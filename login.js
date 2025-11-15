@@ -1,33 +1,31 @@
-import { supabase } from './supabaseClient.js';
+async function entrar() {
+  const email = document.getElementById("email").value;
+  const senha = document.getElementById("senha").value;
+  const msg = document.getElementById("msg");
 
-const form = document.getElementById('loginForm');
-const msg = document.getElementById('msg');
+  msg.textContent = "";
 
-form.addEventListener('submit', async (e)=>{
-  e.preventDefault();
-  const username = form.username.value.trim();
-  const password = form.password.value.trim();
-
-  if(!username || !password){
-    msg.textContent = 'Preencha usuário e senha';
+  if (!email || !senha) {
+    msg.textContent = "Preencha todos os campos.";
     return;
   }
 
-  // Busca na tabela operators
-  const { data, error } = await supabase
-    .from('operators')
-    .select('id, username, fullname')
-    .eq('username', username)
-    .eq('password', password)
-    .limit(1)
-    .single();
+  // LOGIN SUPABASE AUTH
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email,
+    password: senha
+  });
 
-  if(error || !data){
-    msg.textContent = 'Usuário ou senha inválidos';
+  if (error) {
+    msg.textContent = "Erro: " + error.message;
     return;
   }
 
-  // Guarda info no localStorage e redireciona
-  localStorage.setItem('operator', JSON.stringify({ id: data.id, username: data.username, fullname: data.fullname }));
-  window.location.href = 'estoque.html';
-});
+  // LOGIN OK
+  msg.style.color = "green";
+  msg.textContent = "Login realizado! Redirecionando...";
+
+  setTimeout(() => {
+    window.location.href = "estoque.html";
+  }, 800);
+}
