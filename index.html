@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login do Operador - Produção CNC</title>
+  <title>Login - Mini ERP</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -22,40 +22,30 @@
       width: 300px;
       text-align: center;
     }
-    input {
+    input, button {
       width: 100%;
-      padding: 8px;
+      padding: 10px;
       margin: 10px 0;
       border-radius: 5px;
       border: none;
     }
     button {
-      width: 100%;
-      padding: 10px;
-      border: none;
-      border-radius: 5px;
       background: #3b82f6;
       color: #fff;
-      font-size: 16px;
       cursor: pointer;
     }
-    button:hover {
-      background: #2563eb;
-    }
+    button:hover { background: #2563eb; }
   </style>
 </head>
 <body>
   <div class="login-container">
-    <h2>Login Operador</h2>
+    <h2>Mini ERP - Login</h2>
     <input type="email" id="email" placeholder="Email">
     <input type="password" id="senha" placeholder="Senha">
     <button id="btnLogin">Entrar</button>
     <p id="msg" style="color:red;"></p>
   </div>
 
-  <!-- Supabase JS CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/supabase.min.js"></script>
-  <!-- Nosso script -->
-  <script src="login.js"></script>
+  <script type="module" src="./login.js"></script>
 </body>
 </html>
