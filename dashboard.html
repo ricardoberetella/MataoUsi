@@ -3,21 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard - Mini ERP</title>
-<style>
-body { font-family: Arial, sans-serif; padding: 20px; background: #f1f5f9; color: #0f172a; }
-h1 { margin-bottom: 20px; }
-a { display: block; margin: 10px 0; padding: 10px; background: #3b82f6; color: #fff; text-decoration: none; border-radius: 5px; width: 250px; text-align: center; }
-a:hover { background: #2563eb; }
-</style>
+<title>Dashboard - Mini-ERP Modernizado</title>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<h1>Dashboard - Mini ERP</h1>
-
-<a href="clientes.html">Clientes</a>
-<a href="contas.html">Contas a Receber / Pagar</a>
-<a href="estoque.html">Estoque</a>
-<a href="pedidos.html">Pedidos</a>
-
+<div class="sidebar">
+  <a href="dashboard.html">Dashboard</a>
+  <a href="clientes.html">Clientes</a>
+  <a href="produtos.html">Produtos</a>
+  <a href="estoque.html">Estoque</a>
+</div>
+<div class="main">
+  <h1>Dashboard</h1>
+  <div class="cards">
+    <div class="card card-clients"><h3>Total Clientes</h3><p id="totalClientes">0</p></div>
+    <div class="card card-products"><h3>Total Produtos</h3><p id="totalProdutos">0</p></div>
+    <div class="card card-stock"><h3>Movimentações</h3><p id="totalMovs">0</p></div>
+  </div>
+</div>
+<script type="module" src="js/dashboard.js"></script>
 </body>
 </html>
