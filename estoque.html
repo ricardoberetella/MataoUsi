@@ -3,39 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Estoque - Mini ERP</title>
-<style>
-body { font-family: Arial; padding: 20px; background: #f1f5f9; }
-input, button { padding: 8px; margin: 5px 0; border-radius: 5px; border: 1px solid #ccc; width: 100%; }
-button { background: #3b82f6; color: #fff; border: none; cursor: pointer; }
-button:hover { background: #2563eb; }
-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-th { background-color: #e2e8f0; }
-a { color: #3b82f6; text-decoration: none; display: block; margin-bottom: 10px; }
-</style>
+<title>Estoque - Mini-ERP Modernizado</title>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<h1>Estoque de Peças</h1>
-<a href="dashboard.html">← Voltar ao Dashboard</a>
-
-<h3>Adicionar Produto</h3>
-<input type="text" id="nome" placeholder="Nome do Produto">
-<input type="text" id="descricao" placeholder="Descrição">
-<input type="number" id="quantidade" placeholder="Quantidade">
-<input type="text" id="unidade" placeholder="Unidade (ex: pcs, kg)">
-<button id="btnCadastrar">Adicionar</button>
-
-<h3>Lista de Produtos</h3>
-<table id="tabelaEstoque">
-<thead>
-<tr>
-<th>Nome</th><th>Descrição</th><th>Quantidade</th><th>Unidade</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
-
-<script type="module" src="./estoque.js"></script>
+<div class="sidebar">
+  <a href="dashboard.html">Dashboard</a>
+  <a href="clientes.html">Clientes</a>
+  <a href="produtos.html">Produtos</a>
+  <a href="estoque.html">Estoque</a>
+</div>
+<div class="main">
+<h1>Estoque</h1>
+<div class="form-container">
+  <form id="formEstoque">
+    <select id="produto" required><option value="">Selecione Produto</option></select>
+    <input type="number" id="quantidade" placeholder="Quantidade" required>
+    <select id="tipo"><option value="entrada">Entrada</option><option value="saida">Saída</option></select>
+    <button type="button" onclick="movimentarEstoque()">Registrar</button>
+  </form>
+</div>
+<div id="listaEstoque"></div>
+<div id="toast" class="toast"></div>
+</div>
+<script type="module" src="js/estoque.js"></script>
 </body>
 </html>
