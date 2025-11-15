@@ -1,82 +1,35 @@
-
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_KEY;
+const SUPABASE_URL = "https://nfdinjmjofvqmjnfquiy.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5mZGluam1qb2Z2cW1qbmZxdWl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMxODI1NjEsImV4cCI6MjA3ODc1ODU2MX0.K6dojizNG0oFZaGU9DHZkcbqC8yH--wFDEoaOJGbVYE";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Checa usuário logado
-async function checkUser() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) window.location.href = "index.html";
+async function listarContasReceber() {
+    const { data } = await supabase.from('contas_receber').select('*, clientes(nome)');
+    const tbody = document.getElementById('tbodyContasReceber');
+    tbody.innerHTML = '';
+    data.forEach(c => {
+        tbody.innerHTML += `<tr>
+            <td>${c.id}</td>
+            <td>${c.clientes.nome}</td>
+            <td>${c.descricao}</td>
+            <td>${c.valor}</td>
+            <td>${c.vencimento}</td>
+            <td>${c.status}</td>
+        </tr>`;
+    });
 }
 
-// Carregar clientes no select
-async function carregarClientes() {
-  const { data, error } = await supabase.from('clientes').select('*').order('nome', { ascending: true });
-  if (error) return alert("Erro ao carregar clientes: " + error.message);
+async function adicionarConta() {
+    const cliente_id = parseInt(document.getElementById('cliente_id').value);
+    const descricao = document.getElementById('descricao').value;
+    const valor = parseFloat(document.getElementById('valor').value);
+    const vencimento = document.getElementById('vencimento').value;
 
-  const select = document.getElementById('cliente');
-  select.innerHTML = '';
-  data.forEach(c => {
-    const option = document.createElement('option');
-    option.value = c.id;
-    option.textContent = c.nome;
-    select.appendChild(option);
-  });
+    await supabase.from('contas_receber').insert([{ cliente_id, descricao, valor, vencimento }]);
+    listarContasReceber();
 }
 
-// Cadastrar conta a receber
-async function cadastrarConta() {
-  const cliente_id = document.getElementById('cliente').value;
-  const descricao = document.getElementById('descricao').value;
-  const valor = parseFloat(document.getElementById('valor').value || 0);
-  const vencimento = document.getElementById('vencimento').value;
-
-  if (!cliente_id || !descricao || valor <= 0 || !vencimento) {
-    return alert("Preencha todos os campos corretamente!");
-  }
-
-  const { error } = await supabase.from('contas_receber').insert([
-    { cliente_id, descricao, valor, vencimento, status: 'pendente' }
-  ]);
-
-  if (error) return alert("Erro: " + error.message);
-
-  alert("Conta a receber cadastrada!");
-  listarContas();
-  document.getElementById('descricao').value = '';
-  document.getElementById('valor').value = '';
-  document.getElementById('vencimento').value = '';
-}
-
-// Listar contas
-async function listarContas() {
-  const { data, error } = await supabase.from('contas_receber')
-    .select('id, descricao, valor, vencimento, status, clientes(nome)')
-    .order('vencimento', { ascending: true });
-  if (error) return alert("Erro ao listar contas: " + error.message);
-
-  const tbody = document.querySelector("#tabelaReceber tbody");
-  tbody.innerHTML = '';
-  data.forEach(c => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${c.clientes.nome}</td>
-      <td>${c.descricao}</td>
-      <td>R$ ${c.valor.toFixed(2)}</td>
-      <td>${c.vencimento}</td>
-      <td>${c.status}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-// Eventos
-document.getElementById('btnCadastrar').onclick = cadastrarConta;
-
-// Inicialização
-checkUser();
-carregarClientes();
-listarContas();
+window.onload = listarContasReceber;
+document.getElementById('btnAddConta').onclick = adicionarConta;
