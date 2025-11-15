@@ -3,38 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Clientes - Mini ERP</title>
-<style>
-body { font-family: Arial; padding: 20px; background: #f1f5f9; }
-input, button { padding: 8px; margin: 5px 0; border-radius: 5px; border: 1px solid #ccc; width: 100%; }
-button { background: #3b82f6; color: #fff; border: none; cursor: pointer; }
-button:hover { background: #2563eb; }
-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-th { background-color: #e2e8f0; }
-a { color: #3b82f6; text-decoration: none; display: block; margin-bottom: 10px; }
-</style>
+<title>Clientes - Mini-ERP Modernizado</title>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<div class="sidebar">
+  <a href="dashboard.html">Dashboard</a>
+  <a href="clientes.html">Clientes</a>
+  <a href="produtos.html">Produtos</a>
+  <a href="estoque.html">Estoque</a>
+</div>
+<div class="main">
 <h1>Clientes</h1>
-<a href="dashboard.html">← Voltar ao Dashboard</a>
-
-<h3>Cadastrar Cliente</h3>
-<input type="text" id="nome" placeholder="Nome">
-<input type="email" id="email" placeholder="Email">
-<input type="text" id="telefone" placeholder="Telefone">
-<button id="btnCadastrar">Cadastrar</button>
-
-<h3>Lista de Clientes</h3>
-<table id="tabelaClientes">
-<thead>
-<tr>
-<th>Nome</th><th>Email</th><th>Telefone</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
-
-<script type="module" src="./clientes.js"></script>
+<div class="form-container">
+  <form id="formCliente">
+    <input type="text" id="nome" placeholder="Nome" required>
+    <input type="email" id="email" placeholder="Email" required>
+    <button type="button" onclick="cadastrarCliente()">Cadastrar</button>
+  </form>
+</div>
+<div id="listaClientes"></div>
+<div id="toast" class="toast"></div>
+</div>
+<script type="module" src="js/clientes.js"></script>
 </body>
 </html>
