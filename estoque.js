@@ -1,64 +1,30 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_KEY;
+const SUPABASE_URL = "https://nfdinjmjofvqmjnfquiy.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5mZGluam1qb2Z2cW1qbmZxdWl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMxODI1NjEsImV4cCI6MjA3ODc1ODU2MX0.K6dojizNG0oFZaGU9DHZkcbqC8yH--wFDEoaOJGbVYE";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Checa se usuário está logado
-async function checkUser() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) window.location.href = "index.html";
-}
-
-// Cadastrar peça
-async function cadastrarPeca() {
-  const nome = document.getElementById("nome").value;
-  const quantidade = parseInt(document.getElementById("quantidade").value || 0);
-
-  if (!nome || quantidade < 0) {
-    alert("Informe o nome da peça e quantidade válida!");
-    return;
-  }
-
-  const { data, error } = await supabase.from('pecas').insert([
-    { nome, quantidade }
-  ]);
-
-  if (error) {
-    alert("Erro: " + error.message);
-  } else {
-    alert("Peça cadastrada com sucesso!");
-    document.getElementById("nome").value = '';
-    document.getElementById("quantidade").value = '';
-    listarPecas();
-  }
-}
-
-// Listar peças
 async function listarPecas() {
-  const { data, error } = await supabase.from('pecas').select('*').order('nome', { ascending: true });
-
-  if (error) {
-    alert("Erro: " + error.message);
-    return;
-  }
-
-  const tbody = document.querySelector("#tabelaPecas tbody");
-  tbody.innerHTML = '';
-  data.forEach(peca => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${peca.nome}</td>
-      <td>${peca.quantidade}</td>
-    `;
-    tbody.appendChild(tr);
-  });
+    const { data } = await supabase.from('pecas').select('*');
+    const tbody = document.getElementById('tbodyPecas');
+    tbody.innerHTML = '';
+    data.forEach(p => {
+        tbody.innerHTML += `<tr>
+            <td>${p.id}</td>
+            <td>${p.nome}</td>
+            <td>${p.quantidade}</td>
+        </tr>`;
+    });
 }
 
-// Eventos
-document.getElementById("btnCadastrar").onclick = cadastrarPeca;
+async function adicionarPeca() {
+    const nome = document.getElementById('nome').value;
+    const quantidade = parseInt(document.getElementById('quantidade').value);
 
-// Inicialização
-checkUser();
-listarPecas();
+    await supabase.from('pecas').insert([{ nome, quantidade }]);
+    listarPecas();
+}
+
+window.onload = listarPecas;
+document.getElementById('btnAddPeca').onclick = adicionarPeca;
