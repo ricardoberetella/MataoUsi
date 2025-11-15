@@ -16,13 +16,13 @@ a { color: #3b82f6; text-decoration: none; display: block; margin-bottom: 10px; 
 </style>
 </head>
 <body>
-<h1>Contas - Mini ERP</h1>
+<h1>Contas</h1>
 <a href="dashboard.html">← Voltar ao Dashboard</a>
 
 <h3>Cadastrar Conta</h3>
 <select id="tipo">
-    <option value="receber">Contas a Receber</option>
-    <option value="pagar">Contas a Pagar</option>
+<option value="receber">Contas a Receber</option>
+<option value="pagar">Contas a Pagar</option>
 </select>
 <input type="text" id="descricao" placeholder="Descrição">
 <input type="number" id="valor" placeholder="Valor">
@@ -32,12 +32,7 @@ a { color: #3b82f6; text-decoration: none; display: block; margin-bottom: 10px; 
 <h3>Lista de Contas</h3>
 <table id="tabelaContas">
 <thead>
-<tr>
-<th>Tipo</th>
-<th>Descrição</th>
-<th>Valor</th>
-<th>Vencimento</th>
-</tr>
+<tr><th>Tipo</th><th>Descrição</th><th>Valor</th><th>Vencimento</th></tr>
 </thead>
 <tbody></tbody>
 </table>
