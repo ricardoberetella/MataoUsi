@@ -1,51 +1,38 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login - Mini ERP</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background: linear-gradient(135deg, #0f172a, #1e293b);
-      color: #fff;
-    }
-    .login-container {
-      background: #1e293b;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.5);
-      width: 300px;
-      text-align: center;
-    }
-    input, button {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 5px;
-      border: none;
-    }
-    button {
-      background: #3b82f6;
-      color: #fff;
-      cursor: pointer;
-    }
-    button:hover { background: #2563eb; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - Mini ERP</title>
+<style>
+body { font-family: Arial; padding: 20px; background: #f1f5f9; }
+input, button { padding: 8px; margin: 5px 0; }
+button { background: #3b82f6; color: #fff; border: none; cursor: pointer; }
+</style>
 </head>
 <body>
-  <div class="login-container">
-    <h2>Mini ERP - Login</h2>
-    <input type="email" id="email" placeholder="Email">
-    <input type="password" id="senha" placeholder="Senha">
-    <button id="btnLogin">Entrar</button>
-    <p id="msg" style="color:red;"></p>
-  </div>
+<h1>Login</h1>
+<input type="email" id="email" placeholder="Email">
+<input type="password" id="senha" placeholder="Senha">
+<button id="btnLogin">Entrar</button>
 
-  <script type="module" src="./login.js"></script>
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+async function entrar() {
+    const email = document.getElementById('email').value.trim();
+    const senha = document.getElementById('senha').value.trim();
+    if (!email || !senha) { alert("Preencha todos os campos!"); return; }
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
+    if (error) { alert("Erro: " + error.message); } 
+    else { window.location.href = 'dashboard.html'; }
+}
+
+document.getElementById('btnLogin').addEventListener('click', entrar);
+</script>
 </body>
 </html>
