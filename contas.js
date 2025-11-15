@@ -6,15 +6,36 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 async function listarContas() {
-    const { data, error } = await supabase.from('contas').select('*').order('vencimento', { ascending: true });
+    const { data, error } = await supabase.from('contas').select('*').order('vencimento');
     if (error) { console.error(error); return; }
 
     const tbody = document.querySelector('#tabelaContas tbody');
     tbody.innerHTML = '';
     data.forEach(c => {
-        tbody.innerHTML += `<tr><td>${c.tipo}</td><td>${c.descricao}</td><td>${c.valor}</td><td>${c.vencimento}</td></tr>`;
+        tbody.innerHTML += `<tr>
+        <td>${c.tipo}</td><td>${c.descricao}</td><td>${c.valor}</td><td>${c.vencimento}</td>
+        </tr>`;
     });
 }
 
 async function cadastrarConta() {
-    const tipo = document.getElement
+    const tipo = document.getElementById('tipo').value;
+    const descricao = document.getElementById('descricao').value.trim();
+    const valor = parseFloat(document.getElementById('valor').value);
+    const vencimento = document.getElementById('vencimento').value;
+
+    if (!descricao || !valor || !vencimento) { alert("Preencha todos os campos!"); return; }
+
+    const { error } = await supabase.from('contas').insert([{ tipo, descricao, valor, vencimento }]);
+    if (error) alert("Erro ao cadastrar conta: " + error.message);
+    else {
+        alert("Conta cadastrada!");
+        document.getElementById('descricao').value = '';
+        document.getElementById('valor').value = '';
+        document.getElementById('vencimento').value = '';
+        listarContas();
+    }
+}
+
+document.getElementById('btnCadastrar').addEventListener('click', cadastrarConta);
+window.addEventListener('load', listarContas);
