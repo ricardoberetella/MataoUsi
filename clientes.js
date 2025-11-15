@@ -1,66 +1,32 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_KEY;
+const SUPABASE_URL = "https://nfdinjmjofvqmjnfquiy.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5mZGluam1qb2Z2cW1qbmZxdWl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMxODI1NjEsImV4cCI6MjA3ODc1ODU2MX0.K6dojizNG0oFZaGU9DHZkcbqC8yH--wFDEoaOJGbVYE";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-async function checkUser() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) window.location.href = "index.html";
-}
-
-// Função para cadastrar cliente
-async function cadastrarCliente() {
-  const nome = document.getElementById("nome").value;
-  const email = document.getElementById("email").value;
-  const telefone = document.getElementById("telefone").value;
-
-  if (!nome || !email) {
-    alert("Nome e email são obrigatórios!");
-    return;
-  }
-
-  const { data, error } = await supabase.from('clientes').insert([
-    { nome, email, telefone }
-  ]);
-
-  if (error) {
-    alert("Erro: " + error.message);
-  } else {
-    alert("Cliente cadastrado com sucesso!");
-    document.getElementById("nome").value = '';
-    document.getElementById("email").value = '';
-    document.getElementById("telefone").value = '';
-    listarClientes();
-  }
-}
-
-// Função para listar clientes
 async function listarClientes() {
-  const { data, error } = await supabase.from('clientes').select('*').order('nome', { ascending: true });
-
-  if (error) {
-    alert("Erro: " + error.message);
-    return;
-  }
-
-  const tbody = document.querySelector("#tabelaClientes tbody");
-  tbody.innerHTML = '';
-  data.forEach(cliente => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${cliente.nome}</td>
-      <td>${cliente.email}</td>
-      <td>${cliente.telefone || ''}</td>
-    `;
-    tbody.appendChild(tr);
-  });
+    const { data } = await supabase.from('clientes').select('*');
+    const tbody = document.getElementById('tbodyClientes');
+    tbody.innerHTML = '';
+    data.forEach(c => {
+        tbody.innerHTML += `<tr>
+            <td>${c.id}</td>
+            <td>${c.nome}</td>
+            <td>${c.email}</td>
+            <td>${c.telefone}</td>
+        </tr>`;
+    });
 }
 
-// Evento do botão
-document.getElementById("btnCadastrar").onclick = cadastrarCliente;
+async function adicionarCliente() {
+    const nome = document.getElementById('nome').value;
+    const email = document.getElementById('email').value;
+    const telefone = document.getElementById('telefone').value;
 
-// Checa se usuário está logado
-checkUser();
-listarClientes();
+    await supabase.from('clientes').insert([{ nome, email, telefone }]);
+    listarClientes();
+}
+
+window.onload = listarClientes;
+document.getElementById('btnAddCliente').onclick = adicionarCliente;
