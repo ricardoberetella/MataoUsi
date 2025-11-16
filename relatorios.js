@@ -1,62 +1,40 @@
 import { supabase } from "./supabase.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-  carregarProdutosSelectRelatorio();
   carregarRelatorioEstoque();
+  carregarProdutosRel();
   carregarRelatorioMovimentacoes();
-});
 
-/* ============================
-    RELATÓRIO: PRODUTOS
-============================ */
+  document.getElementById("btn-exportar-estoque").addEventListener("click", exportarCSVEstoque);
+  document.getElementById("btn-exportar-mov").addEventListener("click", exportarCSVMOV);
+});
 
 async function carregarRelatorioEstoque() {
   const tabela = document.querySelector("#rel-estoque tbody");
-  tabela.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
 
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("estoque")
-    .select(`
-      quantidade,
-      local,
-      ultima_atualizacao,
-      produtos (
-        nome,
-        sku
-      )
-    `);
-
-  if (error) {
-    tabela.innerHTML = "<tr><td colspan='5'>Erro ao carregar dados.</td></tr>";
-    return;
-  }
+    .select("*, produtos(nome, sku)");
 
   tabela.innerHTML = "";
 
-  data.forEach(item => {
+  data.forEach(i => {
     tabela.innerHTML += `
       <tr>
-        <td>${item.produtos?.nome || "-"}</td>
-        <td>${item.produtos?.sku || "-"}</td>
-        <td>${item.quantidade}</td>
-        <td>${item.local || "-"}</td>
-        <td>${item.ultima_atualizacao ? new Date(item.ultima_atualizacao).toLocaleString() : "-"}</td>
+        <td>${i.produtos.nome}</td>
+        <td>${i.produtos.sku}</td>
+        <td>${i.quantidade}</td>
+        <td>${i.local}</td>
+        <td>${i.ultima_atualizacao ? new Date(i.ultima_atualizacao).toLocaleString() : "-"}</td>
       </tr>
     `;
   });
 }
 
-/* ============================
-    RELATÓRIO: MOVIMENTAÇÕES
-============================ */
-
-async function carregarProdutosSelectRelatorio() {
+async function carregarProdutosRel() {
   const select = document.getElementById("rel-produto");
-  
-  const { data, error } = await supabase
-    .from("produtos")
-    .select("*")
-    .order("nome", { ascending: true });
+
+  const { data } = await supabase.from("produtos").select("*");
 
   select.innerHTML = "<option value=''>Todos</option>";
 
@@ -67,32 +45,25 @@ async function carregarProdutosSelectRelatorio() {
 
 async function carregarRelatorioMovimentacoes() {
   const tabela = document.querySelector("#rel-mov tbody");
-  tabela.innerHTML = "<tr><td colspan='6'>Carregando...</td></tr>";
 
-  const produto_id = document.getElementById("rel-produto").value;
-  const tipo = document.getElementById("rel-tipo").value;
-  const inicio = document.getElementById("rel-inicio").value;
-  const fim = document.getElementById("rel-fim").value;
+  const filtro = {
+    produto_id: document.getElementById("rel-produto").value,
+    tipo: document.getElementById("rel-tipo").value,
+    inicio: document.getElementById("rel-inicio").value,
+    fim: document.getElementById("rel-fim").value,
+  };
 
   let query = supabase
     .from("movimentacoes")
-    .select(`
-      *,
-      produtos (nome, sku)
-    `)
+    .select("*, produtos(nome, sku)")
     .order("id", { ascending: false });
 
-  if (produto_id) query = query.eq("produto_id", produto_id);
-  if (tipo) query = query.eq("tipo", tipo);
-  if (inicio) query = query.gte("criado_em", inicio);
-  if (fim) query = query.lte("criado_em", fim + " 23:59:59");
+  if (filtro.produto_id) query = query.eq("produto_id", filtro.produto_id);
+  if (filtro.tipo) query = query.eq("tipo", filtro.tipo);
+  if (filtro.inicio) query = query.gte("criado_em", filtro.inicio);
+  if (filtro.fim) query = query.lte("criado_em", filtro.fim + " 23:59:59");
 
-  const { data, error } = await query;
-
-  if (error) {
-    tabela.innerHTML = "<tr><td colspan='6'>Erro ao carregar movimentações.</td></tr>";
-    return;
-  }
+  const { data } = await query;
 
   tabela.innerHTML = "";
 
@@ -100,54 +71,36 @@ async function carregarRelatorioMovimentacoes() {
     tabela.innerHTML += `
       <tr>
         <td>${new Date(m.criado_em).toLocaleString()}</td>
-        <td>${m.produtos?.nome || "-"}</td>
-        <td>${m.tipo.toUpperCase()}</td>
+        <td>${m.produtos.nome}</td>
+        <td>${m.tipo}</td>
         <td>${m.quantidade}</td>
-        <td>${m.motivo || "-"}</td>
-        <td>${m.referencia_id || "-"}</td>
+        <td>${m.motivo}</td>
+        <td>${m.referencia_id}</td>
       </tr>
     `;
   });
 }
 
-/* ============================
-      EXPORTAR CSV
-============================ */
-
-document.addEventListener("click", (e) => {
-  if (e.target.matches("#btn-exportar-mov")) {
-    exportarCSVMovimentacoes();
-  }
-  if (e.target.matches("#btn-exportar-estoque")) {
-    exportarCSVEstoque();
-  }
-});
-
-/* CSV: Movimentações */
-function exportarCSVMovimentacoes() {
-  const linhas = [...document.querySelectorAll("#rel-mov tbody tr")]
-    .map(tr => [...tr.children].map(td => td.innerText).join(";"))
-    .join("\n");
-
-  baixarCSV("relatorio_movimentacoes.csv", linhas);
-}
-
-/* CSV: Estoque */
 function exportarCSVEstoque() {
-  const linhas = [...document.querySelectorAll("#rel-estoque tbody tr")]
-    .map(tr => [...tr.children].map(td => td.innerText).join(";"))
-    .join("\n");
-
-  baixarCSV("relatorio_estoque.csv", linhas);
+  exportarTabelaCSV("rel-estoque", "estoque.csv");
 }
 
-/* Função comum */
-function baixarCSV(nome, conteudo) {
-  const blob = new Blob([conteudo], { type: "text/csv;charset=utf-8;" });
+function exportarCSVMOV() {
+  exportarTabelaCSV("rel-mov", "movimentacoes.csv");
+}
+
+function exportarTabelaCSV(idTabela, nomeArquivo) {
+  let csv = "";
+  document.querySelectorAll(`#${idTabela} tr`).forEach(tr => {
+    const linha = [...tr.children].map(td => td.innerText).join(";");
+    csv += linha + "\n";
+  });
+
+  const blob = new Blob([csv], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
 
   const a = document.createElement("a");
   a.href = url;
-  a.download = nome;
+  a.download = nomeArquivo;
   a.click();
 }
