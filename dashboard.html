@@ -1,377 +1,318 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mini ERP - Dashboard</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MataoUsi - Dashboard</title>
 
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-    body { background-color: #f3f4f6; color: #111827; }
-    .app { display: flex; min-height: 100vh; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      display: flex;
+      background-color: #f0f0f0;
+    }
 
-    /* SIDEBAR */
     .sidebar {
-      width: 230px; background: #111827; color: #f9fafb;
-      padding: 20px 15px; display: flex; flex-direction: column;
+      width: 220px;
+      background: #1e293b;
+      color: white;
+      padding-top: 20px;
+      height: 100vh;
+      position: fixed;
     }
-    .logo { font-size: 20px; font-weight: bold; margin-bottom: 20px; text-align: center; }
-    .sidebar small { color: #9ca3af; text-align: center; display: block; margin-bottom: 20px; }
 
-    .menu { display: flex; flex-direction: column; gap: 8px; }
-    .menu button {
-      background: transparent; border: none; color: #e5e7eb; text-align: left;
-      padding: 8px 10px; cursor: pointer; border-radius: 6px; font-size: 14px;
-      transition: 0.2s;
+    .sidebar h2 {
+      color: #38bdf8;
+      text-align: center;
     }
-    .menu button:hover { background: #1f2937; transform: translateX(3px); }
-    .menu button.active { background: #2563eb; color: #fff; }
 
-    .sidebar-footer { margin-top: auto; text-align: center; color: #9ca3af; font-size: 12px; }
+    .sidebar button {
+      width: 100%;
+      padding: 15px;
+      font-size: 16px;
+      border: none;
+      background: transparent;
+      color: white;
+      text-align: left;
+      cursor: pointer;
+    }
 
-    /* CONTENT AREA */
-    .content { flex: 1; padding: 20px; }
-    .topbar { margin-bottom: 20px; }
-    .topbar h1 { font-size: 22px; }
-    .topbar span { font-size: 14px; color: #6b7280; }
+    .sidebar button:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
 
-    .section { display: none; }
-    .section.active { display: block; animation: fadeIn 0.3s; }
-    @keyframes fadeIn { from {opacity: 0;} to {opacity: 1;} }
+    .content {
+      margin-left: 230px;
+      padding: 20px;
+      width: 100%;
+    }
+
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
 
     .card {
-      background: white; padding: 16px; border-radius: 8px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.12); margin-bottom: 20px;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-    .card h2 { margin-bottom: 10px; font-size: 18px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #ccc;
+      text-align: left;
+    }
+
+    th {
+      background: #1e293b;
+      color: white;
+    }
 
     .form-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 10px; margin: 10px 0;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
     }
 
-    input, select {
-      width: 100%; padding: 8px; border-radius: 5px;
-      border: 1px solid #d1d5db; font-size: 14px;
+    input, select, button {
+      padding: 10px;
+      font-size: 16px;
     }
 
     .btn-primary {
-      background: #2563eb; color: white; border: none;
-      padding: 10px 16px; border-radius: 6px; cursor: pointer;
-      margin-top: 10px;
+      background: #38bdf8;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
     }
-    .btn-primary:hover { background: #1d4ed8; }
 
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td {
-      border: 1px solid #e5e7eb; padding: 8px; font-size: 14px;
+    .btn-primary:hover {
+      background: #0ea5e9;
     }
-    th { background: #f3f4f6; }
   </style>
+
 </head>
-
 <body>
-  <div class="app">
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-      <div class="logo">Mini ERP</div>
-      <small>Painel de controle</small>
-
-      <nav class="menu">
-        <button class="menu-link active" data-section="inicio">Início</button>
-        <button class="menu-link" data-section="empresas">Empresas</button>
-        <button class="menu-link" data-section="produtos">Produtos</button>
-        <button class="menu-link" data-section="estoque">Estoque</button>
-        <button class="menu-link" data-section="movimentacoes">Movimentações</button>
-        <button class="menu-link" data-section="relatorios">Relatórios</button>
-      </nav>
-
-      <div class="sidebar-footer">
-        Usuário logado<br>
-        <span id="user-email">operador@empresa.com</span>
-      </div>
-    </aside>
-
-    <!-- MAIN CONTENT -->
-    <main class="content">
-
-      <!-- Top Bar -->
-      <div class="topbar">
-        <h1 id="titulo-pagina">Início</h1>
-        <span id="descricao-pagina">Resumo geral do sistema.</span>
-      </div>
-
-      <!-- INÍCIO -->
-      <section id="inicio" class="section active">
-        <div class="card">
-          <h2>Bem-vindo ao Mini ERP</h2>
-          <p>Use o menu ao lado para acessar os módulos do sistema.</p>
-        </div>
-      </section>
-
-      <!-- EMPRESAS -->
-      <section id="empresas" class="section">
-        <div class="card">
-          <h2>Cadastro de Empresa</h2>
-
-          <div class="form-grid">
-            <div><label>Razão Social</label><input id="empresa-razao"></div>
-            <div><label>Nome Fantasia</label><input id="empresa-fantasia"></div>
-            <div><label>CPF/CNPJ</label><input id="empresa-doc"></div>
-            <div><label>Telefone</label><input id="empresa-fone"></div>
-            <div><label>E-mail</label><input id="empresa-email"></div>
-            <div><label>Endereço</label><input id="empresa-endereco"></div>
-          </div>
-
-          <button class="btn-primary">Salvar Empresa</button>
-        </div>
-
-        <div class="card">
-          <h2>Empresas Cadastradas</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Razão Social</th>
-                <th>Nome Fantasia</th>
-                <th>CPF/CNPJ</th>
-                <th>Telefone</th>
-                <th>E-mail</th>
-              </tr>
-            </thead>
-            <tbody><tr><td colspan="5">Carregando...</td></tr></tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- PRODUTOS -->
-      <section id="produtos" class="section">
-        <div class="card">
-          <h2>Cadastro de Produto</h2>
-
-          <div class="form-grid">
-            <div><label>SKU</label><input id="produto-sku"></div>
-            <div><label>Nome</label><input id="produto-nome"></div>
-            <div><label>Descrição</label><input id="produto-desc"></div>
-            <div><label>Unidade</label><input id="produto-unidade"></div>
-            <div><label>Preço Custo</label><input type="number" id="produto-custo"></div>
-            <div><label>Preço Venda</label><input type="number" id="produto-venda"></div>
-          </div>
-
-          <button class="btn-primary">Salvar Produto</button>
-        </div>
-
-        <div class="card">
-          <h2>Produtos Cadastrados</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>SKU</th>
-                <th>Nome</th>
-                <th>Unidade</th>
-                <th>Preço Custo</th>
-                <th>Preço Venda</th>
-              </tr>
-            </thead>
-            <tbody><tr><td colspan="5">Carregando...</td></tr></tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- ESTOQUE -->
-      <section id="estoque" class="section">
-        <div class="card">
-          <h2>Estoque Atual</h2>
-
-          <table>
-            <thead>
-              <tr>
-                <th>Produto</th>
-                <th>SKU</th>
-                <th>Quantidade</th>
-                <th>Local</th>
-                <th>Última Atualização</th>
-              </tr>
-            </thead>
-            <tbody><tr><td colspan="5">Carregando...</td></tr></tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- MOVIMENTAÇÕES -->
-      <section id="movimentacoes" class="section">
-        <div class="card">
-          <h2>Registrar Movimentação</h2>
-
-          <div class="form-grid">
-            <div>
-              <label>Produto</label>
-              <select id="mov-produto"></select>
-            </div>
-
-            <div>
-              <label>Tipo</label>
-              <select id="mov-tipo">
-                <option value="entrada">Entrada</option>
-                <option value="saida">Saída</option>
-              </select>
-            </div>
-
-            <div>
-              <label>Quantidade</label>
-              <input type="number" id="mov-quantidade">
-            </div>
-
-            <div>
-              <label>Motivo</label>
-              <input type="text" id="mov-motivo">
-            </div>
-
-            <div>
-              <label>Referência</label>
-              <input type="text" id="mov-ref">
-            </div>
-          </div>
-
-          <button id="btn-salvar-mov" class="btn-primary">Salvar Movimentação</button>
-        </div>
-
-        <div class="card">
-          <h2>Histórico de Movimentações</h2>
-
-          <table>
-            <thead>
-              <tr>
-                <th>Data/Hora</th>
-                <th>Produto</th>
-                <th>Tipo</th>
-                <th>Quantidade</th>
-                <th>Motivo</th>
-                <th>Referência</th>
-              </tr>
-            </thead>
-            <tbody><tr><td colspan="6">Carregando...</td></tr></tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- RELATÓRIOS -->
-      <section id="relatorios" class="section">
-
-        <div class="card">
-          <h2>Relatório de Estoque</h2>
-
-          <button id="btn-exportar-estoque" class="btn-primary">Exportar CSV</button>
-
-          <table id="rel-estoque">
-            <thead>
-              <tr>
-                <th>Produto</th>
-                <th>SKU</th>
-                <th>Quantidade</th>
-                <th>Local</th>
-                <th>Última Atualização</th>
-              </tr>
-            </thead>
-            <tbody><tr><td colspan="5">Carregando...</td></tr></tbody>
-          </table>
-        </div>
-
-        <div class="card">
-          <h2>Relatório de Movimentações</h2>
-
-          <div class="form-grid">
-            <div>
-              <label>Produto</label>
-              <select id="rel-produto"></select>
-            </div>
-
-            <div>
-              <label>Tipo</label>
-              <select id="rel-tipo">
-                <option value="">Todos</option>
-                <option value="entrada">Entrada</option>
-                <option value="saida">Saída</option>
-              </select>
-            </div>
-
-            <div>
-              <label>Data Inicial</label>
-              <input type="date" id="rel-inicio">
-            </div>
-
-            <div>
-              <label>Data Final</label>
-              <input type="date" id="rel-fim">
-            </div>
-
-            <div>
-              <button onclick="carregarRelatorioMovimentacoes()" class="btn-primary">Filtrar</button>
-            </div>
-
-            <div>
-              <button id="btn-exportar-mov" class="btn-primary">Exportar CSV</button>
-            </div>
-          </div>
-
-          <table id="rel-mov">
-            <thead>
-              <tr>
-                <th>Data/Hora</th>
-                <th>Produto</th>
-                <th>Tipo</th>
-                <th>Quantidade</th>
-                <th>Motivo</th>
-                <th>Referência</th>
-              </tr>
-            </thead>
-            <tbody><tr><td colspan="6">Carregando...</td></tr></tbody>
-          </table>
-        </div>
-
-      </section>
-
-    </main>
+  <!-- MENU LATERAL -->
+  <div class="sidebar">
+    <h2>MataoUsi</h2>
+    <button onclick="showSection('empresas')">Empresas</button>
+    <button onclick="showSection('produtos')">Produtos</button>
+    <button onclick="showSection('estoque')">Estoque</button>
+    <button onclick="showSection('movimentacoes')">Movimentações</button>
+    <button onclick="showSection('relatorios')">Relatórios</button>
+    <button onclick="logout()">Sair</button>
   </div>
 
-  <!-- Scripts de troca de seções -->
-  <script>
-    const menuLinks = document.querySelectorAll(".menu-link");
-    const sections = document.querySelectorAll(".section");
-    const titulo = document.getElementById("titulo-pagina");
-    const desc = document.getElementById("descricao-pagina");
+  <!-- ÁREA PRINCIPAL -->
+  <div class="content">
 
-    const descricoes = {
-      inicio: "Resumo geral do sistema.",
-      empresas: "Cadastro de empresas.",
-      produtos: "Cadastro de produtos.",
-      estoque: "Consulta de estoque.",
-      movimentacoes: "Entradas e saídas de estoque.",
-      relatorios: "Relatórios e exportações."
-    };
+    <!-- Empresas -->
+    <section id="empresas" class="section active">
+      <div class="card">
+        <h2>Cadastro de Empresas</h2>
+        <div class="form-grid">
+          <input id="emp-razao" placeholder="Razão Social">
+          <input id="emp-fantasia" placeholder="Nome Fantasia">
+          <input id="emp-cnpj" placeholder="CPF/CNPJ">
+          <input id="emp-telefone" placeholder="Telefone">
+          <input id="emp-email" placeholder="E-mail">
+          <input id="emp-endereco" placeholder="Endereço">
+        </div>
+        <button class="btn-primary" id="btnSalvarEmpresa">Salvar</button>
+      </div>
 
-    menuLinks.forEach(btn => {
-      btn.addEventListener("click", () => {
-        menuLinks.forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
+      <div class="card">
+        <h2>Lista de Empresas</h2>
+        <table id="tabela-empresas">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Razão Social</th>
+              <th>Nome Fantasia</th>
+              <th>Telefone</th>
+              <th>Email</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
 
-        const alvo = btn.dataset.section;
+    <!-- Produtos -->
+    <section id="produtos" class="section">
+      <div class="card">
+        <h2>Cadastro de Produtos</h2>
+        <div class="form-grid">
+          <input id="prod-sku" placeholder="SKU">
+          <input id="prod-nome" placeholder="Nome">
+          <input id="prod-desc" placeholder="Descrição">
+          <input id="prod-unidade" placeholder="Unidade">
+          <input id="prod-custo" placeholder="Preço de Custo">
+          <input id="prod-venda" placeholder="Preço de Venda">
+        </div>
+        <button class="btn-primary" id="btnSalvarProduto">Salvar</button>
+      </div>
 
-        sections.forEach(sec => sec.classList.toggle("active", sec.id === alvo));
-        
-        titulo.textContent = btn.textContent;
-        desc.textContent = descricoes[alvo];
-      });
-    });
-  </script>
+      <div class="card">
+        <h2>Lista de Produtos</h2>
+        <table id="tabela-produtos">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>SKU</th>
+              <th>Nome</th>
+              <th>Preço</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
 
-  <!-- IMPORTAÇÃO DOS MÓDULOS -->
+    <!-- Estoque -->
+    <section id="estoque" class="section">
+      <div class="card">
+        <h2>Estoque</h2>
+
+        <div class="form-grid">
+          <select id="est-produto"></select>
+          <input id="est-quantidade" placeholder="Quantidade">
+          <input id="est-local" placeholder="Local">
+        </div>
+
+        <button class="btn-primary" id="btnSalvarEstoque">Atualizar Estoque</button>
+      </div>
+
+      <div class="card">
+        <h2>Estoque Atual</h2>
+        <table id="tabela-estoque">
+          <thead>
+            <tr>
+              <th>Produto</th>
+              <th>SKU</th>
+              <th>Quantidade</th>
+              <th>Local</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Movimentações -->
+    <section id="movimentacoes" class="section">
+      <div class="card">
+        <h2>Registrar Movimentação</h2>
+
+        <div class="form-grid">
+          <select id="mov-produto"></select>
+          <select id="mov-tipo">
+            <option value="entrada">Entrada</option>
+            <option value="saida">Saída</option>
+          </select>
+          <input id="mov-qtd" placeholder="Quantidade">
+          <input id="mov-motivo" placeholder="Motivo">
+          <input id="mov-ref" placeholder="Referência">
+        </div>
+
+        <button class="btn-primary" id="btnSalvarMov">Salvar Movimentação</button>
+      </div>
+    </section>
+
+    <!-- Relatórios -->
+    <section id="relatorios" class="section">
+      <div class="card">
+        <h2>Relatório de Estoque</h2>
+
+        <button id="btn-exportar-estoque" class="btn-primary">Exportar CSV</button>
+
+        <table id="rel-estoque">
+          <thead>
+            <tr>
+              <th>Produto</th>
+              <th>SKU</th>
+              <th>Quantidade</th>
+              <th>Local</th>
+              <th>Atualização</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>Relatório de Movimentações</h2>
+
+        <div class="form-grid">
+          <select id="rel-produto"></select>
+
+          <select id="rel-tipo">
+            <option value="">Todos</option>
+            <option value="entrada">Entrada</option>
+            <option value="saida">Saída</option>
+          </select>
+
+          <input type="date" id="rel-inicio">
+          <input type="date" id="rel-fim">
+        </div>
+
+        <button class="btn-primary" onclick="carregarRelatorioMovimentacoes()">Filtrar</button>
+        <button class="btn-primary" id="btn-exportar-mov">Exportar CSV</button>
+
+        <table id="rel-mov">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Produto</th>
+              <th>Tipo</th>
+              <th>Quantidade</th>
+              <th>Motivo</th>
+              <th>Referência</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- IMPORTS -->
+  <script type="module" src="config.js"></script>
   <script type="module" src="supabase.js"></script>
   <script type="module" src="empresas.js"></script>
   <script type="module" src="produtos.js"></script>
   <script type="module" src="estoque.js"></script>
   <script type="module" src="movimentacoes.js"></script>
   <script type="module" src="relatorios.js"></script>
+
+  <script>
+    function showSection(id) {
+      document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+    }
+
+    async function logout() {
+      const { error } = await supabase.auth.signOut();
+      window.location.href = "index.html";
+    }
+  </script>
 
 </body>
 </html>
