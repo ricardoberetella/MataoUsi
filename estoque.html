@@ -1,41 +1,394 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Estoque - Mini ERP</title>
-<style>
-body { font-family: Arial; padding: 20px; background: #f1f5f9; }
-input, button { padding: 8px; margin: 5px 0; border-radius: 5px; border: 1px solid #ccc; width: 100%; }
-button { background: #3b82f6; color: #fff; border: none; cursor: pointer; }
-button:hover { background: #2563eb; }
-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-th { background-color: #e2e8f0; }
-a { color: #3b82f6; text-decoration: none; display: block; margin-bottom: 10px; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Estoque - MataoUsi</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* MENU LATERAL */
+    .sidebar {
+      width: 240px;
+      background: #0f172a;
+      color: white;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar h2 {
+      color: #38bdf8;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .menu-item {
+      padding: 12px;
+      margin: 6px 0;
+      background-color: rgba(255,255,255,0.1);
+      border-radius: 5px;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .menu-item:hover {
+      background-color: rgba(255,255,255,0.2);
+    }
+
+    .menu-item a {
+      text-decoration: none;
+      color: white;
+      font-size: 15px;
+      display: block;
+    }
+
+    .menu-item.active {
+      background-color: rgba(56,189,248,0.4);
+    }
+
+    /* CONTEÚDO */
+    .content {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .header h1 {
+      margin: 0;
+    }
+
+    .btn-logout {
+      padding: 10px 14px;
+      background: #ef4444;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .btn-logout:hover {
+      background: #dc2626;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      border: 1px solid #e2e8f0;
+      padding: 8px;
+      font-size: 14px;
+      text-align: left;
+    }
+
+    th {
+      background: #e5e7eb;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #cbd5f5;
+      box-sizing: border-box;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+    }
+
+    .btn-primary {
+      padding: 10px 14px;
+      background: #38bdf8;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .btn-primary:hover {
+      background: #0ea5e9;
+    }
+
+    .btn-danger {
+      padding: 6px 10px;
+      background: #ef4444;
+      border: none;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    .msg {
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .msg.ok {
+      color: #16a34a;
+    }
+
+    .msg.err {
+      color: #dc2626;
+    }
+  </style>
 </head>
+
 <body>
-<h1>Estoque de Peças</h1>
-<a href="dashboard.html">← Voltar ao Dashboard</a>
 
-<h3>Adicionar Produto</h3>
-<input type="text" id="nome" placeholder="Nome do Produto">
-<input type="text" id="descricao" placeholder="Descrição">
-<input type="number" id="quantidade" placeholder="Quantidade">
-<input type="text" id="unidade" placeholder="Unidade (ex: pcs, kg)">
-<button id="btnCadastrar">Adicionar</button>
+  <!-- MENU LATERAL -->
+  <div class="sidebar">
+    <h2>MataoUsi</h2>
 
-<h3>Lista de Produtos</h3>
-<table id="tabelaEstoque">
-<thead>
-<tr>
-<th>Nome</th><th>Descrição</th><th>Quantidade</th><th>Unidade</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
+    <div class="menu-item"><a href="dashboard.html">🏠 Início</a></div>
+    <div class="menu-item"><a href="empresas.html">🏭 Empresas</a></div>
+    <div class="menu-item"><a href="produtos.html">📦 Produtos</a></div>
+    <div class="menu-item"><a href="fornecedores.html">🚚 Fornecedores</a></div>
+    <div class="menu-item active"><a href="estoque.html">📊 Estoque</a></div>
+    <div class="menu-item"><a href="movimentacoes.html">📝 Movimentações</a></div>
 
-<script type="module" src="./estoque.js"></script>
+    <div class="menu-item">
+      <a href="https://github.com/ricardoberetella/MataoUsi" target="_blank">🔗 GitHub</a>
+    </div>
+  </div>
+
+  <!-- CONTEÚDO -->
+  <div class="content">
+
+    <div class="header">
+      <h1>Controle de Estoque</h1>
+      <button class="btn-logout" id="btnLogout">Sair</button>
+    </div>
+
+    <!-- FORMULÁRIO -->
+    <div class="card">
+      <h2>Adicionar Estoque</h2>
+      <form id="formEstoque">
+
+        <div class="form-grid">
+
+          <div>
+            <label>Produto</label>
+            <select id="produto_id" required></select>
+          </div>
+
+          <div>
+            <label>Quantidade</label>
+            <input type="number" id="quantidade" required />
+          </div>
+
+          <div>
+            <label>Local</label>
+            <input type="text" id="local" placeholder="Ex: Almoxarifado A" />
+          </div>
+
+        </div>
+
+        <button class="btn-primary" type="submit">Salvar</button>
+        <div id="msgForm" class="msg"></div>
+      </form>
+    </div>
+
+    <!-- LISTAGEM -->
+    <div class="card">
+      <h2>Estoque Registrado</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Produto</th>
+            <th>Qtd</th>
+            <th>Local</th>
+            <th>Última Atualização</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+
+        <tbody id="tbodyEstoque"></tbody>
+      </table>
+
+      <div id="msgLista" class="msg"></div>
+    </div>
+
+  </div>
+
+  <!-- SUPABASE SCRIPT -->
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+    import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const msgForm = document.getElementById("msgForm");
+    const msgLista = document.getElementById("msgLista");
+    const tbody = document.getElementById("tbodyEstoque");
+    const selectProduto = document.getElementById("produto_id");
+
+    // LOGOUT
+    document.getElementById("btnLogout").addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      window.location.href = "index.html";
+    });
+
+    // Carregar tudo ao abrir
+    window.addEventListener("DOMContentLoaded", () => {
+      carregarProdutos();
+      carregarEstoque();
+    });
+
+    // CARREGAR PRODUTOS NO SELECT
+    async function carregarProdutos() {
+      const { data, error } = await supabase.from("produtos").select("*").order("nome");
+
+      if (error) {
+        alert("Erro ao carregar produtos");
+        return;
+      }
+
+      selectProduto.innerHTML = "";
+
+      data.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = `${p.nome} (SKU: ${p.sku})`;
+        selectProduto.appendChild(opt);
+      });
+    }
+
+    // CARREGAR ESTOQUE
+    async function carregarEstoque() {
+      msgLista.textContent = "Carregando...";
+
+      const { data: estoque, error } = await supabase
+        .from("estoque")
+        .select(`
+          *,
+          produtos (nome, sku)
+        `)
+        .order("ultima_atualizacao", { ascending: false });
+
+      if (error) {
+        msgLista.textContent = "Erro ao carregar estoque: " + error.message;
+        msgLista.className = "msg err";
+        return;
+      }
+
+      tbody.innerHTML = "";
+      msgLista.textContent = "";
+
+      if (estoque.length === 0) {
+        msgLista.textContent = "Nenhum item no estoque.";
+        return;
+      }
+
+      estoque.forEach(e => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+          <td>${e.id}</td>
+          <td>${e.produtos?.nome ?? "Produto removido"}</td>
+          <td>${e.quantidade}</td>
+          <td>${e.local ?? ""}</td>
+          <td>${e.ultima_atualizacao ?? ""}</td>
+          <td>
+            <button class="btn-danger" data-id="${e.id}">Excluir</button>
+          </td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+
+      document.querySelectorAll(".btn-danger").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-id");
+          if (confirm("Deseja excluir esse registro de estoque?")) {
+            excluirEstoque(id);
+          }
+        });
+      });
+    }
+
+    // SALVAR ESTOQUE
+    document.getElementById("formEstoque").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const novo = {
+        produto_id: selectProduto.value,
+        quantidade: parseInt(document.getElementById("quantidade").value),
+        local: document.getElementById("local").value.trim()
+      };
+
+      const { error } = await supabase.from("estoque").insert([novo]);
+
+      if (error) {
+        msgForm.textContent = "Erro ao salvar: " + error.message;
+        msgForm.className = "msg err";
+        return;
+      }
+
+      msgForm.textContent = "Estoque salvo!";
+      msgForm.className = "msg ok";
+      document.getElementById("formEstoque").reset();
+
+      carregarEstoque();
+    });
+
+    // EXCLUIR
+    async function excluirEstoque(id) {
+      const { error } = await supabase.from("estoque").delete().eq("id", id);
+
+      if (error) {
+        msgLista.textContent = "Erro: " + error.message;
+        msgLista.className = "msg err";
+        return;
+      }
+
+      msgLista.textContent = "Item excluído!";
+      msgLista.className = "msg ok";
+
+      carregarEstoque();
+    }
+  </script>
+
 </body>
 </html>
