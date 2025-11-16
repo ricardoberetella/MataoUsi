@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Empresas - MataoUsi</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* MENU LATERAL */
+    .sidebar {
+      width: 240px;
+      background: #0f172a;
+      color: white;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar h2 {
+      color: #38bdf8;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .menu-item {
+      padding: 12px;
+      margin: 6px 0;
+      background-color: rgba(255,255,255,0.1);
+      border-radius: 5px;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .menu-item:hover {
+      background-color: rgba(255,255,255,0.2);
+    }
+
+    .menu-item a {
+      text-decoration: none;
+      color: white;
+      font-size: 15px;
+      display: block;
+    }
+
+    .menu-item.active {
+      background-color: rgba(56,189,248,0.4);
+    }
+
+    /* CONTEÚDO PRINCIPAL */
+    .content {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .header h1 {
+      margin: 0;
+    }
+
+    .btn-logout {
+      padding: 10px 14px;
+      background: #ef4444;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .btn-logout:hover {
+      background: #dc2626;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .card h2 {
+      margin-top: 0;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #cbd5f5;
+      box-sizing: border-box;
+    }
+
+    .btn-primary {
+      padding: 10px 14px;
+      background: #38bdf8;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .btn-primary:hover {
+      background: #0ea5e9;
+    }
+
+    .btn-danger {
+      padding: 6px 10px;
+      background: #ef4444;
+      border: none;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    .msg {
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .msg.ok {
+      color: #16a34a;
+    }
+
+    .msg.err {
+      color: #dc2626;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid #e2e8f0;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background: #e5e7eb;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #f9fafb;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- MENU LATERAL -->
+  <div class="sidebar">
+    <h2>MataoUsi</h2>
+
+    <div class="menu-item"><a href="dashboard.html">🏠 Início</a></div>
+    <div class="menu-item active"><a href="empresas.html">🏭 Empresas</a></div>
+    <div class="menu-item"><a href="#">📦 Produtos</a></div>
+    <div class="menu-item"><a href="#">🚚 Fornecedores</a></div>
+    <div class="menu-item"><a href="#">📊 Estoque</a></div>
+    <div class="menu-item"><a href="#">📝 Movimentações</a></div>
+
+    <div class="menu-item">
+      <a href="https://github.com/ricardoberetella/MataoUsi" target="_blank">
+        🔗 Repositório GitHub
+      </a>
+    </div>
+  </div>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <div class="content">
+
+    <div class="header">
+      <h1>Cadastro de Empresas</h1>
+      <button class="btn-logout" id="btnLogout">Sair</button>
+    </div>
+
+    <!-- FORMULÁRIO -->
+    <div class="card">
+      <h2>Nova Empresa</h2>
+      <form id="formEmpresa">
+        <div class="form-grid">
+          <div>
+            <label>Razão Social</label>
+            <input type="text" id="razao_social" required />
+          </div>
+          <div>
+            <label>Nome Fantasia</label>
+            <input type="text" id="nome_fantasia" />
+          </div>
+          <div>
+            <label>CPF/CNPJ</label>
+            <input type="text" id="cpf_cnpj" />
+          </div>
+          <div>
+            <label>Telefone</label>
+            <input type="text" id="telefone" />
+          </div>
+          <div>
+            <label>Email</label>
+            <input type="email" id="email" />
+          </div>
+          <div>
+            <label>Endereço</label>
+            <input type="text" id="endereco" />
+          </div>
+        </div>
+        <button type="submit" class="btn-primary">Salvar Empresa</button>
+        <div id="msgForm" class="msg"></div>
+      </form>
+    </div>
+
+    <!-- LISTAGEM -->
+    <div class="card">
+      <h2>Empresas Cadastradas</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Razão Social</th>
+            <th>Nome Fantasia</th>
+            <th>CPF/CNPJ</th>
+            <th>Telefone</th>
+            <th>Email</th>
+            <th>Endereço</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyEmpresas">
+          <!-- linhas geradas via JS -->
+        </tbody>
+      </table>
+      <div id="msgLista" class="msg"></div>
+    </div>
+
+  </div>
+
+  <!-- SCRIPT SUPABASE -->
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+    import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const form = document.getElementById("formEmpresa");
+    const msgForm = document.getElementById("msgForm");
+    const msgLista = document.getElementById("msgLista");
+    const tbody = document.getElementById("tbodyEmpresas");
+
+    // LOGOUT
+    document.getElementById("btnLogout").addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      window.location.href = "index.html";
+    });
+
+    // Carregar empresas ao abrir a página
+    window.addEventListener("DOMContentLoaded", () => {
+      carregarEmpresas();
+    });
+
+    async function carregarEmpresas() {
+      msgLista.textContent = "Carregando...";
+      msgLista.className = "msg";
+
+      const { data, error } = await supabase
+        .from("empresas")
+        .select("*")
+        .order("criado_em", { ascending: false });
+
+      if (error) {
+        console.error(error);
+        msgLista.textContent = "Erro ao carregar empresas: " + error.message;
+        msgLista.className = "msg err";
+        return;
+      }
+
+      msgLista.textContent = "";
+      msgLista.className = "msg";
+
+      tbody.innerHTML = "";
+
+      if (!data || data.length === 0) {
+        msgLista.textContent = "Nenhuma empresa cadastrada.";
+        return;
+      }
+
+      data.forEach(emp => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+          <td>${emp.id}</td>
+          <td>${emp.razao_social || ""}</td>
+          <td>${emp.nome_fantasia || ""}</td>
+          <td>${emp.cpf_cnpj || ""}</td>
+          <td>${emp.telefone || ""}</td>
+          <td>${emp.email || ""}</td>
+          <td>${emp.endereco || ""}</td>
+          <td>
+            <button class="btn-danger" data-id="${emp.id}">Excluir</button>
+          </td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+
+      // adicionar evento de excluir em cada botão
+      document.querySelectorAll(".btn-danger").forEach(btn => {
+        btn.addEventListener("click", async (e) => {
+          const id = e.target.getAttribute("data-id");
+          if (confirm("Deseja realmente excluir esta empresa?")) {
+            await excluirEmpresa(id);
+          }
+        });
+      });
+    }
+
+    // Salvar nova empresa
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      msgForm.textContent = "";
+      msgForm.className = "msg";
+
+      const razao_social = document.getElementById("razao_social").value.trim();
+      const nome_fantasia = document.getElementById("nome_fantasia").value.trim();
+      const cpf_cnpj = document.getElementById("cpf_cnpj").value.trim();
+      const telefone = document.getElementById("telefone").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const endereco = document.getElementById("endereco").value.trim();
+
+      if (!razao_social) {
+        msgForm.textContent = "Informe a Razão Social.";
+        msgForm.className = "msg err";
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("empresas")
+        .insert([
+          {
+            razao_social,
+            nome_fantasia,
+            cpf_cnpj,
+            telefone,
+            email,
+            endereco
+          }
+        ]);
+
+      if (error) {
+        console.error(error);
+        msgForm.textContent = "Erro ao salvar: " + error.message;
+        msgForm.className = "msg err";
+        return;
+      }
+
+      msgForm.textContent = "Empresa salva com sucesso!";
+      msgForm.className = "msg ok";
+      form.reset();
+
+      carregarEmpresas();
+    });
+
+    async function excluirEmpresa(id) {
+      msgLista.textContent = "";
+      msgLista.className = "msg";
+
+      const { error } = await supabase
+        .from("empresas")
+        .delete()
+        .eq("id", id);
+
+      if (error) {
+        console.error(error);
+        msgLista.textContent = "Erro ao excluir: " + error.message;
+        msgLista.className = "msg err";
+        return;
+      }
+
+      msgLista.textContent = "Empresa excluída.";
+      msgLista.className = "msg ok";
+      carregarEmpresas();
+    }
+  </script>
+
+</body>
+</html>
