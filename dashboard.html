@@ -1,23 +1,172 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard - Mini ERP</title>
-<style>
-body { font-family: Arial, sans-serif; padding: 20px; background: #f1f5f9; color: #0f172a; }
-h1 { margin-bottom: 20px; }
-a { display: block; margin: 10px 0; padding: 10px; background: #3b82f6; color: #fff; text-decoration: none; border-radius: 5px; width: 250px; text-align: center; }
-a:hover { background: #2563eb; }
-</style>
-</head>
-<body>
-<h1>Dashboard - Mini ERP</h1>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - MataoUsi</title>
 
-<a href="clientes.html">Clientes</a>
-<a href="contas.html">Contas a Receber / Pagar</a>
-<a href="estoque.html">Estoque</a>
-<a href="pedidos.html">Pedidos</a>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* MENU LATERAL */
+    .sidebar {
+      width: 240px;
+      background: #0f172a;
+      color: white;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar h2 {
+      color: #38bdf8;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .menu-item {
+      padding: 12px;
+      margin: 6px 0;
+      background-color: rgba(255,255,255,0.1);
+      border-radius: 5px;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .menu-item:hover {
+      background-color: rgba(255,255,255,0.2);
+    }
+
+    .menu-item a {
+      text-decoration: none;
+      color: white;
+      font-size: 15px;
+    }
+
+    /* CONTEÚDO PRINCIPAL */
+    .content {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .header h1 {
+      margin: 0;
+    }
+
+    .btn-logout {
+      padding: 10px 14px;
+      background: #ef4444;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .btn-logout:hover {
+      background: #dc2626;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    a.repo {
+      color: #1e3a8a;
+      font-weight: bold;
+      text-decoration: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- MENU LATERAL -->
+  <div class="sidebar">
+    <h2>MataoUsi</h2>
+
+    <div class="menu-item"><a href="dashboard.html">🏠 Início</a></div>
+    <div class="menu-item"><a href="#">🏭 Empresas</a></div>
+    <div class="menu-item"><a href="#">📦 Produtos</a></div>
+    <div class="menu-item"><a href="#">🚚 Fornecedores</a></div>
+    <div class="menu-item"><a href="#">📊 Estoque</a></div>
+    <div class="menu-item"><a href="#">📝 Movimentações</a></div>
+
+    <div class="menu-item">
+      <a href="https://github.com/ricardoberetella/MataoUsi" target="_blank">
+        🔗 Repositório GitHub
+      </a>
+    </div>
+  </div>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <div class="content">
+
+    <div class="header">
+      <h1>Dashboard Geral</h1>
+      <button class="btn-logout" id="btnLogout">Sair</button>
+    </div>
+
+    <div class="card">
+      <h2>Bem-vindo ao sistema MataoUsi</h2>
+      <p>Você pode navegar pelo menu ao lado e acessar os módulos.</p>
+      <p>
+        Repositório do projeto:
+        <a class="repo" target="_blank" href="https://github.com/ricardoberetella/MataoUsi">
+          Clique aqui
+        </a>
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>Próximos Módulos</h2>
+      <ul>
+        <li>Cadastro de Empresas</li>
+        <li>Cadastro de Produtos</li>
+        <li>Cadastro de Fornecedores</li>
+        <li>Controle de Estoque</li>
+        <li>Movimentações</li>
+        <li>Relatórios</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+    import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // LOGOUT
+    document.getElementById("btnLogout").addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      window.location.href = "index.html";
+    });
+  </script>
 
 </body>
 </html>
