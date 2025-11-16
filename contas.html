@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contas - Mini ERP</title>
+<style>
+body { font-family: Arial; padding: 20px; background: #f1f5f9; }
+input, select, button { padding: 8px; margin: 5px 0; border-radius: 5px; border: 1px solid #ccc; width: 100%; }
+button { background: #3b82f6; color: #fff; border: none; cursor: pointer; }
+button:hover { background: #2563eb; }
+table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+th { background-color: #e2e8f0; }
+a { color: #3b82f6; text-decoration: none; display: block; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<h1>Contas</h1>
+<a href="dashboard.html">← Voltar ao Dashboard</a>
+
+<h3>Cadastrar Conta</h3>
+<select id="tipo">
+<option value="receber">Contas a Receber</option>
+<option value="pagar">Contas a Pagar</option>
+</select>
+<input type="text" id="descricao" placeholder="Descrição">
+<input type="number" id="valor" placeholder="Valor">
+<input type="date" id="vencimento">
+<button id="btnCadastrar">Cadastrar</button>
+
+<h3>Lista de Contas</h3>
+<table id="tabelaContas">
+<thead>
+<tr>
+<th>Tipo</th><th>Descrição</th><th>Valor</th><th>Vencimento</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+<script type="module" src="./contas.js"></script>
+</body>
+</html>
