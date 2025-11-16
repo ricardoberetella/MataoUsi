@@ -1,43 +1,44 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
+import { supabase } from "./supabase.js";
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+document.addEventListener("DOMContentLoaded", () => {
+  carregarEstoque();
+});
 
-async function listarProdutos() {
-    const { data, error } = await supabase.from('estoque').select('*').order('nome');
-    if (error) { console.error("Erro ao listar estoque:", error); return; }
+/* LISTAR ESTOQUE */
+async function carregarEstoque() {
+  const tabela = document.querySelector("#estoque tbody");
+  tabela.innerHTML = "<tr><td colspan='5'>Carregando estoque...</td></tr>";
 
-    const tbody = document.querySelector('#tabelaEstoque tbody');
-    tbody.innerHTML = '';
-    data.forEach(prod => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${prod.nome}</td><td>${prod.descricao}</td><td>${prod.quantidade}</td><td>${prod.unidade}</td>`;
-        tbody.appendChild(tr);
-    });
+  const { data: estoque, error } = await supabase
+    .from("estoque")
+    .select(`
+      id,
+      quantidade,
+      local,
+      ultima_atualizacao,
+      produtos (
+        sku,
+        nome
+      )
+    `)
+    .order("id", { ascending: false });
+
+  if (error) {
+    tabela.innerHTML = "<tr><td colspan='5'>Erro ao carregar estoque.</td></tr>";
+    return;
+  }
+
+  tabela.innerHTML = "";
+
+  estoque.forEach(item => {
+    tabela.innerHTML += `
+      <tr>
+        <td>${item.produtos?.nome || "Produto removido"}</td>
+        <td>${item.produtos?.sku || "-"}</td>
+        <td>${item.quantidade}</td>
+        <td>${item.local || "-"}</td>
+        <td>${item.ultima_atualizacao ? new Date(item.ultima_atualizacao).toLocaleString() : "-"}</td>
+      </tr>
+    `;
+  });
 }
-
-async function cadastrarProduto() {
-    const nome = document.getElementById('nome').value.trim();
-    const descricao = document.getElementById('descricao').value.trim();
-    const quantidade = parseFloat(document.getElementById('quantidade').value);
-    const unidade = document.getElementById('unidade').value.trim();
-
-    if (!nome || !descricao || !quantidade || !unidade) {
-        alert("Preencha todos os campos!");
-        return;
-    }
-
-    const { data, error } = await supabase.from('estoque').insert([{ nome, descricao, quantidade, unidade }]);
-    if (error) alert("Erro ao adicionar produto: " + error.message);
-    else {
-        alert("Produto adicionado!");
-        document.getElementById('nome').value = '';
-        document.getElementById('descricao').value = '';
-        document.getElementById('quantidade').value = '';
-        document.getElementById('unidade').value = '';
-        listarProdutos();
-    }
-}
-
-document.getElementById('btnCadastrar').addEventListener('click', cadastrarProduto);
-window.addEventListener('load', listarProdutos);
