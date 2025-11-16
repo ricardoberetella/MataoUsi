@@ -1,22 +1,24 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login - Mini ERP</title>
-<style>
-body { font-family: Arial; padding: 20px; background: #f1f5f9; }
-input, button { padding: 8px; margin: 5px 0; border-radius: 5px; border: 1px solid #ccc; width: 100%; }
-button { background: #3b82f6; color: #fff; border: none; cursor: pointer; }
-button:hover { background: #2563eb; }
-</style>
-</head>
-<body>
-<h1>Login</h1>
-<input type="email" id="email" placeholder="Email">
-<input type="password" id="senha" placeholder="Senha">
-<button id="btnLogin">Entrar</button>
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 
-<script type="module" src="./login.js"></script>
-</body>
-</html>
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+window.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById('btnLogin');
+
+    btn.addEventListener('click', async () => {
+        const email = document.getElementById('email').value;
+        const senha = document.getElementById('senha').value;
+
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password: senha
+        });
+
+        if (error) {
+            alert("Erro: " + error.message);
+        } else {
+            window.location.href = 'dashboard.html';
+        }
+    });
+});
