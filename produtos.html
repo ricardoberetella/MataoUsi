@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Produtos - MataoUsi</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* MENU LATERAL */
+    .sidebar {
+      width: 240px;
+      background: #0f172a;
+      color: white;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar h2 {
+      color: #38bdf8;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .menu-item {
+      padding: 12px;
+      margin: 6px 0;
+      background-color: rgba(255,255,255,0.1);
+      border-radius: 5px;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .menu-item:hover {
+      background-color: rgba(255,255,255,0.2);
+    }
+
+    .menu-item a {
+      text-decoration: none;
+      color: white;
+      font-size: 15px;
+      display: block;
+    }
+
+    .menu-item.active {
+      background-color: rgba(56,189,248,0.4);
+    }
+
+    /* CONTEÚDO PRINCIPAL */
+    .content {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .header h1 {
+      margin: 0;
+    }
+
+    .btn-logout {
+      padding: 10px 14px;
+      background: #ef4444;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .btn-logout:hover {
+      background: #dc2626;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      border: 1px solid #e2e8f0;
+      padding: 8px;
+      font-size: 14px;
+      text-align: left;
+    }
+
+    th {
+      background: #e5e7eb;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #cbd5f5;
+      box-sizing: border-box;
+    }
+
+    .btn-primary {
+      padding: 10px 14px;
+      background: #38bdf8;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .btn-primary:hover {
+      background: #0ea5e9;
+    }
+
+    .btn-danger {
+      padding: 6px 10px;
+      background: #ef4444;
+      border: none;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    .msg {
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .msg.ok {
+      color: #16a34a;
+    }
+
+    .msg.err {
+      color: #dc2626;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- MENU LATERAL -->
+  <div class="sidebar">
+    <h2>MataoUsi</h2>
+
+    <div class="menu-item"><a href="dashboard.html">🏠 Início</a></div>
+    <div class="menu-item"><a href="empresas.html">🏭 Empresas</a></div>
+    <div class="menu-item active"><a href="produtos.html">📦 Produtos</a></div>
+    <div class="menu-item"><a href="fornecedores.html">🚚 Fornecedores</a></div>
+    <div class="menu-item"><a href="estoque.html">📊 Estoque</a></div>
+    <div class="menu-item"><a href="movimentacoes.html">📝 Movimentações</a></div>
+
+    <div class="menu-item">
+      <a href="https://github.com/ricardoberetella/MataoUsi" target="_blank">
+        🔗 Repositório GitHub
+      </a>
+    </div>
+  </div>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <div class="content">
+
+    <div class="header">
+      <h1>Cadastro de Produtos</h1>
+      <button class="btn-logout" id="btnLogout">Sair</button>
+    </div>
+
+    <!-- FORMULÁRIO -->
+    <div class="card">
+      <h2>Novo Produto</h2>
+
+      <form id="formProduto">
+        <div class="form-grid">
+
+          <div>
+            <label>SKU</label>
+            <input type="text" id="sku" required />
+          </div>
+
+          <div>
+            <label>Nome</label>
+            <input type="text" id="nome" required />
+          </div>
+
+          <div>
+            <label>Descrição</label>
+            <input type="text" id="descricao" />
+          </div>
+
+          <div>
+            <label>Unidade</label>
+            <input type="text" id="unidade" placeholder="ex: UN, CX, KG" />
+          </div>
+
+          <div>
+            <label>Preço Custo</label>
+            <input type="number" step="0.01" id="preco_custo" />
+          </div>
+
+          <div>
+            <label>Preço Venda</label>
+            <input type="number" step="0.01" id="preco_venda" />
+          </div>
+
+        </div>
+
+        <button class="btn-primary" type="submit">Salvar Produto</button>
+        <div id="msgForm" class="msg"></div>
+      </form>
+    </div>
+
+    <!-- LISTAGEM -->
+    <div class="card">
+      <h2>Produtos Cadastrados</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>SKU</th>
+            <th>Nome</th>
+            <th>Descrição</th>
+            <th>Unidade</th>
+            <th>Preço Custo</th>
+            <th>Preço Venda</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+
+        <tbody id="tbodyProdutos"></tbody>
+      </table>
+
+      <div id="msgLista" class="msg"></div>
+    </div>
+
+  </div>
+
+  <!-- SUPABASE SCRIPT -->
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+    import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const tbody = document.getElementById("tbodyProdutos");
+    const msgForm = document.getElementById("msgForm");
+    const msgLista = document.getElementById("msgLista");
+
+    // LOGOUT
+    document.getElementById("btnLogout").addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      window.location.href = "index.html";
+    });
+
+    // CARREGAR PRODUTOS AO ABRIR A PÁGINA
+    window.addEventListener("DOMContentLoaded", () => {
+      carregarProdutos();
+    });
+
+    async function carregarProdutos() {
+      msgLista.textContent = "Carregando...";
+
+      const { data, error } = await supabase
+        .from("produtos")
+        .select("*")
+        .order("criado_em", { ascending: false });
+
+      if (error) {
+        console.error(error);
+        msgLista.textContent = "Erro ao carregar: " + error.message;
+        msgLista.className = "msg err";
+        return;
+      }
+
+      tbody.innerHTML = "";
+      msgLista.textContent = "";
+
+      if (data.length === 0) {
+        msgLista.textContent = "Nenhum produto encontrado.";
+        return;
+      }
+
+      data.forEach(p => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+          <td>${p.id}</td>
+          <td>${p.sku}</td>
+          <td>${p.nome}</td>
+          <td>${p.descricao ?? ""}</td>
+          <td>${p.unidade ?? ""}</td>
+          <td>${p.preco_custo ?? ""}</td>
+          <td>${p.preco_venda ?? ""}</td>
+          <td>
+            <button class="btn-danger" data-id="${p.id}">Excluir</button>
+          </td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+
+      document.querySelectorAll(".btn-danger").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-id");
+          if (confirm("Deseja excluir este produto?")) {
+            await excluirProduto(id);
+          }
+        });
+      });
+    }
+
+    // SALVAR PRODUTO
+    document.getElementById("formProduto").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      msgForm.textContent = "";
+
+      const novo = {
+        sku: document.getElementById("sku").value.trim(),
+        nome: document.getElementById("nome").value.trim(),
+        descricao: document.getElementById("descricao").value.trim(),
+        unidade: document.getElementById("unidade").value.trim(),
+        preco_custo: parseFloat(document.getElementById("preco_custo").value) || null,
+        preco_venda: parseFloat(document.getElementById("preco_venda").value) || null
+      };
+
+      const { error } = await supabase
+        .from("produtos")
+        .insert([novo]);
+
+      if (error) {
+        msgForm.textContent = "Erro ao salvar: " + error.message;
+        msgForm.className = "msg err";
+        return;
+      }
+
+      msgForm.textContent = "Produto salvo!";
+      msgForm.className = "msg ok";
+
+      document.getElementById("formProduto").reset();
+      carregarProdutos();
+    });
+
+    // EXCLUIR PRODUTO
+    async function excluirProduto(id) {
+      const { error } = await supabase
+        .from("produtos")
+        .delete()
+        .eq("id", id);
+
+      if (error) {
+        msgLista.textContent = "Erro ao excluir: " + error.message;
+        msgLista.className = "msg err";
+        return;
+      }
+
+      msgLista.textContent = "Produto excluído!";
+      msgLista.className = "msg ok";
+
+      carregarProdutos();
+    }
+  </script>
+
+</body>
+</html>
