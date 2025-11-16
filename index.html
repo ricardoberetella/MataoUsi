@@ -1,24 +1,96 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - MataoUsi</title>
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
 
-window.addEventListener("DOMContentLoaded", () => {
-    const btn = document.getElementById('btnLogin');
+    h1 {
+      color: #38bdf8;
+      margin-bottom: 10px;
+    }
 
-    btn.addEventListener('click', async () => {
-        const email = document.getElementById('email').value;
-        const senha = document.getElementById('senha').value;
+    .login-container {
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 30px;
+      border-radius: 12px;
+      width: 320px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      text-align: center;
+    }
 
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password: senha
-        });
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: none;
+      font-size: 16px;
+    }
 
-        if (error) {
-            alert("Erro: " + error.message);
-        } else {
-            window.location.href = 'dashboard.html';
-        }
-    });
-});
+    input {
+      background-color: rgba(255,255,255,0.2);
+      color: white;
+    }
+
+    button {
+      background-color: #38bdf8;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background-color: #0ea5e9;
+    }
+
+    .repo-link {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .repo-link a {
+      color: #38bdf8;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>MataoUsi - Login</h1>
+
+  <div class="login-container">
+    <input type="email" id="email" placeholder="Digite seu email" required />
+    <input type="password" id="senha" placeholder="Digite sua senha" required />
+
+    <button id="btnLogin">Entrar</button>
+
+    <!-- Botão Repositório -->
+    <div class="repo-link">
+      <a href="https://github.com/ricardoberetella/MataoUsi" target="_blank">
+        🔗 Acessar Repositório no GitHub
+      </a>
+    </div>
+  </div>
+
+  <!-- Importando o login.js -->
+  <script type="module" src="login.js"></script>
+
+</body>
+</html>
