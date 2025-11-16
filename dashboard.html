@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -5,392 +6,63 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mini ERP - Dashboard</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: Arial, Helvetica, sans-serif;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    body { background-color: #f3f4f6; color: #111827; }
+    .app { display: flex; min-height: 100vh; }
 
-    body {
-      background-color: #f3f4f6;
-      color: #111827;
-    }
-
-    .app {
-      display: flex;
-      min-height: 100vh;
-    }
-
-    /* LATERAL */
+    /* SIDEBAR */
     .sidebar {
-      width: 230px;
-      background: #111827;
-      color: #f9fafb;
-      padding: 20px 15px;
-      display: flex;
-      flex-direction: column;
+      width: 230px; background: #111827; color: #f9fafb;
+      padding: 20px 15px; display: flex; flex-direction: column;
     }
+    .logo { font-size: 20px; font-weight: bold; margin-bottom: 20px; text-align: center; }
+    .sidebar small { color: #9ca3af; text-align: center; display: block; margin-bottom: 20px; }
 
-    .logo {
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 20px;
-      text-align: center;
-    }
-
-    .sidebar small {
-      color: #9ca3af;
-      text-align: center;
-      display: block;
-      margin-bottom: 20px;
-    }
-
-    .menu {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 20px;
-    }
-
+    .menu { display: flex; flex-direction: column; gap: 8px; }
     .menu button {
-      background: transparent;
-      border: none;
-      color: #e5e7eb;
-      text-align: left;
-      padding: 8px 10px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      transition: background 0.2s, transform 0.05s;
+      background: transparent; border: none; color: #e5e7eb;
+      padding: 8px 10px; text-align: left; cursor: pointer;
+      border-radius: 6px; font-size: 14px; transition: 0.2s;
     }
+    .menu button:hover { background: #1f2937; transform: translateX(2px); }
+    .menu button.active { background: #2563eb; color: #fff; }
 
-    .menu button:hover {
-      background: #1f2937;
-      transform: translateX(2px);
-    }
+    .sidebar-footer { margin-top: auto; text-align: center; color: #9ca3af; font-size: 12px; }
 
-    .menu button.active {
-      background: #2563eb;
-      color: #f9fafb;
-    }
+    /* CONTENT */
+    .content { flex: 1; padding: 20px; }
+    .topbar { margin-bottom: 20px; }
+    .topbar h1 { font-size: 20px; }
+    .topbar span { color: #6b7280; font-size: 14px; }
 
-    .sidebar-footer {
-      margin-top: auto;
-      font-size: 12px;
-      color: #9ca3af;
-      text-align: center;
-    }
-
-    /* CONTEÚDO PRINCIPAL */
-    .content {
-      flex: 1;
-      padding: 20px;
-    }
-
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .topbar h1 {
-      font-size: 20px;
-      color: #111827;
-    }
-
-    .topbar span {
-      font-size: 14px;
-      color: #6b7280;
-    }
-
-    .section {
-      display: none;
-    }
-
-    .section.active {
-      display: block;
-    }
+    .section { display: none; }
+    .section.active { display: block; }
 
     .card {
-      background: white;
-      border-radius: 8px;
-      padding: 16px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
+      background: white; padding: 16px; border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px;
     }
-
-    .card h2 {
-      font-size: 18px;
-      margin-bottom: 10px;
-      color: #111827;
-    }
-
-    .card p {
-      font-size: 14px;
-      color: #4b5563;
-      margin-bottom: 5px;
-    }
-
+    .card h2 { margin-bottom: 10px; }
     .form-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 10px;
-      margin-top: 10px;
-      margin-bottom: 10px;
-    }
-
-    label {
-      font-size: 13px;
-      color: #374151;
-      display: block;
-      margin-bottom: 2px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px; margin: 10px 0;
     }
 
     input, select {
-      width: 100%;
-      padding: 6px 8px;
-      border-radius: 4px;
+      width: 100%; padding: 8px; border-radius: 5px;
       border: 1px solid #d1d5db;
-      font-size: 13px;
     }
 
     .btn-primary {
-      background: #2563eb;
-      color: white;
-      border: none;
-      padding: 8px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      margin-top: 5px;
+      background: #2563eb; color: white; border: none;
+      padding: 10px 16px; border-radius: 6px; cursor: pointer;
     }
+    .btn-primary:hover { background: #1d4ed8; }
 
-    .btn-primary:hover {
-      background: #1d4ed8;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-      font-size: 13px;
-    }
-
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
     th, td {
-      border: 1px solid #e5e7eb;
-      padding: 6px 8px;
-      text-align: left;
+      border: 1px solid #e5e7eb; padding: 8px; font-size: 14px;
     }
+    th { background: #f9fafb; font-weight: bold; }
 
-    th {
-      background: #f9fafb;
-      font-weight: 600;
-    }
-
-    .section-title {
-      font-size: 18px;
-      margin-bottom: 5px;
-    }
-
-    .section-subtitle {
-      font-size: 13px;
-      color: #6b7280;
-      margin-bottom: 15px;
-    }
-  </style>
-</head>
-
-<body>
-  <div class="app">
-    <aside class="sidebar">
-      <div class="logo">Mini ERP</div>
-      <small>Painel de controle</small>
-
-      <nav class="menu">
-        <button class="menu-link active" data-section="inicio">Início</button>
-        <button class="menu-link" data-section="empresas">Empresas</button>
-        <button class="menu-link" data-section="produtos">Produtos</button>
-        <button class="menu-link" data-section="estoque">Estoque</button>
-        <button class="menu-link" data-section="movimentacoes">Movimentações</button>
-        <button class="menu-link" data-section="relatorios">Relatórios</button>
-      </nav>
-
-      <div class="sidebar-footer">
-        Usuário logado<br>
-        <span id="user-email">operador@empresa.com</span>
-      </div>
-    </aside>
-
-    <main class="content">
-      <div class="topbar">
-        <div>
-          <h1 id="titulo-pagina">Início</h1>
-          <span id="descricao-pagina">Resumo geral do sistema.</span>
-        </div>
-      </div>
-
-      <!-- INÍCIO -->
-      <section id="inicio" class="section active">
-        <div class="card">
-          <h2>Bem-vindo ao Mini ERP</h2>
-          <p>Aqui você terá acesso aos módulos:</p>
-          <ul style="font-size:14px; margin-left:18px; margin-top:5px; color:#374151;">
-            <li>Empresas</li>
-            <li>Produtos</li>
-            <li>Estoque</li>
-            <li>Movimentações</li>
-            <li>Relatórios</li>
-          </ul>
-        </div>
-      </section>
-
-      <!-- EMPRESAS -->
-      <section id="empresas" class="section">
-        <div class="section-title">Empresas</div>
-        <div class="section-subtitle">Cadastro e listagem das empresas.</div>
-
-        <div class="card">
-          <h2>Cadastro de Empresa</h2>
-          <div class="form-grid">
-            <div><label>Razão Social</label><input id="empresa-razao"></div>
-            <div><label>Nome Fantasia</label><input id="empresa-fantasia"></div>
-            <div><label>CPF/CNPJ</label><input id="empresa-doc"></div>
-            <div><label>Telefone</label><input id="empresa-fone"></div>
-            <div><label>E-mail</label><input id="empresa-email"></div>
-            <div><label>Endereço</label><input id="empresa-endereco"></div>
-          </div>
-          <button class="btn-primary">Salvar Empresa</button>
-        </div>
-
-        <div class="card">
-          <h2>Empresas Cadastradas</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Razão Social</th>
-                <th>Nome Fantasia</th>
-                <th>CPF/CNPJ</th>
-                <th>Telefone</th>
-                <th>E-mail</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td colspan="5">Carregando...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- PRODUTOS -->
-      <section id="produtos" class="section">
-        <div class="section-title">Produtos</div>
-        <div class="section-subtitle">Cadastro de produtos.</div>
-
-        <div class="card">
-          <h2>Cadastro de Produto</h2>
-          <div class="form-grid">
-            <div><label>SKU</label><input id="produto-sku"></div>
-            <div><label>Nome</label><input id="produto-nome"></div>
-            <div><label>Descrição</label><input id="produto-desc"></div>
-            <div><label>Unidade</label><input id="produto-unidade"></div>
-            <div><label>Preço de Custo</label><input type="number" step="0.01" id="produto-custo"></div>
-            <div><label>Preço de Venda</label><input type="number" step="0.01" id="produto-venda"></div>
-          </div>
-          <button class="btn-primary">Salvar Produto</button>
-        </div>
-
-        <div class="card">
-          <h2>Produtos Cadastrados</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>SKU</th>
-                <th>Nome</th>
-                <th>Unidade</th>
-                <th>Preço Custo</th>
-                <th>Preço Venda</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td colspan="5">Carregando...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- ESTOQUE -->
-      <section id="estoque" class="section">
-        <div class="section-title">Estoque</div>
-        <div class="section-subtitle">Controle de estoque.</div>
-
-        <div class="card">
-          <p>Módulo será conectado depois.</p>
-        </div>
-      </section>
-
-      <!-- MOVIMENTAÇÕES -->
-      <section id="movimentacoes" class="section">
-        <div class="section-title">Movimentações</div>
-        <div class="section-subtitle">Entradas e saídas.</div>
-
-        <div class="card">
-          <p>Módulo será conectado depois.</p>
-        </div>
-      </section>
-
-      <!-- RELATÓRIOS -->
-      <section id="relatorios" class="section">
-        <div class="section-title">Relatórios</div>
-        <div class="section-subtitle">Exportações e análises.</div>
-
-        <div class="card">
-          <p>Relatórios serão conectados depois.</p>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <script>
-    // Troca de seções
-    const menuLinks = document.querySelectorAll(".menu-link");
-    const sections = document.querySelectorAll(".section");
-    const tituloPagina = document.getElementById("titulo-pagina");
-    const descricaoPagina = document.getElementById("descricao-pagina");
-
-    const descricoes = {
-      inicio: "Resumo geral do sistema.",
-      empresas: "Cadastro e consulta de empresas.",
-      produtos: "Cadastro de produtos.",
-      estoque: "Controle dos níveis de estoque.",
-      movimentacoes: "Entradas e saídas de estoque.",
-      relatorios: "Relatórios do sistema."
-    };
-
-    menuLinks.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        menuLinks.forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-
-        const alvo = btn.getAttribute("data-section");
-
-        sections.forEach(sec => {
-          sec.classList.toggle("active", sec.id === alvo);
-        });
-
-        tituloPagina.textContent = btn.textContent;
-        descricaoPagina.textContent = descricoes[alvo] || "";
-      });
-    });
-  </script>
-
-  <!-- Importação dos módulos -->
-  <script type="module" src="supabase.js"></script>
-  <script type="module" src="empresas.js"></script>
-  <script type="module" src="produtos.js"></script>
-  <script type="module" src="estoque.js"></script>
-  <script type="module" src="movimentacoes.js"></script>
-
-</body>
-</html>
+  </style
