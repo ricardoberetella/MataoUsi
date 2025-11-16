@@ -1,153 +1,45 @@
 import { supabase } from "./supabase.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-  carregarProdutosNoSelect();
-  carregarMovimentacoes();
+  carregarProdutosMov();
+  document.getElementById("btnSalvarMov").addEventListener("click", salvarMovimentacao);
 });
 
-/* CARREGAR LISTA DE PRODUTOS NO SELECT */
-async function carregarProdutosNoSelect() {
+async function carregarProdutosMov() {
   const select = document.getElementById("mov-produto");
-  
-  const { data: produtos, error } = await supabase
-    .from("produtos")
-    .select("*")
-    .order("nome", { ascending: true });
 
-  if (error) {
-    alert("Erro ao carregar produtos.");
-    return;
-  }
+  const { data } = await supabase.from("produtos").select("*").order("nome", { ascending: true });
 
-  select.innerHTML = "<option value=''>Selecione...</option>";
+  select.innerHTML = "";
 
-  produtos.forEach(p => {
-    select.innerHTML += `
-      <option value="${p.id}">
-        ${p.sku} - ${p.nome}
-      </option>
-    `;
+  data.forEach(p => {
+    select.innerHTML += `<option value="${p.id}">${p.sku} - ${p.nome}</option>`;
   });
 }
 
-/* BOTÃO SALVAR MOVIMENTAÇÃO */
-document.addEventListener("click", async (e) => {
-  if (!e.target.matches("#btn-salvar-mov")) return;
+async function salvarMovimentacao() {
+  const mov = {
+    produto_id: document.getElementById("mov-produto").value,
+    tipo: document.getElementById("mov-tipo").value,
+    quantidade: Number(document.getElementById("mov-qtd").value),
+    motivo: document.getElementById("mov-motivo").value,
+    referencia_id: document.getElementById("mov-ref").value,
+  };
 
-  const produto_id = document.getElementById("mov-produto").value;
-  const tipo = document.getElementById("mov-tipo").value;
-  const quantidade = Number(document.getElementById("mov-quantidade").value);
-  const motivo = document.getElementById("mov-motivo").value;
-  const referencia = document.getElementById("mov-ref").value;
-
-  if (!produto_id || !quantidade) {
-    alert("Selecione o produto e informe uma quantidade.");
-    return;
-  }
-
-  // BUSCAR ESTOQUE ATUAL
-  const { data: estoque, error: estoqueError } = await supabase
-    .from("estoque")
-    .select("*")
-    .eq("produto_id", produto_id)
-    .single();
-
-  let novaQtde = 0;
-
-  if (tipo === "entrada") {
-    novaQtde = (estoque?.quantidade || 0) + quantidade;
-  } else if (tipo === "saida") {
-    novaQtde = (estoque?.quantidade || 0) - quantidade;
-
-    if (novaQtde < 0) {
-      alert("Erro: não há estoque suficiente para esta saída!");
-      return;
-    }
-  }
-
-  // ATUALIZAR OU INSERIR ESTOQUE
-  if (estoque) {
-    await supabase
-      .from("estoque")
-      .update({
-        quantidade: novaQtde,
-        ultima_atualizacao: new Date().toISOString()
-      })
-      .eq("produto_id", produto_id);
-  } else {
-    await supabase
-      .from("estoque")
-      .insert([
-        {
-          produto_id,
-          quantidade: novaQtde,
-          local: "Almoxarifado",
-          ultima_atualizacao: new Date().toISOString()
-        }
-      ]);
-  }
-
-  // REGISTRAR MOVIMENTAÇÃO
-  const { error: movError } = await supabase
-    .from("movimentacoes")
-    .insert([
-      {
-        produto_id,
-        tipo,
-        quantidade,
-        motivo,
-        referencia_id: referencia || null,
-        usuario_id: null
-      }
-    ]);
-
-  if (movError) {
-    alert("Erro ao registrar movimentação: " + movError.message);
-  } else {
-    alert("Movimentação registrada com sucesso!");
-  }
-
-  carregarMovimentacoes();
-}
-
-/* CARREGAR HISTÓRICO DE MOVIMENTAÇÕES */
-async function carregarMovimentacoes() {
-  const tabela = document.querySelector("#movimentacoes tbody");
-  tabela.innerHTML = "<tr><td colspan='6'>Carregando...</td></tr>";
-
-  const { data: movs, error } = await supabase
-    .from("movimentacoes")
-    .select(`
-      id,
-      tipo,
-      quantidade,
-      motivo,
-      referencia_id,
-      criado_em,
-      produtos (
-        nome,
-        sku
-      )
-    `)
-    .order("id", { ascending: false });
+  const { error } = await supabase.from("movimentacoes").insert([mov]);
 
   if (error) {
-    tabela.innerHTML = "<tr><td colspan='6'>Erro ao carregar dados.</td></tr>";
+    alert("Erro ao salvar movimentação!");
     return;
   }
 
-  tabela.innerHTML = "";
+  // atualizar estoque automaticamente
+  const operador = mov.tipo === "entrada" ? +1 : -1;
 
-  movs.forEach(m => {
-    tabela.innerHTML += `
-      <tr>
-        <td>${new Date(m.criado_em).toLocaleString()}</td>
-        <td>${m.produtos?.nome || "Produto apagado"}</td>
-        <td>${m.tipo.toUpperCase()}</td>
-        <td>${m.quantidade}</td>
-        <td>${m.motivo || "-"}</td>
-        <td>${m.referencia_id || "-"}</td>
-      </tr>
-    `;
+  await supabase.rpc("atualizar_estoque", {
+    p_produto: mov.produto_id,
+    p_qtd: mov.quantidade * operador
   });
+
+  alert("Movimentação salva!");
 }
