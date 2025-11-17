@@ -4,24 +4,22 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // -----------------------------------------------------------------------------
-// PROTEÇÃO — VERSÃO DEFINITIVA (sem loop, sem piscar!)
+// PROTEÇÃO — versão estável (SEM LOOP, SEM PISCAR)
 // -----------------------------------------------------------------------------
 async function protegerPagina() {
-  const session = (await supabase.auth.getSession())?.data?.session;
+  const { data } = await supabase.auth.getSession();
 
-  // Só redireciona se 100% confirmado que NÃO tem sessão
-  if (!session) {
-    console.log("🛑 Sem sessão → voltando para login");
-    setTimeout(() => {
-      window.location.replace("index.html");
-    }, 500); // Espera meio segundo para evitar loop
-  } else {
-    console.log("✅ Sessão encontrada → acesso liberado");
+  // SE NÃO TIVER SESSÃO → MANDA PARA LOGIN APENAS UMA VEZ
+  if (!data || !data.session) {
+    console.log("Sem sessão → indo para login");
+    window.location.replace("index.html");
+    return;
   }
+
+  console.log("Sessão OK → painel liberado");
 }
 
-// Só executa depois da página estar totalmente carregada
-window.onload = protegerPagina;
+protegerPagina();
 
 // -----------------------------------------------------------------------------
 // MÓDULOS
