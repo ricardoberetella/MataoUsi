@@ -4,33 +4,56 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // -----------------------------------------------------------------------------
-// PROTEÇÃO — MODO DEBUG (SEM REDIRECIONAMENTO)
+// PROTEÇÃO — MODO PRODUÇÃO (SESSÃO OBRIGATÓRIA)
 // -----------------------------------------------------------------------------
 async function protegerPagina() {
   const { data, error } = await supabase.auth.getSession();
 
-  console.log("Sessão atual:", data);
-
-  // 🔥 NÃO REDIRECIONA — só exibe no console
+  // SE NÃO ESTIVER LOGADO → VAI PARA LOGIN
   if (!data || !data.session) {
-    console.warn("⚠ Nenhuma sessão encontrada! (mas não redirecionando)");
+    console.warn("Nenhuma sessão → voltando para login");
+    window.location.replace("index.html");
     return;
   }
 
-  console.log("Sessão OK → painel liberado");
+  console.log("Sessão válida → painel liberado");
 }
 
 protegerPagina();
 
 // -----------------------------------------------------------------------------
-// MÓDULOS
+// CARREGAR MÓDULOS
 // -----------------------------------------------------------------------------
 window.carregarModulo = async modulo => {
   const conteudo = document.getElementById("conteudo");
 
-  if (modulo === "pecas") {
-    const html = await fetch("pecas.html").then(r => r.text());
-    conteudo.innerHTML = html;
+  switch (modulo) {
+    case "pecas":
+      conteudo.innerHTML = await fetch("pecas.html").then(r => r.text());
+      break;
+
+    case "empresas":
+      conteudo.innerHTML = await fetch("empresas.html").then(r => r.text());
+      break;
+
+    case "produtos":
+      conteudo.innerHTML = await fetch("produtos.html").then(r => r.text());
+      break;
+
+    case "estoque":
+      conteudo.innerHTML = await fetch("estoque.html").then(r => r.text());
+      break;
+
+    case "mov":
+      conteudo.innerHTML = await fetch("movimentacoes.html").then(r => r.text());
+      break;
+
+    case "rel":
+      conteudo.innerHTML = await fetch("relatorios.html").then(r => r.text());
+      break;
+
+    default:
+      conteudo.innerHTML = "<h2>Módulo não encontrado</h2>";
   }
 };
 
