@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - MataoUsi</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f4f4f4;
+        }
+        header {
+            background: #0f172a;
+            color: #fff;
+            padding: 15px;
+            text-align: center;
+        }
+        .menu {
+            background: #1e293b;
+            width: 220px;
+            height: 100vh;
+            float: left;
+            color: white;
+            padding-top: 20px;
+        }
+        .menu a {
+            display: block;
+            padding: 14px;
+            color: white;
+            text-decoration: none;
+        }
+        .menu a:hover {
+            background: #334155;
+        }
+        .conteudo {
+            margin-left: 220px;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Dashboard - MataoUsi</h1>
+</header>
+
+<div class="menu">
+    <a href="painel.html">Painel</a>
+    <a href="pecas.html">Peças</a>
+    <a href="#">Empresas</a>
+    <a href="#">Produtos</a>
+    <a href="#">Estoque</a>
+    <a href="#">Movimentações</a>
+    <a href="#">Relatórios</a>
+    <a href="index.html" onclick="logout()">Sair</a>
+</div>
+
+<div class="conteudo">
+    <h2>Bem-vindo ao Sistema</h2>
+    <p>Escolha uma opção no menu ao lado.</p>
+</div>
+
+<script type="module" src="./js/dashboard.js"></script>
+
+</body>
+</html>
