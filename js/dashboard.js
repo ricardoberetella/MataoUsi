@@ -13,3 +13,25 @@ async function protegerPagina() {
 }
 
 protegerPagina();
+
+// ----------------------------------------------------------------------------------
+// CARREGAR MÓDULOS
+// ----------------------------------------------------------------------------------
+
+window.carregarModulo = async function (modulo) {
+  const conteudo = document.getElementById("conteudo");
+
+  if (modulo === "pecas") {
+    const html = await fetch("pecas.html").then(r => r.text());
+    conteudo.innerHTML = html;
+  }
+};
+
+// ----------------------------------------------------------------------------------
+// LOGOUT
+// ----------------------------------------------------------------------------------
+
+window.logout = async function () {
+  await supabase.auth.signOut();
+  window.location.href = "index.html";
+};
