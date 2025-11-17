@@ -2,10 +2,82 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; URL=painel.html">
-  <title>MataoUsi - Carregando</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MataoUsi - Login</title>
+  <style>
+    body {
+      background: #0f172a;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .box {
+      background: #1e293b;
+      padding: 30px;
+      border-radius: 10px;
+      width: 320px;
+      text-align: center;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 5px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      background: #38bdf8;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0ea5e9;
+    }
+  </style>
 </head>
 <body>
-  Redirecionando...
+
+  <div class="box">
+    <h2>MataoUsi</h2>
+    <p>Faça login para continuar</p>
+
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="senha" placeholder="Senha">
+
+    <button onclick="login()">Entrar</button>
+  </div>
+
+  <script type="module">
+    import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    window.login = async function () {
+      const email = document.getElementById("email").value;
+      const senha = document.getElementById("senha").value;
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password: senha
+      });
+
+      if (error) {
+        alert("Erro: " + error.message);
+      } else {
+        window.location.href = "painel.html";
+      }
+    };
+  </script>
+
 </body>
 </html>
