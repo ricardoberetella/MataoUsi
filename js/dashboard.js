@@ -1,5 +1,7 @@
-import { carregarFormularioPecas } from "./pecas.js";
-import { supabase } from "./config.js";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Proteger acesso
 async function protegerPagina() {
