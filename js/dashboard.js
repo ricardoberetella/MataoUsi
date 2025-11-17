@@ -1,23 +1,26 @@
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
+// Criar cliente supabase
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Proteção da página
+// -----------------------------------------------------------------------------
+// PROTEÇÃO DO PAINEL (impede acesso sem login)
+// -----------------------------------------------------------------------------
 async function protegerPagina() {
-  const { data } = await supabase.auth.getSession();
+  const { data, error } = await supabase.auth.getSession();
 
-  if (!data.session) {
+  // Se não estiver logado → manda para login
+  if (!data || !data.session) {
     window.location.href = "index.html";
   }
 }
 
 protegerPagina();
 
-// ----------------------------------------------------------------------------------
-// CARREGAR MÓDULOS
-// ----------------------------------------------------------------------------------
-
+// -----------------------------------------------------------------------------
+// CARREGAR MÓDULOS DINAMICAMENTE
+// -----------------------------------------------------------------------------
 window.carregarModulo = async function (modulo) {
   const conteudo = document.getElementById("conteudo");
 
@@ -27,10 +30,9 @@ window.carregarModulo = async function (modulo) {
   }
 };
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // LOGOUT
-// ----------------------------------------------------------------------------------
-
+// -----------------------------------------------------------------------------
 window.logout = async function () {
   await supabase.auth.signOut();
   window.location.href = "index.html";
