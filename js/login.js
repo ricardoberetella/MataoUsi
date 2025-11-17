@@ -6,17 +6,25 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 document.getElementById("btnLogin").addEventListener("click", async () => {
   const email = document.getElementById("email").value;
   const senha = document.getElementById("senha").value;
+  const erroBox = document.getElementById("erro");
+
+  if (!email || !senha) {
+    erroBox.innerText = "Preencha todos os campos!";
+    erroBox.style.display = "block";
+    return;
+  }
 
   const { data, error } = await supabase.auth.signInWithPassword({
-    email: email,
+    email,
     password: senha
   });
 
   if (error) {
-    alert("Erro no login: " + error.message);
+    erroBox.innerText = "Usuário ou senha incorretos!";
+    erroBox.style.display = "block";
     return;
   }
 
-  // LOGIN OK → vai para o painel
+  // Login OK → painel
   window.location.href = "painel.html";
 });
