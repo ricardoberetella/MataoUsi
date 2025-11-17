@@ -4,15 +4,16 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // -----------------------------------------------------------------------------
-// PROTEÇÃO — versão estável (SEM LOOP, SEM PISCAR)
+// PROTEÇÃO — MODO DEBUG (SEM REDIRECIONAMENTO)
 // -----------------------------------------------------------------------------
 async function protegerPagina() {
-  const { data } = await supabase.auth.getSession();
+  const { data, error } = await supabase.auth.getSession();
 
-  // SE NÃO TIVER SESSÃO → MANDA PARA LOGIN APENAS UMA VEZ
+  console.log("Sessão atual:", data);
+
+  // 🔥 NÃO REDIRECIONA — só exibe no console
   if (!data || !data.session) {
-    console.log("Sem sessão → indo para login");
-    window.location.replace("index.html");
+    console.warn("⚠ Nenhuma sessão encontrada! (mas não redirecionando)");
     return;
   }
 
