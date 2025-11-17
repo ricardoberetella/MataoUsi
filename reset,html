@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redefinir Senha</title>
+
+  <style>
+    body {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+    .box {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 40px;
+      border-radius: 12px;
+      width: 340px;
+      backdrop-filter: blur(10px);
+    }
+    input, button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      margin-bottom: 15px;
+    }
+    button {
+      background: #38bdf8;
+      color: #0f172a;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="box">
+    <h2>Redefinir Senha</h2>
+
+    <input type="password" id="senha" placeholder="Nova senha">
+    <button onclick="resetar()">Salvar nova senha</button>
+  </div>
+
+  <script type="module">
+    import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function resetar() {
+      const novaSenha = document.getElementById("senha").value;
+
+      const { data, error } = await supabase.auth.updateUser({
+        password: novaSenha
+      });
+
+      if (error) {
+        alert("Erro: " + error.message);
+        return;
+      }
+
+      alert("Senha redefinida com sucesso!");
+      window.location.href = "index.html";
+    }
+
+    window.resetar = resetar;
+  </script>
+
+</body>
+</html>
