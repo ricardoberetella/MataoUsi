@@ -1,22 +1,23 @@
-<script type="module">
-    import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - MataoUsi</title>
+</head>
+<body>
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  <h2>Login no Sistema</h2>
 
-    window.login = async function () {
-      const email = document.getElementById("email").value;
-      const senha = document.getElementById("senha").value;
+  <input id="email" type="email" placeholder="Seu e-mail">
+  <br><br>
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password: senha
-      });
+  <input id="senha" type="password" placeholder="Sua senha">
+  <br><br>
 
-      if (error) {
-        alert("Erro: " + error.message);
-      } else {
-        window.location.href = "painel.html";
-      }
-    };
-</script>
+  <button id="btnLogin">Entrar</button>
+
+  <script type="module" src="login.js"></script>
+
+</body>
+</html>
