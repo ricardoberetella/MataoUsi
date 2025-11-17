@@ -90,8 +90,22 @@
       display: none;
     }
 
+    a {
+      color: #38bdf8;
+      text-decoration: none;
+      text-align: center;
+      margin-top: 12px;
+      display: block;
+      font-size: 14px;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
   </style>
 </head>
+
 <body>
 
   <div class="login-container">
@@ -106,6 +120,9 @@
     <input type="password" id="senha" placeholder="Digite sua senha">
 
     <button id="btnLogin">Entrar</button>
+
+    <!-- 🔥 Link de recuperar senha -->
+    <a href="recover.html">Esqueci minha senha</a>
   </div>
 
   <script type="module" src="login.js"></script>
