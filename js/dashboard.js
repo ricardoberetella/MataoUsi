@@ -3,7 +3,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Proteger acesso
+// Proteção da página
 async function protegerPagina() {
   const { data } = await supabase.auth.getSession();
   if (!data.session) {
@@ -13,15 +13,12 @@ async function protegerPagina() {
 protegerPagina();
 
 window.carregarModulo = function (modulo) {
-  const conteudo = document.getElementById("conteudo");
-
   switch (modulo) {
     case "pecas":
       carregarFormularioPecas();
       break;
-
     default:
-      conteudo.innerHTML = "<h1>MataoUsi</h1>";
+      document.getElementById("conteudo").innerHTML = "<h1>Painel MataoUsi</h1>";
   }
 };
 
