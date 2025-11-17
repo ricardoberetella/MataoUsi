@@ -14,7 +14,6 @@ document.getElementById("btnRecuperar").addEventListener("click", async () => {
     return;
   }
 
-  // Envia email de recuperação
   const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: "https://matao-usi.vercel.app/reset.html"
   });
@@ -27,6 +26,6 @@ document.getElementById("btnRecuperar").addEventListener("click", async () => {
   }
 
   msgBox.className = "msg success";
-  msgBox.innerText = "Enviamos o link! Verifique seu e-mail.";
+  msgBox.innerText = "Enviamos um link de recuperação para o seu e-mail.";
   msgBox.style.display = "block";
 });
