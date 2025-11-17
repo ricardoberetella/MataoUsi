@@ -1,25 +1,26 @@
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-// Criar cliente supabase
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // -----------------------------------------------------------------------------
-// PROTEÇÃO DO PAINEL (impede acesso sem login)
+// PROTEÇÃO DO PAINEL (versão segura, sem loop!)
 // -----------------------------------------------------------------------------
 async function protegerPagina() {
-  const { data, error } = await supabase.auth.getSession();
+  const { data } = await supabase.auth.getSession();
 
-  // Se não estiver logado → manda para login
-  if (!data || !data.session) {
-    window.location.href = "index.html";
+  // 👉 Só redireciona se o Supabase REALMENTE confirmou a ausência da sessão
+  if (data?.session === null) {
+    window.location.replace("index.html"); // replace evita “voltar”
   }
 }
 
-protegerPagina();
+// NÃO chama protegerPagina imediatamente.
+// Espera o navegador carregar tudo primeiro.
+window.addEventListener("DOMContentLoaded", protegerPagina);
 
 // -----------------------------------------------------------------------------
-// CARREGAR MÓDULOS DINAMICAMENTE
+// CARREGAR MÓDULOS
 // -----------------------------------------------------------------------------
 window.carregarModulo = async function (modulo) {
   const conteudo = document.getElementById("conteudo");
@@ -35,5 +36,5 @@ window.carregarModulo = async function (modulo) {
 // -----------------------------------------------------------------------------
 window.logout = async function () {
   await supabase.auth.signOut();
-  window.location.href = "index.html";
+  window.location.replace("index.html");
 };
