@@ -1,0 +1,124 @@
+/* ================================
+   LAYOUT GERAL
+=================================*/
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: #f1f5f9;
+    display: flex;
+    height: 100vh;
+}
+
+/* ================================
+   MENU LATERAL
+=================================*/
+.menu {
+    width: 240px;
+    background: #0f172a;
+    color: white;
+    padding-top: 30px;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+}
+
+.menu h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #38bdf8;
+}
+
+.menu a {
+    display: block;
+    padding: 14px 20px;
+    text-decoration: none;
+    color: #e2e8f0;
+    font-size: 16px;
+    transition: 0.3s;
+}
+
+.menu a:hover {
+    background: #1e293b;
+    border-left: 4px solid #38bdf8;
+    padding-left: 16px;
+}
+
+/* ================================
+   HEADER DO CONTEÚDO
+=================================*/
+header {
+    background: #1e293b;
+    color: white;
+    width: 100%;
+    padding: 20px;
+    text-align: center;
+    margin-left: 240px;
+    box-sizing: border-box;
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+header h1 {
+    margin: 0;
+}
+
+/* ================================
+   ÁREA DE CONTEÚDO
+=================================*/
+.conteudo {
+    margin-left: 240px;
+    margin-top: 100px;
+    padding: 30px;
+}
+
+/* ================================
+   CARDS DO DASHBOARD
+=================================*/
+.cards {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    width: 230px;
+    padding: 20px;
+    text-align: center;
+    transition: 0.3s;
+}
+
+.card:hover {
+    transform: scale(1.03);
+}
+
+.card h3 {
+    margin-top: 0;
+    color: #0f172a;
+}
+
+.card p {
+    color: #475569;
+    font-size: 18px;
+    margin: 10px 0 0;
+}
+
+/* ================================
+   BOTÃO DE LOGOUT
+=================================*/
+.logout {
+    margin-top: 40px;
+    color: #f87171 !important;
+    font-weight: bold;
+}
+
+.logout:hover {
+    background: #7f1d1d;
+    border-left-color: #fca5a5;
+}
