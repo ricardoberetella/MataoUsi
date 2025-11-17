@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Peças - MataoUsi</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 240px;
+            background-color: #0f172a;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding-top: 20px;
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            color: #38bdf8;
+        }
+
+        .menu {
+            margin-top: 30px;
+        }
+
+        .menu a {
+            display: block;
+            padding: 12px 20px;
+            text-decoration: none;
+            color: white;
+            font-size: 16px;
+        }
+
+        .menu a:hover {
+            background-color: #1e293b;
+        }
+
+        .logout {
+            margin-top: auto;
+            background-color: #b91c1c;
+            text-align: center;
+            padding: 15px;
+        }
+
+        .logout a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        /* CONTEÚDO */
+        .content {
+            flex: 1;
+            padding: 30px;
+        }
+
+        h1 {
+            color: #0f172a;
+        }
+
+        .form-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 600px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0 15px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        button {
+            background-color: #0f172a;
+            color: white;
+            padding: 12px;
+            border: none;
+            width: 100%;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #1e293b;
+        }
+
+        table {
+            width: 100%;
+            background: white;
+            border-collapse: collapse;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #0f172a;
+            color: white;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .actions button {
+            margin-right: 5px;
+            padding: 6px 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <h2>MataoUsi</h2>
+
+        <div class="menu">
+            <a href="painel.html"><i class="fa fa-home"></i> Dashboard</a>
+            <a href="pecas.html"><i class="fa fa-cogs"></i> Cadastro de Peças</a>
+            <a href="#"><i class="fa fa-box"></i> Estoque</a>
+            <a href="#"><i class="fa fa-arrows-rotate"></i> Movimentações</a>
+            <a href="#"><i class="fa fa-chart-bar"></i> Relatórios</a>
+        </div>
+
+        <div class="logout">
+            <a href="index.html">Sair</a>
+        </div>
+    </div>
+
+    <!-- CONTEÚDO -->
+    <div class="content">
+        <h1>Cadastro de Peças</h1>
+
+        <!-- FORMULÁRIO -->
+        <div class="form-box">
+            <h3>Nova Peça</h3>
+
+            <label>SKU</label>
+            <input type="text" id="sku">
+
+            <label>Nome</label>
+            <input type="text" id="nome">
+
+            <label>Descrição</label>
+            <input type="text" id="descricao">
+
+            <label>Unidade</label>
+            <select id="unidade">
+                <option value="UN">UN - Unidade</option>
+                <option value="KG">KG - Quilo</option>
+                <option value="PC">PC - Peça</option>
+            </select>
+
+            <label>Preço de Custo</label>
+            <input type="number" id="preco_custo" step="0.01">
+
+            <label>Preço de Venda</label>
+            <input type="number" id="preco_venda" step="0.01">
+
+            <button onclick="salvarPeca()">Salvar Peça</button>
+        </div>
+
+        <!-- TABELA -->
+        <h3>Peças Cadastradas</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>SKU</th>
+                    <th>Nome</th>
+                    <th>Unidade</th>
+                    <th>Preço Venda</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="tabelaPecas">
+            </tbody>
+        </table>
+
+    </div>
+
+    <!-- ARQUIVO JS -->
+    <script type="module" src="js/pecas.js"></script>
+
+</body>
+</html>
