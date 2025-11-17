@@ -4,23 +4,40 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Carregando...</title>
+
   <style>
-    body {
-      font-family: Arial, sans-serif;
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #0f172a; /* cor do painel */
       display: flex;
-      align-items: center;
       justify-content: center;
-      height: 100vh;
-      background: #f1f5f9;
+      align-items: center;
+    }
+
+    .loader {
+      color: #38bdf8;
+      font-size: 22px;
+      font-family: Arial, sans-serif;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0% { opacity: .2; }
+      50% { opacity: 1; }
+      100% { opacity: .2; }
     }
   </style>
 </head>
+
 <body>
-  <h2>Carregando...</h2>
+  <div class="loader">Carregando...</div>
 
   <script>
-    // redireciona de forma correta, sem piscar
-    window.location.href = "painel.html";
+    // redirecionamento rápido e suave
+    window.location.replace("painel.html");
   </script>
 </body>
 </html>
