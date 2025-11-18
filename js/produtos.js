@@ -46,7 +46,7 @@ async function carregarProdutos() {
   const { data, error } = await supabase
     .from("produtos")
     .select("*")
-    .order("sku", { ascending: true });
+    .order("codigo", { ascending: true });
 
   if (error) {
     console.error("Erro ao carregar produtos:", error);
@@ -75,7 +75,7 @@ function renderizarTabela(produtos) {
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
-      <td>${p.sku || ""}</td>
+      <td>${p.codigo || ""}</td>
       <td>${p.descricao || ""}</td>
       <td>${p.unidade || ""}</td>
       <td>${formatDecimalBR(p.comprimento_mm, 2)}</td>
@@ -90,17 +90,14 @@ function renderizarTabela(produtos) {
       </td>
     `;
 
-    const btnEditar = tr.querySelector(".btn-editar");
-    const btnExcluir = tr.querySelector(".btn-excluir");
-
-    btnEditar.addEventListener("click", () => abrirModalEdicao(p.id));
-    btnExcluir.addEventListener("click", () => excluirProduto(p.id));
+    tr.querySelector(".btn-editar").addEventListener("click", () => abrirModalEdicao(p.id));
+    tr.querySelector(".btn-excluir").addEventListener("click", () => excluirProduto(p.id));
 
     tbody.appendChild(tr);
   });
 }
 
-// Filtrar por código (sku)
+// Filtrar por código
 function filtrarProdutosPorCodigo(texto) {
   const termo = texto.trim().toLowerCase();
   if (termo === "") {
@@ -109,7 +106,7 @@ function filtrarProdutosPorCodigo(texto) {
   }
 
   const filtrados = listaProdutos.filter((p) =>
-    (p.sku || "").toLowerCase().includes(termo)
+    (p.codigo || "").toLowerCase().includes(termo)
   );
 
   renderizarTabela(filtrados);
@@ -122,26 +119,26 @@ async function onSubmitNovoProduto(event) {
   const form = event.target;
   const msg = document.getElementById("mensagemForm");
 
-  const sku = form.codigo.value.trim();
+  const codigo = form.codigo.value.trim();
   const descricao = form.descricao.value.trim();
   const unidade = form.unidade.value.trim();
-  const comprimento = parseDecimalBR(form.comprimento.value);
+  const comprimento_mm = parseDecimalBR(form.comprimento.value);
   const acabamento = form.acabamento.value.trim();
   const peso_liquido = parseDecimalBR(form.peso_liquido.value);
   const peso_bruto = parseDecimalBR(form.peso_bruto.value);
   const preco_custo = parseDecimalBR(form.preco_custo.value);
   const preco_venda = parseDecimalBR(form.preco_venda.value);
 
-  if (!sku || !descricao) {
+  if (!codigo || !descricao) {
     mostrarMensagem(msg, "Código e descrição são obrigatórios.", "erro");
     return;
   }
 
   const novoProduto = {
-    sku,
+    codigo,
     descricao,
     unidade,
-    comprimento_mm: comprimento,
+    comprimento_mm,
     acabamento,
     peso_liquido,
     peso_bruto,
@@ -173,7 +170,7 @@ async function onSubmitNovoProduto(event) {
   setTimeout(() => mostrarMensagem(msg, "", "erro"), 2000);
 }
 
-// Abrir modal com dados do produto
+// Abrir modal com dados
 function abrirModalEdicao(id) {
   const produto = listaProdutos.find((p) => p.id === id);
   if (!produto) return;
@@ -181,7 +178,7 @@ function abrirModalEdicao(id) {
   produtoEditandoId = id;
 
   document.getElementById("edit_id").value = produto.id;
-  document.getElementById("edit_codigo").value = produto.sku || "";
+  document.getElementById("edit_codigo").value = produto.codigo || "";
   document.getElementById("edit_descricao").value = produto.descricao || "";
   document.getElementById("edit_unidade").value = produto.unidade || "";
   document.getElementById("edit_comprimento").value = formatDecimalBR(produto.comprimento_mm, 2);
@@ -194,14 +191,13 @@ function abrirModalEdicao(id) {
   document.getElementById("modalEditar").classList.remove("hidden");
 }
 
-// Fechar modal
 function fecharModalEdicao() {
   document.getElementById("modalEditar").classList.add("hidden");
   produtoEditandoId = null;
   mostrarMensagem(document.getElementById("mensagemEditar"), "", "erro");
 }
 
-// Salvar alterações
+// Salvar edição
 async function onSubmitEditarProduto(event) {
   event.preventDefault();
 
@@ -210,26 +206,26 @@ async function onSubmitEditarProduto(event) {
   const msg = document.getElementById("mensagemEditar");
 
   const id = document.getElementById("edit_id").value;
-  const sku = document.getElementById("edit_codigo").value.trim();
+  const codigo = document.getElementById("edit_codigo").value.trim();
   const descricao = document.getElementById("edit_descricao").value.trim();
   const unidade = document.getElementById("edit_unidade").value.trim();
-  const comprimento = parseDecimalBR(document.getElementById("edit_comprimento").value);
+  const comprimento_mm = parseDecimalBR(document.getElementById("edit_comprimento").value);
   const acabamento = document.getElementById("edit_acabamento").value.trim();
   const peso_liquido = parseDecimalBR(document.getElementById("edit_peso_liquido").value);
   const peso_bruto = parseDecimalBR(document.getElementById("edit_peso_bruto").value);
   const preco_custo = parseDecimalBR(document.getElementById("edit_preco_custo").value);
   const preco_venda = parseDecimalBR(document.getElementById("edit_preco_venda").value);
 
-  if (!sku || !descricao) {
+  if (!codigo || !descricao) {
     mostrarMensagem(msg, "Código e descrição são obrigatórios.", "erro");
     return;
   }
 
   const dadosAtualizados = {
-    sku,
+    codigo,
     descricao,
     unidade,
-    comprimento_mm: comprimento,
+    comprimento_mm,
     acabamento,
     peso_liquido,
     peso_bruto,
@@ -251,7 +247,7 @@ async function onSubmitEditarProduto(event) {
 
   mostrarMensagem(msg, "Produto atualizado com sucesso!", "sucesso");
 
-  // Atualiza na lista local
+  // Atualiza localmente
   const idx = listaProdutos.findIndex((p) => p.id === id || p.id === Number(id));
   if (idx !== -1) {
     listaProdutos[idx] = { ...listaProdutos[idx], ...dadosAtualizados };
@@ -317,9 +313,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (modal) {
     modal.addEventListener("click", (e) => {
-      if (e.target === modal) {
-        fecharModalEdicao();
-      }
+      if (e.target === modal) fecharModalEdicao();
     });
   }
 
