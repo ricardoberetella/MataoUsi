@@ -1,24 +1,33 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
+// Inicializa o Supabase
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 window.addEventListener("DOMContentLoaded", () => {
-    const btn = document.getElementById("btnLogin");
+  const btn = document.getElementById("btnLogin");
 
-    btn.addEventListener("click", async () => {
-        const email = document.getElementById("email").value;
-        const senha = document.getElementById("senha").value;
+  btn.addEventListener("click", async () => {
+    const email = document.getElementById("email").value.trim();
+    const senha = document.getElementById("senha").value.trim();
 
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password: senha
-        });
+    if (!email || !senha) {
+      alert("Preencha e-mail e senha!");
+      return;
+    }
 
-        if (error) {
-            alert("Erro: " + error.message);
-        } else {
-            window.location.href = "dashboard.html";
-        }
+    // Login com Supabase
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: senha
     });
+
+    if (error) {
+      alert("Erro ao fazer login: " + error.message);
+      return;
+    }
+
+    // Sucesso → redirecionar para o painel (NOME REAL É painel.html)
+    window.location.href = "painel.html";
+  });
 });
