@@ -15,7 +15,7 @@ document.getElementById("formProduto").addEventListener("submit", async (e) => {
     const acabamento = document.getElementById("acabamento").value.trim();
     const comprimento = parseFloat(document.getElementById("comprimento").value);
 
-    const { data, error } = await supabase.from("produtos").insert([
+    const { error } = await supabase.from("produtos").insert([
         {
             codigo,
             descricao,
