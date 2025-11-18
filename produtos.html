@@ -3,108 +3,495 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Produtos - MataoUsi</title>
-
-  <script type="module" src="./js/produtos.js"></script>
+  <title>Cadastro de Produtos - MataoUsi</title>
 
   <style>
     body {
-      font-family: Arial;
-      margin: 0;
       background: #0f172a;
-      color: white;
-    }
-
-    header {
-      background: #1e293b;
-      padding: 15px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      color: #e5e7eb;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
     }
 
     .container {
-      padding: 20px;
+      max-width: 1100px;
+      margin: 30px auto;
+      background: #1e293b;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.6);
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      gap: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      color: #38bdf8;
+      font-size: 1.6rem;
+    }
+
+    .btn-voltar {
+      background: #0f172a;
+      color: #e5e7eb;
+      border: 1px solid #38bdf8;
+      padding: 8px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: 16px; /* puxa ~10mm pra dentro em relação à borda */
+    }
+
+    .btn-voltar:hover {
+      background: #020617;
+    }
+
+    .secao {
+      margin-bottom: 25px;
+    }
+
+    .secao-titulo {
+      font-size: 1rem;
+      margin-bottom: 10px;
+      color: #e5e7eb;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px 20px;
+    }
+
+    label {
+      font-size: 0.85rem;
+      color: #cbd5f5;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: #0f172a;
+      color: #e5e7eb;
+      font-size: 0.9rem;
+      box-sizing: border-box;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 1px #38bdf8;
+    }
+
+    .linha-unica {
+      grid-column: span 2;
+    }
+
+    .acoes-form {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 15px;
+      gap: 10px;
+    }
+
+    .btn-primario {
+      background: #22c55e;
+      color: #0f172a;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.95rem;
+    }
+
+    .btn-primario:hover {
+      background: #16a34a;
+    }
+
+    .busca-linha {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .busca-linha input {
+      max-width: 260px;
+    }
+
+    .busca-label {
+      font-size: 0.85rem;
+      color: #cbd5f5;
+    }
+
+    .tabela-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      border-radius: 10px;
+      border: 1px solid #334155;
+      background: #0b1220;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
+      font-size: 0.85rem;
     }
 
-    table th, table td {
-      border: 1px solid #334155;
-      padding: 10px;
+    thead {
+      background: #020617;
+    }
+
+    th, td {
+      padding: 8px 10px;
       text-align: left;
+      border-bottom: 1px solid #1f2937;
+      white-space: nowrap;
     }
 
-    table th {
-      background: #1e293b;
+    th {
+      color: #e5e7eb;
+      font-weight: 600;
     }
 
-    input {
-      padding: 8px;
+    tbody tr:nth-child(even) {
+      background: #020617;
+    }
+
+    tbody tr:hover {
+      background: #1f2937;
+    }
+
+    .col-acoes {
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    .btn-acao {
       border: none;
-      border-radius: 6px;
-      width: 250px;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      margin: 0 2px;
     }
 
-    button {
-      padding: 10px 15px;
-      border: none;
-      border-radius: 6px;
+    .btn-editar {
       background: #38bdf8;
-      font-weight: bold;
+      color: #020617;
+    }
+
+    .btn-excluir {
+      background: #f97373;
+      color: #111827;
+    }
+
+    .msg-erro {
+      color: #fca5a5;
+      font-size: 0.8rem;
+      margin-top: 5px;
+    }
+
+    .msg-sucesso {
+      color: #4ade80;
+      font-size: 0.8rem;
+      margin-top: 5px;
+    }
+
+    /* Modal de edição */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+
+    .modal-conteudo {
+      background: #111827;
+      padding: 20px;
+      border-radius: 12px;
+      width: 95%;
+      max-width: 600px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.8);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .modal-header h2 {
+      font-size: 1.1rem;
+      color: #38bdf8;
+      margin: 0;
+    }
+
+    .btn-fechar {
+      background: none;
+      border: none;
+      color: #e5e7eb;
+      font-size: 1.2rem;
       cursor: pointer;
     }
 
-    button:hover {
-      background: #0ea5e9;
+    .modal-acoes {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 15px;
     }
 
-    .btn-red {
-      background: #ef4444;
+    .btn-secundario {
+      background: #374151;
+      color: #e5e7eb;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 0.9rem;
     }
 
-    .btn-red:hover {
-      background: #dc2626;
+    .btn-secundario:hover {
+      background: #4b5563;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        margin: 10px;
+        padding: 15px;
+      }
+
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .linha-unica {
+        grid-column: span 1;
+      }
+
+      .busca-linha {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .tabela-wrapper {
+        font-size: 0.8rem;
+      }
+
+      .btn-voltar {
+        margin-left: 0;
+      }
     }
   </style>
 </head>
-
 <body>
+  <div class="container">
+    <header>
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <h1>Cadastro de Produtos</h1>
+        <span style="font-size:0.85rem; color:#9ca3af;">
+          Gerencie os produtos do MataoUsi: cadastre, edite e exclua.
+        </span>
+      </div>
 
-<header>
-  <h2>📦 Produtos</h2>
-  <button onclick="window.location.href='painel.html'">Voltar ao Painel</button>
-</header>
+      <button class="btn-voltar" onclick="window.location.href='dashboard.html'">
+        ← Voltar ao painel
+      </button>
+    </header>
 
-<div class="container">
+    <!-- Formulário de cadastro -->
+    <section class="secao">
+      <h2 class="secao-titulo">Novo produto</h2>
 
-  <button onclick="window.location.href='produtos_cadastrar.html'">+ Cadastrar Produto</button>
+      <form id="produtoForm">
+        <div class="form-grid">
+          <!-- Modelo A -->
+          <div>
+            <label for="codigo">Código</label>
+            <input type="text" id="codigo" name="codigo" required placeholder="Ex.: 0001">
+          </div>
 
-  <br><br>
+          <div>
+            <label for="descricao">Descrição</label>
+            <input type="text" id="descricao" name="descricao" required placeholder="Ex.: Parafuso M8 x 30">
+          </div>
 
-  <input type="text" id="buscar" placeholder="Buscar produto...">
+          <div>
+            <label for="unidade">Unidade</label>
+            <input type="text" id="unidade" name="unidade" placeholder="Ex.: PC, KG" maxlength="5">
+          </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Código</th>
-        <th>Descrição</th>
-        <th>Unidade</th>
-        <th>Peso</th>
-        <th>Venda</th>
-        <th>Acabamento</th>
-        <th>Comprimento</th>
-        <th>Ações</th>
-      </tr>
-    </thead>
-    <tbody id="lista-produtos"></tbody>
-  </table>
+          <div>
+            <label for="comprimento">Comprimento (mm)</label>
+            <input type="text" id="comprimento" name="comprimento" placeholder="Ex.: 30 ou 30,5">
+          </div>
 
-</div>
+          <div>
+            <label for="acabamento">Acabamento</label>
+            <input type="text" id="acabamento" name="acabamento" placeholder="Ex.: Zincado, Polido">
+          </div>
 
+          <div>
+            <label for="peso_liquido">Peso Líquido (kg)</label>
+            <input type="text" id="peso_liquido" name="peso_liquido" placeholder="Ex.: 0,058">
+          </div>
+
+          <div>
+            <label for="peso_bruto">Peso Bruto (kg)</label>
+            <input type="text" id="peso_bruto" name="peso_bruto" placeholder="Ex.: 0,065">
+          </div>
+
+          <div>
+            <label for="preco_custo">Preço de Custo (R$)</label>
+            <input type="text" id="preco_custo" name="preco_custo" placeholder="Ex.: 1,20">
+          </div>
+
+          <div class="linha-unica">
+            <label for="preco_venda">Preço de Venda (R$)</label>
+            <input type="text" id="preco_venda" name="preco_venda" placeholder="Ex.: 1,80">
+          </div>
+        </div>
+
+        <div id="mensagemForm" class="msg-erro" style="display:none;"></div>
+
+        <div class="acoes-form">
+          <button type="submit" class="btn-primario">Salvar produto</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Listagem -->
+    <section class="secao">
+      <h2 class="secao-titulo">Produtos cadastrados</h2>
+
+      <div class="busca-linha">
+        <span class="busca-label">
+          Buscar por <strong>código</strong>:
+        </span>
+        <input type="text" id="buscaCodigo" placeholder="Digite o código para filtrar">
+      </div>
+
+      <div class="tabela-wrapper">
+        <table id="tabelaProdutos">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Descrição</th>
+              <th>Unidade</th>
+              <th>Comprimento (mm)</th>
+              <th>Acabamento</th>
+              <th>Peso Líquido (kg)</th>
+              <th>Peso Bruto (kg)</th>
+              <th>Preço de Custo</th>
+              <th>Preço de Venda</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- linhas preenchidas via JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modal de edição -->
+  <div id="modalEditar" class="modal hidden">
+    <div class="modal-conteudo">
+      <div class="modal-header">
+        <h2>Editar produto</h2>
+        <button id="btnFecharModal" class="btn-fechar">&times;</button>
+      </div>
+
+      <form id="formEditar">
+        <input type="hidden" id="edit_id">
+
+        <div class="form-grid">
+          <div>
+            <label for="edit_codigo">Código</label>
+            <input type="text" id="edit_codigo" required>
+          </div>
+
+          <div>
+            <label for="edit_descricao">Descrição</label>
+            <input type="text" id="edit_descricao" required>
+          </div>
+
+          <div>
+            <label for="edit_unidade">Unidade</label>
+            <input type="text" id="edit_unidade">
+          </div>
+
+          <div>
+            <label for="edit_comprimento">Comprimento (mm)</label>
+            <input type="text" id="edit_comprimento">
+          </div>
+
+          <div>
+            <label for="edit_acabamento">Acabamento</label>
+            <input type="text" id="edit_acabamento">
+          </div>
+
+          <div>
+            <label for="edit_peso_liquido">Peso Líquido (kg)</label>
+            <input type="text" id="edit_peso_liquido">
+          </div>
+
+          <div>
+            <label for="edit_peso_bruto">Peso Bruto (kg)</label>
+            <input type="text" id="edit_peso_bruto">
+          </div>
+
+          <div>
+            <label for="edit_preco_custo">Preço de Custo (R$)</label>
+            <input type="text" id="edit_preco_custo">
+          </div>
+
+          <div class="linha-unica">
+            <label for="edit_preco_venda">Preço de Venda (R$)</label>
+            <input type="text" id="edit_preco_venda">
+          </div>
+        </div>
+
+        <div id="mensagemEditar" class="msg-erro" style="display:none;"></div>
+
+        <div class="modal-acoes">
+          <button type="button" class="btn-secundario" id="btnCancelarModal">Cancelar</button>
+          <button type="submit" class="btn-primario">Salvar alterações</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JS -->
+  <script type="module" src="js/produtos.js"></script>
 </body>
 </html>
