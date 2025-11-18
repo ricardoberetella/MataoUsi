@@ -1,11 +1,8 @@
-// Importando config.js corretamente
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-// Criar cliente Supabase
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Quando o documento carregar
 document.addEventListener("DOMContentLoaded", () => {
   const emailInput = document.getElementById("email");
   const btn = document.getElementById("btnRecuperar");
@@ -19,15 +16,14 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Enviar solicitação ao Supabase
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: "https://matao-usi.vercel.app/reset.html",
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: "https://matao-usi.vercel.app/reset.html"
     });
 
     if (error) {
       mostrarMensagem("Erro: " + error.message, "error");
     } else {
-      mostrarMensagem("E-mail de recuperação enviado! Verifique sua caixa de entrada.", "success");
+      mostrarMensagem("E-mail de recuperação enviado!", "success");
     }
   });
 
