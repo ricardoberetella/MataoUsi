@@ -11,47 +11,23 @@
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    window.addEventListener("DOMContentLoaded", async () => {
-
-      // 📌 1. CAPTURAR TOKEN DA URL
-      const hash = window.location.hash;
-      const params = new URLSearchParams(hash.replace("#", ""));
-      const access_token = params.get("access_token");
-
-      if (!access_token) {
-        alert("Token inválido. Abra o link enviado por e-mail.");
-        window.location.href = "recover.html";
-        return;
-      }
-
-      // 📌 2. LOGAR AUTOMATICAMENTE COM O TOKEN
-      const { data: session, error: sessionError } = await supabase.auth.setSession({
-        access_token: access_token,
-        refresh_token: params.get("refresh_token")
-      });
-
-      if (sessionError) {
-        alert("Erro ao validar sessão: " + sessionError.message);
-        return;
-      }
-
-      // 📌 3. FORM PARA ALTERAR SENHA
+    window.addEventListener("DOMContentLoaded", () => {
       const form = document.getElementById("resetForm");
 
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
 
-        const novaSenha = document.getElementById("senha").value;
+        const senha = document.getElementById("senha").value;
 
-        const { data, error } = await supabase.auth.updateUser({
-          password: novaSenha
+        const { error } = await supabase.auth.updateUser({
+          password: senha
         });
 
         if (error) {
           alert("Erro ao alterar senha: " + error.message);
         } else {
           alert("Senha alterada com sucesso!");
-          window.location.href = "index.html";
+          window.location.href = "/index.html";
         }
       });
     });
@@ -100,8 +76,9 @@
 <body>
   <div class="box">
     <h2>Redefinir Senha</h2>
+
     <form id="resetForm">
-      <input type="password" id="senha" placeholder="Nova Senha" required>
+      <input type="password" id="senha" placeholder="Nova senha" required />
       <button type="submit">Salvar Nova Senha</button>
     </form>
   </div>
