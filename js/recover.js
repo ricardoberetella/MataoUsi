@@ -1,18 +1,16 @@
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-document.addEventListener("DOMContentLoaded", () => {
-  const emailInput = document.getElementById("email");
+window.addEventListener("DOMContentLoaded", () => {
   const btn = document.getElementById("btnRecuperar");
-  const msg = document.getElementById("msg");
 
   btn.addEventListener("click", async () => {
-    const email = emailInput.value.trim();
+    const email = document.getElementById("email").value.trim();
 
     if (!email) {
-      mostrarMensagem("Digite um e-mail válido.", "error");
+      alert("Digite um e-mail válido!");
       return;
     }
 
@@ -21,15 +19,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     if (error) {
-      mostrarMensagem("Erro: " + error.message, "error");
+      alert("Erro: " + error.message);
     } else {
-      mostrarMensagem("E-mail de recuperação enviado!", "success");
+      alert("Link enviado! Verifique seu e-mail.");
     }
   });
-
-  function mostrarMensagem(texto, tipo) {
-    msg.innerText = texto;
-    msg.className = "msg " + tipo;
-    msg.style.display = "block";
-  }
 });
