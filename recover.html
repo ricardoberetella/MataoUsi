@@ -30,7 +30,7 @@
         if (error) {
           alert("Erro ao enviar link: " + error.message);
         } else {
-          alert(`Link de recuperação enviado para ${email}.`);
+          alert("Link de recuperação enviado para " + email);
         }
       });
     });
@@ -38,36 +38,33 @@
 
   <style>
     body {
-      font-family: Arial;
       background: #0f172a;
-      color: white;
+      color: #fff;
+      font-family: Arial;
       display: flex;
-      align-items: center;
       justify-content: center;
+      align-items: center;
       height: 100vh;
       margin: 0;
     }
-    .container {
+
+    .box {
       background: #1e293b;
       padding: 30px;
       border-radius: 12px;
-      width: 350px;
+      width: 340px;
       text-align: center;
-      box-shadow: 0 0 20px rgba(0,0,0,0.4);
     }
-    h2 {
-      margin-bottom: 20px;
-    }
+
     input {
       width: 100%;
       padding: 12px;
-      margin-top: 10px;
       border-radius: 6px;
       border: none;
-      outline: none;
+      margin: 10px 0;
     }
+
     button {
-      margin-top: 15px;
       width: 100%;
       padding: 12px;
       background: #38bdf8;
@@ -76,20 +73,22 @@
       font-weight: bold;
       cursor: pointer;
     }
+
     button:hover {
       background: #0ea5e9;
     }
+
     a {
-      display: inline-block;
-      margin-top: 15px;
       color: #38bdf8;
       text-decoration: none;
+      display: block;
+      margin-top: 15px;
     }
   </style>
 </head>
-
 <body>
-  <div class="container">
+
+  <div class="box">
     <h2>Recuperar Senha</h2>
 
     <input type="email" id="email" placeholder="Digite seu e-mail">
@@ -97,5 +96,6 @@
 
     <a href="index.html">Voltar ao Login</a>
   </div>
+
 </body>
 </html>
