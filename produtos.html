@@ -1,100 +1,110 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cadastrar Produto - MataoUsi</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Produtos - MataoUsi</title>
+
+  <script type="module" src="./js/produtos.js"></script>
 
   <style>
     body {
       font-family: Arial;
+      margin: 0;
       background: #0f172a;
       color: white;
-      padding: 20px;
+    }
+
+    header {
+      background: #1e293b;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     .container {
-      max-width: 450px;
-      margin: auto;
-      background: #1e293b;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+      padding: 20px;
     }
 
-    h2 {
-      text-align: center;
-      margin-bottom: 20px;
-      color: #38bdf8;
-    }
-
-    input, select {
+    table {
       width: 100%;
-      padding: 12px;
-      margin: 10px 0;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    table th, table td {
+      border: 1px solid #334155;
+      padding: 10px;
+      text-align: left;
+    }
+
+    table th {
+      background: #1e293b;
+    }
+
+    input {
+      padding: 8px;
       border: none;
       border-radius: 6px;
-      background: #475569;
-      color: white;
-      font-size: 15px;
+      width: 250px;
     }
 
     button {
-      width: 100%;
-      padding: 12px;
-      background: #38bdf8;
+      padding: 10px 15px;
       border: none;
       border-radius: 6px;
-      cursor: pointer;
-      font-size: 16px;
+      background: #38bdf8;
       font-weight: bold;
-      margin-top: 10px;
+      cursor: pointer;
     }
 
     button:hover {
       background: #0ea5e9;
     }
 
-    .back-btn {
-      background: #64748b;
+    .btn-red {
+      background: #ef4444;
     }
 
-    .back-btn:hover {
-      background: #475569;
+    .btn-red:hover {
+      background: #dc2626;
     }
   </style>
 </head>
 
 <body>
 
-  <div class="container">
+<header>
+  <h2>📦 Produtos</h2>
+  <button onclick="window.location.href='painel.html'">Voltar ao Painel</button>
+</header>
 
-    <!-- BOTÃO VOLTAR -->
-    <button class="back-btn" onclick="window.location.href='dashboard.html'">
-      ← Voltar ao Dashboard
-    </button>
+<div class="container">
 
-    <h2>Cadastrar Produto</h2>
+  <button onclick="window.location.href='produtos_cadastrar.html'">+ Cadastrar Produto</button>
 
-    <input type="text" id="codigo" placeholder="Código do Produto (SKU)">
-    <input type="text" id="descricao" placeholder="Descrição">
-    <input type="text" id="unidade" placeholder="Unidade (ex: Pç)">
-    <input type="number" step="0.001" id="peso" placeholder="Peso (KG)">
-    <input type="number" step="0.01" id="preco_custo" placeholder="Preço de Custo">
-    <input type="number" step="0.01" id="preco_venda" placeholder="Preço de Venda">
+  <br><br>
 
-    <select id="acabamento">
-      <option value="Zincado">Zincado</option>
-      <option value="Tratado">Tratado</option>
-      <option value="Natural">Natural</option>
-    </select>
+  <input type="text" id="buscar" placeholder="Buscar produto...">
 
-    <input type="number" id="comprimento" placeholder="Comprimento (mm)">
+  <table>
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Descrição</th>
+        <th>Unidade</th>
+        <th>Peso</th>
+        <th>Venda</th>
+        <th>Acabamento</th>
+        <th>Comprimento</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="lista-produtos"></tbody>
+  </table>
 
-    <button onclick="cadastrarProduto()">Cadastrar Produto</button>
-  </div>
-
-  <script type="module" src="./js/produtos.js"></script>
+</div>
 
 </body>
 </html>
