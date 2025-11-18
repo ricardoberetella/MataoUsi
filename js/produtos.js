@@ -6,7 +6,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 async function carregarProdutos() {
     const buscar = document.getElementById("buscar").value.trim();
 
-    let query = supabase.from("produtos").select("*");
+    let query = supabase.from("produtos").select("*").order("descricao");
 
     if (buscar !== "") {
         query = query.ilike("descricao", `%${buscar}%`);
@@ -29,8 +29,8 @@ async function carregarProdutos() {
             <td>${prod.codigo}</td>
             <td>${prod.descricao}</td>
             <td>${prod.unidade}</td>
-            <td>${prod.peso}</td>
-            <td>${prod.preco_venda}</td>
+            <td>${prod.peso?.toFixed(3)}</td>
+            <td>${prod.preco_venda?.toFixed(2)}</td>
             <td>${prod.acabamento}</td>
             <td>${prod.comprimento}</td>
 
@@ -49,7 +49,7 @@ window.editarProduto = (id) => {
 };
 
 window.excluirProduto = async (id) => {
-    if (!confirm("Deseja realmente excluir este produto?")) return;
+    if (!confirm("❗ Deseja excluir este produto?")) return;
 
     const { error } = await supabase
         .from("produtos")
