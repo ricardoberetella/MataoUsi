@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Produtos</title>
+
+  <style>
+    body {
+      background: #0f172a;
+      color: white;
+      font-family: Arial;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #38bdf8;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .form-box {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 500px;
+      margin: auto;
+      margin-bottom: 40px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 6px;
+      border: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #38bdf8;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0ea5e9;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 30px;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #334155;
+    }
+
+    th {
+      background: #1e293b;
+    }
+
+    tr:hover {
+      background: #334155;
+    }
+
+    .deleteBtn {
+      background: red;
+      color: white;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+
+  <script type="module" src="./js/produtos.js"></script>
+</head>
+
+<body>
+
+  <h1>Cadastro de Produtos</h1>
+
+  <div class="form-box">
+    <input id="codigo" placeholder="Código">
+    <input id="descricao" placeholder="Descrição">
+    <input id="unidade" placeholder="Unidade (ex: UN, KG)">
+    <input id="peso" placeholder="Peso (kg)">
+    <input id="precoCusto" placeholder="Preço de Custo">
+    <input id="precoVenda" placeholder="Preço de Venda">
+
+    <select id="tratamento">
+      <option value="nenhum">Nenhum</option>
+      <option value="zincado">Zincado</option>
+      <option value="tratado">Tratado</option>
+    </select>
+
+    <input id="comprimento" placeholder="Comprimento (mm)">
+
+    <button id="btnCadastrar">Cadastrar Produto</button>
+  </div>
+
+  <h1>Lista de Produtos</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Descrição</th>
+        <th>Unidade</th>
+        <th>Peso</th>
+        <th>Custo</th>
+        <th>Venda</th>
+        <th>Tratamento</th>
+        <th>Comp.</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="listaProdutos"></tbody>
+  </table>
+
+</body>
+</html>
