@@ -1,40 +1,42 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Produtos</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cadastrar Produto - MataoUsi</title>
 
   <style>
     body {
+      font-family: Arial;
       background: #0f172a;
       color: white;
-      font-family: Arial;
-      margin: 0;
       padding: 20px;
     }
 
-    h1 {
-      color: #38bdf8;
+    .container {
+      max-width: 450px;
+      margin: auto;
+      background: #1e293b;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+    }
+
+    h2 {
       text-align: center;
       margin-bottom: 20px;
-    }
-
-    .form-box {
-      background: #1e293b;
-      padding: 20px;
-      border-radius: 10px;
-      max-width: 500px;
-      margin: auto;
-      margin-bottom: 40px;
+      color: #38bdf8;
     }
 
     input, select {
       width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border-radius: 6px;
+      padding: 12px;
+      margin: 10px 0;
       border: none;
+      border-radius: 6px;
+      background: #475569;
+      color: white;
+      font-size: 15px;
     }
 
     button {
@@ -43,87 +45,56 @@
       background: #38bdf8;
       border: none;
       border-radius: 6px;
-      font-weight: bold;
       cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      margin-top: 10px;
     }
 
     button:hover {
       background: #0ea5e9;
     }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 30px;
+    .back-btn {
+      background: #64748b;
     }
 
-    th, td {
-      padding: 10px;
-      border-bottom: 1px solid #334155;
-    }
-
-    th {
-      background: #1e293b;
-    }
-
-    tr:hover {
-      background: #334155;
-    }
-
-    .deleteBtn {
-      background: red;
-      color: white;
-      padding: 5px 10px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
+    .back-btn:hover {
+      background: #475569;
     }
   </style>
-
-  <script type="module" src="./js/produtos.js"></script>
 </head>
 
 <body>
 
-  <h1>Cadastro de Produtos</h1>
+  <div class="container">
 
-  <div class="form-box">
-    <input id="codigo" placeholder="Código">
-    <input id="descricao" placeholder="Descrição">
-    <input id="unidade" placeholder="Unidade (ex: UN, KG)">
-    <input id="peso" placeholder="Peso (kg)">
-    <input id="precoCusto" placeholder="Preço de Custo">
-    <input id="precoVenda" placeholder="Preço de Venda">
+    <!-- BOTÃO VOLTAR -->
+    <button class="back-btn" onclick="window.location.href='dashboard.html'">
+      ← Voltar ao Dashboard
+    </button>
 
-    <select id="tratamento">
-      <option value="nenhum">Nenhum</option>
-      <option value="zincado">Zincado</option>
-      <option value="tratado">Tratado</option>
+    <h2>Cadastrar Produto</h2>
+
+    <input type="text" id="codigo" placeholder="Código do Produto (SKU)">
+    <input type="text" id="descricao" placeholder="Descrição">
+    <input type="text" id="unidade" placeholder="Unidade (ex: Pç)">
+    <input type="number" step="0.001" id="peso" placeholder="Peso (KG)">
+    <input type="number" step="0.01" id="preco_custo" placeholder="Preço de Custo">
+    <input type="number" step="0.01" id="preco_venda" placeholder="Preço de Venda">
+
+    <select id="acabamento">
+      <option value="Zincado">Zincado</option>
+      <option value="Tratado">Tratado</option>
+      <option value="Natural">Natural</option>
     </select>
 
-    <input id="comprimento" placeholder="Comprimento (mm)">
+    <input type="number" id="comprimento" placeholder="Comprimento (mm)">
 
-    <button id="btnCadastrar">Cadastrar Produto</button>
+    <button onclick="cadastrarProduto()">Cadastrar Produto</button>
   </div>
 
-  <h1>Lista de Produtos</h1>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Código</th>
-        <th>Descrição</th>
-        <th>Unidade</th>
-        <th>Peso</th>
-        <th>Custo</th>
-        <th>Venda</th>
-        <th>Tratamento</th>
-        <th>Comp.</th>
-        <th>Ações</th>
-      </tr>
-    </thead>
-    <tbody id="listaProdutos"></tbody>
-  </table>
+  <script type="module" src="./js/produtos.js"></script>
 
 </body>
 </html>
