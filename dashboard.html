@@ -1,12 +1,117 @@
-<button id="logout" style="
-    position:absolute;
-    right:20px;
-    top:20px;
-    background:#38bdf8;
-    border:none;
-    padding:10px 15px;
-    color:white;
-    border-radius:6px;
-    cursor:pointer;
-    font-weight:bold;
-">Sair</button>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel - MataoUsi</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+    }
+
+    /* Barra superior */
+    .navbar {
+      width: 100%;
+      background: #1e293b;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 22px;
+      font-weight: bold;
+      color: #38bdf8;
+    }
+
+    .logoutBtn {
+      background: #38bdf8;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .logoutBtn:hover {
+      background: #0ea5e9;
+    }
+
+    /* Conteúdo */
+    .content {
+      padding: 40px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 30px;
+      margin-bottom: 20px;
+    }
+
+    .modules {
+      margin-top: 30px;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .box {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 10px;
+      width: 200px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: 0.3s;
+    }
+
+    .box:hover {
+      border-color: #38bdf8;
+    }
+  </style>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+    import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const logoutBtn = document.getElementById("logout");
+
+      logoutBtn.addEventListener("click", async () => {
+        await supabase.auth.signOut();
+        window.location.href = "index.html";
+      });
+    });
+  </script>
+</head>
+
+<body>
+
+  <div class="navbar">
+    <div class="logo">MataoUsi - Painel</div>
+    <button id="logout" class="logoutBtn">Sair</button>
+  </div>
+
+  <div class="content">
+    <h1>Bem-vindo ao Sistema</h1>
+    <p>Escolha um módulo abaixo:</p>
+
+    <div class="modules">
+      <div class="box" onclick="location.href='empresas.html'">Empresas</div>
+      <div class="box" onclick="location.href='produtos.html'">Produtos</div>
+      <div class="box" onclick="location.href='estoque.html'">Estoque</div>
+      <div class="box" onclick="location.href='movimentacoes.html'">Movimentações</div>
+      <div class="box" onclick="location.href='relatorios.html'">Relatórios</div>
+    </div>
+  </div>
+
+</body>
+</html>
