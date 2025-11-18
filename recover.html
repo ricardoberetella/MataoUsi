@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recuperar Senha</title>
+  <style>
+    body {
+      margin: 0;
+      background: #0f172a;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: Arial, sans-serif;
+      color: white;
+    }
+
+    .caixa {
+      background: rgba(255,255,255,0.08);
+      padding: 40px;
+      width: 360px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 5px;
+      margin-top: 10px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 15px;
+      background: #38bdf8;
+      border: none;
+      color: black;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    a {
+      margin-top: 15px;
+      display: block;
+      color: #38bdf8;
+      text-decoration: none;
+    }
+
+    .msg {
+      display: none;
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 5px;
+    }
+
+    .error {
+      background: #ff4d4d;
+      color: white;
+    }
+
+    .success {
+      background: #4caf50;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="caixa">
+    <h2>Recuperar Senha</h2>
+
+    <input id="email" type="email" placeholder="Seu e-mail">
+    <button id="btnRecuperar">Enviar link de recuperação</button>
+
+    <a href="index.html">Voltar ao login</a>
+
+    <div id="msg" class="msg"></div>
+  </div>
+
+  <script type="module" src="./js/recover.js"></script>
+</body>
+</html>
