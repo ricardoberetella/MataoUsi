@@ -5,97 +5,62 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Recuperar Senha - MataoUsi</title>
 
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-    import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    window.addEventListener("DOMContentLoaded", () => {
-      const btn = document.getElementById("btnRecuperar");
-      const emailInput = document.getElementById("email");
-
-      btn.addEventListener("click", async () => {
-        const email = emailInput.value.trim();
-
-        if (!email) {
-          alert("Digite um e-mail válido!");
-          return;
-        }
-
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: "https://matao-usi.vercel.app/reset.html"
-        });
-
-        if (error) {
-          alert("Erro ao enviar link: " + error.message);
-        } else {
-          alert("Link de recuperação enviado para " + email);
-        }
-      });
-    });
-  </script>
+  <script type="module" src="./js/recover.js"></script>
 
   <style>
     body {
-      background: #0f172a;
-      color: #fff;
       font-family: Arial;
+      background: #0f172a;
+      color: white;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
       margin: 0;
     }
-
     .box {
       background: #1e293b;
       padding: 30px;
-      border-radius: 12px;
-      width: 340px;
+      border-radius: 10px;
+      width: 350px;
       text-align: center;
     }
-
     input {
       width: 100%;
-      padding: 12px;
-      border-radius: 6px;
-      border: none;
+      padding: 10px;
       margin: 10px 0;
+      border-radius: 5px;
+      border: none;
     }
-
     button {
       width: 100%;
-      padding: 12px;
+      padding: 10px;
       background: #38bdf8;
       border: none;
       border-radius: 6px;
-      font-weight: bold;
       cursor: pointer;
+      font-weight: bold;
     }
-
     button:hover {
       background: #0ea5e9;
     }
-
     a {
       color: #38bdf8;
-      text-decoration: none;
       display: block;
       margin-top: 15px;
     }
   </style>
 </head>
-<body>
 
+<body>
   <div class="box">
     <h2>Recuperar Senha</h2>
 
-    <input type="email" id="email" placeholder="Digite seu e-mail">
+    <input type="email" id="email" placeholder="Digite seu e-mail" />
+
     <button id="btnRecuperar">Enviar link de recuperação</button>
 
     <a href="index.html">Voltar ao Login</a>
   </div>
-
 </body>
 </html>
