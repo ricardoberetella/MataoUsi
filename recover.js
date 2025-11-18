@@ -1,8 +1,10 @@
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "/js/config.js";
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
+// Criar cliente do Supabase
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Evento do botão
 document.getElementById("btnRecuperar").addEventListener("click", async () => {
   const email = document.getElementById("email").value;
   const msgBox = document.getElementById("msg");
@@ -14,6 +16,7 @@ document.getElementById("btnRecuperar").addEventListener("click", async () => {
     return;
   }
 
+  // Enviar link de recuperação
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: "https://matao-usi.vercel.app/reset.html"
   });
