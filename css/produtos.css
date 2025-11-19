@@ -1,117 +1,128 @@
-/* -------------------------------------------
-   GLOBAL
--------------------------------------------*/
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
+/* --------------------------------------------------
+   GENERAL STYLE
+-----------------------------------------------------*/
 body {
-  background: #000; /* Fundo escuro moderno */
+  margin: 0;
   font-family: Arial, sans-serif;
+  background: #000;
   color: #e5e7eb;
-  padding-bottom: 100px;
 }
 
-/* -------------------------------------------
+/* --------------------------------------------------
    TOPBAR
--------------------------------------------*/
+-----------------------------------------------------*/
 .topbar {
   background: #0a0a0a;
   padding: 15px 22px;
-  border-bottom: 1px solid #1f1f1f;
   display: flex;
   align-items: center;
   gap: 20px;
+  border-bottom: 1px solid #1f1f1f;
 }
 
 .topbar h1 {
-  font-size: 28px;
-  font-weight: bold;
+  margin: 0;
+  font-size: 1.6rem;
   color: #38bdf8;
 }
 
 .voltar {
-  background: #111;
-  border: 1px solid #444;
-  color: #e5e7eb;
-  padding: 8px 16px;
-  border-radius: 8px;
+  background: #151515;
+  color: #bbb;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid #333;
   cursor: pointer;
+  transition: 0.2s;
 }
+
 .voltar:hover {
   background: #222;
+  color: #fff;
 }
 
-/* -------------------------------------------
+/* --------------------------------------------------
    CONTAINER
--------------------------------------------*/
+-----------------------------------------------------*/
 .container {
-  width: 90%;
-  max-width: 1200px;
+  max-width: 1100px;
   margin: 40px auto;
+  padding: 20px;
 }
 
-/* -------------------------------------------
+/* --------------------------------------------------
    CARD
--------------------------------------------*/
+-----------------------------------------------------*/
 .card {
-  background: #0a0a0a;
-  border: 1px solid #1e1e1e;
-  border-radius: 12px;
-  padding: 30px;
-  margin-bottom: 40px;
-  box-shadow: 0 0 12px rgba(0, 0, 0, 0.4);
+  background: rgba(20, 20, 20, 0.8);
+  border: 1px solid #222;
+  backdrop-filter: blur(4px);
+  padding: 22px;
+  border-radius: 14px;
+  margin-bottom: 28px;
+  box-shadow: 0 0 18px rgba(0,0,0,0.4);
 }
 
 .card h2 {
+  margin-top: 0;
   color: #38bdf8;
-  margin-bottom: 20px;
+  font-size: 1.3rem;
+  margin-bottom: 15px;
 }
 
-/* -------------------------------------------
-   FORM GRID
--------------------------------------------*/
+/* --------------------------------------------------
+   GRID FORM (2–3 columns)
+-----------------------------------------------------*/
 .grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
 }
 
-input,
-select {
-  background: #1a1a1a;
-  border: 1px solid #333;
+/* --------------------------------------------------
+   INPUTS
+-----------------------------------------------------*/
+input, select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #2e2e2e;
+  background: #0f0f0f;
   color: #e5e7eb;
-  padding: 14px;
-  border-radius: 10px;
-  font-size: 16px;
+  font-size: 0.95rem;
+  transition: 0.2s;
 }
 
 input::placeholder,
 select {
-  color: #999;
+  color: #777;
 }
 
-/* -------------------------------------------
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #38bdf8;
+  box-shadow: 0 0 8px #38bdf864;
+}
+
+/* --------------------------------------------------
    BUTTONS
--------------------------------------------*/
+-----------------------------------------------------*/
 .btn-area {
-  margin-top: 25px;
+  margin-top: 18px;
   display: flex;
-  gap: 14px;
+  gap: 15px;
 }
 
 .btn-primary {
   background: #22c55e;
-  color: white;
-  padding: 12px 22px;
+  color: #052e16;
+  padding: 12px 20px;
   border: none;
   border-radius: 10px;
+  font-weight: bold;
   cursor: pointer;
-  transition: 0.1s;
-  font-size: 16px;
+  transition: 0.2s;
 }
 
 .btn-primary:hover {
@@ -119,21 +130,23 @@ select {
 }
 
 .btn-secondary {
-  background: #444;
-  color: #ddd;
-  padding: 12px 22px;
+  background: #6b7280;
+  color: #fff;
+  padding: 12px 20px;
   border: none;
   border-radius: 10px;
+  font-weight: bold;
   cursor: pointer;
+  transition: 0.2s;
 }
 
 .btn-secondary:hover {
-  background: #555;
+  background: #4b5563;
 }
 
-/* -------------------------------------------
-   TABLE LIST
--------------------------------------------*/
+/* --------------------------------------------------
+   TABLE
+-----------------------------------------------------*/
 .tabela-wrapper {
   overflow-x: auto;
 }
@@ -141,84 +154,79 @@ select {
 table {
   width: 100%;
   border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+th, td {
+  padding: 12px 10px;
 }
 
 th {
-  background: #111;
+  background: #0d0d0d;
+  border-bottom: 2px solid #222;
   color: #38bdf8;
-  padding: 12px;
-  font-weight: 600;
-  border-bottom: 1px solid #222;
+  font-weight: bold;
 }
 
-td {
-  background: #1a1a1a;
-  color: #eee;
-  padding: 10px;
-  border-bottom: 1px solid #222;
+/* Alternância */
+tbody tr:nth-child(odd) { background: #0c0c0c; }
+tbody tr:nth-child(even) { background: #141414; }
+
+tbody tr:hover {
+  background: #1f2937;
 }
 
-td button {
-  padding: 6px 12px;
-  margin-right: 6px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
+/* --------------------------------------------------
+   ALINHAMENTO DAS COLUNAS
+-----------------------------------------------------*/
+
+/* Esquerda */
+td:nth-child(1),
+td:nth-child(2),
+td:nth-child(3),
+td:nth-child(5),
+td:nth-child(10) {
+  text-align: left;
 }
 
+/* Direita */
+td:nth-child(4),
+td:nth-child(6),
+td:nth-child(7),
+td:nth-child(8),
+td:nth-child(9) {
+  text-align: right;
+}
+
+/* --------------------------------------------------
+   TABLE BUTTONS
+-----------------------------------------------------*/
 .btn-editar {
-  background: #3b82f6;
-  color: white;
+  background: #38bdf8;
+  color: #000;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  font-weight: bold;
+  transition: 0.2s;
 }
 
 .btn-editar:hover {
-  background: #2563eb;
+  background: #0ea5e9;
 }
 
 .btn-excluir {
   background: #ef4444;
-  color: white;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  font-weight: bold;
+  transition: 0.2s;
 }
 
 .btn-excluir:hover {
   background: #dc2626;
-}
-
-/* -------------------------------------------
-   ALERTAS
--------------------------------------------*/
-.alert {
-  position: fixed;
-  top: -50px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 12px 18px;
-  background: #111;
-  border: 1px solid #333;
-  color: #eee;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  opacity: 0;
-  transition: 0.3s;
-  z-index: 9999;
-}
-
-.alert.show {
-  top: 20px;
-  opacity: 1;
-}
-
-.alert.sucesso {
-  border-color: #22c55e;
-  color: #22c55e;
-}
-
-.alert.erro {
-  border-color: #ef4444;
-  color: #ef4444;
-}
-
-.alert.info {
-  border-color: #38bdf8;
-  color: #38bdf8;
 }
