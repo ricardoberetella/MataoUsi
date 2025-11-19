@@ -103,12 +103,7 @@ window.editarProduto = async function (id) {
 window.excluirProduto = async function (id) {
   if (!confirm("Deseja excluir este produto?")) return;
 
-  const { error } = await supabase.from("produtos").delete().eq("id", id);
-
-  if (error) {
-    alert("Erro ao excluir");
-    return;
-  }
+  await supabase.from("produtos").delete().eq("id", id);
 
   carregarProdutos();
 };
