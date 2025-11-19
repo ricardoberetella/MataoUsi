@@ -1,0 +1,192 @@
+/* ===================================================== */
+/*          CLIENTES – NEON FUTURISTA (BLUE TECH)        */
+/* ===================================================== */
+
+body {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(135deg, #060b17, #0f172a 70%);
+  font-family: Arial, sans-serif;
+  color: #e5e7eb;
+}
+
+/* ============= TOPO (TÍTULO DA PÁGINA) =============== */
+
+h2 {
+  text-align: center;
+  color: #38bdf8;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.8);
+  margin-top: 25px;
+  margin-bottom: 10px;
+  font-size: 32px;
+}
+
+/* ====================== CONTAINER ===================== */
+
+.container {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 25px;
+  background: rgba(17, 25, 40, 0.65);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.10);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+/* ====================== ABAS =========================== */
+
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.tab {
+  padding: 12px 20px;
+  background: rgba(30, 41, 59, 0.7);
+  border-radius: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  color: #e5e7eb;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.tab:hover {
+  background: rgba(56, 189, 248, 0.3);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+}
+
+.tab.active {
+  background: #38bdf8;
+  color: #000;
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.7);
+}
+
+/* ================ ÁREAS DAS ABAS ====================== */
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* ===================== FORMULÁRIO ====================== */
+
+label {
+  display: block;
+  margin-top: 15px;
+  font-size: 15px;
+  color: #cbd5e1;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  margin-top: 5px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(30, 41, 59, 0.9);
+  color: white;
+  outline: none;
+  font-size: 15px;
+  transition: 0.25s;
+}
+
+input:focus {
+  background: rgba(30, 41, 59, 1);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+  border: 1px solid rgba(56, 189, 248, 0.5);
+}
+
+/* ===================== BOTÕES ========================== */
+
+.btns {
+  margin-top: 25px;
+  display: flex;
+  gap: 12px;
+}
+
+button {
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+#btnSalvar {
+  background: #38bdf8;
+  color: #000;
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+}
+
+#btnSalvar:hover {
+  background: #0ea5e9;
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.8);
+}
+
+#btnCancelar {
+  background: rgba(71, 85, 105, 0.8);
+  color: white;
+}
+
+#btnCancelar:hover {
+  background: rgba(100, 116, 139, 1);
+}
+
+/* ===================== LISTA =========================== */
+
+#busca {
+  width: 100%;
+  margin-top: 5px;
+  margin-bottom: 15px;
+  padding: 12px;
+  background: rgba(30, 41, 59, 0.9);
+  border-radius: 10px;
+  border: none;
+  color: white;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  background: rgba(30, 41, 59, 0.5);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+th {
+  background: rgba(56, 189, 248, 0.25);
+  padding: 14px;
+  color: #38bdf8;
+  text-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+}
+
+td {
+  padding: 12px;
+  color: #e5e7eb;
+}
+
+tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* ==================== AÇÕES ============================ */
+
+.action-btn {
+  cursor: pointer;
+  margin-right: 10px;
+  color: #38bdf8;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.action-btn:hover {
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.8);
+}
