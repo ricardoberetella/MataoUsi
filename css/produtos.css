@@ -62,13 +62,13 @@ body {
 }
 
 /* ------------------------------ */
-/*            GRID INPUT          */
+/*      GRID INPUT (PADRÃO)       */
 /* ------------------------------ */
 
 .grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 25px;               /* SEPARAÇÃO CORRETA */
+  gap: 25px;
   padding: 10px 5px;
 }
 
@@ -82,6 +82,36 @@ select {
   color: #000;
   font-size: 16px;
   box-sizing: border-box;
+}
+
+/* ------------------------------ */
+/*    LINHA DO CÓDIGO + BUSCAR    */
+/* ------------------------------ */
+
+.linha-codigo {
+  display: flex;
+  gap: 12px;
+  grid-column: span 3; /* ocupa linha inteira do grid */
+}
+
+.linha-codigo input {
+  flex: 1;
+}
+
+.btn-buscar {
+  padding: 16px 20px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  white-space: nowrap;
+  font-size: 15px;
+}
+
+.btn-buscar:hover {
+  background: #2563eb;
 }
 
 /* ------------------------------ */
