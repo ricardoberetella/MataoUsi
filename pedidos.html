@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pedidos - MataoUsi</title>
+  <link rel="stylesheet" href="css/pedidos.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <h2>Pedidos</h2>
+  </header>
+
+  <div class="container">
+
+    <div class="tabs">
+      <button class="tab active" data-tab="cadastro">Criar Pedido</button>
+      <button class="tab" data-tab="lista">Listar Pedidos</button>
+    </div>
+
+    <!-- ======================= -->
+    <!--   ABA CRIAR PEDIDO      -->
+    <!-- ======================= -->
+    <div id="cadastro" class="tab-content active">
+
+      <form id="formPedido">
+        <input type="hidden" id="pedidoId">
+
+        <label>Cliente</label>
+        <select id="cliente_id" required></select>
+
+        <label>Número do Pedido (fornecido pelo cliente)</label>
+        <input type="text" id="numero_pedido" required>
+
+        <label>Data do Pedido</label>
+        <input type="date" id="data_pedido" required>
+
+        <label>Data de Entrega</label>
+        <input type="date" id="data_entrega">
+
+        <label>Status</label>
+        <select id="status">
+          <option value="aberto">Aberto</option>
+          <option value="entregue">Entregue</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+
+        <div class="btns">
+          <button type="submit" id="btnSalvar">Salvar</button>
+          <button type="button" id="btnCancelar">Cancelar</button>
+        </div>
+
+      </form>
+
+    </div>
+
+    <!-- ======================= -->
+    <!--   ABA LISTAR PEDIDOS    -->
+    <!-- ======================= -->
+    <div id="lista" class="tab-content">
+
+      <input type="text" id="busca" placeholder="Buscar número, cliente ou status">
+
+      <table>
+        <thead>
+          <tr>
+            <th>Número</th>
+            <th>Cliente</th>
+            <th>Data Pedido</th>
+            <th>Entrega</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+
+        <tbody id="tabelaPedidos"></tbody>
+      </table>
+
+    </div>
+
+  </div>
+
+  <script type="module" src="js/pedidos.js"></script>
+
+</body>
+</html>
