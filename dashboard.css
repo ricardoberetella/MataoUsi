@@ -1,124 +1,108 @@
-/* ================================
-   LAYOUT GERAL
-=================================*/
+/* ============================= */
+/*   ESTILO GERAL DO SISTEMA     */
+/* ============================= */
+
 body {
-    margin: 0;
-    padding: 0;
-    font-family: Arial, sans-serif;
-    background: #f1f5f9;
-    display: flex;
-    height: 100vh;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #0f172a;
+  color: #e5e7eb;
 }
 
-/* ================================
-   MENU LATERAL
-=================================*/
-.menu {
-    width: 240px;
-    background: #0f172a;
-    color: white;
-    padding-top: 30px;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
-    height: 100vh;
-    position: fixed;
-    left: 0;
-    top: 0;
+/* ============================= */
+/*         BARRA SUPERIOR        */
+/* ============================= */
+
+.navbar {
+  width: 100%;
+  background: #1e293b;
+  padding: 15px 25px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
 }
 
-.menu h2 {
-    text-align: center;
-    margin-bottom: 20px;
-    color: #38bdf8;
+.logo {
+  font-size: 22px;
+  font-weight: bold;
+  color: #38bdf8;
+  letter-spacing: 0.5px;
 }
 
-.menu a {
-    display: block;
-    padding: 14px 20px;
-    text-decoration: none;
-    color: #e2e8f0;
-    font-size: 16px;
-    transition: 0.3s;
+.logoutBtn {
+  background: #38bdf8;
+  border: none;
+  padding: 9px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: 0.25s;
 }
 
-.menu a:hover {
-    background: #1e293b;
-    border-left: 4px solid #38bdf8;
-    padding-left: 16px;
+.logoutBtn:hover {
+  background: #0ea5e9;
 }
 
-/* ================================
-   HEADER DO CONTEÚDO
-=================================*/
-header {
-    background: #1e293b;
-    color: white;
-    width: 100%;
-    padding: 20px;
-    text-align: center;
-    margin-left: 240px;
-    box-sizing: border-box;
-    position: fixed;
-    top: 0;
-    left: 0;
+/* ============================= */
+/*          ÁREA CENTRAL         */
+/* ============================= */
+
+.content {
+  padding: 50px 20px;
+  text-align: center;
 }
 
-header h1 {
-    margin: 0;
+h1 {
+  font-size: 32px;
+  margin-bottom: 10px;
+  font-weight: bold;
 }
 
-/* ================================
-   ÁREA DE CONTEÚDO
-=================================*/
-.conteudo {
-    margin-left: 240px;
-    margin-top: 100px;
-    padding: 30px;
+p {
+  font-size: 16px;
+  opacity: 0.8;
 }
 
-/* ================================
-   CARDS DO DASHBOARD
-=================================*/
-.cards {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
+/* ============================= */
+/*        MÓDULOS / CARDS        */
+/* ============================= */
+
+.modules {
+  margin-top: 35px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 25px;
 }
 
-.card {
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    width: 230px;
-    padding: 20px;
-    text-align: center;
-    transition: 0.3s;
+.box {
+  background: linear-gradient(145deg, #1e293b, #2b3a4e);
+  padding: 22px;
+  border-radius: 14px;
+  width: 220px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: 0.3s;
+  font-size: 19px;
+  color: #e5e7eb;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
-.card:hover {
-    transform: scale(1.03);
+.box:hover {
+  border-color: #38bdf8;
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(56, 189, 248, 0.15);
 }
 
-.card h3 {
-    margin-top: 0;
-    color: #0f172a;
-}
+/* ============================= */
+/*          RESPONSIVO           */
+/* ============================= */
 
-.card p {
-    color: #475569;
-    font-size: 18px;
-    margin: 10px 0 0;
-}
-
-/* ================================
-   BOTÃO DE LOGOUT
-=================================*/
-.logout {
-    margin-top: 40px;
-    color: #f87171 !important;
-    font-weight: bold;
-}
-
-.logout:hover {
-    background: #7f1d1d;
-    border-left-color: #fca5a5;
+@media (max-width: 600px) {
+  .box {
+    width: 90%;
+  }
 }
