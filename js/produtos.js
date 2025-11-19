@@ -5,15 +5,19 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let editandoId = null;
 
-// Conversores
-function parseNumero(val) {
-  if (!val || val.trim() === "") return null;
-  return Number(val.replace(",", "."));
+// Converte "1.234,56" → 1234.56
+function parseNumero(valor) {
+  if (!valor || valor.trim() === "") return null;
+  return Number(valor.replace(/\./g, "").replace(",", "."));
 }
 
+// Converte 1234.56 → "1.234,56"
 function formatNumero(val) {
   if (val == null) return "";
-  return Number(val).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return Number(val).toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -29,6 +33,9 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+// -------------------------
+// CARREGAR LISTA
+// -------------------------
 async function carregarProdutos() {
   const lista = document.getElementById("listaProdutos");
   lista.innerHTML = "<tr><td colspan='10'>Carregando...</td></tr>";
@@ -40,12 +47,12 @@ async function carregarProdutos() {
 
   if (error) {
     console.error(error);
-    lista.innerHTML = "<tr><td colspan='10'>Erro ao carregar</td></tr>";
+    lista.innerHTML = "<tr><td colspan='10'>Erro ao carregar produtos</td></tr>";
     return;
   }
 
   if (!data || data.length === 0) {
-    lista.innerHTML = "<tr><td colspan='10'>Nenhum produto encontrado</td></tr>";
+    lista.innerHTML = "<tr><td colspan='10'>Nenhum produto cadastrado</td></tr>";
     return;
   }
 
@@ -58,15 +65,15 @@ async function carregarProdutos() {
       <td>${p.descricao}</td>
       <td>${p.unidade}</td>
       <td>${p.comprimento_mm ?? ""}</td>
-      <td>${p.acabamento ?? ""}</td>
+      <td>${p.acabamento}</td>
       <td>${formatNumero(p.peso_bruto)}</td>
       <td>${formatNumero(p.peso_liquido)}</td>
       <td>${formatNumero(p.preco_custo)}</td>
       <td>${formatNumero(p.preco_venda)}</td>
 
       <td class="acoes">
-        <button onclick="editarProduto('${p.id}')">Editar</button>
-        <button onclick="excluirProduto('${p.id}')">Excluir</button>
+        <button onclick="editarProduto(${p.id})">Editar</button>
+        <button onclick="excluirProduto(${p.id})">Excluir</button>
       </td>
     `;
     lista.appendChild(tr);
@@ -81,7 +88,7 @@ window.editarProduto = async function (id) {
     .single();
 
   if (error) {
-    alert("Erro ao carregar produto");
+    alert("Erro ao carregar dados!");
     return;
   }
 
@@ -91,7 +98,7 @@ window.editarProduto = async function (id) {
   document.getElementById("descricao").value = data.descricao;
   document.getElementById("unidade").value = data.unidade;
   document.getElementById("comprimento_mm").value = data.comprimento_mm ?? "";
-  document.getElementById("acabamento").value = data.acabamento ?? "";
+  document.getElementById("acabamento").value = data.acabamento;
   document.getElementById("peso_bruto").value = formatNumero(data.peso_bruto);
   document.getElementById("peso_liquido").value = formatNumero(data.peso_liquido);
   document.getElementById("preco_custo").value = formatNumero(data.preco_custo);
@@ -102,12 +109,12 @@ window.editarProduto = async function (id) {
 };
 
 window.excluirProduto = async function (id) {
-  if (!confirm("Deseja excluir este produto?")) return;
+  if (!confirm("Tem certeza que deseja excluir?")) return;
 
   const { error } = await supabase.from("produtos").delete().eq("id", id);
 
   if (error) {
-    alert("Erro ao excluir");
+    alert("Erro ao excluir!");
     return;
   }
 
@@ -124,13 +131,20 @@ async function salvarProduto() {
     peso_bruto: parseNumero(document.getElementById("peso_bruto").value),
     peso_liquido: parseNumero(document.getElementById("peso_liquido").value),
     preco_custo: parseNumero(document.getElementById("preco_custo").value),
-    preco_venda: parseNumero(document.getElementById("preco_venda").value),
+    preco_venda: parseNumero(document.getElementById("preco_venda").value)
   };
 
+  let resp;
+
   if (editandoId) {
-    await supabase.from("produtos").update(dados).eq("id", editandoId);
+    resp = await supabase.from("produtos").update(dados).eq("id", editandoId);
   } else {
-    await supabase.from("produtos").insert(dados);
+    resp = await supabase.from("produtos").insert(dados);
+  }
+
+  if (resp.error) {
+    alert("Erro ao salvar: " + resp.error.message);
+    return;
   }
 
   limparFormulario();
