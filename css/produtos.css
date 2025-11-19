@@ -7,6 +7,7 @@ body {
   font-family: Arial, sans-serif;
   background: #000;
   color: #e5e7eb;
+  overflow-y: auto; /* garante rolagem geral */
 }
 
 /* ------------------------------ */
@@ -91,7 +92,7 @@ select {
 .linha-codigo {
   display: flex;
   gap: 12px;
-  grid-column: span 3; /* ocupa linha inteira do grid */
+  grid-column: span 3;
 }
 
 .linha-codigo input {
@@ -148,13 +149,27 @@ select {
 /*            TABLE LIST          */
 /* ------------------------------ */
 
-table {
+.tabela-wrapper {
+  max-height: 420px;      /* altura da área visível */
+  overflow-y: auto;       /* ativa rolagem */
+  border: 1px solid #1f1f1f;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+
+.tabela-wrapper table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 15px;
 }
 
 thead { background: #0f0f0f; }
+
+thead th {
+  position: sticky;       /* fixa o cabeçalho */
+  top: 0;
+  background: #0f0f0f;
+  z-index: 10;
+}
 
 th {
   padding: 12px;
