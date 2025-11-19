@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cadastro de Produtos</title>
 
-  <!-- CSS correto -->
+  <!-- CSS -->
   <link rel="stylesheet" href="css/produtos.css">
 </head>
 
@@ -30,7 +30,9 @@
         <input type="text" id="codigo" placeholder="Código (SKU)">
         <input type="text" id="descricao" placeholder="Descrição">
         <input type="text" id="unidade" placeholder="Unidade (UN, KG...)">
-        <input type="number" id="comprimento_mm" placeholder="Comprimento (mm)">
+
+        <!-- ALTERADO p/ text (aceita vírgula) -->
+        <input type="text" id="comprimento_mm" placeholder="Comprimento (mm)">
 
         <select id="acabamento">
           <option value="">Acabamento</option>
@@ -40,7 +42,7 @@
 
         <input type="text" id="peso_bruto" placeholder="Peso Bruto">
         <input type="text" id="peso_liquido" placeholder="Peso Líquido">
-        <input type="text" id="preco_custo" placeholder="Preço de Custo">
+    <input type="text" id="preco_custo" placeholder="Preço de Custo">
         <input type="text" id="preco_venda" placeholder="Preço de Venda">
 
       </div>
@@ -81,7 +83,7 @@
 
   </div>
 
-  <!-- IMPORTANTE: JS correto -->
+  <!-- JS -->
   <script type="module" src="js/produtos.js"></script>
 
 </body>
