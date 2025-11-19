@@ -9,13 +9,8 @@ let editandoId = null;
 ------------------------------------------------------- */
 function toNumberBR(valor) {
   if (!valor || valor.trim() === "") return 0;
-
-  // Remove pontos de milhar
   valor = valor.replace(/\./g, "");
-
-  // Troca vírgula por ponto
   valor = valor.replace(",", ".");
-
   return Number(valor);
 }
 
@@ -88,7 +83,7 @@ async function carregarProdutos() {
   data.forEach((p) => {
     const tr = document.createElement("tr");
 
-    tr.innerHTML = `
+    tr.innerinnerHTML = `
       <td>${p.codigo ?? ""}</td>
       <td>${p.descricao ?? ""}</td>
       <td>${p.unidade ?? ""}</td>
@@ -113,7 +108,7 @@ async function carregarProdutos() {
 }
 
 /* -------------------------------------------------------
-   Salvar produto (INSERT / UPDATE)
+   SALVAR PRODUTO
 ------------------------------------------------------- */
 document.getElementById("formProduto").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -183,6 +178,16 @@ window.editarProduto = async function (id) {
     return;
   }
 
+  preencherFormulario(data);
+  alerta("Editando produto...", "info");
+};
+
+/* -------------------------------------------------------
+   Preencher formulário (reutilizado pela busca)
+------------------------------------------------------- */
+function preencherFormulario(data) {
+  editandoId = data.id;
+
   document.getElementById("codigo").value = data.codigo ?? "";
   document.getElementById("descricao").value = data.descricao ?? "";
   document.getElementById("unidade").value = data.unidade ?? "";
@@ -197,9 +202,40 @@ window.editarProduto = async function (id) {
   document.getElementById("preco_venda").value = formatBR(data.preco_venda);
 
   document.getElementById("btnCancelar").style.display = "inline-block";
+}
 
-  alerta("Editando produto...", "info");
-};
+/* -------------------------------------------------------
+   BUSCAR PRODUTO PELO CÓDIGO
+------------------------------------------------------- */
+document.getElementById("btnBuscarCodigo")?.addEventListener("click", buscarProdutoPorCodigo);
+
+async function buscarProdutoPorCodigo() {
+  const codigo = document.getElementById("codigo").value.trim();
+
+  if (!codigo) {
+    alerta("Digite um código para buscar!", "erro");
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("produtos")
+    .select("*")
+    .eq("codigo", codigo)
+    .maybeSingle();
+
+  if (error) {
+    alerta("Erro ao buscar produto!", "erro");
+    return;
+  }
+
+  if (!data) {
+    alerta("Nenhum produto encontrado!", "erro");
+    return;
+  }
+
+  preencherFormulario(data);
+  alerta("Produto carregado!", "sucesso");
+}
 
 /* -------------------------------------------------------
    Cancelar edição
