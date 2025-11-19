@@ -1,5 +1,5 @@
 /* ------------------------------
-   ESTILO GERAL
+   GENERAL STYLE
 --------------------------------*/
 body {
   margin: 0;
@@ -9,7 +9,7 @@ body {
 }
 
 /* ------------------------------
-   TOPO
+   TOPBAR
 --------------------------------*/
 .topbar {
   background: #0a0a0a;
@@ -42,7 +42,7 @@ body {
 }
 
 /* ------------------------------
-   CONTAINER PRINCIPAL
+   CONTAINER
 --------------------------------*/
 .container {
   max-width: 1100px;
@@ -71,7 +71,7 @@ body {
 }
 
 /* ------------------------------
-   GRID DO FORM (2–3 colunas)
+   GRID FORM (2–3 columns)
 --------------------------------*/
 .grid {
   display: grid;
@@ -80,7 +80,7 @@ body {
 }
 
 /* ------------------------------
-   CAMPOS
+   INPUTS
 --------------------------------*/
 input, select {
   width: 100%;
@@ -106,7 +106,7 @@ select:focus {
 }
 
 /* ------------------------------
-   BOTÕES DO FORM
+   BUTTONS
 --------------------------------*/
 .btn-area {
   margin-top: 18px;
@@ -145,7 +145,7 @@ select:focus {
 }
 
 /* ------------------------------
-   TABELA
+   TABLE
 --------------------------------*/
 .tabela-wrapper {
   overflow-x: auto;
@@ -182,7 +182,7 @@ tbody tr:hover {
 }
 
 /* ------------------------------
-   BOTÕES DA TABELA
+   TABLE BUTTONS
 --------------------------------*/
 .btn-editar {
   background: #38bdf8;
