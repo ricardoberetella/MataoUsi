@@ -5,24 +5,33 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let editandoId = null;
 
 /* -------------------------------------------------------
-   Funções de conversão
+   Conversão BR → Número (vírgula para ponto)
 ------------------------------------------------------- */
-
-// Converte "1,50" → 1.50
 function toNumberBR(valor) {
-  if (!valor) return 0;
-  return Number(String(valor).replace(".", "").replace(",", "."));
+  if (!valor || valor.trim() === "") return 0;
+
+  // Remove pontos de milhar
+  valor = valor.replace(/\./g, "");
+
+  // Troca vírgula por ponto
+  valor = valor.replace(",", ".");
+
+  return Number(valor);
 }
 
-// Formata número para vírgula
-function formatNumero(valor) {
-  if (valor == null || valor === "") return "";
+/* -------------------------------------------------------
+   Formatar exibição com vírgula
+------------------------------------------------------- */
+function formatBR(valor) {
+  if (valor === null || valor === undefined || valor === "") return "";
   return String(valor).replace(".", ",");
 }
 
-// Formata preço em R$
+/* -------------------------------------------------------
+   Formatar preço em Real
+------------------------------------------------------- */
 function formatPreco(valor) {
-  if (valor == null || valor === "") return "";
+  if (valor === null || valor === undefined || valor === "") return "";
   return Number(valor).toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL"
@@ -47,16 +56,11 @@ function alerta(msg, tipo = "info") {
 }
 
 /* -------------------------------------------------------
-   Loading
+   Botão: salvando...
 ------------------------------------------------------- */
 function setLoading(btn, estado) {
-  if (estado) {
-    btn.disabled = true;
-    btn.innerHTML = "⏳ Salvando...";
-  } else {
-    btn.disabled = false;
-    btn.innerHTML = "Salvar";
-  }
+  btn.disabled = estado;
+  btn.innerHTML = estado ? "⏳ Salvando..." : "Salvar";
 }
 
 /* -------------------------------------------------------
@@ -64,12 +68,18 @@ function setLoading(btn, estado) {
 ------------------------------------------------------- */
 async function carregarProdutos() {
   const tbody = document.getElementById("listaProdutos");
-  tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;">Carregando...</td></tr>`;
 
-  const { data, error } = await supabase.from("produtos").select("*").order("id", { ascending: false });
+  tbody.innerHTML = `
+    <tr><td colspan="10" style="text-align:center;">Carregando...</td></tr>
+  `;
+
+  const { data, error } = await supabase
+    .from("produtos")
+    .select("*")
+    .order("id", { ascending: false });
 
   if (error) {
-    alerta("Erro ao carregar produtos", "erro");
+    alerta("Erro ao carregar produtos!", "erro");
     return;
   }
 
@@ -79,17 +89,18 @@ async function carregarProdutos() {
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
-      <td>${p.codigo || ""}</td>
-      <td>${p.descricao || ""}</td>
-      <td>${p.unidade || ""}</td>
+      <td>${p.codigo ?? ""}</td>
+      <td>${p.descricao ?? ""}</td>
+      <td>${p.unidade ?? ""}</td>
 
-      <td>${formatNumero(p.comprimento_mm)}</td>
-      <td>${p.acabamento || ""}</td>
-      <td>${formatNumero(p.peso_bruto)}</td>
-      <td>${formatNumero(p.peso_liquido)}</td>
+      <td class="numero">${formatBR(p.comprimento_mm)}</td>
+      <td>${p.acabamento ?? ""}</td>
 
-      <td>${formatPreco(p.preco_custo)}</td>
-      <td>${formatPreco(p.preco_venda)}</td>
+      <td class="numero">${formatBR(p.peso_bruto)}</td>
+      <td class="numero">${formatBR(p.peso_liquido)}</td>
+
+      <td class="numero">${formatPreco(p.preco_custo)}</td>
+      <td class="numero">${formatPreco(p.preco_venda)}</td>
 
       <td>
         <button class="btn-editar" onclick="editarProduto(${p.id})">Editar</button>
@@ -102,10 +113,11 @@ async function carregarProdutos() {
 }
 
 /* -------------------------------------------------------
-   Salvar produto
+   Salvar produto (INSERT / UPDATE)
 ------------------------------------------------------- */
 document.getElementById("formProduto").addEventListener("submit", async (e) => {
   e.preventDefault();
+
   const btn = document.getElementById("btnSalvar");
   setLoading(btn, true);
 
@@ -114,14 +126,14 @@ document.getElementById("formProduto").addEventListener("submit", async (e) => {
     descricao: document.getElementById("descricao").value.trim(),
     unidade: document.getElementById("unidade").value.trim(),
 
-    comprimento_mm: toNumberBR(document.getElementById("comprimento_mm").value.trim()),
+    comprimento_mm: toNumberBR(document.getElementById("comprimento_mm").value),
     acabamento: document.getElementById("acabamento").value.trim(),
 
-    peso_bruto: toNumberBR(document.getElementById("peso_bruto").value.trim()),
-    peso_liquido: toNumberBR(document.getElementById("peso_liquido").value.trim()),
+    peso_bruto: toNumberBR(document.getElementById("peso_bruto").value),
+    peso_liquido: toNumberBR(document.getElementById("peso_liquido").value),
 
-    preco_custo: toNumberBR(document.getElementById("preco_custo").value.trim()),
-    preco_venda: toNumberBR(document.getElementById("preco_venda").value.trim()),
+    preco_custo: toNumberBR(document.getElementById("preco_custo").value),
+    preco_venda: toNumberBR(document.getElementById("preco_venda").value),
   };
 
   if (!produto.descricao) {
@@ -131,6 +143,7 @@ document.getElementById("formProduto").addEventListener("submit", async (e) => {
   }
 
   let retorno;
+
   if (editandoId) {
     retorno = await supabase.from("produtos").update(produto).eq("id", editandoId);
   } else {
@@ -138,11 +151,12 @@ document.getElementById("formProduto").addEventListener("submit", async (e) => {
   }
 
   const { error } = retorno;
+
   setLoading(btn, false);
 
   if (error) {
+    alerta("Erro ao salvar produto!", "erro");
     console.error(error);
-    alerta("Erro ao salvar!", "erro");
     return;
   }
 
@@ -153,25 +167,34 @@ document.getElementById("formProduto").addEventListener("submit", async (e) => {
 });
 
 /* -------------------------------------------------------
-   Editar
+   Editar produto
 ------------------------------------------------------- */
 window.editarProduto = async function (id) {
   editandoId = id;
 
-  const { data } = await supabase.from("produtos").select("*").eq("id", id).single();
+  const { data, error } = await supabase
+    .from("produtos")
+    .select("*")
+    .eq("id", id)
+    .single();
 
-  document.getElementById("codigo").value = data.codigo || "";
-  document.getElementById("descricao").value = data.descricao || "";
-  document.getElementById("unidade").value = data.unidade || "";
+  if (error) {
+    alerta("Erro ao carregar produto!", "erro");
+    return;
+  }
 
-  document.getElementById("comprimento_mm").value = formatNumero(data.comprimento_mm);
-  document.getElementById("acabamento").value = data.acabamento || "";
+  document.getElementById("codigo").value = data.codigo ?? "";
+  document.getElementById("descricao").value = data.descricao ?? "";
+  document.getElementById("unidade").value = data.unidade ?? "";
 
-  document.getElementById("peso_bruto").value = formatNumero(data.peso_bruto);
-  document.getElementById("peso_liquido").value = formatNumero(data.peso_liquido);
+  document.getElementById("comprimento_mm").value = formatBR(data.comprimento_mm);
+  document.getElementById("acabamento").value = data.acabamento ?? "";
 
-  document.getElementById("preco_custo").value = formatNumero(data.preco_custo);
-  document.getElementById("preco_venda").value = formatNumero(data.preco_venda);
+  document.getElementById("peso_bruto").value = formatBR(data.peso_bruto);
+  document.getElementById("peso_liquido").value = formatBR(data.peso_liquido);
+
+  document.getElementById("preco_custo").value = formatBR(data.preco_custo);
+  document.getElementById("preco_venda").value = formatBR(data.preco_venda);
 
   document.getElementById("btnCancelar").style.display = "inline-block";
 
