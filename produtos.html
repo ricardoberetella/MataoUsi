@@ -162,10 +162,10 @@
       border-radius: 6px;
       border: none;
       cursor: pointer;
+      color: black;
     }
 
-    /* ====================== RESPONSIVIDADE ========================== */
-
+    /* RESPONSIVIDADE */
     @media (max-width: 900px) {
 
       .container {
@@ -174,7 +174,6 @@
 
       .form-row {
         flex-direction: column;
-        gap: 8px;
       }
 
       .btn-salvar {
@@ -182,14 +181,8 @@
         float: none;
       }
 
-      table {
-        font-size: 12px;
-      }
-
       .edit-modal {
-        width: 95% !important;
-        left: 50%;
-        transform: translateX(-50%);
+        width: 95%;
         padding: 15px;
       }
 
@@ -268,7 +261,7 @@
       </div>
 
       <div class="form-row">
-        <div class="form-group" style="flex: 1;">
+        <div class="form-group">
           <label>Preço de Venda (R$)</label>
           <input type="text" id="preco_venda">
         </div>
@@ -294,10 +287,10 @@
           <th>Unidade</th>
           <th>Comprimento (mm)</th>
           <th>Acabamento</th>
-          <th>Peso Líquido (kg)</th>
-          <th>Peso Bruto (kg)</th>
-          <th>Preço de Custo</th>
-          <th>Preço de Venda</th>
+          <th>Peso Líquido</th>
+          <th>Peso Bruto</th>
+          <th>Preço Custo</th>
+          <th>Preço Venda</th>
           <th>Ações</th>
         </tr>
       </thead>
@@ -306,7 +299,7 @@
 
   </div>
 
-  <!-- MODAL DE EDIÇÃO -->
+  <!-- MODAL -->
   <div class="edit-modal" id="editModal">
     <h2>Editar produto</h2>
 
@@ -318,8 +311,8 @@
     </div>
   </div>
 
-  <script src="/js/config.js"></script>
-  <script src="/js/produtos.js"></script>
+  <!-- IMPORTAÇÃO CORRETA COMO MÓDULO -->
+  <script type="module" src="/js/produtos.js"></script>
 
 </body>
 </html>
