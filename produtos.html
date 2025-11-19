@@ -10,33 +10,32 @@
     body {
       background: #0f172a;
       color: white;
-      font-family: Arial, sans-serif;
+      font-family: Arial;
       margin: 0;
       padding: 20px;
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 1100px;
       margin: auto;
       background: #1e293b;
-      padding: 25px;
+      padding: 20px;
       border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 0 10px rgba(0, 0, 0, .5);
     }
 
     h2 {
       text-align: center;
       color: #38bdf8;
+      margin-bottom: 20px;
     }
 
-    input,
-    select {
+    input, select {
       width: 100%;
       padding: 10px;
-      margin: 8px 0;
+      margin: 6px 0;
       border-radius: 6px;
       border: none;
-      outline: none;
     }
 
     button {
@@ -44,18 +43,17 @@
       border: none;
       border-radius: 6px;
       background: #38bdf8;
-      cursor: pointer;
       color: #0f172a;
       font-weight: bold;
+      cursor: pointer;
       margin-right: 10px;
     }
 
     table {
       width: 100%;
-      margin-top: 20px;
       border-collapse: collapse;
+      margin-top: 25px;
       background: #0f172a;
-      color: white;
     }
 
     th, td {
@@ -64,8 +62,14 @@
       text-align: left;
     }
 
+    th {
+      color: #38bdf8;
+    }
+
     .actions button {
+      padding: 6px 12px;
       margin-right: 5px;
+      font-size: 13px;
     }
   </style>
 </head>
@@ -77,15 +81,16 @@
 
     <form id="formProduto">
 
-      <input type="text" id="codigo" placeholder="Código (SKU/código interno)">
-      <input type="text" id="descricao" placeholder="Descrição do Produto">
-      <input type="text" id="unidade" placeholder="Unidade (UN / KG / PC)">
+      <input type="text" id="codigo" placeholder="Código do Produto" required>
+      <input type="text" id="descricao" placeholder="Descrição" required>
+      <input type="text" id="unidade" placeholder="Unidade (ex: UN, KG)" required>
+
       <input type="number" id="comprimento_mm" placeholder="Comprimento (mm)">
-      
+
       <select id="acabamento">
         <option value="">Selecione o Acabamento</option>
-        <option value="zincado">Zincado</option>
-        <option value="tratado">Tratado</option>
+        <option value="Zincado">Zincado</option>
+        <option value="Tratado">Tratado</option>
       </select>
 
       <input type="text" id="peso_bruto" placeholder="Peso Bruto (kg)">
@@ -94,7 +99,7 @@
       <input type="text" id="preco_venda" placeholder="Preço de Venda (R$)">
 
       <button id="btnSalvar" type="submit">Cadastrar Produto</button>
-      <button id="btnCancelar" type="button" style="display:none;">Cancelar</button>
+      <button id="btnCancelar" type="button" style="display:none;">Cancelar Edição</button>
 
     </form>
 
@@ -113,9 +118,9 @@
           <th>Ações</th>
         </tr>
       </thead>
+
       <tbody id="listaProdutos"></tbody>
     </table>
-
   </div>
 
   <!-- Caminho correto -->
