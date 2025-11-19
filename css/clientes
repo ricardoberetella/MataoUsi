@@ -1,0 +1,116 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  background: #0f172a;
+  color: #e5e7eb;
+}
+
+.topbar {
+  background: #0a0a0a;
+  padding: 18px;
+  text-align: center;
+  font-size: 20px;
+  color: #38bdf8;
+  border-bottom: 1px solid #1f2937;
+}
+
+.container {
+  max-width: 900px;
+  margin: 30px auto;
+  background: #1e293b;
+  padding: 25px;
+  border-radius: 10px;
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tab {
+  flex: 1;
+  padding: 12px;
+  background: #334155;
+  color: #e5e7eb;
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+.tab.active {
+  background: #38bdf8;
+  color: black;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+label {
+  display: block;
+  margin-top: 15px;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border-radius: 8px;
+  border: none;
+  background: #334155;
+  color: white;
+}
+
+.btns {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+button {
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+#btnSalvar {
+  background: #38bdf8;
+}
+
+#btnCancelar {
+  background: #475569;
+  color: white;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+th, td {
+  padding: 12px;
+  text-align: left;
+}
+
+th {
+  background: #334155;
+}
+
+tr:nth-child(even) {
+  background: #283548;
+}
+
+.action-btn {
+  margin-right: 8px;
+  cursor: pointer;
+  color: #38bdf8;
+}
