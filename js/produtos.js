@@ -4,23 +4,31 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let editandoId = null;
 
-// ===========================
-// Conversão para número (vírgula → ponto)
-// ===========================
+/* ===========================
+   Conversão BR → Número
+=========================== */
 function toNumber(valor) {
   if (!valor || valor.trim() === "") return null;
-  return Number(valor.replace(".", "").replace(",", "."));
+
+  // Remove pontos de milhar
+  valor = valor.replace(/\./g, "");
+
+  // Troca vírgula por ponto
+  valor = valor.replace(",", ".");
+
+  return Number(valor);
 }
 
-// ===========================
-// Alertas
-// ===========================
+/* ===========================
+   Alertas
+=========================== */
 function alerta(msg, tipo = "info") {
   const box = document.createElement("div");
   box.className = "alert " + tipo;
   box.innerText = msg;
 
   document.body.appendChild(box);
+
   setTimeout(() => box.classList.add("show"), 50);
 
   setTimeout(() => {
@@ -29,20 +37,23 @@ function alerta(msg, tipo = "info") {
   }, 3000);
 }
 
-// ===========================
-// Loading do botão
-// ===========================
+/* ===========================
+   Loading no botão
+=========================== */
 function setLoading(btn, estado) {
   btn.disabled = estado;
   btn.innerHTML = estado ? "⏳ Salvando..." : "Salvar";
 }
 
-// ===========================
-// Carregar produtos
-// ===========================
+/* ===========================
+   Carregar lista de produtos
+=========================== */
 async function carregarProdutos() {
   const tbody = document.getElementById("listaProdutos");
-  tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;">Carregando...</td></tr>`;
+
+  tbody.innerHTML = `
+    <tr><td colspan="10" style="text-align:center;">Carregando...</td></tr>
+  `;
 
   const { data, error } = await supabase
     .from("produtos")
@@ -50,7 +61,7 @@ async function carregarProdutos() {
     .order("id", { ascending: false });
 
   if (error) {
-    alerta("Erro ao carregar produtos", "erro");
+    alerta("Erro ao carregar produtos!", "erro");
     console.error(error);
     return;
   }
@@ -71,8 +82,8 @@ async function carregarProdutos() {
       <td>${p.preco_custo ?? ""}</td>
       <td>${p.preco_venda ?? ""}</td>
       <td>
-        <button class="btn-editar" onclick="editarProduto(${p.id})">✏ Editar</button>
-        <button class="btn-excluir" onclick="excluirProduto(${p.id})">🗑 Excluir</button>
+        <button class="btn-editar" onclick="editarProduto(${p.id})">Editar</button>
+        <button class="btn-excluir" onclick="excluirProduto(${p.id})">Excluir</button>
       </td>
     `;
 
@@ -80,9 +91,9 @@ async function carregarProdutos() {
   });
 }
 
-// ===========================
-// Salvar (novo ou editar)
-// ===========================
+/* ===========================
+   Salvar (Cadastrar ou Editar)
+=========================== */
 document.getElementById("formProduto").addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -107,15 +118,19 @@ document.getElementById("formProduto").addEventListener("submit", async (e) => {
     return;
   }
 
-  let retorno;
+  let resposta;
 
   if (editandoId) {
-    retorno = await supabase.from("produtos").update(produto).eq("id", editandoId);
+    resposta = await supabase
+      .from("produtos")
+      .update(produto)
+      .eq("id", editandoId);
   } else {
-    retorno = await supabase.from("produtos").insert([produto]);
+    resposta = await supabase.from("produtos").insert([produto]);
   }
 
-  const { error } = retorno;
+  const { error } = resposta;
+
   setLoading(btn, false);
 
   if (error) {
@@ -130,13 +145,23 @@ document.getElementById("formProduto").addEventListener("submit", async (e) => {
   carregarProdutos();
 });
 
-// ===========================
-// Editar produto
-// ===========================
+/* ===========================
+   Editar produto
+=========================== */
 window.editarProduto = async function (id) {
   editandoId = id;
 
-  const { data } = await supabase.from("produtos").select("*").eq("id", id).single();
+  const { data, error } = await supabase
+    .from("produtos")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    alerta("Erro ao carregar produto!", "erro");
+    console.error(error);
+    return;
+  }
 
   document.getElementById("codigo").value = data.codigo ?? "";
   document.getElementById("descricao").value = data.descricao ?? "";
@@ -149,20 +174,21 @@ window.editarProduto = async function (id) {
   document.getElementById("preco_venda").value = data.preco_venda ?? "";
 
   document.getElementById("btnCancelar").style.display = "inline-block";
+
   alerta("Editando produto...", "info");
 };
 
-// ===========================
-// Cancelar edição
-// ===========================
+/* ===========================
+   Cancelar
+=========================== */
 document.getElementById("btnCancelar").addEventListener("click", () => {
   limparFormulario();
   alerta("Edição cancelada", "info");
 });
 
-// ===========================
-// Excluir produto
-// ===========================
+/* ===========================
+   Excluir
+=========================== */
 window.excluirProduto = async function (id) {
   if (!confirm("Excluir este produto?")) return;
 
@@ -178,16 +204,16 @@ window.excluirProduto = async function (id) {
   carregarProdutos();
 };
 
-// ===========================
-// Limpar formulário
-// ===========================
+/* ===========================
+   Limpar formulário
+=========================== */
 function limparFormulario() {
   document.getElementById("formProduto").reset();
-  document.getElementById("btnCancelar").style.display = "none";
   editandoId = null;
+  document.getElementById("btnCancelar").style.display = "none";
 }
 
-// ===========================
-// Iniciar a página
-// ===========================
+/* ===========================
+   Inicializar
+=========================== */
 carregarProdutos();
