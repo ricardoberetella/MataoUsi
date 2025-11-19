@@ -4,244 +4,77 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>Cadastro de Produtos</title>
 
-  <style>
-    :root {
-      --bg: #0f172a;
-      --card: #1e293b;
-      --accent: #38bdf8;
-      --text: #ffffff;
-      --border: #334155;
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: Arial, sans-serif;
-    }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      padding: 15px;
-    }
-
-    /* ---------- HEADER ---------- */
-    .header {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    .title {
-      font-size: 1.6rem;
-      font-weight: bold;
-      color: var(--accent);
-    }
-
-    .btn-back {
-      margin-top: 10px;
-      background: var(--accent);
-      color: #0f172a;
-      padding: 10px 20px;
-      border-radius: 6px;
-      border: none;
-      font-weight: bold;
-      cursor: pointer;
-      width: 100%;
-      max-width: 200px;
-    }
-
-    /* ---------- CARD ---------- */
-    .card {
-      background: var(--card);
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.4);
-      margin-bottom: 20px;
-    }
-
-    /* ---------- FORM ---------- */
-    form {
-      display: grid;
-      gap: 12px;
-    }
-
-    label {
-      font-size: 0.9rem;
-      opacity: 0.9;
-    }
-
-    input, select {
-      padding: 12px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: #0f172a;
-      color: white;
-      width: 100%;
-    }
-
-    button {
-      padding: 12px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 1rem;
-    }
-
-    #btnSalvar {
-      background: var(--accent);
-      color: #0f172a;
-    }
-
-    #btnCancelar {
-      background: #ef4444;
-      display: none;
-      color: white;
-    }
-
-    /* ---------- TABLE ---------- */
-    .table-container {
-      overflow-x: auto;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      margin-top: 25px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 900px;
-    }
-
-    th {
-      background: #1e293b;
-      padding: 10px;
-      text-align: left;
-      border-bottom: 2px solid #0f172a;
-    }
-
-    td {
-      padding: 10px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .acoes button {
-      padding: 6px 10px;
-      margin-right: 5px;
-      border-radius: 5px;
-      font-size: 0.8rem;
-      cursor: pointer;
-      background: var(--accent);
-      color: #0f172a;
-      border: none;
-    }
-
-    /* MOBILE */
-    @media(max-width: 600px) {
-      .title {
-        font-size: 1.4rem;
-      }
-
-      table {
-        min-width: 700px;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="css/produtos.css">
 </head>
 
 <body>
 
-  <!-- HEADER -->
-  <div class="header">
-    <div class="title">Cadastro de Produtos</div>
-    <button class="btn-back" onclick="window.location.href='dashboard.html'">← Voltar ao Menu</button>
-  </div>
+  <header class="topbar">
+    <button onclick="window.location.href='dashboard.html'" class="voltar">⬅ Voltar</button>
+    <h1>Produtos</h1>
+  </header>
 
-  <!-- FORM -->
-  <div class="card">
-    <form id="formProduto">
+  <div class="container">
 
-      <div>
-        <label>Código:</label>
-        <input type="text" id="codigo" placeholder="Código do Produto">
-      </div>
+    <form id="formProduto" class="card">
 
-      <div>
-        <label>Descrição:</label>
+      <h2>Cadastrar / Editar Produto</h2>
+
+      <div class="grid">
+        <input type="text" id="codigo" placeholder="Código">
         <input type="text" id="descricao" placeholder="Descrição">
-      </div>
+        <input type="text" id="unidade" placeholder="Unidade (UN, KG...)">
+        <input type="number" id="comprimento_mm" placeholder="Comprimento (mm)">
 
-      <div>
-        <label>Unidade:</label>
-        <input type="text" id="unidade" placeholder="UN, KG...">
-      </div>
-
-      <div>
-        <label>Comprimento (mm):</label>
-        <input type="number" id="comprimento_mm" placeholder="Ex: 80">
-      </div>
-
-      <div>
-        <label>Acabamento:</label>
         <select id="acabamento">
-          <option value="">Selecione</option>
+          <option value="">Acabamento</option>
           <option value="Zincado">Zincado</option>
           <option value="Tratado">Tratado</option>
         </select>
+
+        <input type="text" id="peso_bruto" placeholder="Peso Bruto">
+        <input type="text" id="peso_liquido" placeholder="Peso Líquido">
+        <input type="text" id="preco_custo" placeholder="Preço de Custo">
+        <input type="text" id="preco_venda" placeholder="Preço de Venda">
       </div>
 
-      <div>
-        <label>Peso Bruto:</label>
-        <input type="text" id="peso_bruto">
+      <div class="btn-area">
+        <button id="btnSalvar" type="submit" class="btn-primary">Salvar</button>
+        <button id="btnCancelar" type="button" class="btn-secondary" style="display:none;">Cancelar</button>
       </div>
 
-      <div>
-        <label>Peso Líquido:</label>
-        <input type="text" id="peso_liquido">
-      </div>
-
-      <div>
-        <label>Preço Custo:</label>
-        <input type="text" id="preco_custo">
-      </div>
-
-      <div>
-        <label>Preço Venda:</label>
-        <input type="text" id="preco_venda">
-      </div>
-
-      <button id="btnSalvar" type="submit">Cadastrar Produto</button>
-      <button id="btnCancelar" type="button">Cancelar</button>
     </form>
-  </div>
 
-  <!-- TABELA -->
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th>Código</th>
-          <th>Descrição</th>
-          <th>Unidade</th>
-          <th>Comp. (mm)</th>
-          <th>Acabamento</th>
-          <th>Peso Bruto</th>
-          <th>Peso Líquido</th>
-          <th>Preço Custo</th>
-          <th>Preço Venda</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
+    <div class="card">
+      <h2>Lista de Produtos</h2>
 
-      <tbody id="listaProdutos"></tbody>
-    </table>
+      <div class="tabela-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Cód</th>
+              <th>Descrição</th>
+              <th>UN</th>
+              <th>Comp</th>
+              <th>Acab</th>
+              <th>P. Bruto</th>
+              <th>P. Líquido</th>
+              <th>Custo</th>
+              <th>Venda</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+
+          <tbody id="listaProdutos"></tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 
   <script type="module" src="js/produtos.js"></script>
-
 </body>
+
 </html>
