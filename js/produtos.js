@@ -5,22 +5,15 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let editandoId = null;
 
 // ===========================
-// Máscaras automáticas
+// Conversão para número (vírgula → ponto)
 // ===========================
-function mascaraNumero(valor) {
-  return valor.replace(/[^\d,.-]/g, "");
-}
-
-function mascaraPreco(valor) {
-  valor = valor.replace(/[^\d]/g, "");
-  return (Number(valor) / 100).toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
+function toNumber(valor) {
+  if (!valor || valor.trim() === "") return null;
+  return Number(valor.replace(".", "").replace(",", "."));
 }
 
 // ===========================
-// Alertas bonitos
+// Alertas
 // ===========================
 function alerta(msg, tipo = "info") {
   const box = document.createElement("div");
@@ -40,13 +33,8 @@ function alerta(msg, tipo = "info") {
 // Loading do botão
 // ===========================
 function setLoading(btn, estado) {
-  if (estado) {
-    btn.disabled = true;
-    btn.innerHTML = "⏳ Salvando...";
-  } else {
-    btn.disabled = false;
-    btn.innerHTML = "Salvar";
-  }
+  btn.disabled = estado;
+  btn.innerHTML = estado ? "⏳ Salvando..." : "Salvar";
 }
 
 // ===========================
@@ -56,7 +44,10 @@ async function carregarProdutos() {
   const tbody = document.getElementById("listaProdutos");
   tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;">Carregando...</td></tr>`;
 
-  const { data, error } = await supabase.from("produtos").select("*").order("id", { ascending: false });
+  const { data, error } = await supabase
+    .from("produtos")
+    .select("*")
+    .order("id", { ascending: false });
 
   if (error) {
     alerta("Erro ao carregar produtos", "erro");
@@ -70,18 +61,18 @@ async function carregarProdutos() {
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
-      <td>${p.codigo || ""}</td>
-      <td>${p.descricao || ""}</td>
-      <td>${p.unidade || ""}</td>
-      <td>${p.comprimento_mm || ""}</td>
-      <td>${p.acabamento || ""}</td>
-      <td>${p.peso_bruto || ""}</td>
-      <td>${p.peso_liquido || ""}</td>
-      <td>${p.preco_custo || ""}</td>
-      <td>${p.preco_venda || ""}</td>
+      <td>${p.codigo ?? ""}</td>
+      <td>${p.descricao ?? ""}</td>
+      <td>${p.unidade ?? ""}</td>
+      <td>${p.comprimento_mm ?? ""}</td>
+      <td>${p.acabamento ?? ""}</td>
+      <td>${p.peso_bruto ?? ""}</td>
+      <td>${p.peso_liquido ?? ""}</td>
+      <td>${p.preco_custo ?? ""}</td>
+      <td>${p.preco_venda ?? ""}</td>
       <td>
-        <button class="btn-editar" onclick="editarProduto(${p.id})">Editar</button>
-        <button class="btn-excluir" onclick="excluirProduto(${p.id})">Excluir</button>
+        <button class="btn-editar" onclick="editarProduto(${p.id})">✏ Editar</button>
+        <button class="btn-excluir" onclick="excluirProduto(${p.id})">🗑 Excluir</button>
       </td>
     `;
 
@@ -102,12 +93,12 @@ document.getElementById("formProduto").addEventListener("submit", async (e) => {
     codigo: document.getElementById("codigo").value.trim(),
     descricao: document.getElementById("descricao").value.trim(),
     unidade: document.getElementById("unidade").value.trim(),
-    comprimento_mm: document.getElementById("comprimento_mm").value.trim(),
+    comprimento_mm: toNumber(document.getElementById("comprimento_mm").value),
     acabamento: document.getElementById("acabamento").value,
-    peso_bruto: document.getElementById("peso_bruto").value.trim(),
-    peso_liquido: document.getElementById("peso_liquido").value.trim(),
-    preco_custo: document.getElementById("preco_custo").value.trim(),
-    preco_venda: document.getElementById("preco_venda").value.trim(),
+    peso_bruto: toNumber(document.getElementById("peso_bruto").value),
+    peso_liquido: toNumber(document.getElementById("peso_liquido").value),
+    preco_custo: toNumber(document.getElementById("preco_custo").value),
+    preco_venda: toNumber(document.getElementById("preco_venda").value),
   };
 
   if (!produto.descricao) {
@@ -125,7 +116,6 @@ document.getElementById("formProduto").addEventListener("submit", async (e) => {
   }
 
   const { error } = retorno;
-
   setLoading(btn, false);
 
   if (error) {
@@ -141,22 +131,22 @@ document.getElementById("formProduto").addEventListener("submit", async (e) => {
 });
 
 // ===========================
-// Editar
+// Editar produto
 // ===========================
 window.editarProduto = async function (id) {
   editandoId = id;
 
   const { data } = await supabase.from("produtos").select("*").eq("id", id).single();
 
-  document.getElementById("codigo").value = data.codigo || "";
-  document.getElementById("descricao").value = data.descricao || "";
-  document.getElementById("unidade").value = data.unidade || "";
-  document.getElementById("comprimento_mm").value = data.comprimento_mm || "";
-  document.getElementById("acabamento").value = data.acabamento || "";
-  document.getElementById("peso_bruto").value = data.peso_bruto || "";
-  document.getElementById("peso_liquido").value = data.peso_liquido || "";
-  document.getElementById("preco_custo").value = data.preco_custo || "";
-  document.getElementById("preco_venda").value = data.preco_venda || "";
+  document.getElementById("codigo").value = data.codigo ?? "";
+  document.getElementById("descricao").value = data.descricao ?? "";
+  document.getElementById("unidade").value = data.unidade ?? "";
+  document.getElementById("comprimento_mm").value = data.comprimento_mm ?? "";
+  document.getElementById("acabamento").value = data.acabamento ?? "";
+  document.getElementById("peso_bruto").value = data.peso_bruto ?? "";
+  document.getElementById("peso_liquido").value = data.peso_liquido ?? "";
+  document.getElementById("preco_custo").value = data.preco_custo ?? "";
+  document.getElementById("preco_venda").value = data.preco_venda ?? "";
 
   document.getElementById("btnCancelar").style.display = "inline-block";
   alerta("Editando produto...", "info");
@@ -171,7 +161,7 @@ document.getElementById("btnCancelar").addEventListener("click", () => {
 });
 
 // ===========================
-// Excluir
+// Excluir produto
 // ===========================
 window.excluirProduto = async function (id) {
   if (!confirm("Excluir este produto?")) return;
@@ -180,6 +170,7 @@ window.excluirProduto = async function (id) {
 
   if (error) {
     alerta("Erro ao excluir produto!", "erro");
+    console.error(error);
     return;
   }
 
@@ -188,7 +179,7 @@ window.excluirProduto = async function (id) {
 };
 
 // ===========================
-// Limpar form
+// Limpar formulário
 // ===========================
 function limparFormulario() {
   document.getElementById("formProduto").reset();
@@ -197,6 +188,6 @@ function limparFormulario() {
 }
 
 // ===========================
-// Iniciar
+// Iniciar a página
 // ===========================
 carregarProdutos();
