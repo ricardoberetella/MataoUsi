@@ -27,11 +27,15 @@
 
       <div class="grid">
 
-        <input type="text" id="codigo" placeholder="Código (SKU)">
+        <!-- Linha de código + botão buscar -->
+        <div class="linha-codigo">
+          <input type="text" id="codigo" placeholder="Código (SKU)">
+          <button type="button" id="btnBuscarCodigo" class="btn-buscar">Buscar</button>
+        </div>
+
         <input type="text" id="descricao" placeholder="Descrição">
         <input type="text" id="unidade" placeholder="Unidade (UN, KG...)">
 
-        <!-- ALTERADO p/ text (aceita vírgula) -->
         <input type="text" id="comprimento_mm" placeholder="Comprimento (mm)">
 
         <select id="acabamento">
@@ -42,7 +46,8 @@
 
         <input type="text" id="peso_bruto" placeholder="Peso Bruto">
         <input type="text" id="peso_liquido" placeholder="Peso Líquido">
-    <input type="text" id="preco_custo" placeholder="Preço de Custo">
+
+        <input type="text" id="preco_custo" placeholder="Preço de Custo">
         <input type="text" id="preco_venda" placeholder="Preço de Venda">
 
       </div>
