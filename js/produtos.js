@@ -5,14 +5,13 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let editandoId = null;
 
-// -------------------------------------------
-// Conversores numéricos BR ↔ número real
-// -------------------------------------------
+// Converte entradas numéricas brasileiras para número real
 function parseNumero(val) {
   if (!val || val.trim() === "") return null;
-  return Number(val.replace(".", "").replace(",", "."));
+  return Number(val.replace(",", "."));
 }
 
+// Formata números para padrão brasileiro
 function formatNumero(val) {
   if (val == null) return "";
   return Number(val).toLocaleString("pt-BR", {
@@ -21,9 +20,6 @@ function formatNumero(val) {
   });
 }
 
-// -------------------------------------------
-// Inicialização
-// -------------------------------------------
 document.addEventListener("DOMContentLoaded", () => {
   carregarProdutos();
 
@@ -37,12 +33,10 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// -------------------------------------------
-// LISTAR PRODUTOS
-// -------------------------------------------
+// ---------------- LISTAR PRODUTOS ----------------
 async function carregarProdutos() {
-  const lista = document.getElementById("listaProdutos");
-  lista.innerHTML = "<tr><td colspan='10'>Carregando...</td></tr>";
+  const tabela = document.getElementById("listaProdutos");
+  tabela.innerHTML = "<tr><td colspan='10'>Carregando...</td></tr>";
 
   const { data, error } = await supabase
     .from("produtos")
@@ -50,20 +44,21 @@ async function carregarProdutos() {
     .order("codigo", { ascending: true });
 
   if (error) {
+    tabela.innerHTML = "<tr><td colspan='10'>Erro ao carregar produtos</td></tr>";
     console.error(error);
-    lista.innerHTML = "<tr><td colspan='10'>Erro ao carregar</td></tr>";
     return;
   }
 
   if (!data || data.length === 0) {
-    lista.innerHTML = "<tr><td colspan='10'>Nenhum produto encontrado</td></tr>";
+    tabela.innerHTML = "<tr><td colspan='10'>Nenhum produto encontrado</td></tr>";
     return;
   }
 
-  lista.innerHTML = "";
+  tabela.innerHTML = "";
 
   data.forEach((p) => {
     const tr = document.createElement("tr");
+
     tr.innerHTML = `
       <td>${p.codigo}</td>
       <td>${p.descricao}</td>
@@ -74,19 +69,17 @@ async function carregarProdutos() {
       <td>${formatNumero(p.peso_liquido)}</td>
       <td>${formatNumero(p.preco_custo)}</td>
       <td>${formatNumero(p.preco_venda)}</td>
-
-      <td class="acoes">
+      <td>
         <button onclick="editarProduto('${p.id}')">Editar</button>
         <button onclick="excluirProduto('${p.id}')">Excluir</button>
       </td>
     `;
-    lista.appendChild(tr);
+
+    tabela.appendChild(tr);
   });
 }
 
-// -------------------------------------------
-// EDITAR PRODUTO
-// -------------------------------------------
+// ---------------- EDITAR PRODUTO ----------------
 window.editarProduto = async function (id) {
   const { data, error } = await supabase
     .from("produtos")
@@ -94,8 +87,8 @@ window.editarProduto = async function (id) {
     .eq("id", id)
     .single();
 
-  if (error) {
-    alert("Erro ao carregar produto");
+  if (error || !data) {
+    alert("Erro ao carregar produto.");
     return;
   }
 
@@ -115,30 +108,26 @@ window.editarProduto = async function (id) {
   document.getElementById("btnCancelar").style.display = "inline-block";
 };
 
-// -------------------------------------------
-// EXCLUIR PRODUTO
-// -------------------------------------------
+// ---------------- EXCLUIR PRODUTO ----------------
 window.excluirProduto = async function (id) {
   if (!confirm("Deseja excluir este produto?")) return;
 
   const { error } = await supabase.from("produtos").delete().eq("id", id);
 
   if (error) {
-    alert("Erro ao excluir");
+    alert("Erro ao excluir produto.");
     return;
   }
 
   carregarProdutos();
 };
 
-// -------------------------------------------
-// SALVAR (CRIAR / EDITAR)
-// -------------------------------------------
+// ---------------- SALVAR (NOVO OU EDITADO) ----------------
 async function salvarProduto() {
   const dados = {
-    codigo: document.getElementById("codigo").value.trim(),
-    descricao: document.getElementById("descricao").value.trim(),
-    unidade: document.getElementById("unidade").value.trim(),
+    codigo: document.getElementById("codigo").value,
+    descricao: document.getElementById("descricao").value,
+    unidade: document.getElementById("unidade").value,
     comprimento_mm: parseNumero(document.getElementById("comprimento_mm").value),
     acabamento: document.getElementById("acabamento").value,
     peso_bruto: parseNumero(document.getElementById("peso_bruto").value),
@@ -147,14 +136,11 @@ async function salvarProduto() {
     preco_venda: parseNumero(document.getElementById("preco_venda").value),
   };
 
-  if (!dados.codigo || !dados.descricao) {
-    alert("Código e Descrição são obrigatórios!");
-    return;
-  }
-
   if (editandoId) {
+    // Atualizar
     await supabase.from("produtos").update(dados).eq("id", editandoId);
   } else {
+    // Inserir novo
     await supabase.from("produtos").insert(dados);
   }
 
@@ -162,9 +148,7 @@ async function salvarProduto() {
   carregarProdutos();
 }
 
-// -------------------------------------------
-// LIMPAR FORMULÁRIO
-// -------------------------------------------
+// ---------------- LIMPAR FORMULÁRIO ----------------
 function limparFormulario() {
   editandoId = null;
   document.getElementById("formProduto").reset();
