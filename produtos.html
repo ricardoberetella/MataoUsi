@@ -10,18 +10,18 @@
     body {
       background: #0f172a;
       color: white;
-      font-family: Arial;
+      font-family: Arial, sans-serif;
       margin: 0;
       padding: 20px;
     }
 
     .container {
-      max-width: 900px;
+      max-width: 1200px;
       margin: auto;
       background: #1e293b;
-      padding: 20px;
+      padding: 25px;
       border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, .5);
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     }
 
     h2 {
@@ -58,8 +58,7 @@
       color: white;
     }
 
-    td,
-    th {
+    th, td {
       padding: 10px;
       border-bottom: 1px solid #1e293b;
       text-align: left;
@@ -67,45 +66,61 @@
 
     .actions button {
       margin-right: 5px;
-      background: #38bdf8;
-      color: #0f172a;
     }
   </style>
 </head>
 
 <body>
+
   <div class="container">
     <h2>Cadastro de Produtos</h2>
 
     <form id="formProduto">
-      <input type="text" id="sku" placeholder="SKU">
-      <input type="text" id="nome" placeholder="Nome do Produto">
-      <input type="text" id="descricao" placeholder="Descrição">
-      <input type="text" id="unidade" placeholder="Unidade (ex: UN, KG)">
-      <input type="text" id="preco_custo" placeholder="Preço de Custo">
-      <input type="text" id="preco_venda" placeholder="Preço de Venda">
+
+      <input type="text" id="codigo" placeholder="Código (SKU/código interno)">
+      <input type="text" id="descricao" placeholder="Descrição do Produto">
+      <input type="text" id="unidade" placeholder="Unidade (UN / KG / PC)">
+      <input type="number" id="comprimento_mm" placeholder="Comprimento (mm)">
+      
+      <select id="acabamento">
+        <option value="">Selecione o Acabamento</option>
+        <option value="zincado">Zincado</option>
+        <option value="tratado">Tratado</option>
+      </select>
+
+      <input type="text" id="peso_bruto" placeholder="Peso Bruto (kg)">
+      <input type="text" id="peso_liquido" placeholder="Peso Líquido (kg)">
+      <input type="text" id="preco_custo" placeholder="Preço de Custo (R$)">
+      <input type="text" id="preco_venda" placeholder="Preço de Venda (R$)">
 
       <button id="btnSalvar" type="submit">Cadastrar Produto</button>
       <button id="btnCancelar" type="button" style="display:none;">Cancelar</button>
+
     </form>
 
     <table>
       <thead>
         <tr>
-          <th>ID</th>
-          <th>SKU</th>
-          <th>Nome</th>
+          <th>Código</th>
+          <th>Descrição</th>
           <th>Unidade</th>
+          <th>Comprimento (mm)</th>
+          <th>Acabamento</th>
+          <th>Peso Bruto</th>
+          <th>Peso Líquido</th>
+          <th>Preço Custo</th>
           <th>Preço Venda</th>
           <th>Ações</th>
         </tr>
       </thead>
       <tbody id="listaProdutos"></tbody>
     </table>
+
   </div>
 
-  <!-- Caminho correto para sua pasta -->
+  <!-- Caminho correto -->
   <script type="module" src="js/produtos.js"></script>
+
 </body>
 
 </html>
