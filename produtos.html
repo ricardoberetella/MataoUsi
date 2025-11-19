@@ -1,338 +1,325 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Cadastro de Produtos - MataoUsi</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastro de Produtos</title>
 
-    <link rel="stylesheet" href="dashboard.css">
+  <style>
+    body {
+      background: #0f172a;
+      color: white;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #0f172a;
-            margin: 0;
-            padding: 0;
-            color: #fff;
-        }
+    .container {
+      max-width: 1200px;
+      margin: 30px auto;
+      background: #1e293b;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.6);
+    }
 
-        .container {
-            max-width: 1200px;
-            margin: 20px auto;
-            background: #1e293b;
-            padding: 25px;
-            border-radius: 14px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.45);
-        }
+    h1 {
+      text-align: left;
+      color: #38bdf8;
+      margin-bottom: 10px;
+    }
 
-        h1 {
-            margin-bottom: 20px;
-            color: #38bdf8;
-        }
+    .btn-voltar {
+      margin-left: auto;
+      display: block;
+      width: fit-content;
+      margin-bottom: 20px;
+      background: transparent;
+      padding: 8px 18px;
+      border-radius: 25px;
+      border: 2px solid #38bdf8;
+      color: #38bdf8;
+      text-decoration: none;
+      font-size: 14px;
+      transition: 0.3s;
+    }
 
-        .btn-voltar {
-            float: right;
-            background: none;
-            border: 2px solid #38bdf8;
-            padding: 8px 25px;
-            border-radius: 30px;
-            color: white;
-            cursor: pointer;
-            font-size: 0.9rem;
-            margin-top: -5px;
-            transition: 0.2s;
-        }
+    .btn-voltar:hover {
+      background: #38bdf8;
+      color: black;
+    }
 
-        .btn-voltar:hover {
-            background: #38bdf8;
-        }
+    .form-row {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 10px;
+    }
 
-        /* ⚡ FORMULÁRIO PREMIUM */
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 18px;
-            margin-top: 10px;
-        }
+    .form-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
 
-        label {
-            font-size: 0.88rem;
-            margin-bottom: 3px;
-            display: block;
-            color: #cbd5e1;
-        }
+    input, select {
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
+      background: #e2e8f0;
+      font-size: 15px;
+    }
 
-        input, select {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 7px;
-            background: #e2e8f0;
-            color: #000;
-            margin-bottom: 5px;
-            font-size: 1rem;
-        }
+    .btn-salvar {
+      width: 180px;
+      background: #22c55e;
+      padding: 12px;
+      border-radius: 25px;
+      border: none;
+      font-size: 16px;
+      color: black;
+      cursor: pointer;
+      margin-top: 20px;
+      float: right;
+    }
 
-        .form-full {
-            grid-column: span 2;
-        }
+    .btn-salvar:hover {
+      background: #16a34a;
+    }
 
-        @media (max-width: 700px) {
-            .form-full {
-                grid-column: span 1;
-            }
-        }
+    table {
+      width: 100%;
+      border-spacing: 0;
+      margin-top: 25px;
+    }
 
-        .btn-salvar {
-            background: #10b981;
-            color: white;
-            border: none;
-            padding: 14px 35px;
-            border-radius: 30px;
-            cursor: pointer;
-            float: right;
-            margin-top: 10px;
-            font-size: 1rem;
-            transition: 0.25s;
-        }
+    th, td {
+      padding: 12px;
+      text-align: left;
+    }
 
-        .btn-salvar:hover {
-            background: #059669;
-        }
+    th {
+      background: #0f172a;
+    }
 
-        .msg-erro {
-            color: #f87171;
-            margin-top: 6px;
-        }
-        .msg-sucesso {
-            color: #4ade80;
-            margin-top: 6px;
-        }
+    tr:nth-child(even) {
+      background: #243244;
+    }
 
-        /* ⚡ TABELA PREMIUM */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 40px;
-        }
+    .edit-btn, .delete-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
 
-        th {
-            background: #0f172a;
-            padding: 10px;
-            text-align: left;
-            font-size: 0.9rem;
-        }
+    .edit-btn {
+      background: #3b82f6;
+    }
 
-        td {
-            padding: 10px;
-        }
+    .delete-btn {
+      background: #ef4444;
+    }
 
-        tr:nth-child(even) {
-            background: #334155;
-        }
+    /* MODAL DE EDIÇÃO */
+    .edit-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: 600px;
+      transform: translate(-50%, -50%);
+      background: #1e293b;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.7);
+      display: none;
+      z-index: 999;
+    }
 
-        .col-acoes button {
-            padding: 6px 12px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            color: white;
-            font-size: 0.85rem;
-        }
+    .edit-modal h2 {
+      margin-top: 0;
+      color: #38bdf8;
+    }
 
-        .btn-editar { background: #3b82f6; }
-        .btn-excluir { background: #ef4444; }
+    .modal-buttons {
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+    }
 
-        .col-acoes {
-            display: flex;
-            gap: 6px;
-        }
+    .cancel-btn {
+      background: gray;
+      padding: 10px 15px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      color: white;
+    }
 
-        /* ⚡ MODAL PREMIUM */
-        #modalEditar.hidden { display: none; }
+    .save-edit-btn {
+      background: #22c55e;
+      padding: 10px 15px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+    }
 
-        #modalEditar {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.65);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+    /* ====================== RESPONSIVIDADE ========================== */
 
-        .modal-content {
-            background: #1e293b;
-            padding: 25px;
-            width: 480px;
-            border-radius: 12px;
-        }
+    @media (max-width: 900px) {
 
-        .modal-footer {
-            text-align: right;
-            margin-top: 12px;
-        }
+      .container {
+        padding: 15px;
+      }
 
-        .btn-cancelar {
-            background: #ef4444;
-            padding: 10px 18px;
-            border-radius: 7px;
-            border: none;
-            cursor: pointer;
-            color: white;
-        }
+      .form-row {
+        flex-direction: column;
+        gap: 8px;
+      }
 
-        .btn-salvar-edit {
-            background: #10b981;
-            padding: 10px 18px;
-            border-radius: 7px;
-            border: none;
-            cursor: pointer;
-            color: white;
-        }
-    </style>
+      .btn-salvar {
+        width: 100%;
+        float: none;
+      }
+
+      table {
+        font-size: 12px;
+      }
+
+      .edit-modal {
+        width: 95% !important;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 15px;
+      }
+
+      .modal-buttons {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .modal-buttons button {
+        width: 100%;
+      }
+    }
+  </style>
+
 </head>
-
 <body>
 
-<div class="container">
+  <div class="container">
 
-    <button class="btn-voltar" onclick="window.location.href='painel.html'">
-        ← Voltar ao painel
-    </button>
+    <a href="/painel.html" class="btn-voltar">← Voltar ao painel</a>
 
     <h1>Cadastro de Produtos</h1>
+    <p>Gerencie os produtos cadastrados no sistema.</p>
 
-    <form id="produtoForm">
+    <hr><br>
 
-        <div class="form-grid">
+    <!-- FORMULÁRIO -->
+    <div class="form">
 
-            <div>
-                <label>Código</label>
-                <input type="text" name="codigo" required>
-            </div>
-
-            <div>
-                <label>Descrição</label>
-                <input type="text" name="descricao" required>
-            </div>
-
-            <div>
-                <label>Unidade</label>
-                <input type="text" name="unidade">
-            </div>
-
-            <div>
-                <label>Comprimento (mm)</label>
-                <input type="text" name="comprimento">
-            </div>
-
-            <div>
-                <label>Acabamento</label>
-                <input type="text" name="acabamento">
-            </div>
-
-            <div>
-                <label>Peso Líquido (kg)</label>
-                <input type="text" name="peso_liquido">
-            </div>
-
-            <div>
-                <label>Peso Bruto (kg)</label>
-                <input type="text" name="peso_bruto">
-            </div>
-
-            <div>
-                <label>Preço de Custo (R$)</label>
-                <input type="text" name="preco_custo">
-            </div>
-
-            <div class="form-full">
-                <label>Preço de Venda (R$)</label>
-                <input type="text" name="preco_venda">
-            </div>
-
+      <div class="form-row">
+        <div class="form-group">
+          <label>Código</label>
+          <input type="text" id="codigo">
         </div>
 
-        <div id="mensagemForm" class="msg-erro" style="display:none;"></div>
+        <div class="form-group">
+          <label>Descrição</label>
+          <input type="text" id="descricao">
+        </div>
+      </div>
 
-        <button type="submit" class="btn-salvar">Salvar produto</button>
-    </form>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Unidade</label>
+          <input type="text" id="unidade">
+        </div>
 
-    <h2 style="margin-top: 50px;">Produtos cadastrados</h2>
+        <div class="form-group">
+          <label>Comprimento (mm)</label>
+          <input type="text" id="comprimento_mm">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Acabamento</label>
+          <input type="text" id="acabamento">
+        </div>
+
+        <div class="form-group">
+          <label>Peso Líquido (kg)</label>
+          <input type="text" id="peso_liquido">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Peso Bruto (kg)</label>
+          <input type="text" id="peso_bruto">
+        </div>
+
+        <div class="form-group">
+          <label>Preço de Custo (R$)</label>
+          <input type="text" id="preco_custo">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group" style="flex: 1;">
+          <label>Preço de Venda (R$)</label>
+          <input type="text" id="preco_venda">
+        </div>
+      </div>
+
+      <button class="btn-salvar" id="btnSalvar">Salvar produto</button>
+
+      <p id="mensagem" style="color: #ff6b6b; margin-top: 10px;"></p>
+    </div>
+
+    <br><br>
+    <h2>Produtos cadastrados</h2>
 
     <label>Buscar por código:</label>
-    <input id="buscaCodigo" type="text" placeholder="Digite o código" style="width:250px; margin-bottom:15px;">
+    <input type="text" id="buscarCodigo" placeholder="Digite o código para filtrar" style="width: 260px; margin-bottom: 20px;">
 
-    <table id="tabelaProdutos">
-        <thead>
+    <!-- TABELA -->
+    <table>
+      <thead>
         <tr>
-            <th>Código</th>
-            <th>Descrição</th>
-            <th>Unidade</th>
-            <th>Comprimento (mm)</th>
-            <th>Acabamento</th>
-            <th>Peso Líquido (kg)</th>
-            <th>Peso Bruto (kg)</th>
-            <th>Preço de Custo</th>
-            <th>Preço de Venda</th>
-            <th>Ações</th>
+          <th>Código</th>
+          <th>Descrição</th>
+          <th>Unidade</th>
+          <th>Comprimento (mm)</th>
+          <th>Acabamento</th>
+          <th>Peso Líquido (kg)</th>
+          <th>Peso Bruto (kg)</th>
+          <th>Preço de Custo</th>
+          <th>Preço de Venda</th>
+          <th>Ações</th>
         </tr>
-        </thead>
-        <tbody>
-            <tr><td colspan="10">Carregando...</td></tr>
-        </tbody>
+      </thead>
+      <tbody id="listaProdutos"></tbody>
     </table>
 
-</div>
+  </div>
 
-<!-- MODAL EDITAR -->
-<div id="modalEditar" class="hidden">
-    <div class="modal-content">
-        <h3>Editar Produto</h3>
+  <!-- MODAL DE EDIÇÃO -->
+  <div class="edit-modal" id="editModal">
+    <h2>Editar produto</h2>
 
-        <form id="formEditar">
+    <div id="editFields"></div>
 
-            <input type="hidden" id="edit_id">
-
-            <label>Código</label>
-            <input type="text" id="edit_codigo">
-
-            <label>Descrição</label>
-            <input type="text" id="edit_descricao">
-
-            <label>Unidade</label>
-            <input type="text" id="edit_unidade">
-
-            <label>Comprimento (mm)</label>
-            <input type="text" id="edit_comprimento">
-
-            <label>Acabamento</label>
-            <input type="text" id="edit_acabamento">
-
-            <label>Peso Líquido (kg)</label>
-            <input type="text" id="edit_peso_liquido">
-
-            <label>Peso Bruto (kg)</label>
-            <input type="text" id="edit_peso_bruto">
-
-            <label>Preço de Custo</label>
-            <input type="text" id="edit_preco_custo">
-
-            <label>Preço de Venda</label>
-            <input type="text" id="edit_preco_venda">
-
-            <div id="mensagemEditar" class="msg-erro" style="display:none;"></div>
-
-            <div class="modal-footer">
-                <button type="button" id="btnCancelarModal" class="btn-cancelar">Cancelar</button>
-                <button type="submit" class="btn-salvar-edit">Salvar</button>
-            </div>
-        </form>
+    <div class="modal-buttons">
+      <button class="cancel-btn" onclick="fecharEdicao()">Cancelar</button>
+      <button class="save-edit-btn" onclick="salvarEdicao()">Salvar</button>
     </div>
-</div>
+  </div>
 
-<script type="module" src="./js/produtos.js"></script>
+  <script src="/js/config.js"></script>
+  <script src="/js/produtos.js"></script>
 
 </body>
 </html>
