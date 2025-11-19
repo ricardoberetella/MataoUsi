@@ -16,7 +16,7 @@ body {
 }
 
 .container {
-  max-width: 1000px;
+  max-width: 1100px;
   margin: 30px auto;
   background: #1e293b;
   padding: 25px;
@@ -67,6 +67,12 @@ input, select {
   color: white;
 }
 
+.duas-colunas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
 .btns {
   display: flex;
   gap: 10px;
@@ -90,6 +96,74 @@ input, select {
   cursor: pointer;
 }
 
+/* ITENS DO PEDIDO */
+
+.secao-itens-titulo {
+  margin-top: 25px;
+  margin-bottom: 10px;
+  font-size: 18px;
+  color: #e5e7eb;
+}
+
+.linha-itens {
+  display: grid;
+  grid-template-columns: 3fr 1fr 1.2fr 1.2fr 0.8fr;
+  gap: 10px;
+  align-items: end;
+}
+
+.campo-grande,
+.campo-pequeno,
+.campo-botao {
+  width: 100%;
+}
+
+.campo-botao button {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background: #22c55e;
+  color: white;
+  cursor: pointer;
+}
+
+.tabela-itens {
+  width: 100%;
+  margin-top: 15px;
+  border-collapse: collapse;
+}
+
+.tabela-itens th,
+.tabela-itens td {
+  padding: 10px;
+  text-align: left;
+}
+
+.tabela-itens th {
+  background: #334155;
+}
+
+.tabela-itens tr:nth-child(even) {
+  background: #283548;
+}
+
+.total-pedido-linha {
+  margin-top: 15px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  font-size: 18px;
+}
+
+.action-btn {
+  cursor: pointer;
+  color: #38bdf8;
+  margin-right: 10px;
+}
+
+/* Tabela da aba Listar */
+
 table {
   width: 100%;
   margin-top: 20px;
@@ -107,10 +181,4 @@ th {
 
 tr:nth-child(even) {
   background: #283548;
-}
-
-.action-btn {
-  cursor: pointer;
-  color: #38bdf8;
-  margin-right: 10px;
 }
