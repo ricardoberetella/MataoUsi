@@ -5,78 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Painel - MataoUsi</title>
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: white;
-    }
-
-    /* Barra superior */
-    .navbar {
-      width: 100%;
-      background: #1e293b;
-      padding: 15px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .logo {
-      font-size: 22px;
-      font-weight: bold;
-      color: #38bdf8;
-    }
-
-    .logoutBtn {
-      background: #38bdf8;
-      border: none;
-      padding: 8px 18px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: bold;
-    }
-
-    .logoutBtn:hover {
-      background: #0ea5e9;
-    }
-
-    /* Conteúdo */
-    .content {
-      padding: 40px;
-      text-align: center;
-    }
-
-    h1 {
-      font-size: 30px;
-      margin-bottom: 20px;
-    }
-
-    .modules {
-      margin-top: 30px;
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
-
-    .box {
-      background: #1e293b;
-      padding: 20px;
-      border-radius: 10px;
-      width: 200px;
-      cursor: pointer;
-      border: 2px solid transparent;
-      transition: 0.3s;
-      font-size: 18px;
-    }
-
-    .box:hover {
-      border-color: #38bdf8;
-    }
-  </style>
+  <!-- CSS externo atualizado -->
+  <link rel="stylesheet" href="css/dashboard.css">
 
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
@@ -112,7 +42,7 @@
       <div class="box" onclick="location.href='clientes.html'">Clientes</div>
       <div class="box" onclick="location.href='pedidos.html'">Pedidos</div>
 
-      <!-- EXISTENTES -->
+      <!-- MÓDULOS EXISTENTES -->
       <div class="box" onclick="location.href='empresas.html'">Empresas</div>
       <div class="box" onclick="location.href='produtos.html'">Produtos</div>
       <div class="box" onclick="location.href='estoque.html'">Estoque</div>
