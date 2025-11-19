@@ -2,7 +2,11 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 let editandoId = null;
+let listaProdutos = [];
+let paginaAtual = 1;
+const itensPorPagina = 20;
 
 /* -------------------------------------------------------
    Conversão BR → Número
@@ -59,14 +63,100 @@ function setLoading(btn, estado) {
 }
 
 /* -------------------------------------------------------
+   FILTROS / PAGINAÇÃO
+------------------------------------------------------- */
+function obterProdutosFiltrados() {
+  const cod = document.getElementById("filtroCodigo")?.value.trim().toLowerCase() || "";
+  const desc = document.getElementById("filtroDescricao")?.value.trim().toLowerCase() || "";
+  const uni = document.getElementById("filtroUnidade")?.value.trim().toLowerCase() || "";
+
+  return listaProdutos.filter((p) => {
+    const c = (p.codigo || "").toLowerCase();
+    const d = (p.descricao || "").toLowerCase();
+    const u = (p.unidade || "").toLowerCase();
+
+    if (cod && !c.includes(cod)) return false;
+    if (desc && !d.includes(desc)) return false;
+    if (uni && u !== uni) return false;
+    return true;
+  });
+}
+
+function renderTabela() {
+  const tbody = document.getElementById("listaProdutos");
+  if (!tbody) return;
+
+  const filtrados = obterProdutosFiltrados();
+  const totalItens = filtrados.length;
+  const totalPaginas = Math.max(1, Math.ceil(totalItens / itensPorPagina));
+
+  if (paginaAtual > totalPaginas) paginaAtual = totalPaginas;
+
+  const inicio = (paginaAtual - 1) * itensPorPagina;
+  const pagina = filtrados.slice(inicio, inicio + itensPorPagina);
+
+  tbody.innerHTML = "";
+
+  if (pagina.length === 0) {
+    tbody.innerHTML = `
+      <tr><td colspan="10" style="text-align:center;">Nenhum produto encontrado.</td></tr>
+    `;
+  } else {
+    pagina.forEach((p) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${p.codigo ?? ""}</td>
+        <td>${p.descricao ?? ""}</td>
+        <td>${p.unidade ?? ""}</td>
+        <td class="numero">${formatBR(p.comprimento_mm)}</td>
+        <td>${p.acabamento ?? ""}</td>
+        <td class="numero">${formatBR(p.peso_bruto)}</td>
+        <td class="numero">${formatBR(p.peso_liquido)}</td>
+        <td class="numero">${formatPreco(p.preco_custo)}</td>
+        <td class="numero">${formatPreco(p.preco_venda)}</td>
+        <td>
+          <button class="btn-editar" onclick="editarProduto(${p.id})">Editar</button>
+          <button class="btn-excluir" onclick="excluirProduto(${p.id})">Excluir</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  const info = document.getElementById("infoPagina");
+  if (info) {
+    info.textContent = `Página ${paginaAtual} de ${totalPaginas} (${totalItens} itens)`;
+  }
+}
+
+/* -------------------------------------------------------
+   SUGESTÕES (AUTOCOMPLETE DESCRIÇÃO)
+------------------------------------------------------- */
+function atualizarSugestoesDescricao() {
+  const datalist = document.getElementById("sugestoesDescricao");
+  if (!datalist) return;
+
+  const descricoes = [...new Set(
+    listaProdutos
+      .map((p) => p.descricao)
+      .filter((d) => d && d.trim() !== "")
+  )].sort((a, b) => a.localeCompare(b, "pt-BR"));
+
+  datalist.innerHTML = descricoes
+    .map((d) => `<option value="${d}"></option>`)
+    .join("");
+}
+
+/* -------------------------------------------------------
    Carregar produtos
 ------------------------------------------------------- */
 async function carregarProdutos() {
   const tbody = document.getElementById("listaProdutos");
-
-  tbody.innerHTML = `
-    <tr><td colspan="10" style="text-align:center;">Carregando...</td></tr>
-  `;
+  if (tbody) {
+    tbody.innerHTML = `
+      <tr><td colspan="10" style="text-align:center;">Carregando...</td></tr>
+    `;
+  }
 
   const { data, error } = await supabase
     .from("produtos")
@@ -78,30 +168,10 @@ async function carregarProdutos() {
     return;
   }
 
-  tbody.innerHTML = "";
-
-  data.forEach((p) => {
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td>${p.codigo ?? ""}</td>
-      <td>${p.descricao ?? ""}</td>
-      <td>${p.unidade ?? ""}</td>
-      <td class="numero">${formatBR(p.comprimento_mm)}</td>
-      <td>${p.acabamento ?? ""}</td>
-      <td class="numero">${formatBR(p.peso_bruto)}</td>
-      <td class="numero">${formatBR(p.peso_liquido)}</td>
-      <td class="numero">${formatPreco(p.preco_custo)}</td>
-      <td class="numero">${formatPreco(p.preco_venda)}</td>
-
-      <td>
-        <button class="btn-editar" onclick="editarProduto(${p.id})">Editar</button>
-        <button class="btn-excluir" onclick="excluirProduto(${p.id})">Excluir</button>
-      </td>
-    `;
-
-    tbody.appendChild(tr);
-  });
+  listaProdutos = data || [];
+  paginaAtual = 1;
+  atualizarSugestoesDescricao();
+  renderTabela();
 }
 
 /* -------------------------------------------------------
@@ -152,7 +222,7 @@ document.getElementById("formProduto").addEventListener("submit", async (e) => {
   alerta(editandoId ? "Produto atualizado!" : "Produto cadastrado!", "sucesso");
 
   limparFormulario();
-  carregarProdutos();
+  await carregarProdutos();
 });
 
 /* -------------------------------------------------------
@@ -177,7 +247,7 @@ window.editarProduto = async function (id) {
 };
 
 /* -------------------------------------------------------
-   Preencher formulário (reutilizado na busca)
+   Preencher formulário
 ------------------------------------------------------- */
 function preencherFormulario(data) {
   editandoId = data.id;
@@ -250,7 +320,7 @@ window.excluirProduto = async function (id) {
   }
 
   alerta("Produto excluído!", "sucesso");
-  carregarProdutos();
+  await carregarProdutos();
 };
 
 /* -------------------------------------------------------
@@ -261,6 +331,156 @@ function limparFormulario() {
   document.getElementById("btnCancelar").style.display = "none";
   editandoId = null;
 }
+
+/* -------------------------------------------------------
+   PAGINAÇÃO – BOTÕES
+------------------------------------------------------- */
+document.getElementById("btnAnterior")?.addEventListener("click", () => {
+  if (paginaAtual > 1) {
+    paginaAtual--;
+    renderTabela();
+  }
+});
+
+document.getElementById("btnProximo")?.addEventListener("click", () => {
+  const total = obterProdutosFiltrados().length;
+  const totalPaginas = Math.max(1, Math.ceil(total / itensPorPagina));
+  if (paginaAtual < totalPaginas) {
+    paginaAtual++;
+    renderTabela();
+  }
+});
+
+/* -------------------------------------------------------
+   APLICAR / LIMPAR FILTROS
+------------------------------------------------------- */
+document.getElementById("btnAplicarFiltros")?.addEventListener("click", () => {
+  paginaAtual = 1;
+  renderTabela();
+});
+
+document.getElementById("btnLimparFiltros")?.addEventListener("click", () => {
+  document.getElementById("filtroCodigo").value = "";
+  document.getElementById("filtroDescricao").value = "";
+  document.getElementById("filtroUnidade").value = "";
+  paginaAtual = 1;
+  renderTabela();
+});
+
+/* -------------------------------------------------------
+   EXPORTAR EXCEL (CSV)
+------------------------------------------------------- */
+document.getElementById("btnExportarExcel")?.addEventListener("click", () => {
+  const produtos = obterProdutosFiltrados();
+  if (produtos.length === 0) {
+    alerta("Nenhum produto para exportar.", "info");
+    return;
+  }
+
+  const cabecalho = [
+    "Codigo","Descricao","Unidade",
+    "Comprimento_mm","Acabamento",
+    "Peso_bruto","Peso_liquido",
+    "Preco_custo","Preco_venda"
+  ];
+
+  const linhas = produtos.map((p) => [
+    p.codigo ?? "",
+    p.descricao ?? "",
+    p.unidade ?? "",
+    p.comprimento_mm ?? "",
+    p.acabamento ?? "",
+    p.peso_bruto ?? "",
+    p.peso_liquido ?? "",
+    p.preco_custo ?? "",
+    p.preco_venda ?? "",
+  ]);
+
+  const csv = [cabecalho, ...linhas]
+    .map((linha) =>
+      linha.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";")
+    )
+    .join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "produtos.csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+/* -------------------------------------------------------
+   EXPORTAR PDF (via print)
+------------------------------------------------------- */
+document.getElementById("btnExportarPDF")?.addEventListener("click", () => {
+  const produtos = obterProdutosFiltrados();
+  if (produtos.length === 0) {
+    alerta("Nenhum produto para exportar.", "info");
+    return;
+  }
+
+  const linhas = produtos.map((p) => `
+    <tr>
+      <td>${p.codigo ?? ""}</td>
+      <td>${p.descricao ?? ""}</td>
+      <td>${p.unidade ?? ""}</td>
+      <td>${p.comprimento_mm ?? ""}</td>
+      <td>${p.acabamento ?? ""}</td>
+      <td>${p.peso_bruto ?? ""}</td>
+      <td>${p.peso_liquido ?? ""}</td>
+      <td>${p.preco_custo ?? ""}</td>
+      <td>${p.preco_venda ?? ""}</td>
+    </tr>
+  `).join("");
+
+  const htmlTabela = `
+    <table>
+      <thead>
+        <tr>
+          <th>Cód</th>
+          <th>Descrição</th>
+          <th>UN</th>
+          <th>Comp</th>
+          <th>Acab</th>
+          <th>P. Bruto</th>
+          <th>P. Líquido</th>
+          <th>Custo</th>
+          <th>Venda</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${linhas}
+      </tbody>
+    </table>
+  `;
+
+  const win = window.open("", "_blank");
+  win.document.write(`
+    <html>
+      <head>
+        <title>Relatório de Produtos</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          h2 { text-align: center; }
+          table { width: 100%; border-collapse: collapse; }
+          th, td { border: 1px solid #ccc; padding: 6px; font-size: 12px; }
+          th { background: #f0f0f0; }
+        </style>
+      </head>
+      <body>
+        <h2>Relatório de Produtos</h2>
+        ${htmlTabela}
+      </body>
+    </html>
+  `);
+  win.document.close();
+  win.focus();
+  win.print();
+});
 
 /* -------------------------------------------------------
    Inicializar
