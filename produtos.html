@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,247 +10,101 @@
     body {
       background: #0f172a;
       color: white;
-      font-family: Arial, sans-serif;
+      font-family: Arial;
       margin: 0;
-      padding: 0;
+      padding: 20px;
     }
 
     .container {
-      max-width: 1200px;
-      margin: 30px auto;
+      max-width: 900px;
+      margin: auto;
       background: #1e293b;
-      padding: 25px;
+      padding: 20px;
       border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.6);
+      box-shadow: 0 0 10px rgba(0, 0, 0, .5);
     }
 
-    h1 {
-      text-align: left;
+    h2 {
+      text-align: center;
       color: #38bdf8;
-      margin-bottom: 10px;
     }
 
-    .btn-voltar, .btn-home {
-      margin-left: auto;
-      display: block;
-      width: fit-content;
-      margin-bottom: 10px;
-      background: transparent;
-      padding: 8px 18px;
-      border-radius: 25px;
-      border: 2px solid #38bdf8;
-      color: #38bdf8;
-      text-decoration: none;
-      font-size: 14px;
-      transition: 0.3s;
-    }
-
-    .btn-voltar:hover, .btn-home:hover {
-      background: #38bdf8;
-      color: black;
-    }
-
-    .form-row {
-      display: flex;
-      gap: 15px;
-      margin-bottom: 10px;
-    }
-
-    .form-group {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    input {
+    input,
+    select {
+      width: 100%;
       padding: 10px;
+      margin: 8px 0;
       border-radius: 6px;
       border: none;
-      background: #e2e8f0;
-      font-size: 15px;
+      outline: none;
     }
 
-    .btn-salvar {
-      width: 200px;
-      background: #22c55e;
-      padding: 12px;
-      border-radius: 25px;
+    button {
+      padding: 10px 20px;
       border: none;
-      font-size: 18px;
-      color: black;
+      border-radius: 6px;
+      background: #38bdf8;
       cursor: pointer;
-      margin-top: 20px;
-      float: right;
+      color: #0f172a;
+      font-weight: bold;
+      margin-right: 10px;
     }
 
     table {
       width: 100%;
-      border-spacing: 0;
-      margin-top: 25px;
+      margin-top: 20px;
+      border-collapse: collapse;
+      background: #0f172a;
+      color: white;
     }
 
-    th, td {
-      padding: 12px;
+    td,
+    th {
+      padding: 10px;
+      border-bottom: 1px solid #1e293b;
       text-align: left;
     }
 
-    th {
-      background: #0f172a;
-    }
-
-    tr:nth-child(even) {
-      background: #243244;
-    }
-
-    .edit-btn, .delete-btn {
-      padding: 6px 12px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-
-    .edit-btn { background: #3b82f6; }
-    .delete-btn { background: #ef4444; }
-
-    /* MODAL */
-    .edit-modal {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      width: 600px;
-      transform: translate(-50%, -50%);
-      background: #1e293b;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.7);
-      z-index: 999;
-      display: none;
-    }
-
-    @media (max-width: 900px) {
-      .form-row { flex-direction: column; }
-      .btn-salvar { width: 100%; float: none; }
-      .edit-modal { width: 95%; padding: 15px; }
+    .actions button {
+      margin-right: 5px;
+      background: #38bdf8;
+      color: #0f172a;
     }
   </style>
 </head>
 
 <body>
-
   <div class="container">
+    <h2>Cadastro de Produtos</h2>
 
-    <!-- ✔ CORRIGIDO – SEM BARRA "/" -->
-    <a href="painel.html" class="btn-voltar">← Voltar ao painel</a>
-    <a href="index.html" class="btn-home">🏠 Página inicial</a>
+    <form id="formProduto">
+      <input type="text" id="sku" placeholder="SKU">
+      <input type="text" id="nome" placeholder="Nome do Produto">
+      <input type="text" id="descricao" placeholder="Descrição">
+      <input type="text" id="unidade" placeholder="Unidade (ex: UN, KG)">
+      <input type="text" id="preco_custo" placeholder="Preço de Custo">
+      <input type="text" id="preco_venda" placeholder="Preço de Venda">
 
-    <h1>Cadastro de Produtos</h1>
-    <p>Gerencie os produtos cadastrados no sistema.</p>
+      <button id="btnSalvar" type="submit">Cadastrar Produto</button>
+      <button id="btnCancelar" type="button" style="display:none;">Cancelar</button>
+    </form>
 
-    <hr><br>
-
-    <!-- FORMULÁRIO -->
-    <div class="form">
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>Código</label>
-          <input type="text" id="codigo">
-        </div>
-
-        <div class="form-group">
-          <label>Descrição</label>
-          <input type="text" id="descricao">
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>Unidade</label>
-          <input type="text" id="unidade">
-        </div>
-
-        <div class="form-group">
-          <label>Comprimento (mm)</label>
-          <input type="text" id="comprimento_mm">
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>Acabamento</label>
-          <input type="text" id="acabamento">
-        </div>
-
-        <div class="form-group">
-          <label>Peso Líquido</label>
-          <input type="text" id="peso_liquido">
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>Peso Bruto</label>
-          <input type="text" id="peso_bruto">
-        </div>
-
-        <div class="form-group">
-          <label>Preço de Custo</label>
-          <input type="text" id="preco_custo">
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>Preço de Venda</label>
-          <input type="text" id="preco_venda">
-        </div>
-      </div>
-
-      <button class="btn-salvar" id="btnSalvar">Salvar produto</button>
-
-      <p id="mensagem" style="color:#ff6b6b; margin-top:10px;"></p>
-
-    </div>
-
-    <br><br>
-    <h2>Produtos cadastrados</h2>
-
-    <label>Buscar por código:</label>
-    <input type="text" id="buscarCodigo" placeholder="Digite o código" style="width: 260px; margin-bottom: 20px;">
-
-    <!-- TABELA -->
     <table>
       <thead>
         <tr>
-          <th>Código</th>
-          <th>Descrição</th>
+          <th>ID</th>
+          <th>SKU</th>
+          <th>Nome</th>
           <th>Unidade</th>
-          <th>Comp. (mm)</th>
-          <th>Acabamento</th>
-          <th>Peso Líq.</th>
-          <th>Peso Bruto</th>
-          <th>Custo</th>
-          <th>Venda</th>
+          <th>Preço Venda</th>
           <th>Ações</th>
         </tr>
       </thead>
       <tbody id="listaProdutos"></tbody>
     </table>
-
   </div>
 
-  <!-- MODAL -->
-  <div class="edit-modal" id="editModal">
-    <h2>Editar produto</h2>
-    <div id="editFields"></div>
-
-    <button class="btn-salvar" id="btnSalvarEdicao">Salvar</button>
-    <button class="btn-voltar" id="btnCancelarEdicao">Cancelar</button>
-  </div>
-
-  <!-- ✔ CORRIGIDO – SEM "/" -->
-  <script type="module" src="js/produtos.js"></script>
-
+  <script type="module" src="../js/produtos.js"></script>
 </body>
+
 </html>
