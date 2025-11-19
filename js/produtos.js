@@ -1,250 +1,157 @@
-// ======================================
-// IMPORTS DO SUPABASE
-// ======================================
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Lista em memória
-let listaProdutos = [];
 let produtoEditandoId = null;
 
-// ======================================
-// FUNÇÕES DE CONVERSÃO (BR <-> US)
-// ======================================
-
-// "1.234,56" -> 1234.56
-function parseDecimalBR(valor) {
-  if (!valor) return null;
-  return parseFloat(valor.replace(/\./g, "").replace(",", "."));
+// Converter string BR para número
+function parseDecimalBR(val) {
+  if (!val) return null;
+  return parseFloat(val.replace(/\./g, "").replace(",", "."));
 }
 
-// número -> "1.234,56"
-function formatDecimal(valor, casas = 2) {
-  if (valor == null) return "";
-  return Number(valor).toLocaleString("pt-BR", {
+// Formatar número BR
+function formatDecimal(val, casas = 2) {
+  if (val == null) return "";
+  return Number(val).toLocaleString("pt-BR", {
     minimumFractionDigits: casas,
-    maximumFractionDigits: casas
+    maximumFractionDigits: casas,
   });
 }
 
-// ======================================
-// CARREGAR PRODUTOS
-// ======================================
+document.addEventListener("DOMContentLoaded", () => {
+  carregarProdutos();
+
+  document.getElementById("formProduto").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    salvarProduto();
+  });
+
+  document.getElementById("btnCancelar").addEventListener("click", () => {
+    limparFormulario();
+  });
+});
+
+// ---------------------------------------------------------
+// CARREGAR LISTAGEM
+// ---------------------------------------------------------
 async function carregarProdutos() {
+  const tabela = document.getElementById("listaProdutos");
+  tabela.innerHTML = "<tr><td colspan='6'>Carregando...</td></tr>";
+
   const { data, error } = await supabase
     .from("produtos")
     .select("*")
-    .order("codigo", { ascending: true });
+    .order("id", { ascending: true });
 
   if (error) {
-    console.error("Erro ao carregar:", error);
-    alert("Erro ao carregar produtos.");
+    tabela.innerHTML = "<tr><td colspan='6'>Erro ao carregar</td></tr>";
+    console.error(error);
     return;
   }
 
-  listaProdutos = data || [];
-  renderizarTabela(listaProdutos);
-}
+  if (!data || data.length === 0) {
+    tabela.innerHTML = "<tr><td colspan='6'>Nenhum produto encontrado.</td></tr>";
+    return;
+  }
 
-// ======================================
-// RENDERIZAR TABELA
-// ======================================
-function renderizarTabela(lista) {
-  const tbody = document.getElementById("listaProdutos");
-  tbody.innerHTML = "";
+  tabela.innerHTML = "";
 
-  lista.forEach(prod => {
+  data.forEach((p) => {
     const tr = document.createElement("tr");
+
     tr.innerHTML = `
-      <td>${prod.codigo}</td>
-      <td>${prod.descricao}</td>
-      <td>${prod.unidade}</td>
-      <td>${formatDecimal(prod.comprimento_mm, 2)}</td>
-      <td>${prod.acabamento}</td>
-      <td>${formatDecimal(prod.peso_liquido, 3)}</td>
-      <td>${formatDecimal(prod.peso_bruto, 3)}</td>
-      <td>${formatDecimal(prod.preco_custo, 2)}</td>
-      <td>${formatDecimal(prod.preco_venda, 2)}</td>
+      <td>${p.id}</td>
+      <td>${p.sku}</td>
+      <td>${p.nome}</td>
+      <td>${p.unidade}</td>
+      <td>R$ ${formatDecimal(p.preco_venda)}</td>
       <td>
-        <button class="edit-btn">Editar</button>
-        <button class="delete-btn">Excluir</button>
+        <button onclick="editarProduto(${p.id})">Editar</button>
+        <button onclick="excluirProduto(${p.id})">Excluir</button>
       </td>
     `;
 
-    // Botão editar
-    const btnEdit = tr.querySelector(".edit-btn");
-    btnEdit.addEventListener("click", () => {
-      abrirEdicao(prod.id);
-    });
-
-    // Botão excluir
-    const btnDel = tr.querySelector(".delete-btn");
-    btnDel.addEventListener("click", () => {
-      excluirProduto(prod.id);
-    });
-
-    tbody.appendChild(tr);
+    tabela.appendChild(tr);
   });
 }
 
-// ======================================
-// SALVAR NOVO PRODUTO
-// ======================================
-document.getElementById("btnSalvar").addEventListener("click", async () => {
-  const novo = {
-    codigo: document.getElementById("codigo").value.trim(),
-    descricao: document.getElementById("descricao").value.trim(),
-    unidade: document.getElementById("unidade").value.trim(),
-    comprimento_mm: parseDecimalBR(document.getElementById("comprimento_mm").value),
-    acabamento: document.getElementById("acabamento").value.trim(),
-    peso_liquido: parseDecimalBR(document.getElementById("peso_liquido").value),
-    peso_bruto: parseDecimalBR(document.getElementById("peso_bruto").value),
-    preco_custo: parseDecimalBR(document.getElementById("preco_custo").value),
-    preco_venda: parseDecimalBR(document.getElementById("preco_venda").value)
-  };
-
-  const { error } = await supabase.from("produtos").insert([novo]);
+window.editarProduto = async function (id) {
+  const { data, error } = await supabase
+    .from("produtos")
+    .select("*")
+    .eq("id", id)
+    .single();
 
   if (error) {
-    console.error("Erro ao salvar:", error);
-    alert("Erro ao salvar produto!");
+    alert("Erro ao carregar produto");
     return;
   }
 
-  // Limpa o formulário (opcional)
-  document.getElementById("codigo").value = "";
-  document.getElementById("descricao").value = "";
-  document.getElementById("unidade").value = "";
-  document.getElementById("comprimento_mm").value = "";
-  document.getElementById("acabamento").value = "";
-  document.getElementById("peso_liquido").value = "";
-  document.getElementById("peso_bruto").value = "";
-  document.getElementById("preco_custo").value = "";
-  document.getElementById("preco_venda").value = "";
-
-  await carregarProdutos();
-});
-
-// ======================================
-// ABRIR MODAL DE EDIÇÃO
-// ======================================
-function abrirEdicao(id) {
   produtoEditandoId = id;
-  const prod = listaProdutos.find(p => p.id === id);
-  if (!prod) return;
 
-  document.getElementById("editFields").innerHTML = `
-    <label>Código</label>
-    <input id="edit_codigo" value="${prod.codigo}">
-    
-    <label>Descrição</label>
-    <input id="edit_descricao" value="${prod.descricao}">
-    
-    <label>Unidade</label>
-    <input id="edit_unidade" value="${prod.unidade}">
-    
-    <label>Comprimento (mm)</label>
-    <input id="edit_comprimento_mm" value="${formatDecimal(prod.comprimento_mm,2)}">
-    
-    <label>Acabamento</label>
-    <input id="edit_acabamento" value="${prod.acabamento}">
-    
-    <label>Peso Líquido</label>
-    <input id="edit_peso_liquido" value="${formatDecimal(prod.peso_liquido,3)}">
-    
-    <label>Peso Bruto</label>
-    <input id="edit_peso_bruto" value="${formatDecimal(prod.peso_bruto,3)}">
-    
-    <label>Preço Custo</label>
-    <input id="edit_preco_custo" value="${formatDecimal(prod.preco_custo,2)}">
-    
-    <label>Preço Venda</label>
-    <input id="edit_preco_venda" value="${formatDecimal(prod.preco_venda,2)}">
-  `;
+  document.getElementById("sku").value = data.sku;
+  document.getElementById("nome").value = data.nome;
+  document.getElementById("descricao").value = data.descricao || "";
+  document.getElementById("unidade").value = data.unidade || "";
+  document.getElementById("preco_custo").value = formatDecimal(data.preco_custo);
+  document.getElementById("preco_venda").value = formatDecimal(data.preco_venda);
 
-  document.getElementById("editModal").style.display = "block";
-}
+  document.getElementById("btnSalvar").textContent = "Salvar Alterações";
+  document.getElementById("btnCancelar").style.display = "inline-block";
+};
 
-// ======================================
-// FECHAR MODAL
-// ======================================
-function fecharEdicao() {
-  document.getElementById("editModal").style.display = "none";
-}
+window.excluirProduto = async function (id) {
+  if (!confirm("Deseja excluir este produto?")) return;
 
-// Botões do modal
-document.getElementById("btnCancelarEdicao").addEventListener("click", fecharEdicao);
-document.getElementById("btnSalvarEdicao").addEventListener("click", salvarEdicao);
+  const { error } = await supabase.from("produtos").delete().eq("id", id);
 
-// ======================================
-// SALVAR EDIÇÃO
-// ======================================
-async function salvarEdicao() {
-  if (!produtoEditandoId) return;
+  if (error) {
+    alert("Erro ao excluir");
+    return;
+  }
 
-  const atualizado = {
-    codigo: document.getElementById("edit_codigo").value.trim(),
-    descricao: document.getElementById("edit_descricao").value.trim(),
-    unidade: document.getElementById("edit_unidade").value.trim(),
-    comprimento_mm: parseDecimalBR(document.getElementById("edit_comprimento_mm").value),
-    acabamento: document.getElementById("edit_acabamento").value.trim(),
-    peso_liquido: parseDecimalBR(document.getElementById("edit_peso_liquido").value),
-    peso_bruto: parseDecimalBR(document.getElementById("edit_peso_bruto").value),
-    preco_custo: parseDecimalBR(document.getElementById("edit_preco_custo").value),
-    preco_venda: parseDecimalBR(document.getElementById("edit_preco_venda").value)
+  carregarProdutos();
+};
+
+async function salvarProduto() {
+  const dados = {
+    sku: document.getElementById("sku").value,
+    nome: document.getElementById("nome").value,
+    descricao: document.getElementById("descricao").value,
+    unidade: document.getElementById("unidade").value,
+    preco_custo: parseDecimalBR(document.getElementById("preco_custo").value),
+    preco_venda: parseDecimalBR(document.getElementById("preco_venda").value),
   };
 
-  const { error } = await supabase
-    .from("produtos")
-    .update(atualizado)
-    .eq("id", produtoEditandoId);
+  if (produtoEditandoId) {
+    const { error } = await supabase
+      .from("produtos")
+      .update(dados)
+      .eq("id", produtoEditandoId);
 
-  if (error) {
-    console.error("Erro ao atualizar:", error);
-    alert("Erro ao atualizar produto!");
-    return;
+    if (error) {
+      alert("Erro ao salvar alterações");
+      return;
+    }
+  } else {
+    const { error } = await supabase.from("produtos").insert(dados);
+
+    if (error) {
+      alert("Erro ao criar produto");
+      return;
+    }
   }
 
-  fecharEdicao();
-  await carregarProdutos();
+  limparFormulario();
+  carregarProdutos();
 }
 
-// ======================================
-// EXCLUIR PRODUTO
-// ======================================
-async function excluirProduto(id) {
-  if (!confirm("Excluir este produto?")) return;
+function limparFormulario() {
+  produtoEditandoId = null;
 
-  const { error } = await supabase
-    .from("produtos")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    console.error("Erro ao excluir:", error);
-    alert("Erro ao excluir produto!");
-    return;
-  }
-
-  await carregarProdutos();
+  document.getElementById("formProduto").reset();
+  document.getElementById("btnSalvar").textContent = "Cadastrar Produto";
+  document.getElementById("btnCancelar").style.display = "none";
 }
-
-// ======================================
-// FILTRO POR CÓDIGO
-// ======================================
-document.getElementById("buscarCodigo").addEventListener("input", () => {
-  const termo = document.getElementById("buscarCodigo").value.toLowerCase();
-
-  const filtrado = listaProdutos.filter(p =>
-    p.codigo.toLowerCase().includes(termo)
-  );
-
-  renderizarTabela(filtrado);
-});
-
-// ======================================
-// INICIALIZAÇÃO
-// ======================================
-carregarProdutos();
