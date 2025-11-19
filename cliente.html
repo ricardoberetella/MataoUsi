@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clientes - MataoUsi</title>
+  <link rel="stylesheet" href="css/clientes.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <h2>Clientes</h2>
+  </header>
+
+  <div class="container">
+
+    <div class="tabs">
+      <button class="tab active" data-tab="cadastro">Cadastrar Cliente</button>
+      <button class="tab" data-tab="lista">Listar Clientes</button>
+    </div>
+
+    <!-- ===== ABA CADASTRAR ===== -->
+    <div id="cadastro" class="tab-content active">
+
+      <form id="formCliente">
+        <input type="hidden" id="clienteId">
+
+        <label>Razão Social</label>
+        <input type="text" id="razao_social" required>
+
+        <label>Nome Fantasia</label>
+        <input type="text" id="nome_fantasia">
+
+        <label>CPF / CNPJ</label>
+        <input type="text" id="cpf_cnpj">
+
+        <label>Telefone</label>
+        <input type="text" id="telefone">
+
+        <label>E-mail</label>
+        <input type="email" id="email">
+
+        <label>Endereço</label>
+        <input type="text" id="endereco">
+
+        <div class="btns">
+          <button type="submit" id="btnSalvar">Salvar</button>
+          <button type="button" id="btnCancelar">Cancelar</button>
+        </div>
+      </form>
+
+    </div>
+
+    <!-- ===== ABA LISTAR ===== -->
+    <div id="lista" class="tab-content">
+      <input type="text" id="busca" placeholder="Buscar por razão social, fantasia ou CNPJ">
+      
+      <table>
+        <thead>
+          <tr>
+            <th>Razão Social</th>
+            <th>Fantasia</th>
+            <th>CNPJ</th>
+            <th>Telefone</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaClientes"></tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <script type="module" src="js/clientes.js"></script>
+
+</body>
+</html>
