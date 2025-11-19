@@ -10,13 +10,13 @@
     body {
       background: #0f172a;
       color: white;
-      font-family: Arial, sans-serif;
+      font-family: Arial;
       margin: 0;
       padding: 20px;
     }
 
     .container {
-      max-width: 1100px;
+      max-width: 1000px;
       margin: auto;
       background: #1e293b;
       padding: 20px;
@@ -30,35 +30,17 @@
       margin-bottom: 20px;
     }
 
-    .grid-form {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      grid-gap: 10px 15px;
-    }
-
-    input,
-    select {
+    input, select {
       width: 100%;
-      padding: 8px;
+      padding: 10px;
+      margin: 8px 0;
       border-radius: 6px;
       border: none;
       outline: none;
-      box-sizing: border-box;
-    }
-
-    label {
-      font-size: 0.85rem;
-      color: #cbd5f5;
-      display: block;
-      margin-bottom: 3px;
-    }
-
-    .botoes {
-      margin-top: 15px;
     }
 
     button {
-      padding: 10px 18px;
+      padding: 10px 20px;
       border: none;
       border-radius: 6px;
       background: #38bdf8;
@@ -66,102 +48,60 @@
       color: #0f172a;
       font-weight: bold;
       margin-right: 10px;
-    }
-
-    button#btnCancelar {
-      background: #64748b;
-      color: white;
+      margin-top: 10px;
     }
 
     table {
       width: 100%;
-      margin-top: 25px;
+      margin-top: 30px;
       border-collapse: collapse;
       background: #0f172a;
       color: white;
-      font-size: 0.9rem;
     }
 
-    th,
-    td {
-      padding: 8px;
-      border-bottom: 1px solid #1e293b;
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #334155;
       text-align: left;
-      white-space: nowrap;
     }
 
     th {
-      background: #020617;
+      background: #1e293b;
     }
 
-    .actions button {
+    .acoes button {
       margin-right: 5px;
-      padding: 6px 10px;
-      font-size: 0.8rem;
+      background: #38bdf8;
+      color: #0f172a;
     }
   </style>
 </head>
 
 <body>
+
   <div class="container">
     <h2>Cadastro de Produtos</h2>
 
     <form id="formProduto">
-      <div class="grid-form">
-        <div>
-          <label for="codigo">Código</label>
-          <input type="text" id="codigo" placeholder="Ex: PARAF-08X30">
-        </div>
 
-        <div>
-          <label for="descricao">Descrição</label>
-          <input type="text" id="descricao" placeholder="Descrição do produto">
-        </div>
+      <input type="text" id="codigo" placeholder="Código do Produto">
+      <input type="text" id="descricao" placeholder="Descrição">
+      <input type="text" id="unidade" placeholder="Unidade (ex: UN, KG)">
+      <input type="number" id="comprimento_mm" placeholder="Comprimento (mm)">
 
-        <div>
-          <label for="unidade">Unidade</label>
-          <input type="text" id="unidade" placeholder="Ex: PC, KG, M">
-        </div>
+      <select id="acabamento">
+        <option value="">Selecione o Acabamento</option>
+        <option value="Zincado">Zincado</option>
+        <option value="Tratado">Tratado</option>
+      </select>
 
-        <div>
-          <label for="comprimento_mm">Comprimento (mm)</label>
-          <input type="text" id="comprimento_mm" placeholder="Ex: 30">
-        </div>
+      <input type="text" id="peso_bruto" placeholder="Peso Bruto">
+      <input type="text" id="peso_liquido" placeholder="Peso Líquido">
+      <input type="text" id="preco_custo" placeholder="Preço de Custo">
+      <input type="text" id="preco_venda" placeholder="Preço de Venda">
 
-        <div>
-          <label for="acabamento">Acabamento</label>
-          <select id="acabamento">
-            <option value="">Selecione</option>
-            <option value="Zincado">Zincado</option>
-            <option value="Tratado">Tratado</option>
-          </select>
-        </div>
-
-        <div>
-          <label for="peso_bruto">Peso Bruto (kg)</label>
-          <input type="text" id="peso_bruto" placeholder="Ex: 0,150">
-        </div>
-
-        <div>
-          <label for="peso_liquido">Peso Líquido (kg)</label>
-          <input type="text" id="peso_liquido" placeholder="Ex: 0,120">
-        </div>
-
-        <div>
-          <label for="preco_custo">Preço Custo (R$)</label>
-          <input type="text" id="preco_custo" placeholder="Ex: 2,50">
-        </div>
-
-        <div>
-          <label for="preco_venda">Preço Venda (R$)</label>
-          <input type="text" id="preco_venda" placeholder="Ex: 4,90">
-        </div>
-      </div>
-
-      <div class="botoes">
-        <button id="btnSalvar" type="submit">Cadastrar Produto</button>
-        <button id="btnCancelar" type="button" style="display:none;">Cancelar</button>
-      </div>
+      <button id="btnSalvar" type="submit">Cadastrar Produto</button>
+      <button id="btnCancelar" type="button" style="display:none;">Cancelar</button>
     </form>
 
     <table>
@@ -179,12 +119,14 @@
           <th>Ações</th>
         </tr>
       </thead>
+
       <tbody id="listaProdutos"></tbody>
     </table>
+
   </div>
 
-  <!-- Caminho certo para seu JS -->
   <script type="module" src="js/produtos.js"></script>
+
 </body>
 
 </html>
