@@ -76,13 +76,8 @@ document.getElementById("btnSalvar").addEventListener("click", async () => {
     preco_venda: parseDecimalBR(document.getElementById("preco_venda").value)
   };
 
-  const { error } = await supabase.from("produtos").insert([novo]);
-
-  if (error) {
-    console.error(error);
-  } else {
-    carregarProdutos();
-  }
+  await supabase.from("produtos").insert([novo]);
+  carregarProdutos();
 });
 
 // ======================
@@ -138,7 +133,7 @@ window.salvarEdicao = async function () {
   };
 
   await supabase.from("produtos").update(atualizado).eq("id", produtoEditandoId);
-  document.getElementById("editModal").style.display = "none";
+  fecharEdicao();
   carregarProdutos();
 };
 
@@ -153,9 +148,10 @@ window.excluirProduto = async function (id) {
 document.getElementById("buscarCodigo").addEventListener("input", () => {
   const termo = document.getElementById("buscarCodigo").value.toLowerCase();
   const filtrado = listaProdutos.filter(p => p.codigo.toLowerCase().includes(termo));
-  const tbody = document.getElementById("listaProdutos");
 
+  const tbody = document.getElementById("listaProdutos");
   tbody.innerHTML = "";
+
   filtrado.forEach(p => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -176,6 +172,10 @@ document.getElementById("buscarCodigo").addEventListener("input", () => {
     tbody.appendChild(tr);
   });
 });
+
+// Eventos do modal INCLUÍDOS
+document.getElementById("btnCancelarEdicao").addEventListener("click", fecharEdicao);
+document.getElementById("btnSalvarEdicao").addEventListener("click", salvarEdicao);
 
 // Inicializar
 carregarProdutos();
