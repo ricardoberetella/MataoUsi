@@ -5,8 +5,8 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #000; /* preto elegante */
-  color: #e5e7eb; /* cinza claro */
+  background: #000;
+  color: #e5e7eb;
 }
 
 /* ------------------------------ */
@@ -36,9 +36,7 @@ body {
   border-radius: 6px;
   cursor: pointer;
 }
-.voltar:hover {
-  background: #222;
-}
+.voltar:hover { background: #222; }
 
 /* ------------------------------ */
 /*        CONTAINERS & CARDS      */
@@ -70,23 +68,20 @@ body {
 .grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
+  gap: 25px;               /* SEPARAÇÃO CORRETA */
+  padding: 10px 5px;
 }
 
 input,
 select {
   width: 100%;
-  padding: 14px;
-  border-radius: 8px;
-  border: none;
-  background: #e5edff; /* azul claro */
+  padding: 16px;
+  border-radius: 10px;
+  border: 2px solid #dce3ff;
+  background: #e5edff;
   color: #000;
-  font-size: 15px;
-}
-
-select {
-  appearance: none;
-  background: #e5edff; /* deixa igual ao input */
+  font-size: 16px;
+  box-sizing: border-box;
 }
 
 /* ------------------------------ */
@@ -106,11 +101,8 @@ select {
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 16px;
 }
-.btn-primary:hover {
-  background: #17863f;
-}
+.btn-primary:hover { background: #17863f; }
 
 .btn-secondary {
   background: #333;
@@ -119,11 +111,8 @@ select {
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 16px;
 }
-.btn-secondary:hover {
-  background: #555;
-}
+.btn-secondary:hover { background: #555; }
 
 /* ------------------------------ */
 /*            TABLE LIST          */
@@ -135,9 +124,7 @@ table {
   margin-top: 15px;
 }
 
-thead {
-  background: #0f0f0f;
-}
+thead { background: #0f0f0f; }
 
 th {
   padding: 12px;
@@ -156,25 +143,19 @@ td {
   background: #2563eb;
   color: white;
   padding: 8px 14px;
-  border: none;
   border-radius: 6px;
   cursor: pointer;
 }
-.btn-editar:hover {
-  background: #1d4ed8;
-}
+.btn-editar:hover { background: #1d4ed8; }
 
 .btn-excluir {
   background: #dc2626;
   color: white;
   padding: 8px 14px;
-  border: none;
   border-radius: 6px;
   cursor: pointer;
 }
-.btn-excluir:hover {
-  background: #b91c1c;
-}
+.btn-excluir:hover { background: #b91c1c; }
 
 /* ------------------------------ */
 /*              ALERTS            */
@@ -201,17 +182,6 @@ td {
   opacity: 1;
 }
 
-.alert.sucesso {
-  border-color: #22c55e;
-  color: #22c55e;
-}
-
-.alert.erro {
-  border-color: #ef4444;
-  color: #ef4444;
-}
-
-.alert.info {
-  border-color: #38bdf8;
-  color: #38bdf8;
-}
+.alert.sucesso { border-color: #22c55e; color: #22c55e; }
+.alert.erro     { border-color: #ef4444; color: #ef4444; }
+.alert.info     { border-color: #38bdf8; color: #38bdf8; }
