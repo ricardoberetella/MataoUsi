@@ -59,6 +59,7 @@
       display: flex;
       justify-content: center;
       gap: 20px;
+      flex-wrap: wrap;
     }
 
     .box {
@@ -69,6 +70,7 @@
       cursor: pointer;
       border: 2px solid transparent;
       transition: 0.3s;
+      font-size: 18px;
     }
 
     .box:hover {
@@ -105,11 +107,18 @@
     <p>Escolha um módulo abaixo:</p>
 
     <div class="modules">
+
+      <!-- NOVOS MÓDULOS -->
+      <div class="box" onclick="location.href='clientes.html'">Clientes</div>
+      <div class="box" onclick="location.href='pedidos.html'">Pedidos</div>
+
+      <!-- EXISTENTES -->
       <div class="box" onclick="location.href='empresas.html'">Empresas</div>
       <div class="box" onclick="location.href='produtos.html'">Produtos</div>
       <div class="box" onclick="location.href='estoque.html'">Estoque</div>
       <div class="box" onclick="location.href='movimentacoes.html'">Movimentações</div>
       <div class="box" onclick="location.href='relatorios.html'">Relatórios</div>
+
     </div>
   </div>
 
