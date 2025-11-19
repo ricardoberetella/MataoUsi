@@ -7,7 +7,7 @@ body {
   font-family: Arial, sans-serif;
   background: #000;
   color: #e5e7eb;
-  overflow-y: auto; /* garante rolagem geral */
+  overflow-y: auto;
 }
 
 /* ------------------------------ */
@@ -145,13 +145,45 @@ select {
 }
 .btn-secondary:hover { background: #555; }
 
+.btn-sm {
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+/* ------------------------------ */
+/*             FILTROS            */
+/* ------------------------------ */
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.filtros input,
+.filtros select {
+  max-width: 230px;
+}
+
+/* ------------------------------ */
+/*           EXPORTAÇÃO           */
+/* ------------------------------ */
+
+.export-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
 /* ------------------------------ */
 /*            TABLE LIST          */
 /* ------------------------------ */
 
 .tabela-wrapper {
-  max-height: 420px;      /* altura da área visível */
-  overflow-y: auto;       /* ativa rolagem */
+  max-height: 420px;
+  overflow-y: auto;
   border: 1px solid #1f1f1f;
   border-radius: 8px;
   margin-top: 10px;
@@ -165,7 +197,7 @@ select {
 thead { background: #0f0f0f; }
 
 thead th {
-  position: sticky;       /* fixa o cabeçalho */
+  position: sticky;
   top: 0;
   background: #0f0f0f;
   z-index: 10;
@@ -201,6 +233,23 @@ td {
   cursor: pointer;
 }
 .btn-excluir:hover { background: #b91c1c; }
+
+/* ------------------------------ */
+/*           PAGINAÇÃO            */
+/* ------------------------------ */
+
+.paginacao {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.paginacao span {
+  font-size: 14px;
+  color: #e5e7eb;
+}
 
 /* ------------------------------ */
 /*              ALERTS            */
