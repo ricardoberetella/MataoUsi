@@ -3,27 +3,23 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let produtoEditandoId = null;
+let editandoId = null;
 
-// Converter string BR para número
-function parseDecimalBR(val) {
-  if (!val) return null;
-  return parseFloat(val.replace(/\./g, "").replace(",", "."));
+// Conversores
+function parseNumero(val) {
+  if (!val || val.trim() === "") return null;
+  return Number(val.replace(",", "."));
 }
 
-// Formatar número BR
-function formatDecimal(val, casas = 2) {
+function formatNumero(val) {
   if (val == null) return "";
-  return Number(val).toLocaleString("pt-BR", {
-    minimumFractionDigits: casas,
-    maximumFractionDigits: casas,
-  });
+  return Number(val).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   carregarProdutos();
 
-  document.getElementById("formProduto").addEventListener("submit", async (e) => {
+  document.getElementById("formProduto").addEventListener("submit", (e) => {
     e.preventDefault();
     salvarProduto();
   });
@@ -33,47 +29,46 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// ---------------------------------------------------------
-// CARREGAR LISTAGEM
-// ---------------------------------------------------------
 async function carregarProdutos() {
-  const tabela = document.getElementById("listaProdutos");
-  tabela.innerHTML = "<tr><td colspan='6'>Carregando...</td></tr>";
+  const lista = document.getElementById("listaProdutos");
+  lista.innerHTML = "<tr><td colspan='10'>Carregando...</td></tr>";
 
   const { data, error } = await supabase
     .from("produtos")
     .select("*")
-    .order("id", { ascending: true });
+    .order("codigo", { ascending: true });
 
   if (error) {
-    tabela.innerHTML = "<tr><td colspan='6'>Erro ao carregar</td></tr>";
     console.error(error);
+    lista.innerHTML = "<tr><td colspan='10'>Erro ao carregar</td></tr>";
     return;
   }
 
   if (!data || data.length === 0) {
-    tabela.innerHTML = "<tr><td colspan='6'>Nenhum produto encontrado.</td></tr>";
+    lista.innerHTML = "<tr><td colspan='10'>Nenhum produto encontrado</td></tr>";
     return;
   }
 
-  tabela.innerHTML = "";
+  lista.innerHTML = "";
 
   data.forEach((p) => {
     const tr = document.createElement("tr");
-
     tr.innerHTML = `
-      <td>${p.id}</td>
-      <td>${p.sku}</td>
-      <td>${p.nome}</td>
+      <td>${p.codigo}</td>
+      <td>${p.descricao}</td>
       <td>${p.unidade}</td>
-      <td>R$ ${formatDecimal(p.preco_venda)}</td>
+      <td>${p.comprimento_mm ?? ""}</td>
+      <td>${p.acabamento ?? ""}</td>
+      <td>${formatNumero(p.peso_bruto)}</td>
+      <td>${formatNumero(p.peso_liquido)}</td>
+      <td>${formatNumero(p.preco_custo)}</td>
+      <td>${formatNumero(p.preco_venda)}</td>
       <td>
-        <button onclick="editarProduto(${p.id})">Editar</button>
-        <button onclick="excluirProduto(${p.id})">Excluir</button>
+        <button onclick="editarProduto('${p.id}')">Editar</button>
+        <button onclick="excluirProduto('${p.id}')">Excluir</button>
       </td>
     `;
-
-    tabela.appendChild(tr);
+    lista.appendChild(tr);
   });
 }
 
@@ -89,14 +84,17 @@ window.editarProduto = async function (id) {
     return;
   }
 
-  produtoEditandoId = id;
+  editandoId = id;
 
-  document.getElementById("sku").value = data.sku;
-  document.getElementById("nome").value = data.nome;
-  document.getElementById("descricao").value = data.descricao || "";
-  document.getElementById("unidade").value = data.unidade || "";
-  document.getElementById("preco_custo").value = formatDecimal(data.preco_custo);
-  document.getElementById("preco_venda").value = formatDecimal(data.preco_venda);
+  document.getElementById("codigo").value = data.codigo;
+  document.getElementById("descricao").value = data.descricao;
+  document.getElementById("unidade").value = data.unidade;
+  document.getElementById("comprimento_mm").value = data.comprimento_mm ?? "";
+  document.getElementById("acabamento").value = data.acabamento ?? "";
+  document.getElementById("peso_bruto").value = formatNumero(data.peso_bruto);
+  document.getElementById("peso_liquido").value = formatNumero(data.peso_liquido);
+  document.getElementById("preco_custo").value = formatNumero(data.preco_custo);
+  document.getElementById("preco_venda").value = formatNumero(data.preco_venda);
 
   document.getElementById("btnSalvar").textContent = "Salvar Alterações";
   document.getElementById("btnCancelar").style.display = "inline-block";
@@ -117,31 +115,21 @@ window.excluirProduto = async function (id) {
 
 async function salvarProduto() {
   const dados = {
-    sku: document.getElementById("sku").value,
-    nome: document.getElementById("nome").value,
+    codigo: document.getElementById("codigo").value,
     descricao: document.getElementById("descricao").value,
     unidade: document.getElementById("unidade").value,
-    preco_custo: parseDecimalBR(document.getElementById("preco_custo").value),
-    preco_venda: parseDecimalBR(document.getElementById("preco_venda").value),
+    comprimento_mm: parseNumero(document.getElementById("comprimento_mm").value),
+    acabamento: document.getElementById("acabamento").value,
+    peso_bruto: parseNumero(document.getElementById("peso_bruto").value),
+    peso_liquido: parseNumero(document.getElementById("peso_liquido").value),
+    preco_custo: parseNumero(document.getElementById("preco_custo").value),
+    preco_venda: parseNumero(document.getElementById("preco_venda").value),
   };
 
-  if (produtoEditandoId) {
-    const { error } = await supabase
-      .from("produtos")
-      .update(dados)
-      .eq("id", produtoEditandoId);
-
-    if (error) {
-      alert("Erro ao salvar alterações");
-      return;
-    }
+  if (editandoId) {
+    await supabase.from("produtos").update(dados).eq("id", editandoId);
   } else {
-    const { error } = await supabase.from("produtos").insert(dados);
-
-    if (error) {
-      alert("Erro ao criar produto");
-      return;
-    }
+    await supabase.from("produtos").insert(dados);
   }
 
   limparFormulario();
@@ -149,8 +137,7 @@ async function salvarProduto() {
 }
 
 function limparFormulario() {
-  produtoEditandoId = null;
-
+  editandoId = null;
   document.getElementById("formProduto").reset();
   document.getElementById("btnSalvar").textContent = "Cadastrar Produto";
   document.getElementById("btnCancelar").style.display = "none";
