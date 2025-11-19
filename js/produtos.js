@@ -5,6 +5,37 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let editandoId = null;
 
+// ----------------------------
+// TOAST MENSAGENS
+// ----------------------------
+function showToast(msg, tipo = "success") {
+  const div = document.createElement("div");
+  div.className = `toast ${tipo}`;
+  div.textContent = msg;
+
+  Object.assign(div.style, {
+    position: "fixed",
+    bottom: "20px",
+    right: "20px",
+    background: tipo === "error" ? "#ef4444" : "#22c55e",
+    padding: "12px 18px",
+    color: "white",
+    borderRadius: "8px",
+    fontSize: "15px",
+    boxShadow: "0 0 10px rgba(0,0,0,0.3)",
+    zIndex: "99999",
+    animation: "fadein .3s"
+  });
+
+  document.body.appendChild(div);
+
+  setTimeout(() => {
+    div.style.opacity = "0";
+    div.style.transition = "0.4s";
+    setTimeout(() => div.remove(), 400);
+  }, 2500);
+}
+
 // Conversores
 function parseNumero(val) {
   if (!val || val.trim() === "") return null;
@@ -47,6 +78,7 @@ async function carregarProdutos() {
   if (error) {
     console.error(error);
     lista.innerHTML = "<tr><td colspan='10'>Erro ao carregar dados</td></tr>";
+    showToast("Erro ao carregar dados", "error");
     return;
   }
 
@@ -86,7 +118,7 @@ window.editarProduto = async function (id) {
     .single();
 
   if (error) {
-    alert("Erro ao carregar produto.");
+    showToast("Erro ao carregar item", "error");
     return;
   }
 
@@ -104,6 +136,8 @@ window.editarProduto = async function (id) {
 
   document.getElementById("btnSalvar").textContent = "Salvar Alterações";
   document.getElementById("btnCancelar").style.display = "inline-block";
+
+  showToast("Modo edição ativado");
 };
 
 // -----------------------------------------
@@ -118,15 +152,16 @@ window.excluirProduto = async function (id) {
     .eq("id", id);
 
   if (error) {
-    alert("Erro ao excluir.");
+    showToast("Erro ao excluir", "error");
     return;
   }
 
+  showToast("Produto excluído");
   carregarProdutos();
 };
 
 // -----------------------------------------
-// SALVAR (CRIAR OU EDITAR)
+// SALVAR
 // -----------------------------------------
 async function salvarProduto() {
   const dados = {
@@ -148,14 +183,18 @@ async function salvarProduto() {
       .from("produtos")
       .update(dados)
       .eq("id", editandoId);
+
+    showToast("Produto atualizado");
   } else {
     result = await supabase
       .from("produtos")
       .insert(dados);
+
+    showToast("Produto cadastrado");
   }
 
   if (result.error) {
-    alert("Erro ao salvar. Código duplicado?");
+    showToast("Erro ao salvar (Código duplicado?)", "error");
     console.error(result.error);
     return;
   }
