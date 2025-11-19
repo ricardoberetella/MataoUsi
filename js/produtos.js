@@ -5,18 +5,17 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let editandoId = null;
 
-// Converte entradas numéricas brasileiras para número real
+// Conversores
 function parseNumero(val) {
   if (!val || val.trim() === "") return null;
   return Number(val.replace(",", "."));
 }
 
-// Formata números para padrão brasileiro
 function formatNumero(val) {
   if (val == null) return "";
   return Number(val).toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    maximumFractionDigits: 2
   });
 }
 
@@ -33,10 +32,12 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// ---------------- LISTAR PRODUTOS ----------------
+// -----------------------------------------
+// LISTAR
+// -----------------------------------------
 async function carregarProdutos() {
-  const tabela = document.getElementById("listaProdutos");
-  tabela.innerHTML = "<tr><td colspan='10'>Carregando...</td></tr>";
+  const lista = document.getElementById("listaProdutos");
+  lista.innerHTML = "<tr><td colspan='10'>Carregando...</td></tr>";
 
   const { data, error } = await supabase
     .from("produtos")
@@ -44,17 +45,12 @@ async function carregarProdutos() {
     .order("codigo", { ascending: true });
 
   if (error) {
-    tabela.innerHTML = "<tr><td colspan='10'>Erro ao carregar produtos</td></tr>";
     console.error(error);
+    lista.innerHTML = "<tr><td colspan='10'>Erro ao carregar dados</td></tr>";
     return;
   }
 
-  if (!data || data.length === 0) {
-    tabela.innerHTML = "<tr><td colspan='10'>Nenhum produto encontrado</td></tr>";
-    return;
-  }
-
-  tabela.innerHTML = "";
+  lista.innerHTML = "";
 
   data.forEach((p) => {
     const tr = document.createElement("tr");
@@ -69,17 +65,19 @@ async function carregarProdutos() {
       <td>${formatNumero(p.peso_liquido)}</td>
       <td>${formatNumero(p.preco_custo)}</td>
       <td>${formatNumero(p.preco_venda)}</td>
-      <td>
-        <button onclick="editarProduto('${p.id}')">Editar</button>
-        <button onclick="excluirProduto('${p.id}')">Excluir</button>
+      <td class="acoes">
+        <button onclick="editarProduto(${p.id})">Editar</button>
+        <button onclick="excluirProduto(${p.id})">Excluir</button>
       </td>
     `;
 
-    tabela.appendChild(tr);
+    lista.appendChild(tr);
   });
 }
 
-// ---------------- EDITAR PRODUTO ----------------
+// -----------------------------------------
+// EDITAR
+// -----------------------------------------
 window.editarProduto = async function (id) {
   const { data, error } = await supabase
     .from("produtos")
@@ -87,7 +85,7 @@ window.editarProduto = async function (id) {
     .eq("id", id)
     .single();
 
-  if (error || !data) {
+  if (error) {
     alert("Erro ao carregar produto.");
     return;
   }
@@ -108,21 +106,28 @@ window.editarProduto = async function (id) {
   document.getElementById("btnCancelar").style.display = "inline-block";
 };
 
-// ---------------- EXCLUIR PRODUTO ----------------
+// -----------------------------------------
+// EXCLUIR
+// -----------------------------------------
 window.excluirProduto = async function (id) {
-  if (!confirm("Deseja excluir este produto?")) return;
+  if (!confirm("Deseja realmente excluir este item?")) return;
 
-  const { error } = await supabase.from("produtos").delete().eq("id", id);
+  const { error } = await supabase
+    .from("produtos")
+    .delete()
+    .eq("id", id);
 
   if (error) {
-    alert("Erro ao excluir produto.");
+    alert("Erro ao excluir.");
     return;
   }
 
   carregarProdutos();
 };
 
-// ---------------- SALVAR (NOVO OU EDITADO) ----------------
+// -----------------------------------------
+// SALVAR (CRIAR OU EDITAR)
+// -----------------------------------------
 async function salvarProduto() {
   const dados = {
     codigo: document.getElementById("codigo").value,
@@ -136,19 +141,32 @@ async function salvarProduto() {
     preco_venda: parseNumero(document.getElementById("preco_venda").value),
   };
 
+  let result;
+
   if (editandoId) {
-    // Atualizar
-    await supabase.from("produtos").update(dados).eq("id", editandoId);
+    result = await supabase
+      .from("produtos")
+      .update(dados)
+      .eq("id", editandoId);
   } else {
-    // Inserir novo
-    await supabase.from("produtos").insert(dados);
+    result = await supabase
+      .from("produtos")
+      .insert(dados);
+  }
+
+  if (result.error) {
+    alert("Erro ao salvar. Código duplicado?");
+    console.error(result.error);
+    return;
   }
 
   limparFormulario();
   carregarProdutos();
 }
 
-// ---------------- LIMPAR FORMULÁRIO ----------------
+// -----------------------------------------
+// LIMPAR
+// -----------------------------------------
 function limparFormulario() {
   editandoId = null;
   document.getElementById("formProduto").reset();
