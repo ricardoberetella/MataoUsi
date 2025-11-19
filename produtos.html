@@ -3,132 +3,130 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Cadastro de Produtos</title>
 
   <style>
-    :root {
-      --bg: #0f172a;
-      --card: #1e293b;
-      --text: #ffffff;
-      --primary: #38bdf8;
-      --primary-dark: #0ea5e9;
+    body {
+      background: #0f172a;
+      color: #fff;
+      margin: 0;
+      font-family: "Arial";
     }
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 15px;
+    header {
+      background: #1e293b;
+      padding: 15px 20px;
+      text-align: center;
+      color: #38bdf8;
+      font-size: 22px;
+      font-weight: bold;
     }
 
     .container {
+      padding: 20px;
       max-width: 900px;
       margin: auto;
-      background: var(--card);
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
     }
 
     h2 {
       text-align: center;
-      color: var(--primary);
-      margin-bottom: 20px;
-      font-size: 26px;
+      margin-bottom: 15px;
+      color: #38bdf8;
     }
 
-    /* Inputs */
-    input,
-    select {
+    form input,
+    form select {
       width: 100%;
-      padding: 12px;
+      padding: 14px;
       margin: 8px 0;
       border-radius: 8px;
       border: none;
       font-size: 16px;
-      background: #0f172a;
-      color: #fff;
     }
 
-    /* Botões */
-    button {
-      padding: 12px 18px;
-      border: none;
-      border-radius: 8px;
-      background: var(--primary);
-      cursor: pointer;
-      color: #0f172a;
-      font-weight: bold;
-      font-size: 16px;
+    .btn-area {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
       margin-top: 10px;
-      transition: 0.2s;
     }
 
-    button:hover {
-      background: var(--primary-dark);
+    button {
+      padding: 14px;
+      border: none;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      flex: 1;
+    }
+
+    #btnSalvar {
+      background: #38bdf8;
+      color: #0f172a;
     }
 
     #btnCancelar {
-      background: #f87171;
-      color: #fff;
-      display: none;
-    }
-
-    #btnCancelar:hover {
       background: #ef4444;
-    }
-
-    /* Botão voltar */
-    .btn-voltar {
-      background: #64748b;
       color: white;
-      margin-bottom: 15px;
     }
 
-    .btn-voltar:hover {
-      background: #475569;
+    #btnVoltar {
+      background: #22c55e;
+      color: #0f172a;
+      width: 100%;
+      margin-bottom: 20px;
     }
 
-    /* Tabela */
+    /* TABELA RESPONSIVA */
     .tabela-wrapper {
       overflow-x: auto;
-      margin-top: 20px;
+      margin-top: 25px;
+      border-radius: 10px;
+      border: 1px solid #334155;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
       min-width: 900px;
-      background: var(--bg);
-    }
-
-    th,
-    td {
-      padding: 12px;
-      border-bottom: 1px solid #334155;
-      text-align: left;
-      font-size: 15px;
     }
 
     th {
-      background: var(--card);
+      background: #1e293b;
+      padding: 12px;
+      text-align: left;
+      color: #38bdf8;
     }
 
-    /* Botões da tabela */
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #334155;
+    }
+
     .acoes button {
-      padding: 8px 12px;
+      background: #38bdf8;
+      color: #0f172a;
+      padding: 10px;
       font-size: 14px;
+      margin-right: 5px;
+      border-radius: 6px;
+      cursor: pointer;
     }
 
-    /* Responsividade */
+    /* MOBILE FIRST */
     @media (max-width: 600px) {
       h2 {
-        font-size: 22px;
+        font-size: 20px;
       }
+
       button {
-        width: 100%;
+        font-size: 15px;
+      }
+
+      table {
+        min-width: 700px;
       }
     }
   </style>
@@ -136,21 +134,23 @@
 
 <body>
 
+  <header>Cadastro de Produtos</header>
+
   <div class="container">
 
-    <button class="btn-voltar" onclick="window.location.href='dashboard.html'">⬅ Voltar ao Menu</button>
+    <!-- BOTÃO VOLTAR AO MENU -->
+    <button id="btnVoltar" onclick="window.location.href='dashboard.html'">⬅ Voltar ao Menu</button>
 
-    <h2>Cadastro de Produtos</h2>
+    <h2>Ficha do Produto</h2>
 
     <form id="formProduto">
-
       <input type="text" id="codigo" placeholder="Código do Produto">
       <input type="text" id="descricao" placeholder="Descrição">
       <input type="text" id="unidade" placeholder="Unidade (ex: UN, KG)">
       <input type="number" id="comprimento_mm" placeholder="Comprimento (mm)">
-
+      
       <select id="acabamento">
-        <option value="">Selecione o Acabamento</option>
+        <option value="">Acabamento</option>
         <option value="Zincado">Zincado</option>
         <option value="Tratado">Tratado</option>
       </select>
@@ -160,10 +160,13 @@
       <input type="text" id="preco_custo" placeholder="Preço de Custo">
       <input type="text" id="preco_venda" placeholder="Preço de Venda">
 
-      <button id="btnSalvar" type="submit">Cadastrar Produto</button>
-      <button id="btnCancelar" type="button">Cancelar</button>
+      <div class="btn-area">
+        <button id="btnSalvar" type="submit">Cadastrar Produto</button>
+        <button id="btnCancelar" type="button" style="display:none;">Cancelar</button>
+      </div>
     </form>
 
+    <!-- TABELA RESPONSIVA -->
     <div class="tabela-wrapper">
       <table>
         <thead>
