@@ -4,7 +4,6 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
-// Cria o cliente
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Lista em memória
@@ -15,13 +14,13 @@ let produtoEditandoId = null;
 // FUNÇÕES DE CONVERSÃO (BR <-> US)
 // ======================================
 
-// Ex: "1.234,56" → 1234.56
+// "1.234,56" -> 1234.56
 function parseDecimalBR(valor) {
   if (!valor) return null;
   return parseFloat(valor.replace(/\./g, "").replace(",", "."));
 }
 
-// Exibe valores no padrão BR
+// número -> "1.234,56"
 function formatDecimal(valor, casas = 2) {
   if (valor == null) return "";
   return Number(valor).toLocaleString("pt-BR", {
@@ -41,21 +40,22 @@ async function carregarProdutos() {
 
   if (error) {
     console.error("Erro ao carregar:", error);
+    alert("Erro ao carregar produtos.");
     return;
   }
 
-  listaProdutos = data;
-  renderizarTabela();
+  listaProdutos = data || [];
+  renderizarTabela(listaProdutos);
 }
 
 // ======================================
 // RENDERIZAR TABELA
 // ======================================
-function renderizarTabela() {
+function renderizarTabela(lista) {
   const tbody = document.getElementById("listaProdutos");
   tbody.innerHTML = "";
 
-  listaProdutos.forEach(prod => {
+  lista.forEach(prod => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${prod.codigo}</td>
@@ -68,10 +68,23 @@ function renderizarTabela() {
       <td>${formatDecimal(prod.preco_custo, 2)}</td>
       <td>${formatDecimal(prod.preco_venda, 2)}</td>
       <td>
-        <button class="edit-btn" onclick="editarProduto('${prod.id}')">Editar</button>
-        <button class="delete-btn" onclick="excluirProduto('${prod.id}')">Excluir</button>
+        <button class="edit-btn">Editar</button>
+        <button class="delete-btn">Excluir</button>
       </td>
     `;
+
+    // Botão editar
+    const btnEdit = tr.querySelector(".edit-btn");
+    btnEdit.addEventListener("click", () => {
+      abrirEdicao(prod.id);
+    });
+
+    // Botão excluir
+    const btnDel = tr.querySelector(".delete-btn");
+    btnDel.addEventListener("click", () => {
+      excluirProduto(prod.id);
+    });
+
     tbody.appendChild(tr);
   });
 }
@@ -100,15 +113,27 @@ document.getElementById("btnSalvar").addEventListener("click", async () => {
     return;
   }
 
+  // Limpa o formulário (opcional)
+  document.getElementById("codigo").value = "";
+  document.getElementById("descricao").value = "";
+  document.getElementById("unidade").value = "";
+  document.getElementById("comprimento_mm").value = "";
+  document.getElementById("acabamento").value = "";
+  document.getElementById("peso_liquido").value = "";
+  document.getElementById("peso_bruto").value = "";
+  document.getElementById("preco_custo").value = "";
+  document.getElementById("preco_venda").value = "";
+
   await carregarProdutos();
 });
 
 // ======================================
-// EDITAR PRODUTO (ABRIR MODAL)
+// ABRIR MODAL DE EDIÇÃO
 // ======================================
-function editarProduto(id) {
+function abrirEdicao(id) {
   produtoEditandoId = id;
   const prod = listaProdutos.find(p => p.id === id);
+  if (!prod) return;
 
   document.getElementById("editFields").innerHTML = `
     <label>Código</label>
@@ -149,10 +174,16 @@ function fecharEdicao() {
   document.getElementById("editModal").style.display = "none";
 }
 
+// Botões do modal
+document.getElementById("btnCancelarEdicao").addEventListener("click", fecharEdicao);
+document.getElementById("btnSalvarEdicao").addEventListener("click", salvarEdicao);
+
 // ======================================
 // SALVAR EDIÇÃO
 // ======================================
 async function salvarEdicao() {
+  if (!produtoEditandoId) return;
+
   const atualizado = {
     codigo: document.getElementById("edit_codigo").value.trim(),
     descricao: document.getElementById("edit_descricao").value.trim(),
@@ -172,12 +203,12 @@ async function salvarEdicao() {
 
   if (error) {
     console.error("Erro ao atualizar:", error);
-    alert("Erro ao atualizar!");
+    alert("Erro ao atualizar produto!");
     return;
   }
 
   fecharEdicao();
-  carregarProdutos();
+  await carregarProdutos();
 }
 
 // ======================================
@@ -186,8 +217,18 @@ async function salvarEdicao() {
 async function excluirProduto(id) {
   if (!confirm("Excluir este produto?")) return;
 
-  await supabase.from("produtos").delete().eq("id", id);
-  carregarProdutos();
+  const { error } = await supabase
+    .from("produtos")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.error("Erro ao excluir:", error);
+    alert("Erro ao excluir produto!");
+    return;
+  }
+
+  await carregarProdutos();
 }
 
 // ======================================
@@ -200,38 +241,10 @@ document.getElementById("buscarCodigo").addEventListener("input", () => {
     p.codigo.toLowerCase().includes(termo)
   );
 
-  const tbody = document.getElementById("listaProdutos");
-  tbody.innerHTML = "";
-
-  filtrado.forEach(prod => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${prod.codigo}</td>
-      <td>${prod.descricao}</td>
-      <td>${prod.unidade}</td>
-      <td>${formatDecimal(prod.comprimento_mm, 2)}</td>
-      <td>${prod.acabamento}</td>
-      <td>${formatDecimal(prod.peso_liquido, 3)}</td>
-      <td>${formatDecimal(prod.peso_bruto, 3)}</td>
-      <td>${formatDecimal(prod.preco_custo, 2)}</td>
-      <td>${formatDecimal(prod.preco_venda, 2)}</td>
-      <td>
-        <button class="edit-btn" onclick="editarProduto('${prod.id}')">Editar</button>
-        <button class="delete-btn" onclick="excluirProduto('${prod.id}')">Excluir</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
+  renderizarTabela(filtrado);
 });
 
 // ======================================
-// Expor funções para o HTML (ESSENCIAL)
+// INICIALIZAÇÃO
 // ======================================
-window.carregarProdutos = carregarProdutos;
-window.editarProduto = editarProduto;
-window.excluirProduto = excluirProduto;
-window.salvarEdicao = salvarEdicao;
-window.fecharEdicao = fecharEdicao;
-
-// Inicializa tudo
 carregarProdutos();
