@@ -1,103 +1,88 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cadastrar Produto</title>
+  <title>Cadastro de Produtos</title>
 
-  <style>
-    body {
-      background: #0f172a;
-      color: white;
-      font-family: Arial;
-      margin: 0;
-      padding: 0;
-    }
-
-    .container {
-      max-width: 600px;
-      margin: 40px auto;
-      background: #1e293b;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
-    }
-
-    h2 {
-      text-align: center;
-      color: #38bdf8;
-      margin-bottom: 20px;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border: none;
-      border-radius: 6px;
-      background: #334155;
-      color: white;
-    }
-
-    button {
-      width: 100%;
-      padding: 12px;
-      background: #38bdf8;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-
-    button:hover {
-      background: #0ea5e9;
-    }
-
-    .btn-voltar {
-      background: #64748b;
-    }
-
-    .btn-voltar:hover {
-      background: #475569;
-    }
-  </style>
+  <!-- CSS correto -->
+  <link rel="stylesheet" href="css/produtos.css">
 </head>
 
 <body>
 
-<div class="container">
+  <!-- Topbar -->
+  <header class="topbar">
+    <button onclick="window.location.href='dashboard.html'" class="voltar">⬅ Voltar</button>
+    <h1>Produtos</h1>
+  </header>
 
-  <button class="btn-voltar" onclick="window.location.href='produtos.html'">
-    ← Voltar
-  </button>
+  <div class="container">
 
-  <h2>Cadastrar Produto</h2>
+    <!-- Formulário -->
+    <form id="formProduto" class="card">
 
-  <form id="formProduto">
+      <h2>Cadastrar / Editar Produto</h2>
 
-    <input id="codigo" placeholder="Código (SKU)" required>
+      <div class="grid">
 
-    <input id="descricao" placeholder="Descrição" required>
+        <input type="text" id="codigo" placeholder="Código (SKU)">
+        <input type="text" id="descricao" placeholder="Descrição">
+        <input type="text" id="unidade" placeholder="Unidade (UN, KG...)">
+        <input type="number" id="comprimento_mm" placeholder="Comprimento (mm)">
 
-    <input id="unidade" placeholder="Unidade (ex: Pc)" required>
+        <select id="acabamento">
+          <option value="">Acabamento</option>
+          <option value="Zincado">Zincado</option>
+          <option value="Tratado">Tratado</option>
+        </select>
 
-    <input id="peso" placeholder="Peso (KG)" type="number" step="0.001" required>
+        <input type="text" id="peso_bruto" placeholder="Peso Bruto">
+        <input type="text" id="peso_liquido" placeholder="Peso Líquido">
+        <input type="text" id="preco_custo" placeholder="Preço de Custo">
+        <input type="text" id="preco_venda" placeholder="Preço de Venda">
 
-    <input id="preco_custo" placeholder="Preço de Custo" type="number" step="0.01" required>
+      </div>
 
-    <input id="preco_venda" placeholder="Preço de Venda" type="number" step="0.01" required>
+      <div class="btn-area">
+        <button id="btnSalvar" type="submit" class="btn-primary">Salvar</button>
+        <button id="btnCancelar" type="button" class="btn-secondary" style="display:none;">Cancelar</button>
+      </div>
 
-    <input id="acabamento" placeholder="Zincado / Tratado / Outro" required>
+    </form>
 
-    <input id="comprimento" placeholder="Comprimento (mm)" type="number" required>
+    <!-- Lista -->
+    <div class="card">
+      <h2>Lista de Produtos</h2>
 
-    <button type="submit">Cadastrar Produto</button>
-  </form>
+      <div class="tabela-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Cód</th>
+              <th>Descrição</th>
+              <th>UN</th>
+              <th>Comp</th>
+              <th>Acab</th>
+              <th>P. Bruto</th>
+              <th>P. Líquido</th>
+              <th>Custo</th>
+              <th>Venda</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
 
-</div>
+          <tbody id="listaProdutos"></tbody>
+        </table>
+      </div>
 
-<script type="module" src="./js/produtos_cadastrar.js"></script>
+    </div>
+
+  </div>
+
+  <!-- IMPORTANTE: JS correto -->
+  <script type="module" src="js/produtos.js"></script>
 
 </body>
 </html>
