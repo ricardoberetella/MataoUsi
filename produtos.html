@@ -29,11 +29,11 @@
       margin-bottom: 10px;
     }
 
-    .btn-voltar {
+    .btn-voltar, .btn-home {
       margin-left: auto;
       display: block;
       width: fit-content;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
       background: transparent;
       padding: 8px 18px;
       border-radius: 25px;
@@ -44,7 +44,7 @@
       transition: 0.3s;
     }
 
-    .btn-voltar:hover {
+    .btn-voltar:hover, .btn-home:hover {
       background: #38bdf8;
       color: black;
     }
@@ -61,7 +61,7 @@
       flex-direction: column;
     }
 
-    input, select {
+    input {
       padding: 10px;
       border-radius: 6px;
       border: none;
@@ -70,20 +70,16 @@
     }
 
     .btn-salvar {
-      width: 180px;
+      width: 200px;
       background: #22c55e;
       padding: 12px;
       border-radius: 25px;
       border: none;
-      font-size: 16px;
+      font-size: 18px;
       color: black;
       cursor: pointer;
       margin-top: 20px;
       float: right;
-    }
-
-    .btn-salvar:hover {
-      background: #16a34a;
     }
 
     table {
@@ -113,15 +109,10 @@
       font-size: 14px;
     }
 
-    .edit-btn {
-      background: #3b82f6;
-    }
+    .edit-btn { background: #3b82f6; }
+    .delete-btn { background: #ef4444; }
 
-    .delete-btn {
-      background: #ef4444;
-    }
-
-    /* MODAL DE EDIÇÃO */
+    /* MODAL */
     .edit-modal {
       position: fixed;
       top: 50%;
@@ -132,77 +123,24 @@
       padding: 25px;
       border-radius: 12px;
       box-shadow: 0 0 15px rgba(0,0,0,0.7);
-      display: none;
       z-index: 999;
+      display: none;
     }
 
-    .edit-modal h2 {
-      margin-top: 0;
-      color: #38bdf8;
-    }
-
-    .modal-buttons {
-      margin-top: 20px;
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .cancel-btn {
-      background: gray;
-      padding: 10px 15px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      color: white;
-    }
-
-    .save-edit-btn {
-      background: #22c55e;
-      padding: 10px 15px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      color: black;
-    }
-
-    /* RESPONSIVIDADE */
     @media (max-width: 900px) {
-
-      .container {
-        padding: 15px;
-      }
-
-      .form-row {
-        flex-direction: column;
-      }
-
-      .btn-salvar {
-        width: 100%;
-        float: none;
-      }
-
-      .edit-modal {
-        width: 95%;
-        padding: 15px;
-      }
-
-      .modal-buttons {
-        flex-direction: column;
-        gap: 10px;
-      }
-
-      .modal-buttons button {
-        width: 100%;
-      }
+      .form-row { flex-direction: column; }
+      .btn-salvar { width: 100%; float: none; }
+      .edit-modal { width: 95%; padding: 15px; }
     }
   </style>
-
 </head>
+
 <body>
 
   <div class="container">
 
     <a href="/painel.html" class="btn-voltar">← Voltar ao painel</a>
+    <a href="/index.html" class="btn-home">🏠 Página inicial</a>
 
     <h1>Cadastro de Produtos</h1>
     <p>Gerencie os produtos cadastrados no sistema.</p>
@@ -243,40 +181,41 @@
         </div>
 
         <div class="form-group">
-          <label>Peso Líquido (kg)</label>
+          <label>Peso Líquido</label>
           <input type="text" id="peso_liquido">
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label>Peso Bruto (kg)</label>
+          <label>Peso Bruto</label>
           <input type="text" id="peso_bruto">
         </div>
 
         <div class="form-group">
-          <label>Preço de Custo (R$)</label>
+          <label>Preço de Custo</label>
           <input type="text" id="preco_custo">
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label>Preço de Venda (R$)</label>
+          <label>Preço de Venda</label>
           <input type="text" id="preco_venda">
         </div>
       </div>
 
       <button class="btn-salvar" id="btnSalvar">Salvar produto</button>
 
-      <p id="mensagem" style="color: #ff6b6b; margin-top: 10px;"></p>
+      <p id="mensagem" style="color:#ff6b6b; margin-top:10px;"></p>
+
     </div>
 
     <br><br>
     <h2>Produtos cadastrados</h2>
 
     <label>Buscar por código:</label>
-    <input type="text" id="buscarCodigo" placeholder="Digite o código para filtrar" style="width: 260px; margin-bottom: 20px;">
+    <input type="text" id="buscarCodigo" placeholder="Digite o código" style="width: 260px; margin-bottom: 20px;">
 
     <!-- TABELA -->
     <table>
@@ -285,12 +224,12 @@
           <th>Código</th>
           <th>Descrição</th>
           <th>Unidade</th>
-          <th>Comprimento (mm)</th>
+          <th>Comp. (mm)</th>
           <th>Acabamento</th>
-          <th>Peso Líquido</th>
+          <th>Peso Líq.</th>
           <th>Peso Bruto</th>
-          <th>Preço Custo</th>
-          <th>Preço Venda</th>
+          <th>Custo</th>
+          <th>Venda</th>
           <th>Ações</th>
         </tr>
       </thead>
@@ -302,17 +241,13 @@
   <!-- MODAL -->
   <div class="edit-modal" id="editModal">
     <h2>Editar produto</h2>
-
     <div id="editFields"></div>
 
-    <div class="modal-buttons">
-      <button class="cancel-btn" onclick="fecharEdicao()">Cancelar</button>
-      <button class="save-edit-btn" onclick="salvarEdicao()">Salvar</button>
-    </div>
+    <button class="btn-salvar" onclick="salvarEdicao()">Salvar</button>
+    <button class="btn-voltar" onclick="fecharEdicao()">Cancelar</button>
   </div>
 
-  <!-- IMPORTAÇÃO CORRETA COMO MÓDULO -->
+  <!-- SCRIPT -->
   <script type="module" src="/js/produtos.js"></script>
-
 </body>
 </html>
