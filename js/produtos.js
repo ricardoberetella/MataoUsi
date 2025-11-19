@@ -5,7 +5,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let editandoId = null;
 
 /* -------------------------------------------------------
-   Conversão BR → Número (vírgula para ponto)
+   Conversão BR → Número
 ------------------------------------------------------- */
 function toNumberBR(valor) {
   if (!valor || valor.trim() === "") return 0;
@@ -15,7 +15,7 @@ function toNumberBR(valor) {
 }
 
 /* -------------------------------------------------------
-   Formatar exibição com vírgula
+   Formatar exibição BR
 ------------------------------------------------------- */
 function formatBR(valor) {
   if (valor === null || valor === undefined || valor === "") return "";
@@ -23,7 +23,7 @@ function formatBR(valor) {
 }
 
 /* -------------------------------------------------------
-   Formatar preço em Real
+   Formatar preço R$
 ------------------------------------------------------- */
 function formatPreco(valor) {
   if (valor === null || valor === undefined || valor === "") return "";
@@ -83,17 +83,14 @@ async function carregarProdutos() {
   data.forEach((p) => {
     const tr = document.createElement("tr");
 
-    tr.innerinnerHTML = `
+    tr.innerHTML = `
       <td>${p.codigo ?? ""}</td>
       <td>${p.descricao ?? ""}</td>
       <td>${p.unidade ?? ""}</td>
-
       <td class="numero">${formatBR(p.comprimento_mm)}</td>
       <td>${p.acabamento ?? ""}</td>
-
       <td class="numero">${formatBR(p.peso_bruto)}</td>
       <td class="numero">${formatBR(p.peso_liquido)}</td>
-
       <td class="numero">${formatPreco(p.preco_custo)}</td>
       <td class="numero">${formatPreco(p.preco_venda)}</td>
 
@@ -108,7 +105,7 @@ async function carregarProdutos() {
 }
 
 /* -------------------------------------------------------
-   SALVAR PRODUTO
+   Salvar (INSERT / UPDATE)
 ------------------------------------------------------- */
 document.getElementById("formProduto").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -120,13 +117,10 @@ document.getElementById("formProduto").addEventListener("submit", async (e) => {
     codigo: document.getElementById("codigo").value.trim(),
     descricao: document.getElementById("descricao").value.trim(),
     unidade: document.getElementById("unidade").value.trim(),
-
     comprimento_mm: toNumberBR(document.getElementById("comprimento_mm").value),
     acabamento: document.getElementById("acabamento").value.trim(),
-
     peso_bruto: toNumberBR(document.getElementById("peso_bruto").value),
     peso_liquido: toNumberBR(document.getElementById("peso_liquido").value),
-
     preco_custo: toNumberBR(document.getElementById("preco_custo").value),
     preco_venda: toNumberBR(document.getElementById("preco_venda").value),
   };
@@ -183,7 +177,7 @@ window.editarProduto = async function (id) {
 };
 
 /* -------------------------------------------------------
-   Preencher formulário (reutilizado pela busca)
+   Preencher formulário (reutilizado na busca)
 ------------------------------------------------------- */
 function preencherFormulario(data) {
   editandoId = data.id;
@@ -191,13 +185,10 @@ function preencherFormulario(data) {
   document.getElementById("codigo").value = data.codigo ?? "";
   document.getElementById("descricao").value = data.descricao ?? "";
   document.getElementById("unidade").value = data.unidade ?? "";
-
   document.getElementById("comprimento_mm").value = formatBR(data.comprimento_mm);
   document.getElementById("acabamento").value = data.acabamento ?? "";
-
   document.getElementById("peso_bruto").value = formatBR(data.peso_bruto);
   document.getElementById("peso_liquido").value = formatBR(data.peso_liquido);
-
   document.getElementById("preco_custo").value = formatBR(data.preco_custo);
   document.getElementById("preco_venda").value = formatBR(data.preco_venda);
 
