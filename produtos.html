@@ -30,6 +30,22 @@
       margin-bottom: 20px;
     }
 
+    .btn-voltar {
+      background: #38bdf8;
+      color: #0f172a;
+      padding: 12px 20px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      margin-bottom: 20px;
+      display: inline-block;
+    }
+
+    .btn-voltar:hover {
+      background: #7dd3fc;
+    }
+
     input, select {
       width: 100%;
       padding: 10px;
@@ -49,12 +65,6 @@
       font-weight: bold;
       margin-right: 10px;
       margin-top: 10px;
-    }
-
-    .btn-voltar {
-      background: #f8fafc;
-      color: #0f172a;
-      margin-bottom: 20px;
     }
 
     table {
@@ -87,7 +97,7 @@
 
   <div class="container">
 
-    <!-- BOTÃO DE VOLTAR AO MENU -->
+    <!-- Botão Voltar -->
     <button class="btn-voltar" onclick="window.location.href='dashboard.html'">
       ⬅ Voltar ao Menu
     </button>
@@ -114,7 +124,6 @@
 
       <button id="btnSalvar" type="submit">Cadastrar Produto</button>
       <button id="btnCancelar" type="button" style="display:none;">Cancelar</button>
-
     </form>
 
     <table>
