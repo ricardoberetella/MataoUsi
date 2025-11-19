@@ -1,6 +1,6 @@
-/* --------------------------------------------------
-   GENERAL STYLE
------------------------------------------------------*/
+/* ---------------------------------------------------
+| GENERAL STYLE
+--------------------------------------------------- */
 body {
   margin: 0;
   font-family: Arial, sans-serif;
@@ -8,9 +8,16 @@ body {
   color: #e5e7eb;
 }
 
-/* --------------------------------------------------
-   TOPBAR
------------------------------------------------------*/
+/* Containers */
+.container {
+  width: 95%;
+  max-width: 1200px;
+  margin: 40px auto;
+}
+
+/* ---------------------------------------------------
+| TOPBAR
+--------------------------------------------------- */
 .topbar {
   background: #0a0a0a;
   padding: 15px 22px;
@@ -22,131 +29,100 @@ body {
 
 .topbar h1 {
   margin: 0;
-  font-size: 1.6rem;
+  font-size: 26px;
   color: #38bdf8;
 }
 
 .voltar {
-  background: #151515;
-  color: #bbb;
-  padding: 8px 14px;
-  border-radius: 6px;
-  border: 1px solid #333;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.voltar:hover {
-  background: #222;
+  background: #111;
+  border: 1px solid #444;
+  padding: 8px 16px;
+  border-radius: 8px;
   color: #fff;
+  cursor: pointer;
+  font-size: 14px;
 }
 
-/* --------------------------------------------------
-   CONTAINER
------------------------------------------------------*/
-.container {
-  max-width: 1100px;
-  margin: 40px auto;
-  padding: 20px;
-}
-
-/* --------------------------------------------------
-   CARD
------------------------------------------------------*/
+/* ---------------------------------------------------
+| CARD
+--------------------------------------------------- */
 .card {
-  background: rgba(20, 20, 20, 0.8);
-  border: 1px solid #222;
-  backdrop-filter: blur(4px);
-  padding: 22px;
-  border-radius: 14px;
-  margin-bottom: 28px;
-  box-shadow: 0 0 18px rgba(0,0,0,0.4);
+  background: #0a0a0a;
+  padding: 25px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  border: 1px solid #1f1f1f;
 }
 
 .card h2 {
   margin-top: 0;
+  margin-bottom: 20px;
   color: #38bdf8;
-  font-size: 1.3rem;
-  margin-bottom: 15px;
 }
 
-/* --------------------------------------------------
-   GRID FORM (2–3 columns)
------------------------------------------------------*/
+/* ---------------------------------------------------
+| GRID – CAMPOS DO FORMULÁRIO
+--------------------------------------------------- */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
 }
 
-/* --------------------------------------------------
-   INPUTS
------------------------------------------------------*/
 input, select {
   width: 100%;
-  padding: 12px;
+  padding: 12px 14px;
   border-radius: 8px;
-  border: 1px solid #2e2e2e;
-  background: #0f0f0f;
-  color: #e5e7eb;
-  font-size: 0.95rem;
-  transition: 0.2s;
+  border: 1px solid #ccc;
+  background: #e6eeff;     /* FUNDO CLARO */
+  color: #000;              /* TEXTO PRETO */
+  font-size: 15px;
 }
 
-input::placeholder,
+/* Select mais bonito */
 select {
-  color: #777;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
 }
 
-input:focus,
-select:focus {
-  outline: none;
-  border-color: #38bdf8;
-  box-shadow: 0 0 8px #38bdf864;
+select option {
+  background: #fff;
+  color: #000;
 }
 
-/* --------------------------------------------------
-   BUTTONS
------------------------------------------------------*/
+/* ---------------------------------------------------
+| BOTÕES
+--------------------------------------------------- */
 .btn-area {
-  margin-top: 18px;
+  margin-top: 20px;
   display: flex;
-  gap: 15px;
+  gap: 12px;
 }
 
 .btn-primary {
   background: #22c55e;
-  color: #052e16;
-  padding: 12px 20px;
+  padding: 12px 25px;
   border: none;
-  border-radius: 10px;
-  font-weight: bold;
+  border-radius: 8px;
+  color: #000;
   cursor: pointer;
-  transition: 0.2s;
-}
-
-.btn-primary:hover {
-  background: #16a34a;
+  font-weight: bold;
 }
 
 .btn-secondary {
-  background: #6b7280;
-  color: #fff;
-  padding: 12px 20px;
+  background: #444;
+  padding: 12px 25px;
   border: none;
-  border-radius: 10px;
-  font-weight: bold;
+  border-radius: 8px;
+  color: #fff;
   cursor: pointer;
-  transition: 0.2s;
 }
 
-.btn-secondary:hover {
-  background: #4b5563;
-}
-
-/* --------------------------------------------------
-   TABLE
------------------------------------------------------*/
+/* ---------------------------------------------------
+| TABELA
+--------------------------------------------------- */
 .tabela-wrapper {
   overflow-x: auto;
 }
@@ -154,79 +130,88 @@ select:focus {
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
+  font-size: 15px;
 }
 
-th, td {
-  padding: 12px 10px;
-}
-
-th {
-  background: #0d0d0d;
-  border-bottom: 2px solid #222;
+thead th {
+  background: #111;
+  padding: 12px;
+  text-align: center;
   color: #38bdf8;
-  font-weight: bold;
+  border-bottom: 2px solid #1f1f1f;
 }
 
-/* Alternância */
-tbody tr:nth-child(odd) { background: #0c0c0c; }
-tbody tr:nth-child(even) { background: #141414; }
-
-tbody tr:hover {
-  background: #1f2937;
+tbody td {
+  padding: 12px;
+  border-bottom: 1px solid #1f1f1f;
+  text-align: center;
 }
 
-/* --------------------------------------------------
-   ALINHAMENTO DAS COLUNAS
------------------------------------------------------*/
-
-/* Esquerda */
-td:nth-child(1),
-td:nth-child(2),
-td:nth-child(3),
-td:nth-child(5),
-td:nth-child(10) {
-  text-align: left;
-}
-
-/* Direita */
-td:nth-child(4),
-td:nth-child(6),
-td:nth-child(7),
-td:nth-child(8),
-td:nth-child(9) {
+/* Alinhar números à direita */
+table td:nth-child(5),
+table td:nth-child(6),
+table td:nth-child(7),
+table td:nth-child(8),
+table td:nth-child(9) {
   text-align: right;
 }
 
-/* --------------------------------------------------
-   TABLE BUTTONS
------------------------------------------------------*/
+/* ---------------------------------------------------
+| BOTÕES AÇÕES
+--------------------------------------------------- */
 .btn-editar {
-  background: #38bdf8;
-  color: #000;
+  background: #3b82f6;
   padding: 6px 12px;
   border-radius: 6px;
-  cursor: pointer;
   border: none;
-  font-weight: bold;
-  transition: 0.2s;
-}
-
-.btn-editar:hover {
-  background: #0ea5e9;
+  color: white;
+  cursor: pointer;
 }
 
 .btn-excluir {
   background: #ef4444;
-  color: #fff;
   padding: 6px 12px;
   border-radius: 6px;
-  cursor: pointer;
   border: none;
-  font-weight: bold;
-  transition: 0.2s;
+  color: white;
+  cursor: pointer;
 }
 
-.btn-excluir:hover {
-  background: #dc2626;
+/* ---------------------------------------------------
+| ALERTAS
+--------------------------------------------------- */
+.alert {
+  position: fixed;
+  top: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 18px;
+  background: #111;
+  border: 1px solid #333;
+  color: #eee;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  opacity: 0;
+  transition: 0.3s;
+  z-index: 9999;
+}
+
+.alert.show {
+  top: 20px;
+  opacity: 1;
+}
+
+.alert.sucesso {
+  border-color: #22c55e;
+  color: #22c55e;
+}
+
+.alert.erro {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.alert.info {
+  border-color: #38bdf8;
+  color: #38bdf8;
 }
