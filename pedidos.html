@@ -33,11 +33,16 @@
         <label>Número do Pedido (fornecido pelo cliente)</label>
         <input type="text" id="numero_pedido" required>
 
-        <label>Data do Pedido</label>
-        <input type="date" id="data_pedido" required>
-
-        <label>Data de Entrega</label>
-        <input type="date" id="data_entrega">
+        <div class="duas-colunas">
+          <div>
+            <label>Data do Pedido</label>
+            <input type="date" id="data_pedido" required>
+          </div>
+          <div>
+            <label>Data de Entrega</label>
+            <input type="date" id="data_entrega">
+          </div>
+        </div>
 
         <label>Status</label>
         <select id="status">
@@ -46,8 +51,58 @@
           <option value="cancelado">Cancelado</option>
         </select>
 
+        <!-- ======================= -->
+        <!--   ITENS DO PEDIDO       -->
+        <!-- ======================= -->
+        <h3 class="secao-itens-titulo">Itens do Pedido (Peças)</h3>
+
+        <div class="linha-itens">
+          <div class="campo-grande">
+            <label>Produto / Peça</label>
+            <select id="produto_id_select"></select>
+          </div>
+
+          <div class="campo-pequeno">
+            <label>Qtd.</label>
+            <input type="text" id="quantidade_item" placeholder="0,00">
+          </div>
+
+          <div class="campo-pequeno">
+            <label>Vlr. Unitário (R$)</label>
+            <input type="text" id="valor_unitario_item" readonly>
+          </div>
+
+          <div class="campo-pequeno">
+            <label>Total Item (R$)</label>
+            <input type="text" id="total_item" readonly>
+          </div>
+
+          <div class="campo-botao">
+            <button type="button" id="btnAddItem">Adicionar</button>
+          </div>
+        </div>
+
+        <table class="tabela-itens">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Descrição</th>
+              <th>Qtd.</th>
+              <th>Vlr. Unit. (R$)</th>
+              <th>Total (R$)</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaItens"></tbody>
+        </table>
+
+        <div class="total-pedido-linha">
+          <span>Total do Pedido:</span>
+          <strong id="total_pedido">R$ 0,00</strong>
+        </div>
+
         <div class="btns">
-          <button type="submit" id="btnSalvar">Salvar</button>
+          <button type="submit" id="btnSalvar">Salvar Pedido</button>
           <button type="button" id="btnCancelar">Cancelar</button>
         </div>
 
