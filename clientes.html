@@ -5,11 +5,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Clientes - MataoUsi</title>
+
+  <!-- CSS -->
   <link rel="stylesheet" href="css/clientes.css">
 
+  <!-- Estilo do autocomplete + toast (mantido no HTML) -->
   <style>
-    /* Apenas estilos básicos para autocomplete e toasts */
-
     .autocomplete-list {
       position: absolute;
       background: #1e293b;
@@ -74,6 +75,7 @@
       }
     }
   </style>
+
 </head>
 
 <body>
@@ -87,6 +89,7 @@
 
   <div class="container">
 
+    <!-- FORMULÁRIO -->
     <form id="formCliente">
 
       <h2>Cadastrar / Editar Cliente</h2>
@@ -109,10 +112,12 @@
 
       <button type="submit" class="btnSalvar">Salvar</button>
       <button type="button" id="btnCancelar" class="btnCancelar">Cancelar</button>
+
     </form>
 
     <hr>
 
+    <!-- LISTAGEM -->
     <h2>Lista de Clientes</h2>
 
     <input type="text" id="busca" placeholder="Buscar cliente..." oninput="filtrarClientes()" class="inputBusca">
@@ -130,6 +135,7 @@
       <tbody></tbody>
     </table>
 
+    <!-- PAGINAÇÃO -->
     <div class="paginacao">
       <button id="btnAnterior">Anterior</button>
       <span id="paginacaoInfo"></span>
@@ -138,6 +144,7 @@
 
   </div>
 
+  <!-- JS -->
   <script type="module" src="js/clientes.js"></script>
 
 </body>
