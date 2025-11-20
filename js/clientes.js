@@ -2,24 +2,32 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 let editandoId = null;
 
-/* ---------------- TABS ---------------- */
+/* ==============================
+      TROCAR ABAS
+============================== */
 document.querySelectorAll(".tab").forEach(tab => {
   tab.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
     document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+
     tab.classList.add("active");
     document.getElementById(tab.dataset.tab).classList.add("active");
   });
 });
 
-/* --------------- INICIAR --------------- */
+/* ==============================
+      AO ABRIR A PÁGINA
+============================== */
 document.addEventListener("DOMContentLoaded", () => {
   carregarClientes();
 });
 
-/* --------------- SALVAR --------------- */
+/* ==============================
+      SALVAR CLIENTE
+============================== */
 document.getElementById("formCliente").addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -34,35 +42,34 @@ document.getElementById("formCliente").addEventListener("submit", async (e) => {
     endereco: document.getElementById("endereco").value.trim()
   };
 
-  // Impedir duplicação
-  if (!id) {
-    const { data: existe } = await supabase
-      .from("clientes")
-      .select("id")
-      .eq("razao_social", cliente.razao_social)
-      .maybeSingle();
-
-    if (existe) {
-      alert("Já existe um cliente com essa Razão Social!");
-      return;
-    }
-  }
-
-  let result = id
-    ? await supabase.from("clientes").update(cliente).eq("id", id)
-    : await supabase.from("clientes").insert([cliente]);
-
-  if (result.error) {
-    alert("Erro ao salvar: " + result.error.message);
+  if (!cliente.razao_social) {
+    alert("Razão Social é obrigatória!");
     return;
   }
 
-  alert("Salvo com sucesso!");
+  let result;
+
+  if (id) {
+    result = await supabase.from("clientes").update(cliente).eq("id", id);
+  } else {
+    result = await supabase.from("clientes").insert([cliente]);
+  }
+
+  if (result.error) {
+    console.error(result.error);
+    alert("Erro ao salvar cliente!");
+    return;
+  }
+
+  alert("Cliente salvo!");
+
   limparFormulario();
   carregarClientes();
 });
 
-/* --------------- LISTAR --------------- */
+/* ==============================
+      CARREGAR CLIENTES
+============================== */
 async function carregarClientes() {
   const { data, error } = await supabase
     .from("clientes")
@@ -87,7 +94,7 @@ async function carregarClientes() {
       <td>${c.telefone ?? ""}</td>
       <td>${c.email ?? ""}</td>
       <td>${c.endereco ?? ""}</td>
-      <td>
+      <td class="acoes">
         <button class="btn-editar" onclick="editarCliente(${c.id})">Editar</button>
         <button class="btn-excluir" onclick="excluirCliente(${c.id})">Excluir</button>
       </td>
@@ -97,7 +104,9 @@ async function carregarClientes() {
   });
 }
 
-/* --------------- EDITAR --------------- */
+/* ==============================
+      EDITAR CLIENTE
+============================== */
 window.editarCliente = async function (id) {
   const { data, error } = await supabase
     .from("clientes")
@@ -123,9 +132,11 @@ window.editarCliente = async function (id) {
   document.querySelector('.tab[data-tab="cadastro"]').click();
 };
 
-/* --------------- EXCLUIR --------------- */
+/* ==============================
+      EXCLUIR CLIENTE
+============================== */
 window.excluirCliente = async function (id) {
-  if (!confirm("Excluir cliente?")) return;
+  if (!confirm("Excluir este cliente?")) return;
 
   const { error } = await supabase
     .from("clientes")
@@ -133,15 +144,18 @@ window.excluirCliente = async function (id) {
     .eq("id", id);
 
   if (error) {
-    alert("Erro ao excluir: " + error.message);
+    console.error(error);
+    alert("Erro ao excluir!");
     return;
   }
 
-  alert("Excluído!");
+  alert("Cliente excluído!");
   carregarClientes();
 };
 
-/* --------------- LIMPAR --------------- */
+/* ==============================
+      LIMPAR FORMULÁRIO
+============================== */
 function limparFormulario() {
   document.getElementById("formCliente").reset();
   document.getElementById("clienteId").value = "";
