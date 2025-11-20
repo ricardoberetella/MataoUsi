@@ -27,7 +27,7 @@ window.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Sucesso → redirecionar para o painel (NOME REAL É painel.html)
-    window.location.href = "painel.html";
+    // SUCESSO → REDIRECIONA PARA O DASHBOARD CERTO
+    window.location.href = "dashboard.html";
   });
 });
