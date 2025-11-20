@@ -1,121 +1,118 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cadastro de Produtos</title>
+  <title>Produtos - MataoUsi</title>
 
-  <!-- CSS -->
   <link rel="stylesheet" href="css/produtos.css">
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+    import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
+
+    window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  </script>
 </head>
 
 <body>
 
-  <!-- Topbar -->
-  <header class="topbar">
-    <button onclick="window.location.href='dashboard.html'" class="voltar">⬅ Voltar</button>
-    <h1>Produtos</h1>
-  </header>
+  <h2>Produtos</h2>
+
+  <!-- BOTÃO FUTURISTA VOLTAR AO MENU -->
+  <div style="text-align:right; margin: 10px 30px;">
+    <button onclick="location.href='dashboard.html'"
+      style="
+        background: #38bdf8;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 15px;
+        color: #000;
+        box-shadow: 0 0 12px rgba(56,189,248,0.8);
+        transition: 0.3s;
+      "
+      onmouseover="this.style.boxShadow='0 0 20px rgba(56,189,248,1)'"
+      onmouseout="this.style.boxShadow='0 0 12px rgba(56,189,248,0.8)'"
+    >
+      ⬅ Voltar ao Menu
+    </button>
+  </div>
 
   <div class="container">
 
-    <!-- Formulário -->
-    <form id="formProduto" class="card">
-      <h2>Cadastrar / Editar Produto</h2>
+    <!-- ABAS -->
+    <div class="tabs">
+      <button class="tab active" data-tab="cadastro">Cadastrar Produto</button>
+      <button class="tab" data-tab="lista">Listar Produtos</button>
+    </div>
 
-      <div class="grid">
+    <!-- CADASTRO -->
+    <div id="cadastro" class="tab-content active">
+      <form id="formProduto">
+        <input type="hidden" id="produtoId">
 
-        <!-- Código + Buscar -->
-        <div class="linha-codigo">
-          <input type="text" id="codigo" placeholder="Código (SKU)">
-          <button type="button" id="btnBuscarCodigo" class="btn-buscar">Buscar</button>
-        </div>
+        <label>Código</label>
+        <input type="text" id="codigo" required>
 
-        <input type="text" id="descricao" placeholder="Descrição">
-        <input type="text" id="unidade" placeholder="Unidade (UN, KG...)">
+        <label>Descrição</label>
+        <input type="text" id="descricao" required>
 
-        <input type="text" id="comprimento_mm" placeholder="Comprimento (mm)">
+        <label>Unidade</label>
+        <input type="text" id="unidade">
 
+        <label>Comprimento (mm)</label>
+        <input type="number" id="comprimento_mm">
+
+        <label>Acabamento (Zincado/Tratado)</label>
         <select id="acabamento">
-          <option value="">Acabamento</option>
+          <option value=""></option>
           <option value="Zincado">Zincado</option>
           <option value="Tratado">Tratado</option>
         </select>
 
-        <input type="text" id="peso_bruto" placeholder="Peso Bruto">
-        <input type="text" id="peso_liquido" placeholder="Peso Líquido">
-        <input type="text" id="preco_custo" placeholder="Preço de Custo">
-        <input type="text" id="preco_venda" placeholder="Preço de Venda">
+        <label>Peso Bruto (kg)</label>
+        <input type="text" id="peso_bruto">
 
-      </div>
+        <label>Peso Líquido (kg)</label>
+        <input type="text" id="peso_liquido">
 
-      <div class="btn-area">
-        <button id="btnSalvar" type="submit" class="btn-primary">Salvar</button>
-        <button id="btnCancelar" type="button" class="btn-secondary" style="display:none;">Cancelar</button>
-      </div>
-    </form>
+        <label>Preço de Custo (R$)</label>
+        <input type="text" id="preco_custo">
 
-    <!-- Lista -->
-    <div class="card">
-      <h2>Lista de Produtos</h2>
+        <label>Preço de Venda (R$)</label>
+        <input type="text" id="preco_venda">
 
-      <!-- FILTROS -->
-      <div class="filtros">
-        <input type="text" id="filtroCodigo" placeholder="Filtrar por código">
-        <input type="text" id="filtroDescricao" placeholder="Filtrar por descrição" list="sugestoesDescricao">
-        <select id="filtroUnidade">
-          <option value="">Todas as unidades</option>
-          <option value="UN">UN</option>
-          <option value="KG">KG</option>
-          <option value="PC">PC</option>
-        </select>
-        <button type="button" id="btnAplicarFiltros" class="btn-primary btn-sm">Filtrar</button>
-        <button type="button" id="btnLimparFiltros" class="btn-secondary btn-sm">Limpar</button>
-      </div>
+        <div class="btns">
+          <button type="submit" id="btnSalvar">Salvar</button>
+          <button type="button" id="btnCancelar">Cancelar</button>
+        </div>
+      </form>
+    </div>
 
-      <!-- AUTOCOMPLETE DESCRIÇÃO -->
-      <datalist id="sugestoesDescricao"></datalist>
+    <!-- LISTA -->
+    <div id="lista" class="tab-content">
+      <input type="text" id="busca" placeholder="Buscar por código, descrição ou unidade">
 
-      <!-- EXPORTAÇÃO -->
-      <div class="export-area">
-        <button type="button" id="btnExportarExcel" class="btn-secondary btn-sm">Exportar Excel</button>
-        <button type="button" id="btnExportarPDF" class="btn-secondary btn-sm">Exportar PDF</button>
-      </div>
-
-      <!-- TABELA -->
-      <div class="tabela-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Cód</th>
-              <th>Descrição</th>
-              <th>UN</th>
-              <th>Comp</th>
-              <th>Acab</th>
-              <th>P. Bruto</th>
-              <th>P. Líquido</th>
-              <th>Custo</th>
-              <th>Venda</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="listaProdutos"></tbody>
-        </table>
-      </div>
-
-      <!-- PAGINAÇÃO -->
-      <div class="paginacao">
-        <button type="button" id="btnAnterior" class="btn-secondary btn-sm">◀</button>
-        <span id="infoPagina">Página 1 de 1 (0 itens)</span>
-        <button type="button" id="btnProximo" class="btn-secondary btn-sm">▶</button>
-      </div>
-
+      <table>
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Descrição</th>
+            <th>Unidade</th>
+            <th>Acabamento</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaProdutos"></tbody>
+      </table>
     </div>
 
   </div>
 
-  <!-- JS -->
   <script type="module" src="js/produtos.js"></script>
+
 </body>
 </html>
