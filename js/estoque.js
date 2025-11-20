@@ -3,9 +3,30 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ============================
-// Troca de Abas
-// ============================
+let editandoId = null;
+let listaEstoque = [];
+let listaProdutos = [];
+
+/* =====================================================================
+   FUNÇÕES DE ALERTA FUTURISTA
+===================================================================== */
+function alerta(msg, tipo = "info") {
+  const div = document.createElement("div");
+  div.className = `alert ${tipo}`;
+  div.textContent = msg;
+
+  document.body.appendChild(div);
+  setTimeout(() => div.classList.add("show"), 20);
+
+  setTimeout(() => {
+    div.classList.remove("show");
+    setTimeout(() => div.remove(), 300);
+  }, 3000);
+}
+
+/* =====================================================================
+   TROCA DE ABAS
+===================================================================== */
 document.querySelectorAll(".tab").forEach(tab => {
   tab.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
@@ -16,34 +37,36 @@ document.querySelectorAll(".tab").forEach(tab => {
   });
 });
 
-// ============================
-// Carregar estoque ao abrir
-// ============================
-document.addEventListener("DOMContentLoaded", () => {
-  carregarProdutos();
-  carregarEstoque();
-});
-
-// ============================
-// Listar produtos no select
-// ============================
+/* =====================================================================
+   CARREGAR PRODUTOS NO SELECT
+===================================================================== */
 async function carregarProdutos() {
-  const { data } = await supabase.from("produtos").select("id, descricao, codigo").order("descricao");
+  const { data, error } = await supabase
+    .from("produtos")
+    .select("id, codigo, descricao")
+    .order("descricao", { ascending: true });
 
-  const select = document.getElementById("produto_id");
-  select.innerHTML = "";
+  if (error) {
+    alerta("Erro ao carregar produtos!", "erro");
+    return;
+  }
 
-  data.forEach(p => {
-    const op = document.createElement("option");
-    op.value = p.id;
-    op.textContent = `${p.codigo} - ${p.descricao}`;
-    select.appendChild(op);
+  listaProdutos = data;
+
+  const seletor = document.getElementById("produto_id");
+  seletor.innerHTML = "";
+
+  listaProdutos.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = `${p.codigo} - ${p.descricao}`;
+    seletor.appendChild(opt);
   });
 }
 
-// ============================
-// Listar Estoque
-// ============================
+/* =====================================================================
+   CARREGAR ESTOQUE
+===================================================================== */
 async function carregarEstoque() {
   const { data, error } = await supabase
     .from("estoque")
@@ -51,87 +74,165 @@ async function carregarEstoque() {
     .order("id", { ascending: false });
 
   if (error) {
-    console.error(error);
+    alerta("Erro ao carregar estoque!", "erro");
     return;
   }
 
-  const tabela = document.getElementById("tabelaEstoque");
-  tabela.innerHTML = "";
+  listaEstoque = data;
+  renderTabela();
+}
 
-  data.forEach(e => {
+/* =====================================================================
+   RENDERIZAR TABELA
+===================================================================== */
+function renderTabela() {
+  const tbody = document.getElementById("tabelaEstoque");
+  tbody.innerHTML = "";
+
+  if (listaEstoque.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Nenhum item encontrado.</td></tr>`;
+    return;
+  }
+
+  listaEstoque.forEach(e => {
     const tr = document.createElement("tr");
+
     tr.innerHTML = `
       <td>${e.produtos?.codigo ?? "-"}</td>
       <td>${e.produtos?.descricao ?? "-"}</td>
-      <td>${e.quantidade ?? 0}</td>
+      <td>${e.quantidade}</td>
       <td>${e.local ?? "-"}</td>
       <td>
         <span class="action-btn" onclick="editarEstoque(${e.id})">Editar</span>
         <span class="action-btn" onclick="excluirEstoque(${e.id})">Excluir</span>
       </td>
     `;
-    tabela.appendChild(tr);
+
+    tbody.appendChild(tr);
   });
 }
 
-// ============================
-// SALVAR
-// ============================
+/* =====================================================================
+   SALVAR / ATUALIZAR
+===================================================================== */
 document.getElementById("formEstoque").addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const id = document.getElementById("estoqueId").value;
   const dados = {
-    produto_id: document.getElementById("produto_id").value,
+    produto_id: Number(document.getElementById("produto_id").value),
     quantidade: Number(document.getElementById("quantidade").value),
-    local: document.getElementById("local").value
+    local: document.getElementById("local").value.trim()
   };
 
-  let result;
+  let retorno;
 
-  if (id) {
-    result = await supabase.from("estoque").update(dados).eq("id", id);
+  if (editandoId) {
+    retorno = await supabase.from("estoque").update(dados).eq("id", editandoId);
   } else {
-    result = await supabase.from("estoque").insert(dados);
+    retorno = await supabase.from("estoque").insert([dados]);
   }
 
-  if (result.error) {
-    alert("Erro: " + result.error.message);
+  if (retorno.error) {
+    alerta("Erro ao salvar!", "erro");
     return;
   }
 
-  alert("Salvo com sucesso!");
+  alerta(editandoId ? "Estoque atualizado!" : "Entrada registrada!", "sucesso");
+
   limparFormulario();
   carregarEstoque();
 });
 
-// ============================
-// EDITAR
-// ============================
+/* =====================================================================
+   EDITAR
+===================================================================== */
 window.editarEstoque = async function (id) {
-  const { data } = await supabase.from("estoque").select("*").eq("id", id).single();
+  const { data, error } = await supabase
+    .from("estoque")
+    .select("*")
+    .eq("id", id)
+    .single();
 
-  document.getElementById("estoqueId").value = data.id;
+  if (error) {
+    alerta("Erro ao carregar item!", "erro");
+    return;
+  }
+
+  editandoId = id;
+
+  document.getElementById("estoqueId").value = id;
   document.getElementById("produto_id").value = data.produto_id;
   document.getElementById("quantidade").value = data.quantidade;
-  document.getElementById("local").value = data.local;
+  document.getElementById("local").value = data.local ?? "";
 
   document.querySelector('.tab[data-tab="cadastro"]').click();
+  alerta("Editando item...", "info");
 };
 
-// ============================
-// EXCLUIR
-// ============================
+/* =====================================================================
+   EXCLUIR
+===================================================================== */
 window.excluirEstoque = async function (id) {
-  if (!confirm("Tem certeza que deseja excluir?")) return;
-  await supabase.from("estoque").delete().eq("id", id);
+  if (!confirm("Tem certeza que deseja excluir este registro?")) return;
+
+  const { error } = await supabase
+    .from("estoque")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    alerta("Erro ao excluir!", "erro");
+    return;
+  }
+
+  alerta("Removido!", "sucesso");
   carregarEstoque();
 };
 
-// ============================
-// LIMPAR
-// ============================
+/* =====================================================================
+   LIMPAR FORMULÁRIO
+===================================================================== */
 function limparFormulario() {
-  document.getElementById("estoqueId").value = "";
+  editandoId = null;
   document.getElementById("formEstoque").reset();
 }
+
+/* =====================================================================
+   BUSCA (search bar)
+===================================================================== */
+document.getElementById("busca")?.addEventListener("keyup", () => {
+  const termo = document.getElementById("busca").value.toLowerCase();
+
+  const filtrados = listaEstoque.filter((e) => {
+    const cod = e.produtos?.codigo?.toLowerCase() ?? "";
+    const desc = e.produtos?.descricao?.toLowerCase() ?? "";
+    const local = e.local?.toLowerCase() ?? "";
+    return cod.includes(termo) || desc.includes(termo) || local.includes(termo);
+  });
+
+  const tbody = document.getElementById("tabelaEstoque");
+  tbody.innerHTML = "";
+
+  filtrados.forEach(e => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${e.produtos?.codigo ?? "-"}</td>
+      <td>${e.produtos?.descricao ?? "-"}</td>
+      <td>${e.quantidade}</td>
+      <td>${e.local ?? "-"}</td>
+      <td>
+        <span class="action-btn" onclick="editarEstoque(${e.id})">Editar</span>
+        <span class="action-btn" onclick="excluirEstoque(${e.id})">Excluir</span>
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+});
+
+/* =====================================================================
+   INICIALIZAR
+===================================================================== */
+carregarProdutos();
+carregarEstoque();
