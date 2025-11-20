@@ -3,7 +3,9 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ELEMENTOS
+/* =====================================================================
+   ELEMENTOS
+===================================================================== */
 const listaItens = document.getElementById("listaItens");
 const modal = document.getElementById("modalItem");
 const produtoSelect = document.getElementById("produtoId");
@@ -13,20 +15,57 @@ document.getElementById("btnAddItem").onclick = () => abrirModal();
 document.getElementById("btnCancelarItem").onclick = () => fecharModal();
 document.getElementById("btnSalvarItem").onclick = () => salvarItem();
 
-// PEGAR ID DO PEDIDO DA URL
+/* =====================================================================
+   PEGAR ID DO PEDIDO (via URL)
+===================================================================== */
 const urlParams = new URLSearchParams(window.location.search);
 const pedidoId = urlParams.get("pedido");
 
+/* =====================================================================
+   ALERTA FUTURISTA
+===================================================================== */
+function alerta(msg, tipo = "info") {
+  const box = document.createElement("div");
+  box.className = `alert ${tipo}`;
+  box.innerText = msg;
+
+  document.body.appendChild(box);
+  setTimeout(() => box.classList.add("show"), 20);
+
+  setTimeout(() => {
+    box.classList.remove("show");
+    setTimeout(() => box.remove(), 300);
+  }, 3000);
+}
+
+/* =====================================================================
+   FORMATADOR BR
+===================================================================== */
+function formatBR(v) {
+  return Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+}
+
+/* =====================================================================
+   INICIALIZAÇÃO
+===================================================================== */
 document.addEventListener("DOMContentLoaded", () => {
   carregarProdutos();
   carregarItens();
 });
 
-// ------------------------------------
-// CARREGAR PRODUTOS
-// ------------------------------------
+/* =====================================================================
+   CARREGAR PRODUTOS
+===================================================================== */
 async function carregarProdutos() {
-  const { data } = await supabase.from("produtos").select("*").order("descricao");
+  const { data, error } = await supabase
+    .from("produtos")
+    .select("*")
+    .order("descricao");
+
+  if (error) {
+    alerta("Erro ao carregar produtos!", "erro");
+    return;
+  }
 
   produtoSelect.innerHTML = "";
 
@@ -38,16 +77,28 @@ async function carregarProdutos() {
   });
 }
 
-// ------------------------------------
-// CARREGAR ITENS DO PEDIDO
-// ------------------------------------
+/* =====================================================================
+   CARREGAR ITENS DO PEDIDO
+===================================================================== */
 async function carregarItens() {
-  const { data: itens } = await supabase
+  const { data: itens, error } = await supabase
     .from("pedidos_itens")
-    .select("*, produtos(descricao, codigo)")
-    .eq("pedido_id", pedidoId);
+    .select("*, produtos(codigo, descricao)")
+    .eq("pedido_id", pedidoId)
+    .order("id", { ascending: true });
+
+  if (error) {
+    alerta("Erro ao carregar itens!", "erro");
+    return;
+  }
 
   listaItens.innerHTML = "";
+
+  if (!itens || itens.length === 0) {
+    listaItens.innerHTML = `<div class="item" style="opacity:0.7;">Nenhum item adicionado.</div>`;
+    totalSpan.textContent = "0,00";
+    return;
+  }
 
   let totalPedido = 0;
 
@@ -59,7 +110,8 @@ async function carregarItens() {
     div.innerHTML = `
       <div>
         <strong>${i.produtos.codigo} - ${i.produtos.descricao}</strong><br>
-        Qtd: ${i.quantidade} — Preço: R$ ${Number(i.preco).toFixed(2)}
+        Qtd: ${i.quantidade} — Preço: R$ ${formatBR(i.preco)}<br>
+        <small>Total: R$ ${formatBR(i.total)}</small>
       </div>
       <button class="btn-excluir" onclick="excluirItem(${i.id})">Excluir</button>
     `;
@@ -67,27 +119,39 @@ async function carregarItens() {
     listaItens.appendChild(div);
   });
 
-  totalSpan.textContent = totalPedido.toFixed(2);
+  totalSpan.textContent = formatBR(totalPedido);
 
-  // Atualizar o total do pedido na tabela PEDIDOS
+  // Atualiza total no pedido
   await supabase
     .from("pedidos")
     .update({ total: totalPedido })
     .eq("id", pedidoId);
 }
 
-// ------------------------------------
-// EXCLUIR ITEM
-// ------------------------------------
+/* =====================================================================
+   EXCLUIR ITEM
+===================================================================== */
 window.excluirItem = async function (id) {
-  await supabase.from("pedidos_itens").delete().eq("id", id);
+  const { error } = await supabase
+    .from("pedidos_itens")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    alerta("Erro ao excluir item!", "erro");
+    return;
+  }
+
+  alerta("Item removido!", "sucesso");
   carregarItens();
 };
 
-// ------------------------------------
-// ADICIONAR ITEM
-// ------------------------------------
+/* =====================================================================
+   MODAL
+===================================================================== */
 function abrirModal() {
+  document.getElementById("quantidade").value = "";
+  document.getElementById("preco").value = "";
   modal.classList.remove("hidden");
 }
 
@@ -95,20 +159,35 @@ function fecharModal() {
   modal.classList.add("hidden");
 }
 
+/* =====================================================================
+   SALVAR ITEM
+===================================================================== */
 async function salvarItem() {
   const produto_id = produtoSelect.value;
-  const quantidade = Number(document.getElementById("quantidade").value);
-  const preco = Number(document.getElementById("preco").value.replace(",", "."));
-  const total = quantidade * preco;
+  const qtd = Number(document.getElementById("quantidade").value);
+  let preco = document.getElementById("preco").value.replace(",", ".");
 
-  await supabase.from("pedidos_itens").insert({
+  if (!produto_id) return alerta("Selecione um produto!", "erro");
+  if (!qtd || qtd <= 0) return alerta("Quantidade inválida!", "erro");
+  if (!preco || isNaN(preco)) return alerta("Preço inválido!", "erro");
+
+  preco = Number(preco);
+  const total = qtd * preco;
+
+  const { error } = await supabase.from("pedidos_itens").insert({
     pedido_id: pedidoId,
     produto_id,
-    quantidade,
+    quantidade: qtd,
     preco,
     total
   });
 
+  if (error) {
+    alerta("Erro ao adicionar item!", "erro");
+    return;
+  }
+
+  alerta("Item adicionado!", "sucesso");
   fecharModal();
   carregarItens();
 }
