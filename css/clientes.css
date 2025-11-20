@@ -5,9 +5,10 @@
 body {
   margin: 0;
   padding: 0;
-  background: #0f172a; /* fundo escuro bonito */
+  background: #0f172a;
   color: #e5e7eb;
   font-family: Arial, sans-serif;
+  overflow-x: hidden;
 }
 
 /* =============================== */
@@ -45,7 +46,7 @@ body {
 }
 
 /* =============================== */
-/*         ABAS (TABS)             */
+/*             ABAS                */
 /* =============================== */
 
 .tabs {
@@ -76,7 +77,7 @@ body {
 }
 
 /* =============================== */
-/*      CONTEÚDO DAS ABAS          */
+/*      CONTEÚDO DAS ABAS         */
 /* =============================== */
 
 .tab-content {
@@ -89,7 +90,7 @@ body {
 }
 
 /* =============================== */
-/*      FORMULÁRIO CLIENTE         */
+/*        FORMULÁRIO CLIENTE      */
 /* =============================== */
 
 form {
@@ -97,7 +98,7 @@ form {
   padding: 20px;
   border-radius: 12px;
   box-shadow: 0 0 12px rgba(0,0,0,0.4);
-  max-width: 800px;
+  max-width: 850px;
   margin: auto;
 }
 
@@ -120,37 +121,36 @@ input {
 .actions {
   margin-top: 20px;
   display: flex;
-  gap: 10px;
+  gap: 20px;
   justify-content: center;
+}
+
+.btn-salvar,
+.btn-cancelar {
+  padding: 12px 30px;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  transition: 0.3s;
 }
 
 .btn-salvar {
   background: #38bdf8;
-  border: none;
-  padding: 12px 25px;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
   color: #000;
-  transition: .3s;
+}
+
+.btn-cancelar {
+  background: #475569;
+  color: #fff;
 }
 
 .btn-salvar:hover {
   box-shadow: 0 0 15px #38bdf8;
 }
 
-.btn-cancelar {
-  background: #475569;
-  border: none;
-  padding: 12px 25px;
-  color: white;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
 /* =============================== */
-/*             TABELA              */
+/*              TABELA            */
 /* =============================== */
 
 table {
@@ -175,8 +175,13 @@ td {
 }
 
 /* =============================== */
-/*       BOTÕES DE AÇÃO            */
+/*         BOTÕES DE AÇÃO         */
 /* =============================== */
+
+.acoes {
+  display: flex;
+  gap: 8px; /* separação garantida */
+}
 
 .btn-editar,
 .btn-excluir {
@@ -186,6 +191,8 @@ td {
   color: white;
   cursor: pointer;
   font-weight: bold;
+  min-width: 70px; /* EVITA FICAR MINÚSCULO */
+  text-align: center;
 }
 
 .btn-editar {
@@ -197,20 +204,11 @@ td {
   background: #dc2626;
 }
 
-/* Espaçamento entre botões */
-td button {
-  margin-right: 5px;
-}
-
 /* =============================== */
-/*           MOBILE FIRST          */
+/*          MOBILE MODE           */
 /* =============================== */
 
 @media (max-width: 768px) {
-
-  h1 {
-    font-size: 20px;
-  }
 
   .tabs {
     flex-direction: column;
@@ -218,19 +216,28 @@ td button {
 
   form {
     padding: 15px;
+    max-width: 100%;
   }
 
   table {
     font-size: 12px;
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
   }
 
   td, th {
     padding: 8px;
   }
 
-  /* Botões menores */
-  .btn-editar, .btn-excluir {
-    padding: 5px 10px;
-    margin-bottom: 4px;
+  .acoes {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .btn-editar,
+  .btn-excluir {
+    width: 100%;
+    padding: 8px;
   }
 }
