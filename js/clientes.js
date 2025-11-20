@@ -5,9 +5,9 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let editandoId = null;
 
-/* ============================================
+/* ================================
       TROCA DE ABAS
-============================================ */
+================================ */
 document.querySelectorAll(".tab").forEach(tab => {
   tab.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
@@ -18,18 +18,20 @@ document.querySelectorAll(".tab").forEach(tab => {
   });
 });
 
-/* ============================================
-      CARREGAR AO ABRIR
-============================================ */
+/* ================================
+      AO ABRIR A PÁGINA
+================================ */
 document.addEventListener("DOMContentLoaded", () => {
   carregarClientes();
 });
 
-/* ============================================
+/* ================================
       SALVAR CLIENTE
-============================================ */
+================================ */
 document.getElementById("formCliente").addEventListener("submit", async (e) => {
   e.preventDefault();
+
+  const id = document.getElementById("clienteId").value;
 
   const cliente = {
     razao_social: document.getElementById("razao_social").value.trim(),
@@ -45,59 +47,56 @@ document.getElementById("formCliente").addEventListener("submit", async (e) => {
     return;
   }
 
-  // Verificar duplicado somente quando for novo cadastro
-  if (!editandoId) {
-    const { data: existe } = await supabase
-      .from("clientes")
-      .select("id")
-      .eq("razao_social", cliente.razao_social)
-      .maybeSingle();
+  // Verifica duplicação
+  const { data: existe } = await supabase
+    .from("clientes")
+    .select("id")
+    .eq("razao_social", cliente.razao_social)
+    .maybeSingle();
 
-    if (existe) {
-      alert("Já existe um cliente com essa Razão Social!");
-      return;
-    }
-  }
-
-  let result;
-
-  if (editandoId) {
-    result = await supabase.from("clientes").update(cliente).eq("id", editandoId);
-  } else {
-    result = await supabase.from("clientes").insert([cliente]);
-  }
-
-  if (result.error) {
-    alert("Erro ao salvar: " + result.error.message);
+  if (!id && existe) {
+    alert("Já existe um cliente com esta Razão Social!");
     return;
   }
 
-  alert(editandoId ? "Cliente atualizado!" : "Cliente cadastrado!");
+  let resultado;
+
+  if (id) {
+    resultado = await supabase.from("clientes").update(cliente).eq("id", id);
+  } else {
+    resultado = await supabase.from("clientes").insert([cliente]);
+  }
+
+  if (resultado.error) {
+    alert("Erro ao salvar: " + resultado.error.message);
+    return;
+  }
+
+  alert(id ? "Cliente atualizado!" : "Cliente cadastrado!");
   limparFormulario();
   carregarClientes();
 });
 
-/* ============================================
+/* ================================
       LISTAR CLIENTES
-============================================ */
+================================ */
 async function carregarClientes() {
-  const tabela = document.getElementById("tabelaClientes");
-  tabela.innerHTML = `<tr><td colspan="7" style="text-align:center;">Carregando...</td></tr>`;
-
   const { data, error } = await supabase
     .from("clientes")
     .select("*")
     .order("id", { ascending: false });
 
   if (error) {
-    tabela.innerHTML = `<tr><td colspan="7">Erro ao carregar clientes!</td></tr>`;
+    console.error(error);
     return;
   }
 
+  const tabela = document.getElementById("tabelaClientes");
   tabela.innerHTML = "";
 
   data.forEach(c => {
     const tr = document.createElement("tr");
+
     tr.innerHTML = `
       <td>${c.razao_social}</td>
       <td>${c.nome_fantasia ?? ""}</td>
@@ -105,29 +104,34 @@ async function carregarClientes() {
       <td>${c.telefone ?? ""}</td>
       <td>${c.email ?? ""}</td>
       <td>${c.endereco ?? ""}</td>
-      <td>
+      <td class="acoes">
         <button class="btn-editar" onclick="editarCliente(${c.id})">Editar</button>
         <button class="btn-excluir" onclick="excluirCliente(${c.id})">Excluir</button>
       </td>
     `;
+
     tabela.appendChild(tr);
   });
 }
 
-/* ============================================
+/* ================================
       EDITAR CLIENTE
-============================================ */
-window.editarCliente = async function (id) {
-  const { data, error } = await supabase.from("clientes").select("*").eq("id", id).single();
+================================ */
+async function editarCliente(id) {
+  const { data, error } = await supabase
+    .from("clientes")
+    .select("*")
+    .eq("id", id)
+    .single();
 
-  if (error || !data) {
+  if (error) {
     alert("Erro ao carregar cliente!");
     return;
   }
 
   editandoId = id;
 
-  document.getElementById("clienteId").value = id;
+  document.getElementById("clienteId").value = data.id;
   document.getElementById("razao_social").value = data.razao_social;
   document.getElementById("nome_fantasia").value = data.nome_fantasia;
   document.getElementById("cpf_cnpj").value = data.cpf_cnpj;
@@ -136,15 +140,21 @@ window.editarCliente = async function (id) {
   document.getElementById("endereco").value = data.endereco;
 
   document.querySelector('.tab[data-tab="cadastro"]').click();
-};
+}
 
-/* ============================================
+// EXPORTAR PARA O HTML
+window.editarCliente = editarCliente;
+
+/* ================================
       EXCLUIR CLIENTE
-============================================ */
-window.excluirCliente = async function (id) {
-  if (!confirm("Deseja realmente excluir?")) return;
+================================ */
+async function excluirCliente(id) {
+  if (!confirm("Tem certeza que deseja excluir este cliente?")) return;
 
-  const { error } = await supabase.from("clientes").delete().eq("id", id);
+  const { error } = await supabase
+    .from("clientes")
+    .delete()
+    .eq("id", id);
 
   if (error) {
     alert("Erro ao excluir: " + error.message);
@@ -153,15 +163,17 @@ window.excluirCliente = async function (id) {
 
   alert("Cliente excluído!");
   carregarClientes();
-};
+}
 
-/* ============================================
+// EXPORTAR PARA O HTML
+window.excluirCliente = excluirCliente;
+
+/* ================================
       LIMPAR FORMULÁRIO
-============================================ */
+================================ */
 function limparFormulario() {
-  editandoId = null;
-  document.getElementById("clienteId").value = "";
   document.getElementById("formCliente").reset();
+  document.getElementById("clienteId").value = "";
 }
 
 document.getElementById("btnCancelar").addEventListener("click", limparFormulario);
