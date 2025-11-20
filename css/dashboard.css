@@ -1,137 +1,68 @@
-/* ============================= */
-/* LAYOUT GERAL */
-/* ============================= */
-
+/* Fundo geral */
 body {
-  margin: 0;
-  background: #0f172a;
-  font-family: Arial, sans-serif;
-  color: #e5e7eb;
-  display: flex;
+    margin: 0;
+    padding: 0;
+    background: #0a0f1a;
+    font-family: Arial, sans-serif;
+    color: #fff;
+    text-align: center;
 }
 
-/* ============================= */
-/* MENU LATERAL */
-/* ============================= */
-
-.sidebar {
-  width: 240px;
-  background: #0a0a0a;
-  height: 100vh;
-  position: fixed;
-  left: 0;
-  top: 0;
-  padding: 20px;
-  box-shadow: 2px 0 10px #00eaff55;
-  display: flex;
-  flex-direction: column;
+/* LOGO CENTRAL */
+.logo-container {
+    margin-top: 40px;
 }
 
-.sidebar .logo {
-  text-align: center;
-  font-size: 22px;
-  font-weight: bold;
-  color: #00eaff;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #333;
+.logo {
+    width: 380px;
+    max-width: 90%;
+    filter: drop-shadow(0 0 12px #00eaff);
+    animation: glow 2s infinite alternate;
 }
 
-.sidebar nav {
-  margin-top: 25px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+@keyframes glow {
+    from { filter: drop-shadow(0 0 4px #00eaff); }
+    to   { filter: drop-shadow(0 0 14px #00eaff); }
 }
 
-.sidebar nav a {
-  text-decoration: none;
-  padding: 12px;
-  border-radius: 8px;
-  background: #111;
-  color: #e5e7eb;
-  font-weight: bold;
-  transition: 0.2s;
+/* MENU BOTÕES */
+.menu-container {
+    margin-top: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    width: 100%;
+    max-width: 380px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-.sidebar nav a:hover {
-  background: #1e293b;
-  box-shadow: 0 0 8px #00eaff88;
+.menu-btn {
+    background: #0d2239;
+    border: 2px solid #00eaff;
+    color: #00eaff;
+    padding: 14px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: bold;
+    transition: 0.3s;
 }
 
-.sidebar nav a.active {
-  background: #00eaff;
-  color: #000;
-  box-shadow: 0 0 12px #00eaff;
+.menu-btn:hover {
+    background: #00eaff;
+    color: #000;
+    box-shadow: 0 0 12px #00eaff;
 }
 
-.sidebar .logout {
-  margin-top: 40px;
-  padding: 12px;
-  background: #ff4d4d;
-  border: none;
-  font-weight: bold;
-  color: white;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: 0.2s;
+/* Botão de sair */
+.sair {
+    border-color: #ff3f3f;
+    color: #ff3f3f;
 }
 
-.sidebar .logout:hover {
-  background: #e60000;
-  box-shadow: 0 0 12px #ff4d4d;
-}
-
-/* ============================= */
-/* CONTEÚDO PRINCIPAL */
-/* ============================= */
-
-.content {
-  margin-left: 260px;
-  padding: 40px;
-  width: calc(100% - 260px);
-}
-
-.content h1 {
-  color: #00eaff;
-  margin-bottom: 10px;
-}
-
-.content p {
-  font-size: 18px;
-}
-
-/* ============================= */
-/* CARDS DO DASHBOARD */
-/* ============================= */
-
-.cards {
-  margin-top: 30px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 20px;
-}
-
-.card {
-  background: #1e293b;
-  padding: 25px;
-  text-align: center;
-  border-radius: 12px;
-  cursor: pointer;
-  color: #e5e7eb;
-  font-weight: bold;
-  transition: 0.2s;
-  font-size: 18px;
-  box-shadow: 0 0 15px rgba(0, 234, 255, 0.2);
-}
-
-.card span {
-  display: block;
-  font-size: 40px;
-  margin-bottom: 10px;
-}
-
-.card:hover {
-  background: #334155;
-  transform: translateY(-4px);
-  box-shadow: 0 0 20px rgba(0, 234, 255, 0.5);
+.sair:hover {
+    background: #ff3f3f;
+    color: #fff;
+    box-shadow: 0 0 12px #ff3f3f;
 }
