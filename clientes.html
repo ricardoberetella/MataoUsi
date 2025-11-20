@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Clientes - MataoUsi</title>
 
+  <!-- CSS futurista -->
   <link rel="stylesheet" href="css/clientes.css">
 </head>
 
@@ -17,12 +18,13 @@
     <h1>Clientes</h1>
   </header>
 
+  <!-- ABAS -->
   <div class="tabs">
-    <div class="tab active" data-tab="cadastro">Cadastrar</div>
-    <div class="tab" data-tab="lista">Lista de Clientes</div>
+    <button class="tab active" data-tab="cadastro">Cadastrar</button>
+    <button class="tab" data-tab="lista">Lista de Clientes</button>
   </div>
 
-  <!-- ABA DE CADASTRO -->
+  <!-- CADASTRO -->
   <section id="cadastro" class="tab-content active">
     <form id="formCliente">
 
@@ -54,7 +56,7 @@
     </form>
   </section>
 
-  <!-- ABA LISTA -->
+  <!-- LISTA -->
   <section id="lista" class="tab-content">
     <table>
       <thead>
@@ -69,12 +71,11 @@
         </tr>
       </thead>
 
-      <tbody id="tabelaClientes">
-        <!-- JS insere aqui -->
-      </tbody>
+      <tbody id="tabelaClientes"></tbody>
     </table>
   </section>
 
+  <!-- JS -->
   <script type="module" src="js/clientes.js"></script>
 </body>
 
