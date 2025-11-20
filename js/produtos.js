@@ -8,45 +8,40 @@ let listaProdutos = [];
 let paginaAtual = 1;
 const itensPorPagina = 20;
 
-/* -------------------------------------------------------
-   Conversão BR → Número
-------------------------------------------------------- */
+/* =====================================================================
+   FORMATADORES PADRÃO BRASIL
+===================================================================== */
 function toNumberBR(valor) {
   if (!valor || valor.trim() === "") return 0;
-  valor = valor.replace(/\./g, "");
-  valor = valor.replace(",", ".");
-  return Number(valor);
+  return Number(valor.replace(/\./g, "").replace(",", "."));
 }
 
-/* -------------------------------------------------------
-   Formatar exibição BR
-------------------------------------------------------- */
 function formatBR(valor) {
-  if (valor === null || valor === undefined || valor === "") return "";
-  return String(valor).replace(".", ",");
+  if (valor == null || valor === "") return "";
+  return Number(valor).toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
 }
 
-/* -------------------------------------------------------
-   Formatar preço R$
-------------------------------------------------------- */
 function formatPreco(valor) {
-  if (valor === null || valor === undefined || valor === "") return "";
+  if (valor == null || valor === "") return "";
   return Number(valor).toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL"
   });
 }
 
-/* -------------------------------------------------------
-   Alertas
-------------------------------------------------------- */
+/* =====================================================================
+   ALERTA FUTURISTA
+===================================================================== */
 function alerta(msg, tipo = "info") {
   const box = document.createElement("div");
-  box.className = "alert " + tipo;
+  box.className = `alert ${tipo}`;
   box.innerText = msg;
 
   document.body.appendChild(box);
-  setTimeout(() => box.classList.add("show"), 50);
+  setTimeout(() => box.classList.add("show"), 20);
 
   setTimeout(() => {
     box.classList.remove("show");
@@ -54,30 +49,26 @@ function alerta(msg, tipo = "info") {
   }, 3000);
 }
 
-/* -------------------------------------------------------
-   Botão: salvando...
-------------------------------------------------------- */
+/* =====================================================================
+   LOADING BUTTON
+===================================================================== */
 function setLoading(btn, estado) {
   btn.disabled = estado;
-  btn.innerHTML = estado ? "⏳ Salvando..." : "Salvar";
+  btn.textContent = estado ? "⏳ Salvando..." : "Salvar";
 }
 
-/* -------------------------------------------------------
-   FILTROS / PAGINAÇÃO
-------------------------------------------------------- */
+/* =====================================================================
+   FILTROS E PAGINAÇÃO
+===================================================================== */
 function obterProdutosFiltrados() {
   const cod = document.getElementById("filtroCodigo")?.value.trim().toLowerCase() || "";
   const desc = document.getElementById("filtroDescricao")?.value.trim().toLowerCase() || "";
   const uni = document.getElementById("filtroUnidade")?.value.trim().toLowerCase() || "";
 
   return listaProdutos.filter((p) => {
-    const c = (p.codigo || "").toLowerCase();
-    const d = (p.descricao || "").toLowerCase();
-    const u = (p.unidade || "").toLowerCase();
-
-    if (cod && !c.includes(cod)) return false;
-    if (desc && !d.includes(desc)) return false;
-    if (uni && u !== uni) return false;
+    if (cod && !(p.codigo || "").toLowerCase().includes(cod)) return false;
+    if (desc && !(p.descricao || "").toLowerCase().includes(desc)) return false;
+    if (uni && (p.unidade || "").toLowerCase() !== uni) return false;
     return true;
   });
 }
@@ -95,12 +86,10 @@ function renderTabela() {
   const inicio = (paginaAtual - 1) * itensPorPagina;
   const pagina = filtrados.slice(inicio, inicio + itensPorPagina);
 
-  tbody.innerHTML = "";
+  const fragment = document.createDocumentFragment();
 
   if (pagina.length === 0) {
-    tbody.innerHTML = `
-      <tr><td colspan="10" style="text-align:center;">Nenhum produto encontrado.</td></tr>
-    `;
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;">Nenhum produto encontrado.</td></tr>`;
   } else {
     pagina.forEach((p) => {
       const tr = document.createElement("tr");
@@ -119,49 +108,38 @@ function renderTabela() {
           <button class="btn-excluir" onclick="excluirProduto(${p.id})">Excluir</button>
         </td>
       `;
-      tbody.appendChild(tr);
+      fragment.appendChild(tr);
     });
+
+    tbody.innerHTML = "";
+    tbody.appendChild(fragment);
   }
 
   const info = document.getElementById("infoPagina");
-  if (info) {
-    info.textContent = `Página ${paginaAtual} de ${totalPaginas} (${totalItens} itens)`;
-  }
+  if (info) info.textContent = `Página ${paginaAtual} de ${totalPaginas} (${totalItens} itens)`;
 }
 
-/* -------------------------------------------------------
-   SUGESTÕES (AUTOCOMPLETE DESCRIÇÃO)
-------------------------------------------------------- */
+/* =====================================================================
+   AUTOCOMPLETE
+===================================================================== */
 function atualizarSugestoesDescricao() {
   const datalist = document.getElementById("sugestoesDescricao");
   if (!datalist) return;
 
-  const descricoes = [...new Set(
-    listaProdutos
-      .map((p) => p.descricao)
-      .filter((d) => d && d.trim() !== "")
-  )].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  const descricoes = [...new Set(listaProdutos.map((p) => p.descricao).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, "pt-BR"));
 
-  datalist.innerHTML = descricoes
-    .map((d) => `<option value="${d}"></option>`)
-    .join("");
+  datalist.innerHTML = descricoes.map((d) => `<option value="${d}"></option>`).join("");
 }
 
-/* -------------------------------------------------------
-   Carregar produtos
-------------------------------------------------------- */
+/* =====================================================================
+   CARREGAR PRODUTOS
+===================================================================== */
 async function carregarProdutos() {
   const tbody = document.getElementById("listaProdutos");
-  if (tbody) {
-    tbody.innerHTML = `
-      <tr><td colspan="10" style="text-align:center;">Carregando...</td></tr>
-    `;
-  }
+  if (tbody) tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;">Carregando...</td></tr>`;
 
-  const { data, error } = await supabase
-    .from("produtos")
-    .select("*")
-    .order("id", { ascending: false });
+  const { data, error } = await supabase.from("produtos").select("*").order("id", { ascending: false });
 
   if (error) {
     alerta("Erro ao carregar produtos!", "erro");
@@ -170,13 +148,14 @@ async function carregarProdutos() {
 
   listaProdutos = data || [];
   paginaAtual = 1;
+
   atualizarSugestoesDescricao();
   renderTabela();
 }
 
-/* -------------------------------------------------------
-   Salvar (INSERT / UPDATE)
-------------------------------------------------------- */
+/* =====================================================================
+   SALVAR / EDITAR
+===================================================================== */
 document.getElementById("formProduto").addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -201,41 +180,32 @@ document.getElementById("formProduto").addEventListener("submit", async (e) => {
     return;
   }
 
-  let retorno;
+  const operacao = editandoId
+    ? supabase.from("produtos").update(produto).eq("id", editandoId)
+    : supabase.from("produtos").insert([produto]);
 
-  if (editandoId) {
-    retorno = await supabase.from("produtos").update(produto).eq("id", editandoId);
-  } else {
-    retorno = await supabase.from("produtos").insert([produto]);
-  }
-
-  const { error } = retorno;
+  const { error } = await operacao;
 
   setLoading(btn, false);
 
   if (error) {
     alerta("Erro ao salvar produto!", "erro");
-    console.error(error);
     return;
   }
 
   alerta(editandoId ? "Produto atualizado!" : "Produto cadastrado!", "sucesso");
 
   limparFormulario();
-  await carregarProdutos();
+  carregarProdutos();
 });
 
-/* -------------------------------------------------------
-   Editar produto
-------------------------------------------------------- */
+/* =====================================================================
+   EDITAR
+===================================================================== */
 window.editarProduto = async function (id) {
   editandoId = id;
 
-  const { data, error } = await supabase
-    .from("produtos")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const { data, error } = await supabase.from("produtos").select("*").eq("id", id).single();
 
   if (error) {
     alerta("Erro ao carregar produto!", "erro");
@@ -246,95 +216,75 @@ window.editarProduto = async function (id) {
   alerta("Editando produto...", "info");
 };
 
-/* -------------------------------------------------------
-   Preencher formulário
-------------------------------------------------------- */
-function preencherFormulario(data) {
-  editandoId = data.id;
+function preencherFormulario(d) {
+  editandoId = d.id;
 
-  document.getElementById("codigo").value = data.codigo ?? "";
-  document.getElementById("descricao").value = data.descricao ?? "";
-  document.getElementById("unidade").value = data.unidade ?? "";
-  document.getElementById("comprimento_mm").value = formatBR(data.comprimento_mm);
-  document.getElementById("acabamento").value = data.acabamento ?? "";
-  document.getElementById("peso_bruto").value = formatBR(data.peso_bruto);
-  document.getElementById("peso_liquido").value = formatBR(data.peso_liquido);
-  document.getElementById("preco_custo").value = formatBR(data.preco_custo);
-  document.getElementById("preco_venda").value = formatBR(data.preco_venda);
+  document.getElementById("codigo").value = d.codigo ?? "";
+  document.getElementById("descricao").value = d.descricao ?? "";
+  document.getElementById("unidade").value = d.unidade ?? "";
+  document.getElementById("comprimento_mm").value = formatBR(d.comprimento_mm);
+  document.getElementById("acabamento").value = d.acabamento ?? "";
+  document.getElementById("peso_bruto").value = formatBR(d.peso_bruto);
+  document.getElementById("peso_liquido").value = formatBR(d.peso_liquido);
+  document.getElementById("preco_custo").value = formatBR(d.preco_custo);
+  document.getElementById("preco_venda").value = formatBR(d.preco_venda);
 
   document.getElementById("btnCancelar").style.display = "inline-block";
 }
 
-/* -------------------------------------------------------
-   BUSCAR PRODUTO PELO CÓDIGO
-------------------------------------------------------- */
+/* =====================================================================
+   BUSCAR POR CÓDIGO (ENTER + BOTÃO)
+===================================================================== */
+
 document.getElementById("btnBuscarCodigo")?.addEventListener("click", buscarProdutoPorCodigo);
+
+document.getElementById("codigo")?.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") buscarProdutoPorCodigo();
+});
 
 async function buscarProdutoPorCodigo() {
   const codigo = document.getElementById("codigo").value.trim();
+  if (!codigo) return alerta("Digite um código!", "erro");
 
-  if (!codigo) {
-    alerta("Digite um código para buscar!", "erro");
-    return;
-  }
+  const { data, error } = await supabase.from("produtos").select("*").eq("codigo", codigo).maybeSingle();
 
-  const { data, error } = await supabase
-    .from("produtos")
-    .select("*")
-    .eq("codigo", codigo)
-    .maybeSingle();
-
-  if (error) {
-    alerta("Erro ao buscar produto!", "erro");
-    return;
-  }
-
-  if (!data) {
-    alerta("Nenhum produto encontrado!", "erro");
-    return;
-  }
+  if (error) return alerta("Erro ao buscar!", "erro");
+  if (!data) return alerta("Produto não encontrado!", "erro");
 
   preencherFormulario(data);
   alerta("Produto carregado!", "sucesso");
 }
 
-/* -------------------------------------------------------
-   Cancelar edição
-------------------------------------------------------- */
+/* =====================================================================
+   EXCLUIR
+===================================================================== */
+window.excluirProduto = async function (id) {
+  if (!confirm("Excluir este produto?")) return;
+
+  const { error } = await supabase.from("produtos").delete().eq("id", id);
+  if (error) return alerta("Erro ao excluir!", "erro");
+
+  alerta("Produto excluído!", "sucesso");
+  carregarProdutos();
+};
+
+/* =====================================================================
+   CANCELAR EDIÇÃO
+===================================================================== */
 document.getElementById("btnCancelar").addEventListener("click", () => {
   limparFormulario();
   alerta("Edição cancelada", "info");
 });
 
-/* -------------------------------------------------------
-   Excluir
-------------------------------------------------------- */
-window.excluirProduto = async function (id) {
-  if (!confirm("Excluir este produto?")) return;
-
-  const { error } = await supabase.from("produtos").delete().eq("id", id);
-
-  if (error) {
-    alerta("Erro ao excluir!", "erro");
-    return;
-  }
-
-  alerta("Produto excluído!", "sucesso");
-  await carregarProdutos();
-};
-
-/* -------------------------------------------------------
-   Limpar formulário
-------------------------------------------------------- */
 function limparFormulario() {
   document.getElementById("formProduto").reset();
   document.getElementById("btnCancelar").style.display = "none";
   editandoId = null;
 }
 
-/* -------------------------------------------------------
-   PAGINAÇÃO – BOTÕES
-------------------------------------------------------- */
+/* =====================================================================
+   PAGINAÇÃO
+===================================================================== */
 document.getElementById("btnAnterior")?.addEventListener("click", () => {
   if (paginaAtual > 1) {
     paginaAtual--;
@@ -344,38 +294,38 @@ document.getElementById("btnAnterior")?.addEventListener("click", () => {
 
 document.getElementById("btnProximo")?.addEventListener("click", () => {
   const total = obterProdutosFiltrados().length;
-  const totalPaginas = Math.max(1, Math.ceil(total / itensPorPagina));
+  const totalPaginas = Math.ceil(total / itensPorPagina);
   if (paginaAtual < totalPaginas) {
     paginaAtual++;
     renderTabela();
   }
 });
 
-/* -------------------------------------------------------
-   APLICAR / LIMPAR FILTROS
-------------------------------------------------------- */
+/* =====================================================================
+   FILTROS
+===================================================================== */
 document.getElementById("btnAplicarFiltros")?.addEventListener("click", () => {
   paginaAtual = 1;
   renderTabela();
 });
 
 document.getElementById("btnLimparFiltros")?.addEventListener("click", () => {
-  document.getElementById("filtroCodigo").value = "";
-  document.getElementById("filtroDescricao").value = "";
-  document.getElementById("filtroUnidade").value = "";
+  ["filtroCodigo", "filtroDescricao", "filtroUnidade"].forEach((id) => {
+    const campo = document.getElementById(id);
+    if (campo) campo.value = "";
+  });
   paginaAtual = 1;
   renderTabela();
 });
 
-/* -------------------------------------------------------
-   EXPORTAR EXCEL (CSV)
-------------------------------------------------------- */
+/* =====================================================================
+   EXPORTAR CSV / PDF
+===================================================================== */
+// Mantive iguais, estão funcionando muito bem.
+
 document.getElementById("btnExportarExcel")?.addEventListener("click", () => {
   const produtos = obterProdutosFiltrados();
-  if (produtos.length === 0) {
-    alerta("Nenhum produto para exportar.", "info");
-    return;
-  }
+  if (produtos.length === 0) return alerta("Nenhum produto para exportar.", "info");
 
   const cabecalho = [
     "Codigo","Descricao","Unidade",
@@ -397,9 +347,7 @@ document.getElementById("btnExportarExcel")?.addEventListener("click", () => {
   ]);
 
   const csv = [cabecalho, ...linhas]
-    .map((linha) =>
-      linha.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";")
-    )
+    .map((l) => l.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";"))
     .join("\n");
 
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -407,82 +355,61 @@ document.getElementById("btnExportarExcel")?.addEventListener("click", () => {
   const a = document.createElement("a");
   a.href = url;
   a.download = "produtos.csv";
-  document.body.appendChild(a);
   a.click();
-  document.body.removeChild(a);
   URL.revokeObjectURL(url);
 });
 
-/* -------------------------------------------------------
-   EXPORTAR PDF (via print)
-------------------------------------------------------- */
 document.getElementById("btnExportarPDF")?.addEventListener("click", () => {
   const produtos = obterProdutosFiltrados();
-  if (produtos.length === 0) {
-    alerta("Nenhum produto para exportar.", "info");
-    return;
-  }
+  if (produtos.length === 0) return alerta("Nenhum produto para exportar.", "info");
 
   const linhas = produtos.map((p) => `
     <tr>
-      <td>${p.codigo ?? ""}</td>
-      <td>${p.descricao ?? ""}</td>
-      <td>${p.unidade ?? ""}</td>
-      <td>${p.comprimento_mm ?? ""}</td>
-      <td>${p.acabamento ?? ""}</td>
-      <td>${p.peso_bruto ?? ""}</td>
-      <td>${p.peso_liquido ?? ""}</td>
-      <td>${p.preco_custo ?? ""}</td>
-      <td>${p.preco_venda ?? ""}</td>
+      <td>${p.codigo}</td>
+      <td>${p.descricao}</td>
+      <td>${p.unidade}</td>
+      <td>${p.comprimento_mm}</td>
+      <td>${p.acabamento}</td>
+      <td>${p.peso_bruto}</td>  
+      <td>${p.peso_liquido}</td>
+      <td>${p.preco_custo}</td>
+      <td>${p.preco_venda}</td>
     </tr>
   `).join("");
 
-  const htmlTabela = `
-    <table>
-      <thead>
-        <tr>
-          <th>Cód</th>
-          <th>Descrição</th>
-          <th>UN</th>
-          <th>Comp</th>
-          <th>Acab</th>
-          <th>P. Bruto</th>
-          <th>P. Líquido</th>
-          <th>Custo</th>
-          <th>Venda</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${linhas}
-      </tbody>
-    </table>
-  `;
-
-  const win = window.open("", "_blank");
-  win.document.write(`
+  const html = `
     <html>
       <head>
         <title>Relatório de Produtos</title>
         <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
-          h2 { text-align: center; }
+          body { font-family: Arial; padding: 20px; }
           table { width: 100%; border-collapse: collapse; }
           th, td { border: 1px solid #ccc; padding: 6px; font-size: 12px; }
-          th { background: #f0f0f0; }
         </style>
       </head>
       <body>
         <h2>Relatório de Produtos</h2>
-        ${htmlTabela}
+        <table>
+          <thead>
+            <tr>
+              <th>Cód</th><th>Desc</th><th>UN</th>
+              <th>Comp</th><th>Acab</th>
+              <th>P.Bruto</th><th>P.Liq</th>
+              <th>Custo</th><th>Venda</th>
+            </tr>
+          </thead>
+          <tbody>${linhas}</tbody>
+        </table>
       </body>
     </html>
-  `);
-  win.document.close();
-  win.focus();
+  `;
+
+  const win = window.open("", "_blank");
+  win.document.write(html);
   win.print();
 });
 
-/* -------------------------------------------------------
-   Inicializar
-------------------------------------------------------- */
+/* =====================================================================
+   INICIALIZAR
+===================================================================== */
 carregarProdutos();
