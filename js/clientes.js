@@ -4,10 +4,12 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let editandoId = null;
-let listaOriginal = [];     // <- AQUI! Lista oficial
-let listaClientes = [];     // <- lista filtrada
+let listaOriginal = [];
+let listaClientes = [];
 let paginaAtual = 1;
 const itensPorPagina = 20;
+
+let salvando = false; // ⚡ ANTI-DUPLICAÇÃO
 
 /* ==========================
       TOAST FUTURISTA
@@ -46,7 +48,7 @@ export function mascararCpfCnpj(input) {
 }
 
 /* ==========================
-      AO CARREGAR
+      AO CARREGAR A PÁGINA
 ========================== */
 document.addEventListener("DOMContentLoaded", () => {
   carregarClientes();
@@ -63,9 +65,17 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /* ==========================
-      SALVAR
+      SALVAR CLIENTE (ANTI-DUPLO)
 ========================== */
 async function salvarCliente() {
+
+  if (salvando) return;  // 🔥 Evita submit duplicado
+  salvando = true;
+
+  const btn = document.querySelector(".btnSalvar");
+  btn.disabled = true;
+  btn.innerText = "Salvando...";
+
   const razao_social = document.getElementById("razao_social").value;
   const cpf_cnpj = document.getElementById("cpf_cnpj").value.replace(/\D/g, "");
   const telefone = document.getElementById("telefone").value;
@@ -74,6 +84,9 @@ async function salvarCliente() {
 
   if (!razao_social || !cpf_cnpj) {
     toast("Preencha Razão Social e CPF/CNPJ!", "error");
+    salvando = false;
+    btn.disabled = false;
+    btn.innerText = "Salvar";
     return;
   }
 
@@ -93,6 +106,10 @@ async function salvarCliente() {
     limparFormulario();
     carregarClientes();
   }
+
+  salvando = false;
+  btn.disabled = false;
+  btn.innerText = "Salvar";
 }
 
 /* ==========================
@@ -109,8 +126,8 @@ async function carregarClientes() {
     return;
   }
 
-  listaOriginal = data;   // <-- Lista oficial
-  listaClientes = [...listaOriginal]; // <-- Cópia filtrada
+  listaOriginal = data;
+  listaClientes = [...listaOriginal];
 
   paginaAtual = 1;
   renderLista();
@@ -129,7 +146,6 @@ function renderLista() {
 
   pagina.forEach(cli => {
     const tr = document.createElement("tr");
-
     tr.innerHTML = `
       <td>${cli.razao_social}</td>
       <td>${formatCpfCnpj(cli.cpf_cnpj)}</td>
@@ -140,7 +156,6 @@ function renderLista() {
         <button onclick="excluirCliente(${cli.id})">Excluir</button>
       </td>
     `;
-
     tabela.appendChild(tr);
   });
 
@@ -149,7 +164,7 @@ function renderLista() {
 }
 
 /* ==========================
-      BUSCA (SEM DUPLICAR)
+      BUSCA INTELIGENTE
 ========================== */
 window.filtrarClientes = function () {
   const termo = document.getElementById("busca").value.toLowerCase();
@@ -170,6 +185,7 @@ window.filtrarClientes = function () {
 ========================== */
 function mudarPagina(delta) {
   const total = Math.ceil(listaClientes.length / itensPorPagina);
+
   paginaAtual += delta;
 
   if (paginaAtual < 1) paginaAtual = 1;
@@ -179,12 +195,47 @@ function mudarPagina(delta) {
 }
 
 /* ==========================
+      AUTOCOMPLETE
+========================== */
+document.getElementById("razao_social").addEventListener("input", function () {
+  const termo = this.value.toLowerCase();
+  const lista = listaOriginal
+    .filter(c => c.razao_social.toLowerCase().includes(termo))
+    .slice(0, 5);
+
+  const box = document.getElementById("autocomplete");
+
+  if (lista.length === 0 || termo.length < 2) {
+    box.style.display = "none";
+    return;
+  }
+
+  box.innerHTML = "";
+  box.style.display = "block";
+
+  lista.forEach(cli => {
+    const div = document.createElement("div");
+    div.className = "autocomplete-item";
+    div.innerText = cli.razao_social;
+    div.onclick = () => {
+      document.getElementById("razao_social").value = cli.razao_social;
+      box.style.display = "none";
+    };
+    box.appendChild(div);
+  });
+});
+
+/* ==========================
       EDITAR
 ========================== */
 window.editarCliente = async function (id) {
   editandoId = id;
 
-  const { data } = await supabase.from("clientes").select("*").eq("id", id).single();
+  const { data } = await supabase
+    .from("clientes")
+    .select("*")
+    .eq("id", id)
+    .single();
 
   document.getElementById("razao_social").value = data.razao_social;
   document.getElementById("cpf_cnpj").value = formatCpfCnpj(data.cpf_cnpj);
@@ -203,6 +254,7 @@ window.excluirCliente = async function (id) {
 
   await supabase.from("clientes").delete().eq("id", id);
   toast("Cliente excluído!", "success");
+
   carregarClientes();
 };
 
@@ -211,8 +263,10 @@ window.excluirCliente = async function (id) {
 ========================== */
 function formatCpfCnpj(v) {
   if (!v) return "";
+
   if (v.length === 11)
     return v.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+
   return v.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
 }
 
