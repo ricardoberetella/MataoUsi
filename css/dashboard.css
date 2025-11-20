@@ -1,126 +1,137 @@
 /* ============================= */
-/*   ESTILO GERAL (NEON FUTURE)  */
+/* LAYOUT GERAL */
 /* ============================= */
 
 body {
   margin: 0;
+  background: #0f172a;
   font-family: Arial, sans-serif;
-  background: linear-gradient(135deg, #060b17, #0f172a 70%);
   color: #e5e7eb;
-  overflow-x: hidden;
-}
-
-/* ============================= */
-/*         BARRA SUPERIOR        */
-/* ============================= */
-
-.navbar {
-  width: 100%;
-  background: rgba(17, 25, 40, 0.85);
-  backdrop-filter: blur(10px);
-  padding: 15px 25px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 2px solid rgba(56, 189, 248, 0.15);
-  box-shadow: 0 0 15px rgba(56, 189, 248, 0.15);
 }
 
-.logo {
-  font-size: 24px;
+/* ============================= */
+/* MENU LATERAL */
+/* ============================= */
+
+.sidebar {
+  width: 240px;
+  background: #0a0a0a;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  padding: 20px;
+  box-shadow: 2px 0 10px #00eaff55;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar .logo {
+  text-align: center;
+  font-size: 22px;
   font-weight: bold;
-  color: #38bdf8;
-  text-shadow: 0 0 8px rgba(56, 189, 248, 0.8);
-  letter-spacing: 1px;
+  color: #00eaff;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #333;
 }
 
-.logoutBtn {
-  background: #38bdf8;
+.sidebar nav {
+  margin-top: 25px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sidebar nav a {
+  text-decoration: none;
+  padding: 12px;
+  border-radius: 8px;
+  background: #111;
+  color: #e5e7eb;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.sidebar nav a:hover {
+  background: #1e293b;
+  box-shadow: 0 0 8px #00eaff88;
+}
+
+.sidebar nav a.active {
+  background: #00eaff;
+  color: #000;
+  box-shadow: 0 0 12px #00eaff;
+}
+
+.sidebar .logout {
+  margin-top: 40px;
+  padding: 12px;
+  background: #ff4d4d;
   border: none;
-  padding: 9px 20px;
+  font-weight: bold;
+  color: white;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: bold;
-  box-shadow: 0 0 10px #38bdf8;
-  transition: 0.25s;
+  transition: 0.2s;
 }
 
-.logoutBtn:hover {
-  background: #0ea5e9;
-  box-shadow: 0 0 20px #38bdf8;
+.sidebar .logout:hover {
+  background: #e60000;
+  box-shadow: 0 0 12px #ff4d4d;
 }
 
 /* ============================= */
-/*         ÁREA CENTRAL          */
+/* CONTEÚDO PRINCIPAL */
 /* ============================= */
 
 .content {
-  padding: 50px 20px;
-  text-align: center;
+  margin-left: 260px;
+  padding: 40px;
+  width: calc(100% - 260px);
 }
 
-h1 {
-  font-size: 34px;
-  margin-bottom: 8px;
-  font-weight: bold;
-  color: #38bdf8;
-  text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+.content h1 {
+  color: #00eaff;
+  margin-bottom: 10px;
 }
 
-p {
+.content p {
   font-size: 18px;
-  opacity: 0.8;
-  margin-bottom: 20px;
 }
 
 /* ============================= */
-/*         MÓDULOS / CARDS       */
+/* CARDS DO DASHBOARD */
 /* ============================= */
 
-.modules {
-  margin-top: 40px;
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 30px;
+.cards {
+  margin-top: 30px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 20px;
 }
 
-.box {
-  background: rgba(30, 41, 59, 0.75);
-  backdrop-filter: blur(10px);
+.card {
+  background: #1e293b;
   padding: 25px;
-  border-radius: 16px;
-  width: 230px;
-  cursor: pointer;
-  border: 1px solid rgba(56, 189, 248, 0.25);
-  transition: 0.35s;
-  font-size: 20px;
   text-align: center;
+  border-radius: 12px;
+  cursor: pointer;
   color: #e5e7eb;
-
-  /* Efeito neon suave */
-  box-shadow: 
-    0 0 15px rgba(56, 189, 248, 0.10),
-    inset 0 0 12px rgba(56, 189, 248, 0.05);
+  font-weight: bold;
+  transition: 0.2s;
+  font-size: 18px;
+  box-shadow: 0 0 15px rgba(0, 234, 255, 0.2);
 }
 
-.box:hover {
-  border-color: #38bdf8;
-  transform: translateY(-8px) scale(1.03);
-  text-shadow: 0 0 10px rgba(56, 189, 248, 0.9);
-
-  box-shadow: 
-    0 0 20px rgba(56, 189, 248, 0.65),
-    inset 0 0 20px rgba(56, 189, 248, 0.25);
+.card span {
+  display: block;
+  font-size: 40px;
+  margin-bottom: 10px;
 }
 
-/* ============================= */
-/*         RESPONSIVO            */
-/* ============================= */
-
-@media (max-width: 600px) {
-  .box {
-    width: 90%;
-  }
+.card:hover {
+  background: #334155;
+  transform: translateY(-4px);
+  box-shadow: 0 0 20px rgba(0, 234, 255, 0.5);
 }
