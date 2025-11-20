@@ -5,159 +5,172 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let editandoId = null;
 
-/* ==============================
-      TROCAR ABAS
-============================== */
-document.querySelectorAll(".tab").forEach(tab => {
-  tab.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+/* ========================================
+      MÁSCARA CPF / CNPJ
+======================================== */
+export function mascararCpfCnpj(input) {
+  let v = input.value.replace(/\D/g, "");
 
-    tab.classList.add("active");
-    document.getElementById(tab.dataset.tab).classList.add("active");
+  if (v.length <= 11) {
+    // CPF 000.000.000-00
+    v = v.replace(/(\d{3})(\d)/, "$1.$2");
+    v = v.replace(/(\d{3})(\d)/, "$1.$2");
+    v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  } else {
+    // CNPJ 00.000.000/0000-00
+    v = v.replace(/^(\d{2})(\d)/, "$1.$2");
+    v = v.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
+    v = v.replace(/\.(\d{3})(\d)/, ".$1/$2");
+    v = v.replace(/(\d{4})(\d)/, "$1-$2");
+  }
+
+  input.value = v;
+}
+
+/* ========================================
+      AO ABRIR A PÁGINA
+======================================== */
+document.addEventListener("DOMContentLoaded", () => {
+  carregarClientes();
+
+  document.getElementById("formCliente").addEventListener("submit", (e) => {
+    e.preventDefault();
+    salvarCliente();
+  });
+
+  document.getElementById("btnCancelar").addEventListener("click", () => {
+    limparFormulario();
   });
 });
 
-/* ==============================
-      AO ABRIR
-============================== */
-document.addEventListener("DOMContentLoaded", () => {
-  carregarClientes();
-});
-
-/* ==============================
+/* ========================================
       SALVAR CLIENTE
-============================== */
-document.getElementById("formCliente").addEventListener("submit", async (e) => {
-  e.preventDefault();
+======================================== */
+async function salvarCliente() {
+  const razao_social = document.getElementById("razao_social").value;
+  const cpf_cnpj = document.getElementById("cpf_cnpj").value.replace(/\D/g, "");
+  const telefone = document.getElementById("telefone").value;
+  const email = document.getElementById("email").value;
+  const endereco = document.getElementById("endereco").value;
 
-  const id = document.getElementById("clienteId").value;
+  if (!razao_social || !cpf_cnpj) {
+    alert("Preencha Razão Social e CPF/CNPJ!");
+    return;
+  }
 
-  const cliente = {
-    razao_social: document.getElementById("razao_social").value.trim(),
-    nome_fantasia: document.getElementById("nome_fantasia").value.trim(),
-    cpf_cnpj: document.getElementById("cpf_cnpj").value.trim(),
-    telefone: document.getElementById("telefone").value.trim(),
-    email: document.getElementById("email").value.trim(),
-    endereco: document.getElementById("endereco").value.trim()
+  let dados = {
+    razao_social,
+    cpf_cnpj,
+    telefone,
+    email,
+    endereco
   };
 
-  if (!cliente.razao_social) {
-    alert("Razão Social é obrigatória!");
-    return;
-  }
+  let resultado;
 
-  let result;
-
-  if (id) {
-    // ✅ UPDATE CORRETO
-    result = await supabase.from("clientes").update(cliente).eq("id", id);
+  if (editandoId) {
+    resultado = await supabase
+      .from("clientes")
+      .update(dados)
+      .eq("id", editandoId);
   } else {
-    // ✅ INSERT
-    result = await supabase.from("clientes").insert([cliente]);
+    resultado = await supabase
+      .from("clientes")
+      .insert(dados);
   }
 
-  if (result.error) {
-    console.error(result.error);
-    alert("Erro ao salvar cliente!");
-    return;
+  if (resultado.error) {
+    alert("Erro ao salvar: " + resultado.error.message);
+  } else {
+    alert("Salvo com sucesso!");
+    limparFormulario();
+    carregarClientes();
   }
+}
 
-  alert("Cliente salvo!");
-  limparFormulario();
-  carregarClientes();
-});
-
-/* ==============================
+/* ========================================
       LISTAR CLIENTES
-============================== */
+======================================== */
 async function carregarClientes() {
+  const tabela = document.querySelector("#tabelaClientes tbody");
+  tabela.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
+
   const { data, error } = await supabase
     .from("clientes")
     .select("*")
     .order("id", { ascending: false });
 
   if (error) {
-    console.error(error);
+    tabela.innerHTML = "<tr><td colspan='5'>Erro ao carregar</td></tr>";
     return;
   }
 
-  const tabela = document.getElementById("tabelaClientes");
   tabela.innerHTML = "";
 
-  data.forEach(c => {
-    const tr = document.createElement("tr");
+  data.forEach(cli => {
+    const linha = document.createElement("tr");
 
-    tr.innerHTML = `
-      <td>${c.razao_social}</td>
-      <td>${c.nome_fantasia ?? ""}</td>
-      <td>${c.cpf_cnpj ?? ""}</td>
-      <td>${c.telefone ?? ""}</td>
-      <td>${c.email ?? ""}</td>
-      <td>${c.endereco ?? ""}</td>
-      <td class="acoes">
-        <button class="btn-editar" onclick="editarCliente(${c.id})">Editar</button>
-        <button class="btn-excluir" onclick="excluirCliente(${c.id})">Excluir</button>
+    linha.innerHTML = `
+      <td>${cli.razao_social}</td>
+      <td>${formatCpfCnpj(cli.cpf_cnpj)}</td>
+      <td>${cli.telefone || ""}</td>
+      <td>${cli.email || ""}</td>
+      <td>
+        <button onclick="editarCliente(${cli.id})">Editar</button>
+        <button onclick="excluirCliente(${cli.id})">Excluir</button>
       </td>
     `;
 
-    tabela.appendChild(tr);
+    tabela.appendChild(linha);
   });
 }
 
-/* ==============================
-      EDITAR CLIENTE
-============================== */
-window.editarCliente = async function (id) {
+/* ========================================
+      FORMATAR EXIBIÇÃO CPF/CNPJ
+======================================== */
+function formatCpfCnpj(v) {
+  if (!v) return "";
 
-  const { data, error } = await supabase
+  if (v.length === 11) {
+    return v.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  }
+
+  return v.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
+}
+
+/* ========================================
+      EDITAR
+======================================== */
+window.editarCliente = async function (id) {
+  editandoId = id;
+
+  const { data } = await supabase
     .from("clientes")
     .select("*")
     .eq("id", id)
     .single();
 
-  if (error) {
-    console.error(error);
-    alert("Erro ao carregar cliente!");
-    return;
-  }
-
-  document.getElementById("clienteId").value = data.id;
   document.getElementById("razao_social").value = data.razao_social;
-  document.getElementById("nome_fantasia").value = data.nome_fantasia;
-  document.getElementById("cpf_cnpj").value = data.cpf_cnpj;
+  document.getElementById("cpf_cnpj").value = formatCpfCnpj(data.cpf_cnpj);
   document.getElementById("telefone").value = data.telefone;
   document.getElementById("email").value = data.email;
   document.getElementById("endereco").value = data.endereco;
-
-  document.querySelector('.tab[data-tab="cadastro"]').click();
 };
 
-/* ==============================
-      EXCLUIR CLIENTE
-============================== */
+/* ========================================
+      EXCLUIR
+======================================== */
 window.excluirCliente = async function (id) {
+  if (!confirm("Excluir cliente?")) return;
 
-  if (!confirm("Excluir este cliente?")) return;
-
-  const { error } = await supabase.from("clientes").delete().eq("id", id);
-
-  if (error) {
-    console.error(error);
-    alert("Erro ao excluir!");
-    return;
-  }
-
-  alert("Cliente excluído!");
+  await supabase.from("clientes").delete().eq("id", id);
   carregarClientes();
 };
 
-/* ==============================
-      LIMPAR
-============================== */
+/* ========================================
+      LIMPAR FORM
+======================================== */
 function limparFormulario() {
+  editandoId = null;
   document.getElementById("formCliente").reset();
-  document.getElementById("clienteId").value = "";
 }
-
-document.getElementById("btnCancelar").addEventListener("click", limparFormulario);
