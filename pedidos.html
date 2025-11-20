@@ -4,105 +4,83 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pedidos - MataoUsi</title>
+
   <link rel="stylesheet" href="css/pedidos.css">
+
+  <!-- Supabase -->
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+    import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
+
+    window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  </script>
 </head>
+
 <body>
 
-  <header class="topbar">
-    <h2>Pedidos</h2>
-  </header>
+  <h2>Pedidos</h2>
+
+  <!-- BOTÃO FUTURISTA VOLTAR AO MENU -->
+  <div style="text-align:right; margin: 10px 30px;">
+    <button onclick="location.href='dashboard.html'"
+      style="
+        background: #38bdf8;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 15px;
+        color: #000;
+        box-shadow: 0 0 12px rgba(56,189,248,0.8);
+        transition: 0.3s;
+      "
+      onmouseover="this.style.boxShadow='0 0 20px rgba(56,189,248,1)'"
+      onmouseout="this.style.boxShadow='0 0 12px rgba(56,189,248,0.8)'"
+    >
+      ⬅ Voltar ao Menu
+    </button>
+  </div>
 
   <div class="container">
 
+    <!-- ABAS -->
     <div class="tabs">
       <button class="tab active" data-tab="cadastro">Criar Pedido</button>
       <button class="tab" data-tab="lista">Listar Pedidos</button>
     </div>
 
-    <!-- ======================= -->
-    <!--   ABA CRIAR PEDIDO      -->
-    <!-- ======================= -->
+    <!-- ================== CADASTRAR PEDIDO ================== -->
     <div id="cadastro" class="tab-content active">
 
       <form id="formPedido">
         <input type="hidden" id="pedidoId">
 
+        <!-- CLIENTE -->
         <label>Cliente</label>
         <select id="cliente_id" required></select>
 
+        <!-- NÚMERO DO PEDIDO DO CLIENTE -->
         <label>Número do Pedido (fornecido pelo cliente)</label>
         <input type="text" id="numero_pedido" required>
 
-        <div class="duas-colunas">
-          <div>
-            <label>Data do Pedido</label>
-            <input type="date" id="data_pedido" required>
-          </div>
-          <div>
-            <label>Data de Entrega</label>
-            <input type="date" id="data_entrega">
-          </div>
-        </div>
+        <!-- DATAS -->
+        <label>Data do Pedido</label>
+        <input type="date" id="data_pedido">
 
+        <label>Data de Entrega</label>
+        <input type="date" id="data_entrega">
+
+        <!-- STATUS -->
         <label>Status</label>
         <select id="status">
-          <option value="aberto">Aberto</option>
-          <option value="entregue">Entregue</option>
-          <option value="cancelado">Cancelado</option>
+          <option value="Aberto">Aberto</option>
+          <option value="Entregue">Entregue</option>
+          <option value="Cancelado">Cancelado</option>
         </select>
 
-        <!-- ======================= -->
-        <!--   ITENS DO PEDIDO       -->
-        <!-- ======================= -->
-        <h3 class="secao-itens-titulo">Itens do Pedido (Peças)</h3>
-
-        <div class="linha-itens">
-          <div class="campo-grande">
-            <label>Produto / Peça</label>
-            <select id="produto_id_select"></select>
-          </div>
-
-          <div class="campo-pequeno">
-            <label>Qtd.</label>
-            <input type="text" id="quantidade_item" placeholder="0,00">
-          </div>
-
-          <div class="campo-pequeno">
-            <label>Vlr. Unitário (R$)</label>
-            <input type="text" id="valor_unitario_item" readonly>
-          </div>
-
-          <div class="campo-pequeno">
-            <label>Total Item (R$)</label>
-            <input type="text" id="total_item" readonly>
-          </div>
-
-          <div class="campo-botao">
-            <button type="button" id="btnAddItem">Adicionar</button>
-          </div>
-        </div>
-
-        <table class="tabela-itens">
-          <thead>
-            <tr>
-              <th>Código</th>
-              <th>Descrição</th>
-              <th>Qtd.</th>
-              <th>Vlr. Unit. (R$)</th>
-              <th>Total (R$)</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="tabelaItens"></tbody>
-        </table>
-
-        <div class="total-pedido-linha">
-          <span>Total do Pedido:</span>
-          <strong id="total_pedido">R$ 0,00</strong>
-        </div>
-
         <div class="btns">
-          <button type="submit" id="btnSalvar">Salvar Pedido</button>
+          <button type="submit">Salvar Pedido</button>
           <button type="button" id="btnCancelar">Cancelar</button>
         </div>
 
@@ -110,18 +88,16 @@
 
     </div>
 
-    <!-- ======================= -->
-    <!--   ABA LISTAR PEDIDOS    -->
-    <!-- ======================= -->
+    <!-- ================== LISTAR PEDIDOS ================== -->
     <div id="lista" class="tab-content">
 
-      <input type="text" id="busca" placeholder="Buscar número, cliente ou status">
+      <input type="text" id="busca" placeholder="Buscar por cliente ou nº do pedido">
 
       <table>
         <thead>
           <tr>
-            <th>Número</th>
             <th>Cliente</th>
+            <th>Nº Pedido</th>
             <th>Data Pedido</th>
             <th>Entrega</th>
             <th>Status</th>
@@ -136,6 +112,7 @@
 
   </div>
 
+  <!-- JS do módulo -->
   <script type="module" src="js/pedidos.js"></script>
 
 </body>
