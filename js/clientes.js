@@ -4,13 +4,14 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let editandoId = null;
-let listaClientes = [];
+let listaOriginal = [];     // <- AQUI! Lista oficial
+let listaClientes = [];     // <- lista filtrada
 let paginaAtual = 1;
 const itensPorPagina = 20;
 
-/* ================================
-      TOASTS FUTURISTAS
-================================ */
+/* ==========================
+      TOAST FUTURISTA
+========================== */
 function toast(msg, tipo = "info") {
   const div = document.createElement("div");
   div.className = `toast toast-${tipo}`;
@@ -24,29 +25,29 @@ function toast(msg, tipo = "info") {
   }, 2500);
 }
 
-/* ================================
-      MÁSCARA CPF / CNPJ
-================================ */
+/* ==========================
+      MÁSCARA CPF/CNPJ
+========================== */
 export function mascararCpfCnpj(input) {
   let v = input.value.replace(/\D/g, "");
 
   if (v.length <= 11) {
     v = v.replace(/(\d{3})(\d)/, "$1.$2")
-      .replace(/(\d{3})(\d)/, "$1.$2")
-      .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+         .replace(/(\d{3})(\d)/, "$1.$2")
+         .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
   } else {
     v = v.replace(/^(\d{2})(\d)/, "$1.$2")
-      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
-      .replace(/\.(\d{3})(\d)/, ".$1/$2")
-      .replace(/(\d{4})(\d)/, "$1-$2");
+         .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+         .replace(/\.(\d{3})(\d)/, ".$1/$2")
+         .replace(/(\d{4})(\d)/, "$1-$2");
   }
 
   input.value = v;
 }
 
-/* ================================
+/* ==========================
       AO CARREGAR
-================================ */
+========================== */
 document.addEventListener("DOMContentLoaded", () => {
   carregarClientes();
 
@@ -58,12 +59,12 @@ document.addEventListener("DOMContentLoaded", () => {
     salvarCliente();
   };
 
-  document.getElementById("btnCancelar").onclick = limparFormulario;
+  document.getElementById("btnCancelar").onclick = () => limparFormulario();
 });
 
-/* ================================
-      SALVAR CLIENTE
-================================ */
+/* ==========================
+      SALVAR
+========================== */
 async function salvarCliente() {
   const razao_social = document.getElementById("razao_social").value;
   const cpf_cnpj = document.getElementById("cpf_cnpj").value.replace(/\D/g, "");
@@ -78,26 +79,25 @@ async function salvarCliente() {
 
   const dados = { razao_social, cpf_cnpj, telefone, email, endereco };
 
-  let resultado;
-
+  let r;
   if (editandoId) {
-    resultado = await supabase.from("clientes").update(dados).eq("id", editandoId);
+    r = await supabase.from("clientes").update(dados).eq("id", editandoId);
   } else {
-    resultado = await supabase.from("clientes").insert(dados);
+    r = await supabase.from("clientes").insert(dados);
   }
 
-  if (resultado.error) {
-    toast("Erro: " + resultado.error.message, "error");
+  if (r.error) {
+    toast("Erro: " + r.error.message, "error");
   } else {
-    toast("Cliente salvo com sucesso!", "success");
+    toast("Cliente salvo!", "success");
     limparFormulario();
     carregarClientes();
   }
 }
 
-/* ================================
+/* ==========================
       CARREGAR CLIENTES
-================================ */
+========================== */
 async function carregarClientes() {
   const { data, error } = await supabase
     .from("clientes")
@@ -105,29 +105,31 @@ async function carregarClientes() {
     .order("id", { ascending: false });
 
   if (error) {
-    toast("Erro ao carregar clientes!", "error");
+    toast("Erro ao carregar!", "error");
     return;
   }
 
-  listaClientes = data;
+  listaOriginal = data;   // <-- Lista oficial
+  listaClientes = [...listaOriginal]; // <-- Cópia filtrada
+
   paginaAtual = 1;
   renderLista();
 }
 
-/* ================================
-      RENDERIZAÇÃO
-================================ */
+/* ==========================
+      RENDERIZAR LISTA
+========================== */
 function renderLista() {
   const tabela = document.querySelector("#tabelaClientes tbody");
   tabela.innerHTML = "";
 
   const inicio = (paginaAtual - 1) * itensPorPagina;
   const fim = inicio + itensPorPagina;
-
   const pagina = listaClientes.slice(inicio, fim);
 
   pagina.forEach(cli => {
     const tr = document.createElement("tr");
+
     tr.innerHTML = `
       <td>${cli.razao_social}</td>
       <td>${formatCpfCnpj(cli.cpf_cnpj)}</td>
@@ -136,37 +138,38 @@ function renderLista() {
       <td>
         <button onclick="editarCliente(${cli.id})">Editar</button>
         <button onclick="excluirCliente(${cli.id})">Excluir</button>
-      </td>`;
+      </td>
+    `;
+
     tabela.appendChild(tr);
   });
 
-  document.getElementById("paginacaoInfo").textContent =
+  document.getElementById("paginacaoInfo").innerText =
     `Página ${paginaAtual} de ${Math.ceil(listaClientes.length / itensPorPagina)}`;
 }
 
-/* ================================
-      BUSCA INTELIGENTE
-================================ */
+/* ==========================
+      BUSCA (SEM DUPLICAR)
+========================== */
 window.filtrarClientes = function () {
   const termo = document.getElementById("busca").value.toLowerCase();
 
-  listaClientes = listaClientes.filter(c =>
+  listaClientes = listaOriginal.filter(c =>
     c.razao_social.toLowerCase().includes(termo) ||
     formatCpfCnpj(c.cpf_cnpj).includes(termo) ||
-    (c.email || "").toLowerCase().includes(termo) ||
-    (c.telefone || "").toLowerCase().includes(termo)
+    (c.telefone || "").toLowerCase().includes(termo) ||
+    (c.email || "").toLowerCase().includes(termo)
   );
 
   paginaAtual = 1;
   renderLista();
 };
 
-/* ================================
+/* ==========================
       PAGINAÇÃO
-================================ */
+========================== */
 function mudarPagina(delta) {
   const total = Math.ceil(listaClientes.length / itensPorPagina);
-
   paginaAtual += delta;
 
   if (paginaAtual < 1) paginaAtual = 1;
@@ -175,40 +178,9 @@ function mudarPagina(delta) {
   renderLista();
 }
 
-/* ================================
-      AUTOCOMPLETE
-================================ */
-document.getElementById("razao_social").addEventListener("input", function () {
-  const termo = this.value.toLowerCase();
-  const lista = listaClientes
-    .filter(c => c.razao_social.toLowerCase().includes(termo))
-    .slice(0, 5);
-
-  const box = document.getElementById("autocomplete");
-
-  if (lista.length === 0 || termo.length < 2) {
-    box.style.display = "none";
-    return;
-  }
-
-  box.innerHTML = "";
-  box.style.display = "block";
-
-  lista.forEach(cli => {
-    const div = document.createElement("div");
-    div.className = "autocomplete-item";
-    div.innerText = cli.razao_social;
-    div.onclick = () => {
-      document.getElementById("razao_social").value = cli.razao_social;
-      box.style.display = "none";
-    };
-    box.appendChild(div);
-  });
-});
-
-/* ================================
+/* ==========================
       EDITAR
-================================ */
+========================== */
 window.editarCliente = async function (id) {
   editandoId = id;
 
@@ -220,39 +192,34 @@ window.editarCliente = async function (id) {
   document.getElementById("email").value = data.email;
   document.getElementById("endereco").value = data.endereco;
 
-  toast("Modo edição ativado!", "info");
+  toast("Modo edição!", "info");
 };
 
-/* ================================
+/* ==========================
       EXCLUIR
-================================ */
+========================== */
 window.excluirCliente = async function (id) {
   if (!confirm("Excluir cliente?")) return;
 
   await supabase.from("clientes").delete().eq("id", id);
-
   toast("Cliente excluído!", "success");
   carregarClientes();
 };
 
-/* ================================
+/* ==========================
       FORMATAR CPF/CNPJ
-================================ */
+========================== */
 function formatCpfCnpj(v) {
   if (!v) return "";
-
-  if (v.length === 11) {
+  if (v.length === 11)
     return v.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-  }
-
   return v.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
 }
 
-/* ================================
-      LIMPAR
-================================ */
+/* ==========================
+      LIMPAR FORM
+========================== */
 function limparFormulario() {
   editandoId = null;
   document.getElementById("formCliente").reset();
-  toast("Formulário limpo!", "info");
 }
