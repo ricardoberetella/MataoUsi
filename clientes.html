@@ -4,12 +4,81 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cadastro de Clientes</title>
-
+  <title>Clientes - MataoUsi</title>
   <link rel="stylesheet" href="css/clientes.css">
+
+  <style>
+    /* Apenas estilos básicos para autocomplete e toasts */
+
+    .autocomplete-list {
+      position: absolute;
+      background: #1e293b;
+      border: 1px solid #334155;
+      width: 100%;
+      max-height: 150px;
+      overflow-y: auto;
+      border-radius: 6px;
+      margin-top: -5px;
+      z-index: 10;
+    }
+
+    .autocomplete-item {
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    .autocomplete-item:hover {
+      background: #334155;
+    }
+
+    /* TOAST */
+    #toastContainer {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast {
+      padding: 15px 22px;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 16px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .toast-success {
+      background: #16a34a;
+    }
+
+    .toast-error {
+      background: #dc2626;
+    }
+
+    .toast-info {
+      background: #2563eb;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
 </head>
 
 <body>
+
+  <div id="toastContainer"></div>
 
   <header class="topbar">
     <h1>Clientes</h1>
@@ -23,10 +92,10 @@
       <h2>Cadastrar / Editar Cliente</h2>
 
       <label>Razão Social</label>
-      <input type="text" id="razao_social" required>
+      <input type="text" id="razao_social" autocomplete="off" required>
+      <div id="autocomplete" class="autocomplete-list" style="display:none;"></div>
 
       <label>CPF/CNPJ</label>
-      <!-- MÁSCARA APLICADA AQUI -->
       <input type="text" id="cpf_cnpj" placeholder="CPF ou CNPJ" oninput="mascararCpfCnpj(this)" required>
 
       <label>Telefone</label>
@@ -45,7 +114,8 @@
     <hr>
 
     <h2>Lista de Clientes</h2>
-    <button onclick="carregarClientes()" class="btnListar">Listar Todos</button>
+
+    <input type="text" id="busca" placeholder="Buscar cliente..." oninput="filtrarClientes()" class="inputBusca">
 
     <table id="tabelaClientes">
       <thead>
@@ -60,9 +130,16 @@
       <tbody></tbody>
     </table>
 
+    <div class="paginacao">
+      <button id="btnAnterior">Anterior</button>
+      <span id="paginacaoInfo"></span>
+      <button id="btnProximo">Próximo</button>
+    </div>
+
   </div>
 
   <script type="module" src="js/clientes.js"></script>
 
 </body>
+
 </html>
