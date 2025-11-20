@@ -1,124 +1,137 @@
-body {
-  background: #0f172a;
-  color: #e5e7eb;
-  font-family: Arial;
-  margin: 0;
-  padding: 0;
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ============================
+// Troca de Abas
+// ============================
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+
+    tab.classList.add("active");
+    document.getElementById(tab.dataset.tab).classList.add("active");
+  });
+});
+
+// ============================
+// Carregar estoque ao abrir
+// ============================
+document.addEventListener("DOMContentLoaded", () => {
+  carregarProdutos();
+  carregarEstoque();
+});
+
+// ============================
+// Listar produtos no select
+// ============================
+async function carregarProdutos() {
+  const { data } = await supabase.from("produtos").select("id, descricao, codigo").order("descricao");
+
+  const select = document.getElementById("produto_id");
+  select.innerHTML = "";
+
+  data.forEach(p => {
+    const op = document.createElement("option");
+    op.value = p.id;
+    op.textContent = `${p.codigo} - ${p.descricao}`;
+    select.appendChild(op);
+  });
 }
 
-h2 {
-  text-align: center;
-  color: #38bdf8;
-  margin-top: 20px;
+// ============================
+// Listar Estoque
+// ============================
+async function carregarEstoque() {
+  const { data, error } = await supabase
+    .from("estoque")
+    .select("*, produtos(codigo, descricao)")
+    .order("id", { ascending: false });
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  const tabela = document.getElementById("tabelaEstoque");
+  tabela.innerHTML = "";
+
+  data.forEach(e => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${e.produtos?.codigo ?? "-"}</td>
+      <td>${e.produtos?.descricao ?? "-"}</td>
+      <td>${e.quantidade ?? 0}</td>
+      <td>${e.local ?? "-"}</td>
+      <td>
+        <span class="action-btn" onclick="editarEstoque(${e.id})">Editar</span>
+        <span class="action-btn" onclick="excluirEstoque(${e.id})">Excluir</span>
+      </td>
+    `;
+    tabela.appendChild(tr);
+  });
 }
 
-.container {
-  max-width: 900px;
-  margin: 20px auto;
-  background: #1e293b;
-  padding: 25px;
-  border-radius: 12px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.4);
-}
+// ============================
+// SALVAR
+// ============================
+document.getElementById("formEstoque").addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-/* Abas */
-.tabs {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-}
+  const id = document.getElementById("estoqueId").value;
+  const dados = {
+    produto_id: document.getElementById("produto_id").value,
+    quantidade: Number(document.getElementById("quantidade").value),
+    local: document.getElementById("local").value
+  };
 
-.tab {
-  flex: 1;
-  padding: 12px;
-  background: #334155;
-  border: none;
-  cursor: pointer;
-  border-radius: 8px;
-  font-weight: bold;
-  color: #e5e7eb;
-}
+  let result;
 
-.tab.active {
-  background: #38bdf8;
-  color: #000;
-}
+  if (id) {
+    result = await supabase.from("estoque").update(dados).eq("id", id);
+  } else {
+    result = await supabase.from("estoque").insert(dados);
+  }
 
-/* Conteúdo das abas */
-.tab-content {
-  display: none;
-}
+  if (result.error) {
+    alert("Erro: " + result.error.message);
+    return;
+  }
 
-.tab-content.active {
-  display: block;
-}
+  alert("Salvo com sucesso!");
+  limparFormulario();
+  carregarEstoque();
+});
 
-label {
-  display: block;
-  margin-top: 12px;
-  font-weight: bold;
-}
+// ============================
+// EDITAR
+// ============================
+window.editarEstoque = async function (id) {
+  const { data } = await supabase.from("estoque").select("*").eq("id", id).single();
 
-input, select {
-  width: 100%;
-  padding: 10px;
-  margin-top: 5px;
-  background: #0f172a;
-  border: 1px solid #475569;
-  color: white;
-  border-radius: 6px;
-}
+  document.getElementById("estoqueId").value = data.id;
+  document.getElementById("produto_id").value = data.produto_id;
+  document.getElementById("quantidade").value = data.quantidade;
+  document.getElementById("local").value = data.local;
 
-/* Botões */
-.btns {
-  margin-top: 20px;
-  display: flex;
-  gap: 10px;
-}
+  document.querySelector('.tab[data-tab="cadastro"]').click();
+};
 
-.btns button {
-  flex: 1;
-  padding: 12px;
-  border: none;
-  cursor: pointer;
-  font-weight: bold;
-  border-radius: 8px;
-}
+// ============================
+// EXCLUIR
+// ============================
+window.excluirEstoque = async function (id) {
+  if (!confirm("Tem certeza que deseja excluir?")) return;
+  await supabase.from("estoque").delete().eq("id", id);
+  carregarEstoque();
+};
 
-.btns button:first-child {
-  background: #38bdf8;
-  color: #000;
-}
-
-.btns button:last-child {
-  background: #475569;
-}
-
-/* Tabela */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-}
-
-th {
-  text-align: left;
-  padding: 12px;
-  background: #334155;
-}
-
-td {
-  padding: 10px;
-  border-bottom: 1px solid #334155;
-}
-
-.action-btn {
-  cursor: pointer;
-  color: #38bdf8;
-  font-weight: bold;
-  margin-right: 10px;
-}
-
-.action-btn:hover {
-  color: #7dd3fc;
+// ============================
+// LIMPAR
+// ============================
+function limparFormulario() {
+  document.getElementById("estoqueId").value = "";
+  document.getElementById("formEstoque").reset();
 }
