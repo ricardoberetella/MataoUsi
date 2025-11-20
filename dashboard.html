@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard - MataoUsi</title>
 
-  <!-- CSS externo -->
   <link rel="stylesheet" href="css/dashboard.css">
 
   <script type="module">
@@ -14,18 +14,14 @@
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // 🔒 IMPEDIR ACESSO SEM LOGIN
     document.addEventListener("DOMContentLoaded", async () => {
       const { data: { user } } = await supabase.auth.getUser();
-
       if (!user) {
         window.location.href = "index.html";
         return;
       }
 
-      // Botão de sair
-      const logoutBtn = document.getElementById("logout");
-      logoutBtn.addEventListener("click", async () => {
+      document.getElementById("logout").addEventListener("click", async () => {
         await supabase.auth.signOut();
         window.location.href = "index.html";
       });
@@ -35,30 +31,64 @@
 
 <body>
 
-  <div class="navbar">
-    <div class="logo">MataoUsi - Dashboard</div>
-    <button id="logout" class="logoutBtn">Sair</button>
-  </div>
+  <!-- MENU LATERAL FUTURISTA -->
+  <aside class="sidebar">
+    <div class="logo">MataoUsi</div>
 
-  <div class="content">
+    <nav>
+      <a href="dashboard.html" class="active">🏠 Dashboard</a>
+      <a href="clientes.html">👤 Clientes</a>
+      <a href="pedidos.html">🧾 Pedidos</a>
+      <a href="produtos.html">📦 Produtos</a>
+      <a href="estoque.html">🏢 Estoque</a>
+      <a href="movimentacoes.html">🔄 Movimentações</a>
+      <a href="empresas.html">🏭 Empresas</a>
+      <a href="relatorios.html">📊 Relatórios</a>
+
+      <button id="logout" class="logout">⏻ Sair</button>
+    </nav>
+  </aside>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="content">
     <h1>Bem-vindo ao Sistema</h1>
-    <p>Escolha um módulo abaixo:</p>
+    <p>Selecione um módulo no menu ao lado.</p>
 
-    <div class="modules">
+    <div class="cards">
 
-      <!-- NOVOS MÓDULOS -->
-      <div class="box" onclick="location.href='clientes.html'">Clientes</div>
-      <div class="box" onclick="location.href='pedidos.html'">Pedidos</div>
+      <div class="card" onclick="location.href='clientes.html'">
+        <span>👤</span>
+        Clientes
+      </div>
 
-      <!-- MÓDULOS EXISTENTES -->
-      <div class="box" onclick="location.href='empresas.html'">Empresas</div>
-      <div class="box" onclick="location.href='produtos.html'">Produtos</div>
-      <div class="box" onclick="location.href='estoque.html'">Estoque</div>
-      <div class="box" onclick="location.href='movimentacoes.html'">Movimentações</div>
-      <div class="box" onclick="location.href='relatorios.html'">Relatórios</div>
+      <div class="card" onclick="location.href='pedidos.html'">
+        <span>🧾</span>
+        Pedidos
+      </div>
+
+      <div class="card" onclick="location.href='produtos.html'">
+        <span>📦</span>
+        Produtos
+      </div>
+
+      <div class="card" onclick="location.href='estoque.html'">
+        <span>🏢</span>
+        Estoque
+      </div>
+
+      <div class="card" onclick="location.href='movimentacoes.html'">
+        <span>🔄</span>
+        Movimentações
+      </div>
+
+      <div class="card" onclick="location.href='relatorios.html'">
+        <span>📊</span>
+        Relatórios
+      </div>
 
     </div>
-  </div>
+  </main>
 
 </body>
+
 </html>
