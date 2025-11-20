@@ -5,9 +5,9 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let editandoId = null;
 
-/* ================================
-      TROCA DE ABAS
-================================ */
+/* ==========================================================
+    TROCA DE ABAS
+========================================================== */
 document.querySelectorAll(".tab").forEach(tab => {
   tab.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
@@ -18,16 +18,16 @@ document.querySelectorAll(".tab").forEach(tab => {
   });
 });
 
-/* ================================
-      AO ABRIR A PÁGINA
-================================ */
+/* ==========================================================
+    AO ABRIR A PÁGINA
+========================================================== */
 document.addEventListener("DOMContentLoaded", () => {
   carregarClientes();
 });
 
-/* ================================
-      SALVAR CLIENTE
-================================ */
+/* ==========================================================
+    SALVAR CLIENTE
+========================================================== */
 document.getElementById("formCliente").addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -39,7 +39,7 @@ document.getElementById("formCliente").addEventListener("submit", async (e) => {
     cpf_cnpj: document.getElementById("cpf_cnpj").value.trim(),
     telefone: document.getElementById("telefone").value.trim(),
     email: document.getElementById("email").value.trim(),
-    endereco: document.getElementById("endereco").value.trim()
+    endereco: document.getElementById("endereco").value.trim(),
   };
 
   if (!cliente.razao_social) {
@@ -47,39 +47,42 @@ document.getElementById("formCliente").addEventListener("submit", async (e) => {
     return;
   }
 
-  // Verifica duplicação
-  const { data: existe } = await supabase
-    .from("clientes")
-    .select("id")
-    .eq("razao_social", cliente.razao_social)
-    .maybeSingle();
+  // Verificar duplicação APENAS para novo cadastro
+  if (!id) {
+    const { data: existe } = await supabase
+      .from("clientes")
+      .select("id")
+      .eq("razao_social", cliente.razao_social)
+      .maybeSingle();
 
-  if (!id && existe) {
-    alert("Já existe um cliente com esta Razão Social!");
-    return;
+    if (existe) {
+      alert("Já existe um cliente com esta Razão Social!");
+      return;
+    }
   }
 
-  let resultado;
+  let retorno;
 
   if (id) {
-    resultado = await supabase.from("clientes").update(cliente).eq("id", id);
+    retorno = await supabase.from("clientes").update(cliente).eq("id", id);
   } else {
-    resultado = await supabase.from("clientes").insert([cliente]);
+    retorno = await supabase.from("clientes").insert([cliente]);
   }
 
-  if (resultado.error) {
-    alert("Erro ao salvar: " + resultado.error.message);
+  if (retorno.error) {
+    alert("Erro ao salvar: " + retorno.error.message);
     return;
   }
 
-  alert(id ? "Cliente atualizado!" : "Cliente cadastrado!");
+  alert("Cliente salvo com sucesso!");
+
   limparFormulario();
   carregarClientes();
 });
 
-/* ================================
-      LISTAR CLIENTES
-================================ */
+/* ==========================================================
+    LISTAR CLIENTES
+========================================================== */
 async function carregarClientes() {
   const { data, error } = await supabase
     .from("clientes")
@@ -99,11 +102,12 @@ async function carregarClientes() {
 
     tr.innerHTML = `
       <td>${c.razao_social}</td>
-      <td>${c.nome_fantasia ?? ""}</td>
-      <td>${c.cpf_cnpj ?? ""}</td>
-      <td>${c.telefone ?? ""}</td>
-      <td>${c.email ?? ""}</td>
-      <td>${c.endereco ?? ""}</td>
+      <td>${c.nome_fantasia || ""}</td>
+      <td>${c.cpf_cnpj || ""}</td>
+      <td>${c.telefone || ""}</td>
+      <td>${c.email || ""}</td>
+      <td>${c.endereco || ""}</td>
+
       <td class="acoes">
         <button class="btn-editar" onclick="editarCliente(${c.id})">Editar</button>
         <button class="btn-excluir" onclick="excluirCliente(${c.id})">Excluir</button>
@@ -114,10 +118,10 @@ async function carregarClientes() {
   });
 }
 
-/* ================================
-      EDITAR CLIENTE
-================================ */
-async function editarCliente(id) {
+/* ==========================================================
+    EDITAR CLIENTE
+========================================================== */
+window.editarCliente = async function (id) {
   const { data, error } = await supabase
     .from("clientes")
     .select("*")
@@ -140,15 +144,12 @@ async function editarCliente(id) {
   document.getElementById("endereco").value = data.endereco;
 
   document.querySelector('.tab[data-tab="cadastro"]').click();
-}
+};
 
-// EXPORTAR PARA O HTML
-window.editarCliente = editarCliente;
-
-/* ================================
-      EXCLUIR CLIENTE
-================================ */
-async function excluirCliente(id) {
+/* ==========================================================
+    EXCLUIR CLIENTE
+========================================================== */
+window.excluirCliente = async function (id) {
   if (!confirm("Tem certeza que deseja excluir este cliente?")) return;
 
   const { error } = await supabase
@@ -161,16 +162,13 @@ async function excluirCliente(id) {
     return;
   }
 
-  alert("Cliente excluído!");
+  alert("Cliente excluído com sucesso!");
   carregarClientes();
-}
+};
 
-// EXPORTAR PARA O HTML
-window.excluirCliente = excluirCliente;
-
-/* ================================
-      LIMPAR FORMULÁRIO
-================================ */
+/* ==========================================================
+    LIMPAR FORMULÁRIO
+========================================================== */
 function limparFormulario() {
   document.getElementById("formCliente").reset();
   document.getElementById("clienteId").value = "";
