@@ -1,200 +1,141 @@
-/* =============================== */
-/*     ESTILO FUTURISTA GLOBAL     */
-/* =============================== */
-
 body {
   margin: 0;
-  padding: 0;
   background: #0f172a;
-  color: #e5e7eb;
+  color: #e2e8f0;
   font-family: Arial, sans-serif;
 }
 
-/* =============================== */
-/*             TOPBAR              */
-/* =============================== */
-
+/* Topbar */
 .topbar {
-  background: #0a0f1e;
-  padding: 15px 20px;
+  background: #0a0e1a;
+  padding: 15px 25px;
   display: flex;
   align-items: center;
-  gap: 20px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.6);
+  justify-content: space-between;
+  border-bottom: 2px solid #1e293b;
 }
 
 .topbar h1 {
-  margin: 0;
-  font-size: 26px;
+  font-size: 24px;
   color: #38bdf8;
 }
 
-.btn-voltar {
-  background: #38bdf8;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: bold;
-  color: black;
-  transition: .3s;
-}
-
-.btn-voltar:hover {
-  box-shadow: 0 0 15px #38bdf8;
-}
-
-/* =============================== */
-/*              TABS               */
-/* =============================== */
-
-.tabs {
-  display: flex;
-  gap: 10px;
-  padding: 20px;
-}
-
-.tab {
-  flex: 1;
-  padding: 12px;
-  text-align: center;
+.btnVoltar {
   background: #1e293b;
-  color: #e5e7eb;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: .3s;
+  border: 1px solid #475569;
+  padding: 8px 16px;
+  color: #e2e8f0;
+  border-radius: 6px;
 }
-
-.tab.active {
-  background: #38bdf8;
-  color: #000;
-}
-
-.tab:hover {
+.btnVoltar:hover {
   background: #334155;
 }
 
-/* =============================== */
-/*           FORMULÁRIO            */
-/* =============================== */
-
-form {
-  background: #1e293b;
-  padding: 25px;
-  border-radius: 12px;
+/* Container */
+.container {
   max-width: 900px;
-  margin: auto;
-  box-shadow: 0 0 15px rgba(0,0,0,0.4);
+  margin: 40px auto;
+  background: #1e293b;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.4);
 }
 
-label {
-  font-weight: bold;
-  margin-top: 10px;
-  display: block;
-}
-
+/* Inputs */
 input {
   width: 100%;
-  padding: 12px;
-  margin-top: 5px;
-  background: #0f172a;
-  color: white;
+  padding: 10px;
+  margin: 6px 0 18px 0;
   border: 1px solid #475569;
   border-radius: 6px;
-}
-
-/* AÇÕES */
-
-.actions {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  margin-top: 20px;
-}
-
-.btn-salvar {
-  background: #38bdf8;
-  padding: 12px 25px;
-  border-radius: 8px;
-  border: none;
-  font-weight: bold;
-  cursor: pointer;
-  color: #000;
-}
-
-.btn-cancelar {
-  background: #475569;
-  padding: 12px 25px;
-  border-radius: 8px;
-  border: none;
-  font-weight: bold;
-  cursor: pointer;
+  background: #0f172a;
   color: white;
 }
 
-/* =============================== */
-/*             TABELA              */
-/* =============================== */
+/* Botões */
+button {
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  font-size: 14px;
+}
 
+.btnSalvar {
+  background: #0ea5e9;
+  color: #fff;
+}
+.btnSalvar:hover {
+  background: #0284c7;
+}
+
+.btnCancelar {
+  background: #475569;
+  color: #fff;
+}
+.btnCancelar:hover {
+  background: #64748b;
+}
+
+.btnListar {
+  background: #334155;
+  color: #fff;
+  margin-bottom: 12px;
+}
+.btnListar:hover {
+  background: #475569;
+}
+
+/* Tabela */
 table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 20px;
-  background: #1e293b;
-  border-radius: 10px;
-  overflow: hidden;
 }
 
-th {
+thead {
+  background: #0f172a;
+}
+th, td {
   padding: 12px;
-  background: #334155;
-  text-align: left;
-  font-size: 14px;
-}
-
-td {
-  padding: 10px;
   border-bottom: 1px solid #334155;
 }
 
-/* BOTÕES */
-
-.btn-editar,
-.btn-excluir {
-  border: none;
-  padding: 7px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
+tr:hover {
+  background: #334155;
 }
 
-.btn-editar {
-  background: #38bdf8;
-}
-
-.btn-excluir {
-  background: #dc2626;
+/* Botões da tabela */
+td button {
+  margin-right: 6px;
+  background: #1e40af;
   color: white;
 }
-
-td button {
-  margin-right: 5px;
+td button:hover {
+  background: #1e3a8a;
 }
 
-/* =============================== */
-/*              MOBILE             */
-/* =============================== */
+/* Paginação */
+.paginacao {
+  margin-top: 20px;
+  text-align: center;
+}
 
-@media (max-width: 768px) {
-  form { padding: 15px; }
+.paginacao button {
+  margin: 0 10px;
+  background: #1e293b;
+  color: white;
+}
+.paginacao button:hover {
+  background: #334155;
+}
 
-  table { font-size: 12px; }
-
-  td, th { padding: 6px; }
-
-  .btn-editar, .btn-excluir {
-    padding: 5px 10px;
-    margin-bottom: 4px;
-  }
+/* Campo de busca */
+.inputBusca {
+  background: #0f172a;
+  border: 1px solid #475569;
+  padding: 10px;
+  color: white;
+  border-radius: 6px;
+  margin-bottom: 20px;
 }
