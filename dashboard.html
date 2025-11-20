@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painel - MataoUsi</title>
+  <title>Dashboard - MataoUsi</title>
 
-  <!-- CSS externo atualizado -->
+  <!-- CSS externo -->
   <link rel="stylesheet" href="css/dashboard.css">
 
   <script type="module">
@@ -14,9 +14,17 @@
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // 🔒 IMPEDIR ACESSO SEM LOGIN
     document.addEventListener("DOMContentLoaded", async () => {
-      const logoutBtn = document.getElementById("logout");
+      const { data: { user } } = await supabase.auth.getUser();
 
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+
+      // Botão de sair
+      const logoutBtn = document.getElementById("logout");
       logoutBtn.addEventListener("click", async () => {
         await supabase.auth.signOut();
         window.location.href = "index.html";
@@ -28,7 +36,7 @@
 <body>
 
   <div class="navbar">
-    <div class="logo">MataoUsi - Painel</div>
+    <div class="logo">MataoUsi - Dashboard</div>
     <button id="logout" class="logoutBtn">Sair</button>
   </div>
 
