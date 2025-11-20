@@ -54,7 +54,6 @@ async function carregarClientes() {
       <td>${c.cpf_cnpj ?? ""}</td>
       <td>${c.telefone ?? ""}</td>
       <td>${c.email ?? ""}</td>
-      <td>${c.endereco ?? ""}</td>
       <td>
         <button class="btn-editar" onclick="editarCliente(${c.id})">Editar</button>
         <button class="btn-excluir" onclick="excluirCliente(${c.id})">Excluir</button>
@@ -80,6 +79,22 @@ document.getElementById("formCliente").addEventListener("submit", async (e) => {
     endereco: document.getElementById("endereco").value.trim(),
   };
 
+  /* =============================
+       VERIFICAR DUPLICADO
+  ============================== */
+  if (!editandoId && cliente.cpf_cnpj.trim() !== "") {
+    const { data: existente } = await supabase
+      .from("clientes")
+      .select("*")
+      .eq("cpf_cnpj", cliente.cpf_cnpj)
+      .maybeSingle();
+
+    if (existente) {
+      alert("⚠ Já existe um cliente com este CPF/CNPJ!");
+      return;
+    }
+  }
+
   let resultado;
 
   if (editandoId) {
@@ -95,7 +110,6 @@ document.getElementById("formCliente").addEventListener("submit", async (e) => {
 
   if (resultado.error) {
     alert("Erro ao salvar: " + resultado.error.message);
-    console.error(resultado.error);
     return;
   }
 
@@ -131,7 +145,6 @@ window.editarCliente = async function (id) {
 
   document.getElementById("btnCancelar").style.display = "inline-block";
 
-  // mudar aba automaticamente
   document.querySelector('.tab[data-tab="cadastro"]').click();
 };
 
@@ -148,9 +161,11 @@ window.excluirCliente = async function (id) {
 
   if (error) {
     alert("Erro ao excluir!");
+    console.error(error);
     return;
   }
 
+  alert("Cliente excluído!");
   carregarClientes();
 };
 
