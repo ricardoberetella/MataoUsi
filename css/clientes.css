@@ -1,3 +1,7 @@
+/* =============== */
+/*   ESTILO BASE   */
+/* =============== */
+
 body {
   margin: 0;
   background: #0f172a;
@@ -5,7 +9,10 @@ body {
   font-family: Arial, sans-serif;
 }
 
-/* Topbar */
+/* =============== */
+/*     TOPBAR      */
+/* =============== */
+
 .topbar {
   background: #0a0e1a;
   padding: 15px 25px;
@@ -26,12 +33,17 @@ body {
   padding: 8px 16px;
   color: #e2e8f0;
   border-radius: 6px;
+  cursor: pointer;
 }
+
 .btnVoltar:hover {
   background: #334155;
 }
 
-/* Container */
+/* =============== */
+/*    CONTAINER    */
+/* =============== */
+
 .container {
   max-width: 900px;
   margin: 40px auto;
@@ -41,18 +53,29 @@ body {
   box-shadow: 0 0 20px rgba(0,0,0,0.4);
 }
 
-/* Inputs */
+/* =============== */
+/*     FORM        */
+/* =============== */
+
+label {
+  font-size: 14px;
+  display: block;
+  margin-bottom: 5px;
+  margin-top: 10px;
+}
+
 input {
   width: 100%;
   padding: 10px;
-  margin: 6px 0 18px 0;
+  margin-bottom: 15px;
   border: 1px solid #475569;
   border-radius: 6px;
   background: #0f172a;
   color: white;
 }
 
-/* Botões */
+/* Botões principais (Salvar / Cancelar) */
+
 button {
   padding: 10px 16px;
   border-radius: 6px;
@@ -65,6 +88,7 @@ button {
   background: #0ea5e9;
   color: #fff;
 }
+
 .btnSalvar:hover {
   background: #0284c7;
 }
@@ -73,20 +97,28 @@ button {
   background: #475569;
   color: #fff;
 }
+
 .btnCancelar:hover {
   background: #64748b;
 }
 
-.btnListar {
-  background: #334155;
-  color: #fff;
-  margin-bottom: 12px;
-}
-.btnListar:hover {
-  background: #475569;
+/* =============== */
+/*    BUSCA        */
+/* =============== */
+
+.inputBusca {
+  background: #0f172a;
+  border: 1px solid #475569;
+  padding: 10px;
+  color: white;
+  border-radius: 6px;
+  margin-bottom: 20px;
 }
 
-/* Tabela */
+/* =============== */
+/*     TABELA      */
+/* =============== */
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -96,6 +128,7 @@ table {
 thead {
   background: #0f172a;
 }
+
 th, td {
   padding: 12px;
   border-bottom: 1px solid #334155;
@@ -105,17 +138,35 @@ tr:hover {
   background: #334155;
 }
 
-/* Botões da tabela */
-td button {
-  margin-right: 6px;
-  background: #1e40af;
+/* Botões de Edição / Exclusão */
+
+td .btnEditar {
+  background: #2563eb;
   color: white;
-}
-td button:hover {
-  background: #1e3a8a;
+  padding: 6px 12px;
+  border-radius: 6px;
+  margin-right: 8px;
 }
 
-/* Paginação */
+td .btnEditar:hover {
+  background: #1d4ed8;
+}
+
+td .btnExcluir {
+  background: #dc2626;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+td .btnExcluir:hover {
+  background: #b91c1c;
+}
+
+/* =============== */
+/*   PAGINAÇÃO     */
+/* =============== */
+
 .paginacao {
   margin-top: 20px;
   text-align: center;
@@ -125,17 +176,10 @@ td button:hover {
   margin: 0 10px;
   background: #1e293b;
   color: white;
-}
-.paginacao button:hover {
-  background: #334155;
+  padding: 8px 14px;
+  border-radius: 6px;
 }
 
-/* Campo de busca */
-.inputBusca {
-  background: #0f172a;
-  border: 1px solid #475569;
-  padding: 10px;
-  color: white;
-  border-radius: 6px;
-  margin-bottom: 20px;
+.paginacao button:hover {
+  background: #334155;
 }
