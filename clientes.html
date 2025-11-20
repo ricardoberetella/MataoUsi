@@ -4,22 +4,55 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Clientes - MataoUsi</title>
+
+  <!-- CSS futurista -->
   <link rel="stylesheet" href="css/clientes.css">
+
+  <!-- Supabase -->
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+    import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
+
+    window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  </script>
+
 </head>
+
 <body>
 
-  <header class="topbar">
-    <h2>Clientes</h2>
-  </header>
+  <h2>Clientes</h2>
+
+  <!-- Botão Futurista Voltar ao Menu -->
+  <div style="text-align:right; margin: 10px 30px;">
+    <button onclick="location.href='dashboard.html'"
+      style="
+        background: #38bdf8;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 15px;
+        color: #000;
+        box-shadow: 0 0 12px rgba(56,189,248,0.8);
+        transition: 0.3s;
+      "
+      onmouseover="this.style.boxShadow='0 0 20px rgba(56,189,248,1)'"
+      onmouseout="this.style.boxShadow='0 0 12px rgba(56,189,248,0.8)'"
+    >
+      ⬅ Voltar ao Menu
+    </button>
+  </div>
 
   <div class="container">
 
+    <!-- ABAS -->
     <div class="tabs">
       <button class="tab active" data-tab="cadastro">Cadastrar Cliente</button>
       <button class="tab" data-tab="lista">Listar Clientes</button>
     </div>
 
-    <!-- ===== ABA CADASTRAR ===== -->
+    <!-- ===================== ABA CADASTRO ====================== -->
     <div id="cadastro" class="tab-content active">
 
       <form id="formCliente">
@@ -51,10 +84,11 @@
 
     </div>
 
-    <!-- ===== ABA LISTAR ===== -->
+    <!-- ===================== ABA LISTA ====================== -->
     <div id="lista" class="tab-content">
+
       <input type="text" id="busca" placeholder="Buscar por razão social, fantasia ou CNPJ">
-      
+
       <table>
         <thead>
           <tr>
@@ -65,12 +99,16 @@
             <th>Ações</th>
           </tr>
         </thead>
+
         <tbody id="tabelaClientes"></tbody>
+
       </table>
+
     </div>
 
   </div>
 
+  <!-- JavaScript do módulo -->
   <script type="module" src="js/clientes.js"></script>
 
 </body>
