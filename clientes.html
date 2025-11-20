@@ -2,17 +2,16 @@
 <html lang="pt-BR">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Clientes - MataoUsi</title>
 
-  <!-- ESTILO -->
-  <link rel="stylesheet" href="css/clientes.css" />
+  <link rel="stylesheet" href="css/clientes.css">
 </head>
 
 <body>
 
-  <!-- TOPBAR -->
+  <!-- TOPO -->
   <header class="topbar">
     <button class="btn-voltar" onclick="window.location.href='dashboard.html'">⬅ Voltar</button>
     <h1>Clientes</h1>
@@ -20,11 +19,11 @@
 
   <!-- ABAS -->
   <div class="tabs">
-    <button class="tab active" data-tab="cadastro">Cadastrar</button>
-    <button class="tab" data-tab="lista">Lista de Clientes</button>
+    <div class="tab active" data-tab="cadastro">Cadastrar</div>
+    <div class="tab" data-tab="lista">Lista</div>
   </div>
 
-  <!-- CADASTRO -->
+  <!-- FORMULÁRIO -->
   <section id="cadastro" class="tab-content active">
     <form id="formCliente">
 
@@ -42,7 +41,7 @@
       <label>Telefone</label>
       <input type="text" id="telefone">
 
-      <label>E-mail</label>
+      <label>Email</label>
       <input type="email" id="email">
 
       <label>Endereço</label>
@@ -75,7 +74,6 @@
     </table>
   </section>
 
-  <!-- SCRIPT -->
   <script type="module" src="js/clientes.js"></script>
 
 </body>
