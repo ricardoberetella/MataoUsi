@@ -9,7 +9,8 @@ let listaClientes = [];
 let paginaAtual = 1;
 const itensPorPagina = 20;
 
-let salvando = false; // ⚡ ANTI-DUPLICAÇÃO
+let salvando = false; 
+let ultimoEnvio = 0;
 
 /* ==========================
       TOAST FUTURISTA
@@ -48,7 +49,7 @@ export function mascararCpfCnpj(input) {
 }
 
 /* ==========================
-      AO CARREGAR A PÁGINA
+      AO CARREGAR
 ========================== */
 document.addEventListener("DOMContentLoaded", () => {
   carregarClientes();
@@ -65,11 +66,15 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /* ==========================
-      SALVAR CLIENTE (ANTI-DUPLO)
+      SALVAR (COM ANTI-DUPLO E UNIQUE)
 ========================== */
 async function salvarCliente() {
 
-  if (salvando) return;  // 🔥 Evita submit duplicado
+  const agora = Date.now();
+  if (agora - ultimoEnvio < 400) return;
+  ultimoEnvio = agora;
+
+  if (salvando) return;
   salvando = true;
 
   const btn = document.querySelector(".btnSalvar");
@@ -99,21 +104,34 @@ async function salvarCliente() {
     r = await supabase.from("clientes").insert(dados);
   }
 
+  /* =============================
+        TRATAMENTO DO ERRO UNIQUE
+  ============================== */
   if (r.error) {
-    toast("Erro: " + r.error.message, "error");
+
+    if (r.error.message.includes("duplicate key") ||
+        r.error.message.includes("unique constraint")) {
+
+      toast("⚠ Já existe um cliente com este CPF/CNPJ.", "error");
+
+    } else {
+      toast("Erro: " + r.error.message, "error");
+    }
+
   } else {
-    toast("Cliente salvo!", "success");
+    toast("Cliente salvo com sucesso!", "success");
     limparFormulario();
     carregarClientes();
   }
 
-  salvando = false;
+  setTimeout(() => salvando = false, 1000);
+
   btn.disabled = false;
   btn.innerText = "Salvar";
 }
 
 /* ==========================
-      CARREGAR CLIENTES
+     CARREGAR CLIENTES
 ========================== */
 async function carregarClientes() {
   const { data, error } = await supabase
@@ -134,7 +152,7 @@ async function carregarClientes() {
 }
 
 /* ==========================
-      RENDERIZAR LISTA
+     RENDERIZAR LISTA
 ========================== */
 function renderLista() {
   const tabela = document.querySelector("#tabelaClientes tbody");
@@ -142,6 +160,7 @@ function renderLista() {
 
   const inicio = (paginaAtual - 1) * itensPorPagina;
   const fim = inicio + itensPorPagina;
+
   const pagina = listaClientes.slice(inicio, fim);
 
   pagina.forEach(cli => {
@@ -152,8 +171,8 @@ function renderLista() {
       <td>${cli.telefone || ""}</td>
       <td>${cli.email || ""}</td>
       <td>
-        <button onclick="editarCliente(${cli.id})">Editar</button>
-        <button onclick="excluirCliente(${cli.id})">Excluir</button>
+        <button class="btnEditar" onclick="editarCliente(${cli.id})">Editar</button>
+        <button class="btnExcluir" onclick="excluirCliente(${cli.id})">Excluir</button>
       </td>
     `;
     tabela.appendChild(tr);
@@ -164,7 +183,7 @@ function renderLista() {
 }
 
 /* ==========================
-      BUSCA INTELIGENTE
+     BUSCA INTELIGENTE
 ========================== */
 window.filtrarClientes = function () {
   const termo = document.getElementById("busca").value.toLowerCase();
@@ -185,7 +204,6 @@ window.filtrarClientes = function () {
 ========================== */
 function mudarPagina(delta) {
   const total = Math.ceil(listaClientes.length / itensPorPagina);
-
   paginaAtual += delta;
 
   if (paginaAtual < 1) paginaAtual = 1;
@@ -198,6 +216,7 @@ function mudarPagina(delta) {
       AUTOCOMPLETE
 ========================== */
 document.getElementById("razao_social").addEventListener("input", function () {
+
   const termo = this.value.toLowerCase();
   const lista = listaOriginal
     .filter(c => c.razao_social.toLowerCase().includes(termo))
@@ -210,17 +229,19 @@ document.getElementById("razao_social").addEventListener("input", function () {
     return;
   }
 
-  box.innerHTML = "";
   box.style.display = "block";
+  box.innerHTML = "";
 
   lista.forEach(cli => {
     const div = document.createElement("div");
     div.className = "autocomplete-item";
     div.innerText = cli.razao_social;
+
     div.onclick = () => {
       document.getElementById("razao_social").value = cli.razao_social;
       box.style.display = "none";
     };
+
     box.appendChild(div);
   });
 });
@@ -259,11 +280,10 @@ window.excluirCliente = async function (id) {
 };
 
 /* ==========================
-      FORMATAR CPF/CNPJ
+     FORMATAR CPF/CNPJ
 ========================== */
 function formatCpfCnpj(v) {
   if (!v) return "";
-
   if (v.length === 11)
     return v.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
 
@@ -271,7 +291,7 @@ function formatCpfCnpj(v) {
 }
 
 /* ==========================
-      LIMPAR FORM
+     LIMPAR FORM
 ========================== */
 function limparFormulario() {
   editandoId = null;
