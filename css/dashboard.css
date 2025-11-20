@@ -1,68 +1,96 @@
-/* Fundo geral */
 body {
     margin: 0;
-    padding: 0;
-    background: #0a0f1a;
+    display: flex;
+    background: #0d1117;
     font-family: Arial, sans-serif;
     color: #fff;
-    text-align: center;
 }
 
-/* LOGO CENTRAL */
-.logo-container {
-    margin-top: 40px;
+/* SIDEBAR */
+.sidebar {
+    width: 230px;
+    background: #0b0e13;
+    padding: 20px;
+    height: 100vh;
+    box-shadow: 3px 0 10px rgba(0,0,0,0.4);
 }
 
-.logo {
-    width: 380px;
-    max-width: 90%;
-    filter: drop-shadow(0 0 12px #00eaff);
-    animation: glow 2s infinite alternate;
-}
-
-@keyframes glow {
-    from { filter: drop-shadow(0 0 4px #00eaff); }
-    to   { filter: drop-shadow(0 0 14px #00eaff); }
-}
-
-/* MENU BOTÕES */
-.menu-container {
-    margin-top: 40px;
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-    width: 100%;
-    max-width: 380px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.menu-btn {
-    background: #0d2239;
-    border: 2px solid #00eaff;
+.sidebar .titulo {
     color: #00eaff;
-    padding: 14px;
-    border-radius: 10px;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.sidebar a {
+    display: block;
+    padding: 12px;
+    color: #cfcfcf;
     text-decoration: none;
-    font-size: 18px;
-    font-weight: bold;
+    margin-bottom: 10px;
+    border-radius: 8px;
     transition: 0.3s;
 }
 
-.menu-btn:hover {
+.sidebar a:hover {
     background: #00eaff;
     color: #000;
-    box-shadow: 0 0 12px #00eaff;
 }
 
-/* Botão de sair */
-.sair {
-    border-color: #ff3f3f;
-    color: #ff3f3f;
+.sidebar a.ativo {
+    background: #00eaff;
+    color: #000;
 }
 
-.sair:hover {
-    background: #ff3f3f;
-    color: #fff;
-    box-shadow: 0 0 12px #ff3f3f;
+/* CONTEÚDO */
+.conteudo {
+    flex: 1;
+    padding: 30px;
+}
+
+/* LOGO CENTRAL */
+.logo-centro {
+    text-align: center;
+    margin-bottom: 35px;
+}
+
+.logo-centro img {
+    width: 230px;   /* tamanho médio */
+    filter: drop-shadow(0 0 12px #00eaff);
+}
+
+.logo-centro .subtexto {
+    margin-top: 10px;
+    font-size: 18px;
+    color: #bfbfbf;
+}
+
+/* CARDS */
+.cards {
+    display: grid;
+    grid-template-columns: repeat(3, 200px);
+    gap: 25px;
+    justify-content: center;
+}
+
+.card {
+    background: #11161f;
+    padding: 25px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 0 12px rgba(0,0,0,0.4);
+    transition: 0.3s;
+}
+
+.card img {
+    width: 50px;
+    margin-bottom: 10px;
+}
+
+.card span {
+    font-size: 18px;
+}
+
+.card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 18px #00eaff;
 }
