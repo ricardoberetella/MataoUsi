@@ -19,7 +19,7 @@ document.querySelectorAll(".tab").forEach(tab => {
 });
 
 /* ==============================
-      AO ABRIR A PÁGINA
+      AO ABRIR
 ============================== */
 document.addEventListener("DOMContentLoaded", () => {
   carregarClientes();
@@ -50,8 +50,10 @@ document.getElementById("formCliente").addEventListener("submit", async (e) => {
   let result;
 
   if (id) {
+    // ✅ UPDATE CORRETO
     result = await supabase.from("clientes").update(cliente).eq("id", id);
   } else {
+    // ✅ INSERT
     result = await supabase.from("clientes").insert([cliente]);
   }
 
@@ -62,13 +64,12 @@ document.getElementById("formCliente").addEventListener("submit", async (e) => {
   }
 
   alert("Cliente salvo!");
-
   limparFormulario();
   carregarClientes();
 });
 
 /* ==============================
-      CARREGAR CLIENTES
+      LISTAR CLIENTES
 ============================== */
 async function carregarClientes() {
   const { data, error } = await supabase
@@ -108,6 +109,7 @@ async function carregarClientes() {
       EDITAR CLIENTE
 ============================== */
 window.editarCliente = async function (id) {
+
   const { data, error } = await supabase
     .from("clientes")
     .select("*")
@@ -115,11 +117,10 @@ window.editarCliente = async function (id) {
     .single();
 
   if (error) {
+    console.error(error);
     alert("Erro ao carregar cliente!");
     return;
   }
-
-  editandoId = id;
 
   document.getElementById("clienteId").value = data.id;
   document.getElementById("razao_social").value = data.razao_social;
@@ -136,12 +137,10 @@ window.editarCliente = async function (id) {
       EXCLUIR CLIENTE
 ============================== */
 window.excluirCliente = async function (id) {
+
   if (!confirm("Excluir este cliente?")) return;
 
-  const { error } = await supabase
-    .from("clientes")
-    .delete()
-    .eq("id", id);
+  const { error } = await supabase.from("clientes").delete().eq("id", id);
 
   if (error) {
     console.error(error);
@@ -154,7 +153,7 @@ window.excluirCliente = async function (id) {
 };
 
 /* ==============================
-      LIMPAR FORMULÁRIO
+      LIMPAR
 ============================== */
 function limparFormulario() {
   document.getElementById("formCliente").reset();
