@@ -1,4 +1,3 @@
-
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
@@ -33,8 +32,7 @@ document.getElementById("formCliente").addEventListener("submit", async (e) => {
   const id = document.getElementById("clienteId").value;
 
   const cliente = {
-    razao_social: document.getElementById("razao_social").value,
-    nome_fantasia: document.getElementById("nome_fantasia").value,
+    nome: document.getElementById("nome").value,
     cpf_cnpj: document.getElementById("cpf_cnpj").value,
     telefone: document.getElementById("telefone").value,
     email: document.getElementById("email").value,
@@ -79,10 +77,11 @@ async function carregarClientes() {
   data.forEach(c => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${c.razao_social}</td>
-      <td>${c.nome_fantasia ?? ""}</td>
+      <td>${c.nome}</td>
       <td>${c.cpf_cnpj ?? ""}</td>
       <td>${c.telefone ?? ""}</td>
+      <td>${c.email ?? ""}</td>
+      <td>${c.endereco ?? ""}</td>
       <td>
         <span class="action-btn" onclick="editarCliente(${c.id})">Editar</span>
         <span class="action-btn" onclick="excluirCliente(${c.id})">Excluir</span>
@@ -99,8 +98,7 @@ window.editarCliente = async function (id) {
   const { data } = await supabase.from("clientes").select("*").eq("id", id).single();
 
   document.getElementById("clienteId").value = data.id;
-  document.getElementById("razao_social").value = data.razao_social;
-  document.getElementById("nome_fantasia").value = data.nome_fantasia;
+  document.getElementById("nome").value = data.nome;
   document.getElementById("cpf_cnpj").value = data.cpf_cnpj;
   document.getElementById("telefone").value = data.telefone;
   document.getElementById("email").value = data.email;
