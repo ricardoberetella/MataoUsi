@@ -1,62 +1,71 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Itens do Pedido - MataoUsi</title>
 
-  <link rel="stylesheet" href="CSS/pedidos_itens.css" />
+  <link rel="stylesheet" href="css/pedidos.css" />
+  <link rel="stylesheet" href="css/pedido_itens.css" />
 </head>
 
 <body>
+
+  <!-- TOPBAR FUTURISTA -->
   <header class="topbar">
-    <div class="user-area">
-      <div class="logo-circle">MU</div>
-      <div class="logo-text">
-        <span class="app-name">Matao Usinagem</span>
-        <span class="app-subtitle">Itens do Pedido</span>
-      </div>
+    <div class="topbar-left">
+      <span class="logo-text">MataoUsi</span>
+      <span class="topbar-module">Itens do Pedido</span>
     </div>
 
-    <button class="btn btn-ghost" onclick="window.location.href='pedidos_lista.html'">
-      Voltar aos Pedidos
-    </button>
+    <div class="topbar-right">
+      <a href="pedidos_lista.html" class="btn-secondary">Voltar</a>
+    </div>
   </header>
 
-  <main class="page">
+  <main class="page-container">
+
+    <!-- CARD DO CABEÇALHO DO PEDIDO -->
+    <section class="card">
+      <h1 class="titulo-card">Detalhes do Pedido</h1>
+      <p id="infoPedido" class="info-texto"></p>
+    </section>
+
+    <!-- CARD DOS ITENS -->
     <section class="card">
 
       <div class="card-header">
-        <div>
-          <h1>Itens do Pedido</h1>
-          <p class="texto-menor" id="infoPedido"></p>
-        </div>
+        <h2>Itens do Pedido</h2>
       </div>
 
-      <div class="table-wrapper">
-        <table class="tabela">
+      <div class="tabela-wrapper">
+        <table class="tabela-futurista">
           <thead>
             <tr>
-              <th>CÓDIGO</th>
-              <th>DESCRIÇÃO</th>
-              <th>QTD SOL.</th>
-              <th>QTD ENTREGUE</th>
-              <th>RESTANTE</th>
-              <th>UNIT</th>
-              <th>TOTAL</th>
-              <th>DATA ENTREGA</th>
-              <th>STATUS</th>
+              <th>Código</th>
+              <th>Descrição</th>
+              <th>Qtd Sol.</th>
+              <th>Qtd Entregue</th>
+              <th>Restante</th>
+              <th>Unit. (R$)</th>
+              <th>Total (R$)</th>
+              <th>Entrega</th>
+              <th>Status</th>
+              <th class="col-acoes">Ações</th>
             </tr>
           </thead>
+
           <tbody id="listaItens"></tbody>
+
         </table>
       </div>
 
-      <p id="msgErro" class="msg-erro"></p>
     </section>
+
   </main>
 
-  <!-- AGORA CORRETO -->
   <script type="module" src="js/pedido_itens.js"></script>
 </body>
+
 </html>
