@@ -26,9 +26,10 @@ body {
   font-size: 26px;
   font-weight: bold;
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
+/* MENU LATERAL */
 .menu {
   display: flex;
   flex-direction: column;
@@ -53,38 +54,42 @@ body {
   box-shadow: 0 0 15px #00eaff;
 }
 
-/* CONTEÚDO */
+/* CONTEÚDO PRINCIPAL */
 .main {
   flex: 1;
-  padding: 20px 40px;
+  padding: 10px 40px;
+  margin-top: -20px; /* SUBIR TUDO */
 }
 
-/* LOGO NO TOPO (SUBIDO) */
+/* LOGO CENTRAL SUBIDO E ALINHADO */
 .topo-dashboard {
-  margin-top: -10px;
   text-align: center;
-  margin-bottom: 18px;
+  margin-top: -40px; /* SUBIR MAIS */
+  margin-bottom: 10px;
 }
 
 .logo-dashboard {
-  width: 280px;
+  width: 250px; /* ajuste perfeito */
   height: auto;
   filter: drop-shadow(0 0 14px #00eaff);
+  margin-top: -15px; /* sobe mais ainda */
 }
 
+/* SUBTÍTULO AJUSTADO */
 .subtitulo {
   font-size: 18px;
   color: #d0d0d0;
-  margin-top: 5px;
+  margin-top: -5px; /* SUBIR */
+  margin-bottom: 10px;
 }
 
-/* CARDS */
+/* CARDS SUBIDOS */
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(180px, 220px));
   gap: 24px;
   justify-content: center;
-  margin-top: 30px;
+  margin-top: 0px;  /* subir os botões */
 }
 
 .card {
