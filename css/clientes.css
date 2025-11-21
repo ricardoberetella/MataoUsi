@@ -14,25 +14,6 @@ body {
   margin: 20px;
 }
 
-/* BOTÃO NEON */
-.btn-neon {
-  background: #0b0f16;
-  border: 2px solid #00eaff;
-  padding: 12px 18px;
-  font-size: 16px;
-  color: #00eaff;
-  border-radius: 8px;
-  cursor: pointer;
-  margin: 20px;
-  transition: 0.3s;
-}
-
-.btn-neon:hover {
-  background: #00eaff;
-  color: #000;
-  box-shadow: 0 0 18px #00eaff;
-}
-
 /* BUSCA */
 .area-busca {
   margin: 10px 20px 20px 20px;
@@ -52,6 +33,25 @@ body {
 
 .input-busca:focus {
   box-shadow: 0 0 15px #00eaff;
+}
+
+/* BOTÃO NEON */
+.btn-neon {
+  background: #0b0f16;
+  border: 2px solid #00eaff;
+  padding: 12px 18px;
+  font-size: 16px;
+  color: #00eaff;
+  border-radius: 8px;
+  cursor: pointer;
+  margin: 20px;
+  transition: 0.3s;
+}
+
+.btn-neon:hover {
+  background: #00eaff;
+  color: #000;
+  box-shadow: 0 0 18px #00eaff;
 }
 
 /* LISTA DE CLIENTES */
@@ -75,13 +75,15 @@ body {
   align-items: center;
 }
 
+/* Hover sem mudar cor do texto */
 .item-cliente:hover {
-  background: #00eaff;
-  color: #000;
-  box-shadow: 0 0 25px #00eaff;
+  background: #0b0f16;
+  border-color: #00eaff;
+  box-shadow: 0 0 20px #00eaff;
+  color: white;
 }
 
-/* TEXTO DO CLIENTe */
+/* TEXTO DO CLIENTE */
 .item-info {
   font-size: 16px;
 }
@@ -108,6 +110,41 @@ body {
   background: #000;
   color: #00eaff;
   border-color: #000;
+}
+
+/* DETALHES DO CLIENTE */
+.detalhes {
+  padding: 20px;
+  background: #0b0f16;
+  border: 2px solid #00eaff;
+  border-radius: 12px;
+  margin: 20px;
+}
+
+.hidden {
+  display: none;
+}
+
+/* BOTÕES DO DETALHE */
+.btn-editar,
+.btn-excluir {
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  border: 2px solid;
+}
+
+.btn-editar {
+  border-color: #00eaff;
+  color: #00eaff;
+  background: transparent;
+}
+
+.btn-excluir {
+  border-color: #ff3b3b;
+  color: #ff3b3b;
+  background: transparent;
 }
 
 /* VOLTAR */
