@@ -1,185 +1,155 @@
-/* =============== */
-/*   ESTILO BASE   */
-/* =============== */
-
+/* LAYOUT PRINCIPAL */
 body {
   margin: 0;
-  background: #0f172a;
-  color: #e2e8f0;
   font-family: Arial, sans-serif;
+  background: #05070c;
+  color: #fff;
 }
 
-/* =============== */
-/*     TOPBAR      */
-/* =============== */
-
-.topbar {
-  background: #0a0e1a;
-  padding: 15px 25px;
+.layout {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 2px solid #1e293b;
 }
 
-.topbar h1 {
-  font-size: 24px;
-  color: #38bdf8;
+/* SIDEBAR */
+.sidebar {
+  width: 230px;
+  background: #05070c;
+  padding: 20px 18px;
+  box-shadow: 3px 0 20px rgba(0, 0, 0, 0.7);
 }
 
-.btnVoltar {
-  background: #1e293b;
-  border: 1px solid #475569;
-  padding: 8px 16px;
-  color: #e2e8f0;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.btnVoltar:hover {
-  background: #334155;
-}
-
-/* =============== */
-/*    CONTAINER    */
-/* =============== */
-
-.container {
-  max-width: 900px;
-  margin: 40px auto;
-  background: #1e293b;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 0 20px rgba(0,0,0,0.4);
-}
-
-/* =============== */
-/*     FORM        */
-/* =============== */
-
-label {
-  font-size: 14px;
-  display: block;
-  margin-bottom: 5px;
-  margin-top: 10px;
-}
-
-input {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 15px;
-  border: 1px solid #475569;
-  border-radius: 6px;
-  background: #0f172a;
-  color: white;
-}
-
-/* Botões principais (Salvar / Cancelar) */
-
-button {
-  padding: 10px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  border: none;
-  font-size: 14px;
-}
-
-.btnSalvar {
-  background: #0ea5e9;
-  color: #fff;
-}
-
-.btnSalvar:hover {
-  background: #0284c7;
-}
-
-.btnCancelar {
-  background: #475569;
-  color: #fff;
-}
-
-.btnCancelar:hover {
-  background: #64748b;
-}
-
-/* =============== */
-/*    BUSCA        */
-/* =============== */
-
-.inputBusca {
-  background: #0f172a;
-  border: 1px solid #475569;
-  padding: 10px;
-  color: white;
-  border-radius: 6px;
+.logo-sistema {
+  color: #00eaff;
+  font-size: 26px;
+  font-weight: bold;
+  text-align: center;
   margin-bottom: 20px;
 }
 
-/* =============== */
-/*     TABELA      */
-/* =============== */
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
-table {
-  width: 100%;
-  border-collapse: collapse;
+.menu-item {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #0b0f16;
+  border: 2px solid #00eaff;
+  color: white;
+  text-decoration: none;
+  transition: 0.3s;
+}
+
+.menu-item:hover,
+.menu-item.active {
+  background: #00eaff;
+  color: #000;
+  box-shadow: 0 0 15px #00eaff;
+}
+
+/* ÁREA PRINCIPAL */
+.main {
+  flex: 1;
+  padding: 30px;
+}
+
+.titulo {
+  font-size: 30px;
+  margin-bottom: 20px;
+  color: #00eaff;
+}
+
+/* BOTÃO FUTURISTA */
+.btn-neon {
+  background: #0b0f16;
+  border: 2px solid #00eaff;
+  padding: 12px 18px;
+  font-size: 16px;
+  color: #00eaff;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  transition: 0.3s;
+}
+
+.btn-neon:hover {
+  background: #00eaff;
+  color: #000;
+  box-shadow: 0 0 12px #00eaff;
+}
+
+/* LISTA DE CLIENTES */
+.lista-clientes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.item-cliente {
+  padding: 14px;
+  background: #111722;
+  border-radius: 10px;
+  color: white;
+  border: 2px solid #00eaff;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.item-cliente:hover {
+  background: #00eaff;
+  color: #000;
+}
+
+/* DETALHES DO CLIENTE */
+.detalhes {
   margin-top: 20px;
+  padding: 20px;
+  background: #0b0f16;
+  border-radius: 12px;
+  border: 2px solid #00eaff;
 }
 
-thead {
-  background: #0f172a;
+.hidden {
+  display: none;
 }
 
-th, td {
-  padding: 12px;
-  border-bottom: 1px solid #334155;
+.btn-editar,
+.btn-excluir {
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-top: 10px;
+  cursor: pointer;
+  font-weight: bold;
 }
 
-tr:hover {
-  background: #334155;
+.btn-editar {
+  border: 2px solid #00eaff;
+  background: #0b0f16;
+  color: #00eaff;
 }
 
-/* Botões de Edição / Exclusão */
-
-td .btnEditar {
-  background: #2563eb;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 6px;
-  margin-right: 8px;
+.btn-excluir {
+  border: 2px solid #ff3b3b;
+  background: #0b0f16;
+  color: #ff3b3b;
 }
 
-td .btnEditar:hover {
-  background: #1d4ed8;
+.btn-voltar {
+  display: inline-block;
+  margin-top: 25px;
+  background: #0b0f16;
+  border: 2px solid #00eaff;
+  padding: 10px 16px;
+  border-radius: 10px;
+  color: #00eaff;
+  text-decoration: none;
+  transition: 0.3s;
 }
 
-td .btnExcluir {
-  background: #dc2626;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 6px;
-}
-
-td .btnExcluir:hover {
-  background: #b91c1c;
-}
-
-/* =============== */
-/*   PAGINAÇÃO     */
-/* =============== */
-
-.paginacao {
-  margin-top: 20px;
-  text-align: center;
-}
-
-.paginacao button {
-  margin: 0 10px;
-  background: #1e293b;
-  color: white;
-  padding: 8px 14px;
-  border-radius: 6px;
-}
-
-.paginacao button:hover {
-  background: #334155;
+.btn-voltar:hover {
+  background: #00eaff;
+  color: #000;
+  box-shadow: 0 0 12px #00eaff;
 }
