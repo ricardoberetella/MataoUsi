@@ -14,12 +14,7 @@ body {
   margin: 20px;
 }
 
-/* ÁREA DE AÇÕES */
-.area-acoes {
-  margin: 20px;
-}
-
-/* BOTÃO FUTURISTA */
+/* BOTÃO NEON */
 .btn-neon {
   background: #0b0f16;
   border: 2px solid #00eaff;
@@ -28,75 +23,94 @@ body {
   color: #00eaff;
   border-radius: 8px;
   cursor: pointer;
+  margin: 20px;
   transition: 0.3s;
 }
 
 .btn-neon:hover {
   background: #00eaff;
   color: #000;
-  box-shadow: 0 0 12px #00eaff;
+  box-shadow: 0 0 18px #00eaff;
+}
+
+/* BUSCA */
+.area-busca {
+  margin: 10px 20px 20px 20px;
+}
+
+.input-busca {
+  width: 100%;
+  padding: 12px;
+  background: #020617;
+  border: 2px solid #00eaff;
+  border-radius: 12px;
+  color: #00eaff;
+  font-size: 16px;
+  outline: none;
+  transition: 0.3s;
+}
+
+.input-busca:focus {
+  box-shadow: 0 0 15px #00eaff;
 }
 
 /* LISTA DE CLIENTES */
 .lista-clientes {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 18px;
   margin: 0 20px 30px 20px;
 }
 
+/* ITEM DO CLIENTE */
 .item-cliente {
-  padding: 15px;
+  padding: 18px;
   background: #0b0f16;
   border: 2px solid #00eaff;
-  border-radius: 12px;
+  border-radius: 14px;
   cursor: pointer;
-  transition: 0.3s;
+  transition: 0.25s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .item-cliente:hover {
   background: #00eaff;
   color: #000;
-  box-shadow: 0 0 12px #00eaff;
+  box-shadow: 0 0 25px #00eaff;
 }
 
-/* DETALHES DO CLIENTE */
-.detalhes {
-  padding: 20px;
-  background: #0b0f16;
-  border: 2px solid #00eaff;
-  border-radius: 12px;
-  margin: 20px;
+/* TEXTO DO CLIENTe */
+.item-info {
+  font-size: 16px;
 }
 
-.hidden {
-  display: none;
+/* ÍCONE FUTURISTA */
+.icone-cliente {
+  margin-right: 10px;
+  font-size: 22px;
+  color: #00eaff;
 }
 
-/* BOTÕES DETALHES */
-.btn-editar,
-.btn-excluir {
-  padding: 10px 14px;
-  border-radius: 8px;
-  margin-top: 10px;
-  cursor: pointer;
-  font-weight: bold;
-  display: inline-block;
-}
-
-.btn-editar {
+/* BOTÃO ABRIR */
+.btn-abrir {
+  padding: 10px 16px;
   border: 2px solid #00eaff;
   color: #00eaff;
-  background: #0b0f16;
+  border-radius: 8px;
+  background: transparent;
+  font-weight: bold;
+  transition: 0.3s;
 }
 
-.btn-excluir {
-  border: 2px solid #ff3b3b;
-  color: #ff3b3b;
-  background: #0b0f16;
+.item-cliente:hover .btn-abrir {
+  background: #000;
+  color: #00eaff;
+  border-color: #000;
 }
 
-/* BOTÃO VOLTAR */
+/* VOLTAR */
 .btn-voltar {
   display: inline-block;
   margin: 30px 20px;
