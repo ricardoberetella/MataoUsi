@@ -1,17 +1,8 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-const listaContainer = document.getElementById("listaClientes");
-const detalhesContainer = document.getElementById("detalhesCliente");
-const btnNovo = document.getElementById("btnNovoCliente");
-
 /* CARREGAR LISTA */
 async function carregarClientes() {
   const { data, error } = await supabase
     .from("clientes")
-    .select("id, razao_social, cnpj")
+    .select("id, razao_social, cpf_cnpj")
     .order("razao_social", { ascending: true });
 
   if (error) {
@@ -24,7 +15,7 @@ async function carregarClientes() {
   data.forEach(cli => {
     const div = document.createElement("div");
     div.className = "item-cliente";
-    div.textContent = `${cli.razao_social} — ${cli.cnpj}`;
+    div.textContent = `${cli.razao_social} — ${cli.cpf_cnpj}`;
     div.onclick = () => abrirDetalhes(cli.id);
     listaContainer.appendChild(div);
   });
@@ -48,7 +39,7 @@ async function abrirDetalhes(id) {
   detalhesContainer.innerHTML = `
     <h2>Dados do Cliente</h2>
     <p><strong>Razão Social:</strong> ${data.razao_social}</p>
-    <p><strong>CNPJ:</strong> ${data.cnpj}</p>
+    <p><strong>CNPJ:</strong> ${data.cpf_cnpj}</p>
     <p><strong>Telefone:</strong> ${data.telefone || ""}</p>
     <p><strong>E-mail:</strong> ${data.email || ""}</p>
     <p><strong>Endereço:</strong> ${data.endereco || ""}</p>
@@ -62,30 +53,3 @@ async function abrirDetalhes(id) {
     </button>
   `;
 }
-
-/* EXCLUIR */
-async function excluirCliente(id) {
-  if (!confirm("Deseja realmente excluir?")) return;
-
-  const { error } = await supabase
-    .from("clientes")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    alert("Erro ao excluir");
-    return;
-  }
-
-  alert("Cliente excluído!");
-  carregarClientes();
-  detalhesContainer.classList.add("hidden");
-}
-
-/* BOTÃO NOVO CLIENTE */
-btnNovo.onclick = () => {
-  window.location = "clientes_cadastrar.html";
-};
-
-/* INICIALIZAÇÃO */
-carregarClientes();
