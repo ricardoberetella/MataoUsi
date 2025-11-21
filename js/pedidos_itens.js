@@ -14,9 +14,6 @@ if (!pedidoId) {
   window.location.href = "pedidos_lista.html";
 }
 
-// ===============================
-// AO CARREGAR
-// ===============================
 document.addEventListener("DOMContentLoaded", () => {
   carregarCabecalho();
   carregarItens();
