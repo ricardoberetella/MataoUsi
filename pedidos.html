@@ -11,7 +11,8 @@
 
   <!-- BARRA DE BUSCA -->
   <div class="area-busca">
-    <input type="text" id="campoBuscaPedidos" class="input-busca" placeholder="🔍 Buscar por cliente ou número do pedido...">
+    <input type="text" id="campoBuscaPedidos" class="input-busca"
+           placeholder="🔍 Buscar por número, cliente ou data...">
   </div>
 
   <!-- AÇÕES -->
@@ -27,7 +28,7 @@
   <!-- DETALHES DO PEDIDO -->
   <div id="detalhesPedido" class="detalhes hidden"></div>
 
-  <!-- FORMULÁRIO DE PEDIDO -->
+  <!-- FORMULÁRIO DE PEDIDO (overlay) -->
   <section id="formContainer" class="form-container hidden">
     <div class="card-form">
       <h2 id="tituloForm">Novo Pedido</h2>
@@ -42,6 +43,20 @@
           </div>
 
           <div class="form-group">
+            <label for="tipo_pedido">Tipo do Pedido *</label>
+            <select id="tipo_pedido" required>
+              <option value="OC">OC - Ordem de Compra</option>
+              <option value="PC">PC - Pedido de Compra</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="numero_pedido">Número do Pedido *</label>
+            <input type="text" id="numero_pedido"
+                   placeholder="Digite apenas o número. Ex: 125" required>
+          </div>
+
+          <div class="form-group">
             <label for="data_pedido">Data do Pedido *</label>
             <input type="date" id="data_pedido" required>
           </div>
@@ -49,7 +64,8 @@
 
         <div class="form-group">
           <label for="observacoes">Observações</label>
-          <textarea id="observacoes" rows="3" placeholder="Digite alguma observação se necessário..."></textarea>
+          <textarea id="observacoes" rows="3"
+                    placeholder="Digite alguma observação se necessário..."></textarea>
         </div>
 
         <h3 class="subtitulo">Itens do Pedido</h3>
@@ -60,7 +76,7 @@
               <tr>
                 <th style="width: 40%;">Produto</th>
                 <th style="width: 15%;">Qtd</th>
-                <th style="width: 20%;">Preço Unit. (R$)</th>
+                <th style="width: 20%;">Valor Unit. (R$)</th>
                 <th style="width: 20%;">Total (R$)</th>
                 <th style="width: 5%;"></th>
               </tr>
