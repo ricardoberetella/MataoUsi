@@ -1,49 +1,95 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pedidos - MataoUsi</title>
-
+  <title>Pedidos</title>
   <link rel="stylesheet" href="css/pedidos.css">
 </head>
 
 <body>
+  <h1 class="titulo">Pedidos</h1>
 
-  <!-- TOPBAR -->
-  <header class="topbar">
-    <button class="btn-voltar" onclick="window.location.href='dashboard.html'">⬅ Voltar</button>
-    <h1>Pedidos</h1>
-    <button id="btnNovoPedido" class="btn-novo">+ Novo Pedido</button>
-  </header>
+  <!-- BARRA DE BUSCA -->
+  <div class="area-busca">
+    <input type="text" id="campoBuscaPedidos" class="input-busca" placeholder="🔍 Buscar por cliente ou número do pedido...">
+  </div>
+
+  <!-- AÇÕES -->
+  <div class="area-acoes">
+    <button id="btnNovoPedido" class="btn-neon">
+      + Novo Pedido
+    </button>
+  </div>
 
   <!-- LISTA DE PEDIDOS -->
-  <section class="container">
-    <h2>Listagem de Pedidos</h2>
+  <div id="listaPedidos" class="lista-pedidos"></div>
 
-    <div id="listaPedidos" class="lista">
-      <!-- Lista carregada via JS -->
+  <!-- DETALHES DO PEDIDO -->
+  <div id="detalhesPedido" class="detalhes hidden"></div>
+
+  <!-- FORMULÁRIO DE PEDIDO -->
+  <section id="formContainer" class="form-container hidden">
+    <div class="card-form">
+      <h2 id="tituloForm">Novo Pedido</h2>
+
+      <form id="formPedido">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="cliente">Cliente *</label>
+            <select id="cliente" required>
+              <option value="">Selecione um cliente...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="data_pedido">Data do Pedido *</label>
+            <input type="date" id="data_pedido" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="observacoes">Observações</label>
+          <textarea id="observacoes" rows="3" placeholder="Digite alguma observação se necessário..."></textarea>
+        </div>
+
+        <h3 class="subtitulo">Itens do Pedido</h3>
+
+        <div class="tabela-itens-wrapper">
+          <table class="tabela-itens">
+            <thead>
+              <tr>
+                <th style="width: 40%;">Produto</th>
+                <th style="width: 15%;">Qtd</th>
+                <th style="width: 20%;">Preço Unit. (R$)</th>
+                <th style="width: 20%;">Total (R$)</th>
+                <th style="width: 5%;"></th>
+              </tr>
+            </thead>
+            <tbody id="tbodyItens">
+              <!-- linhas de itens criadas via JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <button type="button" id="btnAdicionarItem" class="btn-add-item">
+          + Adicionar Item
+        </button>
+
+        <div class="total-geral-linha">
+          <span>Total do Pedido:</span>
+          <strong id="totalGeral">R$ 0,00</strong>
+        </div>
+
+        <div class="actions-form">
+          <button type="submit" class="btn-salvar">Salvar Pedido</button>
+          <button type="button" id="btnCancelarPedido" class="btn-cancelar">Cancelar</button>
+        </div>
+      </form>
     </div>
   </section>
 
-  <!-- MODAL DE NOVO PEDIDO -->
-  <div id="modalPedido" class="modal hidden">
-    <div class="modal-content">
-      <h3>Novo Pedido</h3>
-
-      <label>Cliente</label>
-      <select id="clienteId"></select>
-
-      <label>Observações</label>
-      <textarea id="observacoes"></textarea>
-
-      <div class="actions">
-        <button id="btnSalvarPedido" class="btn-salvar">Salvar Pedido</button>
-        <button id="btnCancelarPedido" class="btn-cancelar">Cancelar</button>
-      </div>
-    </div>
-  </div>
+  <!-- BOTÃO VOLTAR -->
+  <a href="dashboard.html" class="btn-voltar">← Voltar</a>
 
   <script type="module" src="js/pedidos.js"></script>
 </body>
