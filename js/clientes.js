@@ -22,6 +22,11 @@ async function carregarClientes() {
 
   listaContainer.innerHTML = "";
 
+  if (data.length === 0) {
+    listaContainer.innerHTML = "<p>Nenhum cliente cadastrado.</p>";
+    return;
+  }
+
   data.forEach(cli => {
     const div = document.createElement("div");
     div.className = "item-cliente";
