@@ -3,21 +3,28 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ---- pegar ID do pedido da URL ----
+// ===============================
+// PEGAR ID DA URL
+// ===============================
 const params = new URLSearchParams(window.location.search);
 const pedidoId = params.get("id");
 
 if (!pedidoId) {
-  alert("ID do pedido não encontrado.");
+  alert("ID do pedido não informado.");
   window.location.href = "pedidos_lista.html";
 }
 
+// ===============================
+// AO CARREGAR
+// ===============================
 document.addEventListener("DOMContentLoaded", () => {
   carregarCabecalho();
   carregarItens();
 });
 
-// ---- CABEÇALHO ----
+// ===============================
+// CABEÇALHO
+// ===============================
 async function carregarCabecalho() {
   const { data, error } = await supabase
     .from("pedidos")
@@ -32,21 +39,19 @@ async function carregarCabecalho() {
     .eq("id", pedidoId)
     .maybeSingle();
 
-  if (error) {
-    console.error(error);
+  if (error || !data) {
+    console.error("Erro carregando cabeçalho:", error);
     return;
   }
 
-  const texto =
-    `Pedido Nº ${data.numero_pedido} — ` +
-    `${data.clientes?.razao_social} — ` +
-    `${new Date(data.data_pedido).toLocaleDateString("pt-BR")} — ` +
-    `Total: R$ ${formatar(data.total)}`;
-
-  document.getElementById("infoPedido").textContent = texto;
+  document.getElementById("infoPedido").textContent =
+    `Pedido Nº ${data.numero_pedido} — ${data.clientes?.razao_social} — ` +
+    `${new Date(data.data_pedido).toLocaleDateString("pt-BR")} — Total: R$ ${formatar(data.total)}`;
 }
 
-// ---- LISTAR ITENS ----
+// ===============================
+// ITENS DO PEDIDO
+// ===============================
 async function carregarItens() {
   const tbody = document.getElementById("listaItens");
   tbody.innerHTML = "";
@@ -55,9 +60,9 @@ async function carregarItens() {
     .from("pedidos_itens")
     .select(`
       id,
-      pedido_id,
       produto_id,
       quantidade,
+      quantidade_entregue,
       valor_unitario,
       total_item,
       data_entrega,
@@ -67,41 +72,43 @@ async function carregarItens() {
     .eq("pedido_id", pedidoId);
 
   if (error) {
-    console.error(error);
+    console.error("Erro Supabase:", error);
     tbody.innerHTML = "<tr><td colspan='10'>Erro ao carregar itens.</td></tr>";
     return;
   }
 
-  if (!data.length) {
+  if (!data || data.length === 0) {
     tbody.innerHTML = "<tr><td colspan='10'>Nenhum item encontrado.</td></tr>";
     return;
   }
 
   data.forEach(item => {
-    const restante = item.quantidade; // você não tem campo entregue
+    const entregue = Number(item.quantidade_entregue ?? 0);
+    const restante = Number(item.quantidade ?? 0) - entregue;
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${item.produtos?.codigo || ""}</td>
-      <td>${item.produtos?.descricao || ""}</td>
+      <td>${item.produtos?.codigo ?? ""}</td>
+      <td>${item.produtos?.descricao ?? ""}</td>
       <td>${formatar(item.quantidade)}</td>
-      <td>0</td>
+      <td>${formatar(entregue)}</td>
       <td>${formatar(restante)}</td>
       <td>${formatar(item.valor_unitario)}</td>
       <td>${formatar(item.total_item)}</td>
       <td>${item.data_entrega ? new Date(item.data_entrega).toLocaleDateString("pt-BR") : "-"}</td>
-      <td>${item.status || "-"}</td>
-      <td>
-        <button class="btn-remover" data-id="${item.id}">Excluir</button>
-      </td>
+      <td>${item.status ?? "-"}</td>
+      <td><button class="btn-remover" data-id="${item.id}">Excluir</button></td>
     `;
     tbody.appendChild(tr);
   });
 }
 
+// ===============================
+// FORMATAR
+// ===============================
 function formatar(v) {
   return Number(v || 0).toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    maximumFractionDigits: 2,
   });
 }
