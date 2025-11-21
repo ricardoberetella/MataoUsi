@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Novo Pedido - MataoUsi</title>
-  <link rel="stylesheet" href="css/pedidos.css">
+  <link rel="stylesheet" href="css/pedidos.css" />
 </head>
 
 <body>
-
   <header class="topbar">
     <div class="logo-area">
       <div class="logo-circle">MU</div>
@@ -17,7 +16,6 @@
         <span class="app-subtitle">Cadastro de Pedido</span>
       </div>
     </div>
-
     <button class="btn btn-ghost" onclick="window.location.href='pedidos.html'">
       Voltar à Lista
     </button>
@@ -26,11 +24,9 @@
   <main class="page">
     <section class="card">
 
-      <div class="card-header">
-        <h1 id="tituloPagina">Novo Pedido</h1>
-      </div>
+      <h1>Novo Pedido</h1>
 
-      <!-- CABEÇALHO -->
+      <!-- CABEÇALHO SIMPLIFICADO -->
       <form class="grid-header" id="formPedido">
 
         <div class="field">
@@ -41,56 +37,67 @@
         </div>
 
         <div class="field">
-          <label>Data Pedido</label>
-          <input type="date" id="data_pedido" required>
+          <label>Data</label>
+          <input type="date" id="data_pedido" required />
         </div>
 
         <div class="field">
           <label>Tipo</label>
           <select id="tipo_documento" required>
             <option value="">Selecione...</option>
-            <option value="PC">Pedido de Compra (PC)</option>
-            <option value="OC">Ordem de Compra (OC)</option>
+            <option value="PC">PC - Pedido de Compra</option>
+            <option value="OC">OC - Ordem de Compra</option>
           </select>
         </div>
 
         <div class="field">
-          <label>Número do Documento</label>
-          <input type="text" id="numero_documento" placeholder="Ex: PC-345.980" required>
+          <label>Nº Documento</label>
+          <input
+            type="text"
+            id="numero_documento"
+            placeholder="Ex: PC-123"
+            required
+          />
         </div>
 
       </form>
 
-      <!-- ITENS -->
+      <!-- ITENS DO PEDIDO -->
       <section class="itens-section">
-
         <h2>Itens do Pedido</h2>
 
         <div class="itens-adicionar">
-
           <div class="field">
             <label>Código</label>
-            <input id="codigo_produto" placeholder="Ex: 1020">
+            <input
+              id="codigo_produto"
+              placeholder="Clique para selecionar"
+              readonly
+            />
           </div>
 
           <div class="field">
             <label>Descrição</label>
-            <input id="descricao_produto" disabled>
+            <input id="descricao_produto" disabled />
           </div>
 
           <div class="field">
             <label>Preço R$</label>
-            <input id="preco_unitario" placeholder="0,00">
+            <input id="preco_unitario" />
           </div>
 
           <div class="field">
             <label>Qtd</label>
-            <input id="quantidade" type="number" step="0.01">
+            <input id="quantidade" type="number" step="0.01" />
           </div>
 
-          <button class="btn btn-secondary" id="btnBuscarProduto" type="button">Buscar</button>
-          <button class="btn btn-primary" id="btnAdicionarItem" type="button">+</button>
+          <button class="btn btn-secondary" type="button" id="btnBuscarProduto">
+            Buscar
+          </button>
 
+          <button class="btn btn-primary" type="button" id="btnAdicionarItem">
+            +
+          </button>
         </div>
 
         <div class="table-wrapper">
@@ -105,9 +112,7 @@
                 <th>Ações</th>
               </tr>
             </thead>
-
             <tbody id="tbodyItens"></tbody>
-
           </table>
         </div>
 
@@ -115,18 +120,52 @@
           <span>Total:</span>
           <strong id="totalPedido">R$ 0,00</strong>
         </div>
-
       </section>
 
       <div class="form-actions">
-        <button class="btn btn-primary" id="btnSalvarPedido" type="button">Salvar</button>
-        <button class="btn btn-ghost" type="button" onclick="window.location.href='pedidos.html'">
+        <button class="btn btn-primary" type="button" id="btnSalvarPedido">
+          Salvar
+        </button>
+        <button
+          class="btn btn-ghost"
+          onclick="window.location.href='pedidos.html'"
+          type="button"
+        >
           Cancelar
         </button>
       </div>
-
     </section>
   </main>
+
+  <!-- MODAL DE PRODUTOS -->
+  <div id="modalProdutos" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Selecionar Produto</h2>
+        <button type="button" class="btn btn-ghost btn-fechar-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label>Buscar</label>
+          <input id="buscaProduto" placeholder="Código ou descrição" />
+        </div>
+
+        <div class="table-wrapper modal-table-wrapper">
+          <table class="tabela">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Descrição</th>
+                <th>Preço</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyModalProdutos"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="js/pedido_novo.js"></script>
 </body>
