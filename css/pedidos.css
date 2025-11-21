@@ -1,25 +1,29 @@
-/* ===== ESTILO GERAL ===== */
 body {
   background: #020617;
   color: #e5e7eb;
   font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 0;
 }
 
-/* ===== TOPBAR ===== */
 .topbar {
-  background: #0a0f1f;
-  padding: 15px 22px;
+  background: #0f172a;
+  padding: 20px 30px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-bottom: 2px solid #1e293b;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #fff;
 }
 
 .logo-circle {
-  background: #1e40af;
   width: 45px;
   height: 45px;
+  background: #1e40af;
   border-radius: 50%;
   display: flex;
   justify-content: center;
@@ -27,82 +31,81 @@ body {
   font-weight: bold;
 }
 
-.btn {
-  padding: 10px 18px;
-  border-radius: 12px;
-  cursor: pointer;
-  border: none;
-}
-
-.btn-primary {
-  background: #0ea5e9;
-  color: #fff;
-}
-
-.btn-secondary {
-  background: #1e293b;
-  color: #fff;
-}
-
-.btn-danger {
-  background: #dc2626;
-  color: #fff;
-}
-
-.btn-ghost {
-  background: transparent;
-  color: #94a3b8;
-  border: 1px solid #475569;
-}
-
-/* ===== CARD PRINCIPAL ===== */
 .card {
-  margin: 30px auto;
+  margin: 40px auto;
   background: #0f172a;
   max-width: 1100px;
   padding: 30px;
   border-radius: 18px;
-  box-shadow: 0 0 30px #0004;
+  box-shadow: 0 0 25px #0005;
 }
 
-/* ===== GRID DO CABEÇALHO ===== */
-.grid-header {
-  margin-top: 18px;
+h1 {
+  color: #38bdf8;
+}
+
+.descricao {
+  margin-bottom: 25px;
+  opacity: 0.8;
+}
+
+.filtros {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 18px;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 15px;
+  margin-bottom: 25px;
 }
 
-/* ===== CAMPOS ===== */
 .field {
   display: flex;
   flex-direction: column;
 }
 
-.field input,
-.field select {
+.field input {
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #fff;
   padding: 10px;
   border-radius: 10px;
-  border: 1px solid #334155;
-  background: #1e293b;
-  color: #fff;
 }
 
-/* ===== TABELA ===== */
+.btn-primary {
+  background: #0ea5e9;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.btn-blue {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.btn-ghost {
+  background: none;
+  border: 1px solid #475569;
+  color: #94a3b8;
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
 .table-wrapper {
-  margin-top: 20px;
   overflow-x: auto;
 }
 
 .tabela {
   width: 100%;
   border-collapse: collapse;
-  background: #020617;
 }
 
 .tabela th {
   background: #1e293b;
-  padding: 10px;
+  padding: 12px;
 }
 
 .tabela td {
@@ -110,33 +113,18 @@ body {
   border-bottom: 1px solid #334155;
 }
 
-/* ===== TOTAL ===== */
-.totais {
-  margin-top: 20px;
-  font-size: 22px;
-  font-weight: bold;
-  color: #facc15;
+.btn-ver {
+  background: #0ea5e9;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
 }
 
-/* ===== MODAL ===== */
-.modal-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: #0009;
-  justify-content: center;
-  align-items: center;
-}
-
-.modal {
-  background: #0f172a;
-  width: 60%;
-  padding: 25px;
-  border-radius: 20px;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 15px;
+.btn-del {
+  background: #dc2626;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
 }
