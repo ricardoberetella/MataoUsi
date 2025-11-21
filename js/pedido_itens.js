@@ -3,9 +3,9 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ============================================
-// PEGAR ID DA URL
-// ============================================
+// ===============================
+// PEGAR O ID DO PEDIDO NA URL
+// ===============================
 const params = new URLSearchParams(window.location.search);
 const pedidoId = params.get("id");
 
@@ -14,17 +14,17 @@ if (!pedidoId) {
   window.location.href = "pedidos_lista.html";
 }
 
-// ============================================
-// AO CARREGAR
-// ============================================
+// ===============================
+// AO CARREGAR A PÁGINA
+// ===============================
 document.addEventListener("DOMContentLoaded", () => {
   carregarCabecalho();
   carregarItens();
 });
 
-// ============================================
+// ===============================
 // CABEÇALHO DO PEDIDO
-// ============================================
+// ===============================
 async function carregarCabecalho() {
   const { data, error } = await supabase
     .from("pedidos")
@@ -53,9 +53,9 @@ async function carregarCabecalho() {
   document.getElementById("infoPedido").textContent = texto;
 }
 
-// ============================================
+// ===============================
 // LISTAR ITENS DO PEDIDO
-// ============================================
+// ===============================
 async function carregarItens() {
   const tbody = document.getElementById("listaItens");
   tbody.innerHTML = "";
@@ -80,11 +80,10 @@ async function carregarItens() {
   }
 
   data.forEach((item) => {
-    const entregue = item.qtd_entregue ?? 0;
-    const restante = (item.quantidade ?? 0) - entregue;
+    const entregue = Number(item.qtd_entregue || 0);
+    const restante = Number(item.quantidade || 0) - entregue;
 
     const tr = document.createElement("tr");
-
     tr.innerHTML = `
       <td>${item.produtos?.codigo || ""}</td>
       <td>${item.produtos?.descricao || ""}</td>
@@ -95,16 +94,44 @@ async function carregarItens() {
       <td>${formatar(item.total_item)}</td>
       <td>${item.data_entrega ? new Date(item.data_entrega).toLocaleDateString("pt-BR") : "-"}</td>
       <td>${item.status || "-"}</td>
-      <td>—</td>
+      <td class="col-acoes">
+        <button class="btn-remover" data-id="${item.id}">
+          Excluir
+        </button>
+      </td>
     `;
 
     tbody.appendChild(tr);
   });
+
+  document.querySelectorAll(".btn-remover").forEach(btn => {
+    btn.addEventListener("click", () => excluirItem(btn.dataset.id));
+  });
 }
 
-// ============================================
-// FORMATADOR
-// ============================================
+// ===============================
+// EXCLUIR ITEM DO PEDIDO
+// ===============================
+async function excluirItem(itemId) {
+  if (!confirm("Deseja realmente excluir este item?")) return;
+
+  const { error } = await supabase
+    .from("pedidos_itens")
+    .delete()
+    .eq("id", itemId);
+
+  if (error) {
+    alert("Erro ao excluir item.");
+    console.error(error);
+    return;
+  }
+
+  carregarItens();
+}
+
+// ===============================
+// FORMATAR NÚMEROS
+// ===============================
 function formatar(v) {
   return Number(v || 0).toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
