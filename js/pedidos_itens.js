@@ -3,28 +3,21 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ===============================
-// PEGAR ID DA URL
-// ===============================
+// ---- pegar ID do pedido da URL ----
 const params = new URLSearchParams(window.location.search);
 const pedidoId = params.get("id");
 
 if (!pedidoId) {
-  alert("ID do pedido não informado.");
+  alert("ID do pedido não encontrado.");
   window.location.href = "pedidos_lista.html";
 }
 
-// ===============================
-// AO CARREGAR
-// ===============================
 document.addEventListener("DOMContentLoaded", () => {
   carregarCabecalho();
   carregarItens();
 });
 
-// ===============================
-// CABEÇALHO
-// ===============================
+// ---- CABEÇALHO ----
 async function carregarCabecalho() {
   const { data, error } = await supabase
     .from("pedidos")
@@ -39,28 +32,36 @@ async function carregarCabecalho() {
     .eq("id", pedidoId)
     .maybeSingle();
 
-  if (error || !data) {
+  if (error) {
     console.error(error);
     return;
   }
 
-  document.getElementById("infoPedido").textContent =
-    `Pedido Nº ${data.numero_pedido} — ${data.clientes?.razao_social} — ` +
-    `${new Date(data.data_pedido).toLocaleDateString("pt-BR")} — Total: R$ ${formatar(data.total)}`;
+  const texto =
+    `Pedido Nº ${data.numero_pedido} — ` +
+    `${data.clientes?.razao_social} — ` +
+    `${new Date(data.data_pedido).toLocaleDateString("pt-BR")} — ` +
+    `Total: R$ ${formatar(data.total)}`;
+
+  document.getElementById("infoPedido").textContent = texto;
 }
 
-// ===============================
-// ITENS DO PEDIDO
-// ===============================
+// ---- LISTAR ITENS ----
 async function carregarItens() {
   const tbody = document.getElementById("listaItens");
   tbody.innerHTML = "";
 
-  // AQUI ERA O ERRO! NOME DA TABELA ERRADO
   const { data, error } = await supabase
-    .from("pedidos_itens")   // <<< CERTO!!
+    .from("pedidos_itens")
     .select(`
-      *,
+      id,
+      pedido_id,
+      produto_id,
+      quantidade,
+      valor_unitario,
+      total_item,
+      data_entrega,
+      status,
       produtos:produto_id ( codigo, descricao )
     `)
     .eq("pedido_id", pedidoId);
@@ -77,32 +78,30 @@ async function carregarItens() {
   }
 
   data.forEach(item => {
-    const entregue = Number(item.quantidade_entregue || 0);
-    const restante = Number(item.quantidade) - entregue;
+    const restante = item.quantidade; // você não tem campo entregue
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${item.produtos?.codigo || ""}</td>
       <td>${item.produtos?.descricao || ""}</td>
       <td>${formatar(item.quantidade)}</td>
-      <td>${formatar(entregue)}</td>
+      <td>0</td>
       <td>${formatar(restante)}</td>
       <td>${formatar(item.valor_unitario)}</td>
       <td>${formatar(item.total_item)}</td>
       <td>${item.data_entrega ? new Date(item.data_entrega).toLocaleDateString("pt-BR") : "-"}</td>
       <td>${item.status || "-"}</td>
-      <td><button class="btn-remover" data-id="${item.id}">Excluir</button></td>
+      <td>
+        <button class="btn-remover" data-id="${item.id}">Excluir</button>
+      </td>
     `;
     tbody.appendChild(tr);
   });
 }
 
-// ===============================
-// FORMATAR
-// ===============================
 function formatar(v) {
   return Number(v || 0).toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    maximumFractionDigits: 2
   });
 }
