@@ -1,46 +1,70 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - MataoUsi</title>
-    <link rel="stylesheet" href="css/dashboard.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Matão Usinagem</title>
+  <link rel="stylesheet" href="css/dashboard.css">
 </head>
-
 <body>
 
-    <!-- SIDEBAR -->
-    <div class="sidebar">
-        <h2 class="titulo">MataoUsi</h2>
-        <a href="dashboard.html" class="ativo">🏠 Dashboard</a>
-        <a href="clientes.html">👤 Clientes</a>
-        <a href="pedidos.html">📄 Pedidos</a>
-        <a href="produtos.html">📦 Produtos</a>
-        <a href="estoque.html">🏭 Estoque</a>
-        <a href="movimentacoes.html">🔄 Movimentações</a>
-        <a href="empresas.html">🏢 Empresas</a>
-    </div>
+<div class="layout">
 
-    <!-- CONTEÚDO -->
-    <div class="conteudo">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+      <div class="logo-sistema">Matão Usinagem</div>
 
-        <!-- LOGO NO LUGAR DO TEXTO -->
-        <div class="logo-centro">
-            <img src="img/logo-mataousi.png" alt="Logo Matao Usinagem">
-            <p class="subtexto">Selecione um módulo no menu ao lado.</p>
-        </div>
+      <nav class="menu">
+        <a href="clientes.html" class="menu-item">👤 Clientes</a>
+        <a href="pedidos.html" class="menu-item">📄 Pedidos</a>
+        <a href="produtos.html" class="menu-item">📦 Produtos</a>
+        <a href="estoque.html" class="menu-item">🏭 Estoque</a>
+        <a href="movimentacoes.html" class="menu-item">🔄 Movimentações</a>
+        <a href="empresas.html" class="menu-item">🏢 Empresas</a>
+      </nav>
+  </aside>
 
-        <!-- CARDS -->
-        <div class="cards">
-            <div class="card"><img src="img/icon-clientes.png"><span>Clientes</span></div>
-            <div class="card"><img src="img/icon-pedidos.png"><span>Pedidos</span></div>
-            <div class="card"><img src="img/icon-produtos.png"><span>Produtos</span></div>
-            <div class="card"><img src="img/icon-estoque.png"><span>Estoque</span></div>
-            <div class="card"><img src="img/icon-mov.png"><span>Movimentações</span></div>
-            <div class="card"><img src="img/icon-rel.png"><span>Relatórios</span></div>
-        </div>
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="main">
 
-    </div>
+    <!-- LOGO CENTRAL (AGORA MAIS PARA O TOPO) -->
+    <section class="topo-dashboard">
+      <img src="img/logo-mataousi.png" class="logo-dashboard" alt="Logo Matão Usinagem">
+      <p class="subtitulo">Selecione um módulo no menu ao lado.</p>
+    </section>
+
+    <!-- CARDS (SEM IMAGENS QUEBRADAS) -->
+    <section class="cards-grid">
+
+      <a href="clientes.html" class="card">
+        <span class="card-titulo">Clientes</span>
+      </a>
+
+      <a href="pedidos.html" class="card">
+        <span class="card-titulo">Pedidos</span>
+      </a>
+
+      <a href="produtos.html" class="card">
+        <span class="card-titulo">Produtos</span>
+      </a>
+
+      <a href="estoque.html" class="card">
+        <span class="card-titulo">Estoque</span>
+      </a>
+
+      <a href="movimentacoes.html" class="card">
+        <span class="card-titulo">Movimentações</span>
+      </a>
+
+      <a href="relatorios.html" class="card">
+        <span class="card-titulo">Relatórios</span>
+      </a>
+
+    </section>
+
+  </main>
+
+</div>
 
 </body>
 </html>
