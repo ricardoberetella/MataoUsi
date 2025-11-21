@@ -3,97 +3,102 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const listaContainer = document.getElementById("listaClientes");
-const detalhesContainer = document.getElementById("detalhesCliente");
-const btnNovo = document.getElementById("btnNovoCliente");
+// ELEMENTOS
+const listaDiv = document.getElementById("listaClientes");
+const detalhesDiv = document.getElementById("detalhesCliente");
 
-/* LISTAR CLIENTES */
+/* ===============================
+   CARREGAR LISTA DE CLIENTES
+=============================== */
 async function carregarClientes() {
-  const { data, error } = await supabase
-    .from("clientes")
-    .select("id, razao_social, cpf_cnpj")
-    .order("razao_social", { ascending: true });
+    const { data, error } = await supabase
+        .from("clientes")
+        .select("id, razao_social, cpf_cnpj")
+        .order("razao_social", { ascending: true });
 
-  if (error) {
-    console.error(error);
-    alert("Erro ao carregar clientes");
-    return;
-  }
+    if (error) {
+        alert("Erro ao carregar clientes");
+        console.log(error);
+        return;
+    }
 
-  listaContainer.innerHTML = "";
+    if (!data || data.length === 0) {
+        listaDiv.innerHTML = "<p class='aviso'>Nenhum cliente cadastrado.</p>";
+        return;
+    }
 
-  if (data.length === 0) {
-    listaContainer.innerHTML = "<p>Nenhum cliente cadastrado.</p>";
-    return;
-  }
+    listaDiv.innerHTML = "";
 
-  data.forEach(cli => {
-    const div = document.createElement("div");
-    div.className = "item-cliente";
-    div.textContent = `${cli.razao_social} — ${cli.cpf_cnpj}`;
-    div.onclick = () => abrirDetalhes(cli.id);
-    listaContainer.appendChild(div);
-  });
+    data.forEach(c => {
+        const item = document.createElement("div");
+        item.classList.add("cliente-item");
+
+        item.innerHTML = `
+            <span><strong>${c.razao_social}</strong></span>
+            <span>CNPJ: ${c.cpf_cnpj}</span>
+            <button class="btn-primary-sm" onclick="mostrarDetalhes(${c.id})">Abrir</button>
+        `;
+
+        listaDiv.appendChild(item);
+    });
 }
 
-/* ABRIR DETALHES */
-async function abrirDetalhes(id) {
-  const { data, error } = await supabase
-    .from("clientes")
-    .select("*")
-    .eq("id", id)
-    .single();
+/* ===============================
+   MOSTRAR DETALHES DO CLIENTE
+=============================== */
+window.mostrarDetalhes = async function (id) {
+    const { data, error } = await supabase
+        .from("clientes")
+        .select("*")
+        .eq("id", id)
+        .single();
 
-  if (error) {
-    alert("Erro ao carregar detalhes");
-    return;
-  }
+    if (error) {
+        alert("Erro ao buscar detalhes");
+        return;
+    }
 
-  detalhesContainer.classList.remove("hidden");
+    detalhesDiv.innerHTML = `
+        <h2>Dados do Cliente</h2>
 
-  detalhesContainer.innerHTML = `
-    <h2>Dados do Cliente</h2>
-    <p><strong>Razão Social:</strong> ${data.razao_social}</p>
-    <p><strong>CNPJ:</strong> ${data.cpf_cnpj}</p>
-    <p><strong>Telefone:</strong> ${data.telefone || ""}</p>
-    <p><strong>E-mail:</strong> ${data.email || ""}</p>
-    <p><strong>Endereço:</strong> ${data.endereco || ""}</p>
+        <p><b>Razão Social:</b> ${data.razao_social}</p>
+        <p><b>CNPJ:</b> ${data.cpf_cnpj}</p>
+        <p><b>Telefone:</b> ${data.telefone || "-"}</p>
+        <p><b>E-mail:</b> ${data.email || "-"}</p>
+        <p><b>Endereço:</b> ${data.endereco || "-"}</p>
 
-    <button class="btn-editar"
-      onclick="window.location='clientes_editar.html?id=${id}'">
-      Editar
-    </button>
-
-    <button class="btn-excluir"
-      onclick="excluirCliente(${id})">
-      Excluir
-    </button>
-  `;
-}
-
-/* EXCLUIR */
-async function excluirCliente(id) {
-  if (!confirm("Deseja realmente excluir?")) return;
-
-  const { error } = await supabase
-    .from("clientes")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    alert("Erro ao excluir");
-    return;
-  }
-
-  alert("Cliente excluído!");
-  carregarClientes();
-  detalhesContainer.classList.add("hidden");
-}
-
-/* REDIRECIONAR PARA CADASTRAR */
-btnNovo.onclick = () => {
-  window.location = "clientes_cadastrar.html";
+        <div class="grupo-botoes">
+            <button class="btn-primary" onclick="editarCliente(${data.id})">Editar</button>
+            <button class="btn-danger" onclick="excluirCliente(${data.id})">Excluir</button>
+        </div>
+    `;
 };
 
-/* INICIAR */
+/* ===============================
+       EDITAR CLIENTE
+=============================== */
+window.editarCliente = function (id) {
+    window.location.href = `clientes_editar.html?id=${id}`;
+};
+
+/* ===============================
+       EXCLUIR CLIENTE
+=============================== */
+window.excluirCliente = async function (id) {
+    if (!confirm("Deseja excluir este cliente?")) return;
+
+    const { error } = await supabase
+        .from("clientes")
+        .delete()
+        .eq("id", id);
+
+    if (error) {
+        alert("Erro ao excluir: " + error.message);
+        return;
+    }
+
+    alert("Cliente excluído!");
+    location.reload();
+};
+
 carregarClientes();
