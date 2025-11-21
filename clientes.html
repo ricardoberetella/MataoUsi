@@ -10,43 +10,20 @@
 
 <body>
 
-<div class="layout">
+<!-- CONTEÚDO SEM MENU LATERAL -->
+<main class="main-full">
 
-    <!-- SIDEBAR (MESMO PADRÃO DO DASHBOARD) -->
-    <aside class="sidebar">
-        <div class="logo-sistema">Matão Usinagem</div>
+    <h1 class="titulo">Clientes</h1>
 
-        <nav class="menu">
-            <a href="dashboard.html" class="menu-item">🏠 Início</a>
-            <a href="clientes.html" class="menu-item active">👤 Clientes</a>
-            <a href="pedidos.html" class="menu-item">📄 Pedidos</a>
-            <a href="produtos.html" class="menu-item">📦 Produtos</a>
-            <a href="estoque.html" class="menu-item">🏭 Estoque</a>
-            <a href="movimentacoes.html" class="menu-item">🔄 Movimentações</a>
-            <a href="empresas.html" class="menu-item">🏢 Empresas</a>
-        </nav>
-    </aside>
+    <button id="btnNovoCliente" class="btn-neon">+ Cadastrar Novo Cliente</button>
 
-    <!-- ÁREA PRINCIPAL -->
-    <main class="main">
+    <div id="listaClientes" class="lista-clientes"></div>
 
-        <h1 class="titulo">Clientes</h1>
+    <div id="detalhesCliente" class="detalhes hidden"></div>
 
-        <!-- BOTÃO NOVO CLIENTE -->
-        <button id="btnNovoCliente" class="btn-neon">+ Cadastrar Novo Cliente</button>
+    <a href="dashboard.html" class="btn-voltar">⟵ Voltar</a>
 
-        <!-- LISTA DE CLIENTES -->
-        <div id="listaClientes" class="lista-clientes"></div>
-
-        <!-- DETALHES DO CLIENTE -->
-        <div id="detalhesCliente" class="detalhes hidden"></div>
-
-        <!-- BOTÃO VOLTAR -->
-        <a href="dashboard.html" class="btn-voltar">⟵ Voltar</a>
-
-    </main>
-
-</div>
+</main>
 
 </body>
 </html>
