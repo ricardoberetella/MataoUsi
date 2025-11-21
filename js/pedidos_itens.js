@@ -61,7 +61,7 @@ async function carregarItens() {
   tbody.innerHTML = "";
 
   const { data, error } = await supabase
-    .from("pedidos_itens")
+    .from("pedido_itens")   // <<< CORRIGIDO AQUI
     .select(`
       *,
       produtos:produto_id ( codigo, descricao )
@@ -115,7 +115,7 @@ async function excluirItem(itemId) {
   if (!confirm("Deseja realmente excluir este item?")) return;
 
   const { error } = await supabase
-    .from("pedidos_itens")
+    .from("pedido_itens")  // <<< CORRIGIDO TAMBÉM
     .delete()
     .eq("id", itemId);
 
