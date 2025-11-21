@@ -1,96 +1,135 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pedidos - MataoUsi</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Novo Pedido</title>
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="CSS/pedidos.css" />
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/pedidos.css">
 </head>
-
 <body>
-  <!-- TOPO -->
   <header class="topbar">
-    <div class="user-area">
-      <div class="logo-circle">MU</div>
-      <div class="logo-text">
-        <span class="app-name">Matao Usinagem</span>
-        <span class="app-subtitle">Módulo de Pedidos</span>
-      </div>
+    <div class="topbar-left">
+      <span class="logo-text">MataoUsi</span>
+      <span class="topbar-module">Novo Pedido</span>
     </div>
-
-    <button class="btn btn-ghost" onclick="window.location.href='painel.html'">
-      Voltar ao Painel
-    </button>
+    <div class="topbar-right">
+      <a href="pedidos_lista.html" class="btn-secondary">Voltar à Lista</a>
+    </div>
   </header>
 
-  <!-- CONTEÚDO -->
-  <main class="page">
+  <main class="page-container page-grid">
+    <!-- CARD DADOS DO PEDIDO -->
     <section class="card">
-
       <div class="card-header">
-        <div>
-          <h1>Pedidos</h1>
-          <p class="texto-menor">
-            Visualize, filtre e abra pedidos realizados.
-          </p>
-        </div>
-        <button class="btn btn-primary" onclick="window.location.href='pedido_novo.html'">
-          + Novo Pedido
-        </button>
+        <h1>Dados do Pedido</h1>
       </div>
 
-      <!-- FILTROS -->
-      <section class="filtros">
-
-        <div class="field">
-          <label>NÚMERO DO DOCUMENTO (PC / OC)</label>
-          <input id="f_numero" placeholder="Ex: 345.980" />
+      <form id="formPedido" class="form-grid">
+        <div class="field-group">
+          <label for="cliente_id">Cliente</label>
+          <select id="cliente_id" required>
+            <option value="">Selecione o cliente</option>
+            <!-- preenchido via JS -->
+          </select>
         </div>
 
-        <div class="field">
-          <label>CLIENTE</label>
-          <input id="f_cliente" placeholder="Parte do nome do cliente" />
+        <div class="field-group">
+          <label for="data_pedido">Data do Pedido</label>
+          <input type="date" id="data_pedido" required>
         </div>
 
-        <div class="field">
-          <label>CÓDIGO DA PEÇA</label>
-          <input id="f_codigo" placeholder="Ex: CC31PR" />
+        <div class="field-group">
+          <label for="tipo_pedido">Tipo de Pedido</label>
+          <select id="tipo_pedido" required>
+            <option value="">Selecione</option>
+            <option value="Venda">Venda</option>
+            <option value="Orçamento">Orçamento</option>
+            <option value="Interno">Interno</option>
+          </select>
         </div>
 
-        <div class="field">
-          <button id="btnFiltrar" class="btn btn-secondary btn-filtrar">
-            Filtrar
+        <div class="field-group">
+          <label for="numero_pedido">Número do Pedido</label>
+          <input type="text" id="numero_pedido" placeholder="Ex: 1024" required>
+        </div>
+
+        <div class="field-group field-full">
+          <label for="observacoes">Observações</label>
+          <textarea id="observacoes" rows="3" placeholder="Informações adicionais do pedido"></textarea>
+        </div>
+
+        <div class="buttons-row field-full">
+          <button type="button" id="btnSalvarPedido" class="btn-primary">Salvar Pedido</button>
+          <button type="button" id="btnCancelar" class="btn-outline">Cancelar</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- CARD ITENS DO PEDIDO -->
+    <section class="card">
+      <div class="card-header">
+        <h2>Itens do Pedido</h2>
+        <span class="badge" id="badgeTotal">Total: R$ 0,00</span>
+      </div>
+
+      <div class="itens-form-grid">
+        <div class="field-group">
+          <label for="codigo_produto">Código do Produto</label>
+          <input type="text" id="codigo_produto" placeholder="Ex: 1234">
+        </div>
+
+        <div class="field-group">
+          <label>&nbsp;</label>
+          <button type="button" id="btnBuscarProduto" class="btn-secondary block">
+            Buscar Produto
           </button>
         </div>
 
-      </section>
+        <div class="field-group">
+          <label>Descrição</label>
+          <div id="descricao_produto" class="info-box">-</div>
+        </div>
 
-      <!-- TABELA -->
-      <div class="table-wrapper">
-        <table class="tabela">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>NÚMERO</th>
-              <th>CLIENTE</th>
-              <th>DATA</th>
-              <th>TIPO</th>
-              <th>TOTAL</th>
-              <th>AÇÕES</th>
-            </tr>
-          </thead>
-          <tbody id="listaPedidos"></tbody>
-        </table>
+        <div class="field-group">
+          <label>Preço Unit. (R$)</label>
+          <div id="preco_produto" class="info-box">0,00</div>
+        </div>
+
+        <div class="field-group">
+          <label for="quantidade">Quantidade</label>
+          <input type="number" id="quantidade" min="0" step="0.01" placeholder="0,00">
+        </div>
+
+        <div class="field-group">
+          <label>&nbsp;</label>
+          <button type="button" id="btnAdicionarItem" class="btn-primary block">
+            Adicionar Item
+          </button>
+        </div>
       </div>
 
-      <p id="msgErro" class="msg-erro"></p>
-
+      <div class="tabela-wrapper">
+        <table class="tabela-futurista">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Descrição</th>
+              <th>Qtd</th>
+              <th>Vlr Unit. (R$)</th>
+              <th>Total (R$)</th>
+              <th class="col-acoes">Remover</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyItens">
+            <!-- itens via JS -->
+          </tbody>
+        </table>
+      </div>
     </section>
   </main>
 
-  <!-- SCRIPT -->
   <script type="module" src="js/pedidos.js"></script>
 </body>
 </html>
