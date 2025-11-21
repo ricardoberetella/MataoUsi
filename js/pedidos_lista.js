@@ -4,21 +4,19 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("btnAtualizar").addEventListener("click", carregarPedidos);
-  document.getElementById("filtroNumero").addEventListener("input", carregarPedidos);
-  document.getElementById("filtroCliente").addEventListener("input", carregarPedidos);
-  document.getElementById("filtroTipo").addEventListener("change", carregarPedidos);
-
   carregarPedidos();
+  document.getElementById("btnFiltrar").addEventListener("click", carregarPedidos);
 });
 
+/* ============================================================
+   FUNÇÃO PRINCIPAL — CARREGAR LISTA DE PEDIDOS
+============================================================ */
 async function carregarPedidos() {
-  const tbody = document.getElementById("tbodyPedidos");
-  const emptyState = document.getElementById("emptyStatePedidos");
+  const filtroNumero = document.getElementById("filtroNumero").value.trim();
+  const filtroCliente = document.getElementById("filtroCliente").value.trim();
+  const filtroTipo = document.getElementById("filtroTipo").value;
 
-  tbody.innerHTML = `<tr><td colspan="6">Carregando...</td></tr>`;
-
-  let { data, error } = await supabase
+  let query = supabase
     .from("pedidos")
     .select(`
       id,
@@ -30,81 +28,64 @@ async function carregarPedidos() {
     `)
     .order("id", { ascending: false });
 
-  if (error) {
-    console.error(error);
-    tbody.innerHTML = `<tr><td colspan="6">Erro ao carregar pedidos.</td></tr>`;
-    return;
+  if (filtroNumero) {
+    query = query.ilike("numero_pedido", `%${filtroNumero}%`);
   }
 
-  // Filtros simples no front
-  const filtroNumero = document.getElementById("filtroNumero").value.trim().toLowerCase();
-  const filtroCliente = document.getElementById("filtroCliente").value.trim().toLowerCase();
-  const filtroTipo = document.getElementById("filtroTipo").value;
+  if (filtroTipo && filtroTipo !== "TODOS") {
+    query = query.eq("tipo_pedido", filtroTipo);
+  }
 
-  data = data.filter((p) => {
-    let ok = true;
+  if (filtroCliente) {
+    query = query.ilike("clientes.razao_social", `%${filtroCliente}%`);
+  }
 
-    if (filtroNumero) {
-      ok = ok && String(p.numero_pedido || "").toLowerCase().includes(filtroNumero);
-    }
+  const { data, error } = await query;
 
-    if (filtroCliente) {
-      const nomeCliente = (p.clientes?.razao_social || "").toLowerCase();
-      ok = ok && nomeCliente.includes(filtroCliente);
-    }
-
-    if (filtroTipo) {
-      ok = ok && p.tipo_pedido === filtroTipo;
-    }
-
-    return ok;
-  });
-
+  const tbody = document.getElementById("tbodyPedidos");
   tbody.innerHTML = "";
 
-  if (!data.length) {
-    emptyState.style.display = "block";
+  if (error) {
+    console.error("Erro ao carregar pedidos:", error);
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:10px;">Erro ao carregar pedidos.</td></tr>`;
     return;
-  } else {
-    emptyState.style.display = "none";
   }
 
-  for (const pedido of data) {
-    const tr = document.createElement("tr");
+  if (!data || data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:10px;">Nenhum pedido encontrado.</td></tr>`;
+    return;
+  }
 
-    const dataBR = pedido.data_pedido
-      ? new Date(pedido.data_pedido).toLocaleDateString("pt-BR")
+  for (const ped of data) {
+    const dataBR = ped.data_pedido
+      ? new Date(ped.data_pedido).toLocaleDateString("pt-BR")
       : "-";
 
-    const total = pedido.total ?? 0;
+    const cliente = ped.clientes?.razao_social || "—";
 
+    const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${pedido.numero_pedido || "-"}</td>
+      <td>${ped.numero_pedido}</td>
       <td>${dataBR}</td>
-      <td>${pedido.clientes?.razao_social || "-"}</td>
-      <td>${pedido.tipo_pedido || "-"}</td>
-      <td>${total.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-      <td class="col-acoes">
-        <button class="btn-secondary btn-sm" data-id="${pedido.id}" data-acao="editar">Editar</button>
-        <button class="btn-outline btn-sm" data-id="${pedido.id}" data-acao="itens">Itens</button>
+      <td>${cliente}</td>
+      <td>${ped.tipo_pedido}</td>
+      <td>R$ ${formatarValor(ped.total)}</td>
+      <td class="acoes">
+        <a href="pedido_itens.html?id=${ped.id}" class="btn-ver">Ver</a>
       </td>
     `;
 
     tbody.appendChild(tr);
   }
+}
 
-  // Ações dos botões
-  tbody.addEventListener("click", (e) => {
-    const btn = e.target.closest("button");
-    if (!btn) return;
-
-    const id = btn.getAttribute("data-id");
-    const acao = btn.getAttribute("data-acao");
-
-    if (acao === "editar") {
-      window.location.href = `pedidos.html?id=${id}`;
-    } else if (acao === "itens") {
-      window.location.href = `pedidos.html?id=${id}#itens`;
-    }
+/* ============================================================
+   FORMATAÇÃO DE VALORES
+============================================================ */
+function formatarValor(v) {
+  const val = Number(v || 0);
+  return val.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
   });
 }
