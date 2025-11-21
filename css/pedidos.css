@@ -9,9 +9,6 @@ body {
   color: #e5e7eb;
 }
 
-/* Herda boa parte do visual do dashboard.css.
-   Aqui só complementamos coisas específicas. */
-
 .page-container {
   max-width: 1200px;
   margin: 90px auto 40px;
@@ -165,13 +162,9 @@ button,
   border-color: #38bdf8;
 }
 
-/* Botão que ocupa toda a largura do field */
-
 .block {
   width: 100%;
 }
-
-/* Linha de botões */
 
 .buttons-row {
   display: flex;
@@ -179,7 +172,7 @@ button,
   gap: 10px;
 }
 
-/* Topbar (complementar ao dashboard.css, caso precise) */
+/* Topbar */
 
 .topbar {
   position: fixed;
@@ -293,7 +286,7 @@ button,
   filter: brightness(1.08);
 }
 
-/* Linha de filtros */
+/* Linha de filtros (usada na lista) */
 
 .filtros-row {
   display: grid;
