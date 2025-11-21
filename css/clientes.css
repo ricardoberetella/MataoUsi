@@ -7,18 +7,16 @@ body {
   color: white;
 }
 
-/* CONTEÚDO PRINCIPAL OCUPANDO TELA TODA */
-.main-full {
-  padding: 40px;
-  max-width: 900px;
-  margin: 0 auto;
-}
-
 /* TÍTULO */
 .titulo {
   font-size: 34px;
   color: #00eaff;
-  margin-bottom: 20px;
+  margin: 20px;
+}
+
+/* ÁREA DE AÇÕES */
+.area-acoes {
+  margin: 20px;
 }
 
 /* BOTÃO FUTURISTA */
@@ -30,7 +28,6 @@ body {
   color: #00eaff;
   border-radius: 8px;
   cursor: pointer;
-  margin-bottom: 25px;
   transition: 0.3s;
 }
 
@@ -45,7 +42,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-bottom: 30px;
+  margin: 0 20px 30px 20px;
 }
 
 .item-cliente {
@@ -69,7 +66,7 @@ body {
   background: #0b0f16;
   border: 2px solid #00eaff;
   border-radius: 12px;
-  margin-top: 20px;
+  margin: 20px;
 }
 
 .hidden {
@@ -102,7 +99,7 @@ body {
 /* BOTÃO VOLTAR */
 .btn-voltar {
   display: inline-block;
-  margin-top: 30px;
+  margin: 30px 20px;
   background: #0b0f16;
   border: 2px solid #00eaff;
   padding: 12px 16px;
