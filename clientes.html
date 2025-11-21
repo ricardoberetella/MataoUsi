@@ -11,18 +11,19 @@
     <h1 class="titulo">Clientes</h1>
 
     <div class="area-acoes">
-        <button class="btn-primary" onclick="window.location.href='clientes_cadastrar.html'">
+        <button class="btn-neon" onclick="window.location.href='clientes_cadastrar.html'">
             + Cadastrar Novo Cliente
         </button>
     </div>
 
-    <div id="listaClientes" class="lista"></div>
+    <!-- LISTA DE CLIENTES -->
+    <div id="listaClientes" class="lista-clientes"></div>
 
-    <div id="detalhesCliente" class="detalhes"></div>
+    <!-- DETALHES -->
+    <div id="detalhesCliente" class="detalhes hidden"></div>
 
-    <button class="btn-secondary voltar" onclick="window.location.href='dashboard.html'">
-        ← Voltar
-    </button>
+    <!-- BOTÃO VOLTAR -->
+    <a href="dashboard.html" class="btn-voltar">← Voltar</a>
 
     <script type="module" src="js/clientes.js"></script>
 
