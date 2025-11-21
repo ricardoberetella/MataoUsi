@@ -3,8 +3,11 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+let listaCompleta = [];
+
 document.addEventListener("DOMContentLoaded", () => {
   carregarClientes();
+  document.getElementById("campoBusca").addEventListener("input", filtrarLista);
 });
 
 /* ============================================
@@ -25,77 +28,60 @@ async function carregarClientes() {
     return;
   }
 
+  listaCompleta = data;
+  exibirLista(data);
+}
+
+/* ============================================
+   EXIBIR LISTA
+============================================ */
+function exibirLista(clientes) {
+  const lista = document.getElementById("listaClientes");
   lista.innerHTML = "";
 
-  data.forEach(cliente => {
+  clientes.forEach(cliente => {
     const item = document.createElement("div");
     item.classList.add("item-cliente");
 
     const cnpjFormatado = formataCNPJ(cliente.cpf_cnpj);
-    const telefoneFormatado = formataTelefone(cliente.telefone);
+    const telFormatado = formataTelefone(cliente.telefone);
 
     item.innerHTML = `
-      <strong>${cliente.razao_social}</strong><br>
-      <span>CNPJ: ${cnpjFormatado || "-"}</span><br>
-      <span>Telefone: ${telefoneFormatado || "-"}</span>
-    `;
+      <div class="item-info">
+        <span class="icone-cliente">⚡</span>
+        <strong>${cliente.razao_social}</strong> —
+        CNPJ: ${cnpjFormatado} —
+        Tel: ${telFormatado}
+      </div>
 
-    item.addEventListener("click", () => abrirDetalhes(cliente));
+      <button class="btn-abrir" onclick="abrir(${cliente.id})">
+        Abrir →
+      </button>
+    `;
 
     lista.appendChild(item);
   });
 }
 
 /* ============================================
-   EXIBIR DETALHES
+   BUSCAR NOME / CNPJ
 ============================================ */
-function abrirDetalhes(cliente) {
-  const det = document.getElementById("detalhesCliente");
-  det.classList.remove("hidden");
+function filtrarLista() {
+  const termo = document.getElementById("campoBusca").value.toLowerCase();
 
-  const cnpjFormatado = formataCNPJ(cliente.cpf_cnpj);
-  const telefoneFormatado = formataTelefone(cliente.telefone);
+  const filtrado = listaCompleta.filter(c =>
+    c.razao_social.toLowerCase().includes(termo) ||
+    c.cpf_cnpj.includes(termo.replace(/\D/g, ""))
+  );
 
-  det.innerHTML = `
-    <h2 style="color:#00eaff;">${cliente.razao_social}</h2>
-
-    <p><strong>CNPJ:</strong> ${cnpjFormatado || "-"}</p>
-    <p><strong>Telefone:</strong> ${telefoneFormatado || "-"}</p>
-    <p><strong>Email:</strong> ${cliente.email || "-"}</p>
-    <p><strong>Endereço:</strong> ${cliente.endereco || "-"}</p>
-
-    <button class="btn-editar" onclick="editarCliente(${cliente.id})">Editar</button>
-    <button class="btn-excluir" onclick="excluirCliente(${cliente.id})">Excluir</button>
-  `;
+  exibirLista(filtrado);
 }
 
 /* ============================================
-   EDITAR CLIENTE
+   ABRIR
 ============================================ */
-window.editarCliente = function (id) {
+window.abrir = function (id) {
   window.location.href = `clientes_editar.html?id=${id}`;
-};
-
-/* ============================================
-   EXCLUIR CLIENTE
-============================================ */
-window.excluirCliente = async function (id) {
-  if (!confirm("Tem certeza que deseja excluir este cliente?")) return;
-
-  const { error } = await supabase
-    .from("clientes")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    alert("Erro ao excluir cliente.");
-    console.error(error);
-    return;
-  }
-
-  alert("Cliente excluído!");
-  carregarClientes();
-  document.getElementById("detalhesCliente").classList.add("hidden");
 };
 
 /* ============================================
@@ -110,5 +96,12 @@ function formataCNPJ(cnpj) {
 function formataTelefone(tel) {
   if (!tel) return "";
   const t = tel.replace(/\D/g, "");
-  return t.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1)$2-$3");
+
+  if (t.length === 10)
+    return t.replace(/^(\d{2})(\d{4})(\d{4})$/, "($1)$2-$3");
+
+  if (t.length === 11)
+    return t.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1)$2-$3");
+
+  return tel;
 }
