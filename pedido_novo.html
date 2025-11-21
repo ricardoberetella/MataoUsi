@@ -46,28 +46,17 @@
         </div>
 
         <div class="field">
-          <label>PC / OC</label>
-          <input type="text" id="pc_oc" placeholder="PC-123">
-        </div>
-
-        <div class="field">
-          <label>Número Pedido</label>
-          <input type="text" id="numero_pedido" placeholder="P-0001" required>
-        </div>
-
-        <div class="field">
           <label>Tipo</label>
-          <select id="tipo_pedido">
+          <select id="tipo_documento" required>
             <option value="">Selecione...</option>
-            <option value="VENDA">Venda</option>
-            <option value="ORCAMENTO">Orçamento</option>
-            <option value="SERVICO">Serviço</option>
+            <option value="PC">Pedido de Compra (PC)</option>
+            <option value="OC">Ordem de Compra (OC)</option>
           </select>
         </div>
 
-        <div class="field field-full">
-          <label>Observações</label>
-          <textarea id="observacoes" rows="3"></textarea>
+        <div class="field">
+          <label>Número do Documento</label>
+          <input type="text" id="numero_documento" placeholder="Ex: PC-345.980" required>
         </div>
 
       </form>
@@ -91,7 +80,7 @@
 
           <div class="field">
             <label>Preço R$</label>
-            <input id="preco_unitario">
+            <input id="preco_unitario" placeholder="0,00">
           </div>
 
           <div class="field">
@@ -99,8 +88,8 @@
             <input id="quantidade" type="number" step="0.01">
           </div>
 
-          <button class="btn btn-secondary" id="btnBuscarProduto">Buscar</button>
-          <button class="btn btn-primary" id="btnAdicionarItem">+</button>
+          <button class="btn btn-secondary" id="btnBuscarProduto" type="button">Buscar</button>
+          <button class="btn btn-primary" id="btnAdicionarItem" type="button">+</button>
 
         </div>
 
@@ -130,8 +119,10 @@
       </section>
 
       <div class="form-actions">
-        <button class="btn btn-primary" id="btnSalvarPedido">Salvar</button>
-        <button class="btn btn-ghost" onclick="window.location.href='pedidos.html'">Cancelar</button>
+        <button class="btn btn-primary" id="btnSalvarPedido" type="button">Salvar</button>
+        <button class="btn btn-ghost" type="button" onclick="window.location.href='pedidos.html'">
+          Cancelar
+        </button>
       </div>
 
     </section>
