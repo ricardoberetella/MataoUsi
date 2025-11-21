@@ -3,6 +3,9 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// ===============================
+// PEGAR ID DA URL
+// ===============================
 const params = new URLSearchParams(window.location.search);
 const pedidoId = params.get("id");
 
@@ -11,11 +14,17 @@ if (!pedidoId) {
   window.location.href = "pedidos_lista.html";
 }
 
+// ===============================
+// AO CARREGAR
+// ===============================
 document.addEventListener("DOMContentLoaded", () => {
   carregarCabecalho();
   carregarItens();
 });
 
+// ===============================
+// CABEÇALHO
+// ===============================
 async function carregarCabecalho() {
   const { data, error } = await supabase
     .from("pedidos")
@@ -40,6 +49,9 @@ async function carregarCabecalho() {
     `${new Date(data.data_pedido).toLocaleDateString("pt-BR")} — Total: R$ ${formatar(data.total)}`;
 }
 
+// ===============================
+// ITENS DO PEDIDO
+// ===============================
 async function carregarItens() {
   const tbody = document.getElementById("listaItens");
   tbody.innerHTML = "";
@@ -91,6 +103,9 @@ async function carregarItens() {
   });
 }
 
+// ===============================
+// FORMATAR
+// ===============================
 function formatar(v) {
   return Number(v || 0).toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
