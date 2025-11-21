@@ -1,17 +1,15 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Novo Pedido - MataoUsi</title>
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="css/pedidos.css" />
+  <!-- CSS futurista compartilhado com pedidos -->
+  <link rel="stylesheet" href="CSS/pedidos.css" />
 </head>
 
 <body>
-
   <!-- TOPO -->
   <header class="topbar">
     <div class="user-area">
@@ -27,77 +25,84 @@
     </button>
   </header>
 
-  <!-- PÁGINA -->
   <main class="page">
     <section class="card">
+      <div class="card-header">
+        <div>
+          <h1>Novo Pedido</h1>
+          <p class="texto-menor">Preencha os dados do pedido e adicione os itens.</p>
+        </div>
+      </div>
 
-      <h1>Novo Pedido</h1>
-
-      <!-- CABEÇALHO SIMPLIFICADO -->
-      <form id="formPedido" class="grid-header">
-
-        <!-- Cliente -->
+      <!-- CABEÇALHO DO PEDIDO -->
+      <section class="filtros">
         <div class="field">
-          <label>Cliente</label>
-          <select id="cliente" required>
+          <label>CLIENTE</label>
+          <select id="cliente_id">
             <option value="">Selecione...</option>
           </select>
         </div>
 
-        <!-- Data -->
         <div class="field">
-          <label>Data</label>
-          <input type="date" id="data_pedido" required />
+          <label>DATA PEDIDO</label>
+          <input id="data_pedido" type="date" />
         </div>
 
-        <!-- Tipo Documento (PC / OC) -->
         <div class="field">
-          <label>Tipo de Documento</label>
-          <select id="tipo_documento" required>
-            <option value="">Selecione...</option>
+          <label>TIPO DOCUMENTO</label>
+          <select id="tipo_documento">
             <option value="PC">PC - Pedido de Compra</option>
             <option value="OC">OC - Ordem de Compra</option>
           </select>
         </div>
 
-        <!-- Número Documento -->
         <div class="field">
-          <label>Nº Documento</label>
-          <input type="text" id="numero_documento" placeholder="Ex: PC-123" required />
+          <label>Nº DOCUMENTO</label>
+          <input id="numero_documento" placeholder="Ex: 345.980" />
         </div>
-      </form>
+      </section>
 
       <!-- ITENS DO PEDIDO -->
-      <section class="itens-section">
+      <h2>Itens do Pedido</h2>
 
-        <h2>Itens do Pedido</h2>
+      <div class="itens-section">
 
-        <!-- Linha de inclusão -->
+        <!-- Linha de inclusão de item -->
         <div class="itens-adicionar">
-
           <div class="field">
-            <label>Código</label>
-            <input id="codigo_produto" placeholder="Clique para selecionar" readonly />
+            <label>CÓDIGO</label>
+            <input id="item_codigo" placeholder="Clique para selecionar" readonly />
           </div>
 
           <div class="field">
-            <label>Descrição</label>
-            <input id="descricao_produto" disabled />
+            <label>DESCRIÇÃO</label>
+            <input id="item_descricao" readonly />
           </div>
 
           <div class="field">
-            <label>Preço R$</label>
-            <input id="preco_unitario" />
+            <label>PREÇO R$</label>
+            <input id="item_preco" placeholder="0,00" />
           </div>
 
           <div class="field">
-            <label>Qtd</label>
-            <input id="quantidade" type="number" step="0.01" />
+            <label>QTD</label>
+            <input id="item_qtd" type="number" min="0" step="1" />
           </div>
 
-          <button class="btn btn-secondary" type="button" id="btnBuscarProduto">Buscar</button>
-          <button class="btn btn-primary" type="button" id="btnAdicionarItem">+</button>
+          <div class="field">
+            <label>DATA ENTREGA</label>
+            <input id="item_data_entrega" type="date" />
+          </div>
 
+          <div class="field">
+            <label>&nbsp;</label>
+            <button id="btnBuscarProduto" class="btn btn-secondary">Buscar</button>
+          </div>
+
+          <div class="field">
+            <label>&nbsp;</label>
+            <button id="btnAddItem" class="btn btn-primary">+</button>
+          </div>
         </div>
 
         <!-- Tabela de itens -->
@@ -105,70 +110,68 @@
           <table class="tabela">
             <thead>
               <tr>
-                <th>Código</th>
-                <th>Descrição</th>
-                <th>Qtd</th>
-                <th>Unit</th>
-                <th>Total</th>
-                <th>Ações</th>
+                <th>CÓDIGO</th>
+                <th>DESCRIÇÃO</th>
+                <th>QTD</th>
+                <th>UNIT</th>
+                <th>DATA ENTREGA</th>
+                <th>TOTAL</th>
+                <th>STATUS</th>
+                <th>AÇÕES</th>
               </tr>
             </thead>
-            <tbody id="tbodyItens"></tbody>
+            <tbody id="tabelaItens"></tbody>
           </table>
         </div>
 
-        <!-- Total do pedido -->
-        <div class="totais">
+        <div class="total-area" style="margin-top: 10px; text-align: right;">
           <span>Total:</span>
           <strong id="totalPedido">R$ 0,00</strong>
         </div>
-      </section>
+      </div>
 
-      <!-- BOTÕES -->
+      <p id="msgErro" class="msg-erro"></p>
+
       <div class="form-actions">
-        <button class="btn btn-primary" type="button" id="btnSalvarPedido">Salvar</button>
-        <button class="btn btn-ghost" type="button" onclick="window.location.href='pedidos.html'">Cancelar</button>
+        <button id="btnSalvarPedido" class="btn btn-primary">Salvar</button>
+        <button class="btn btn-secondary" onclick="window.location.href='pedidos.html'">
+          Cancelar
+        </button>
       </div>
 
     </section>
   </main>
 
   <!-- MODAL DE PRODUTOS -->
-  <div id="modalProdutos" class="modal-overlay">
+  <div class="modal-overlay" id="modalProdutos">
     <div class="modal">
-
       <div class="modal-header">
-        <h2>Selecionar Produto</h2>
-        <button type="button" class="btn btn-ghost btn-fechar-modal">&times;</button>
+        <h3>Selecionar Produto</h3>
+        <button class="btn btn-ghost" id="btnFecharModal">X</button>
       </div>
-
       <div class="modal-body">
         <div class="field">
           <label>Buscar</label>
           <input id="buscaProduto" placeholder="Código ou descrição" />
         </div>
-
-        <div class="table-wrapper modal-table-wrapper">
+        <div class="table-wrapper">
           <table class="tabela">
             <thead>
               <tr>
-                <th>Código</th>
-                <th>Descrição</th>
-                <th>Preço</th>
-                <th>Ações</th>
+                <th>CÓDIGO</th>
+                <th>DESCRIÇÃO</th>
+                <th>UNIT</th>
+                <th>AÇÃO</th>
               </tr>
             </thead>
-            <tbody id="tbodyModalProdutos"></tbody>
+            <tbody id="listaProdutosModal"></tbody>
           </table>
         </div>
-
       </div>
     </div>
   </div>
 
   <!-- JS -->
   <script type="module" src="js/pedido_novo.js"></script>
-
 </body>
-
 </html>
