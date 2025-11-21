@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ===============================
-// PEGAR O ID DO PEDIDO NA URL
+// PEGAR ID DO PEDIDO NA URL
 // ===============================
 const params = new URLSearchParams(window.location.search);
 const pedidoId = params.get("id");
@@ -80,7 +80,8 @@ async function carregarItens() {
   }
 
   data.forEach((item) => {
-    const entregue = Number(item.qtd_entregue || 0);
+
+    const entregue = Number(item.quantidade_entregue || 0);
     const restante = Number(item.quantidade || 0) - entregue;
 
     const tr = document.createElement("tr");
@@ -91,13 +92,11 @@ async function carregarItens() {
       <td>${formatar(entregue)}</td>
       <td>${formatar(restante)}</td>
       <td>${formatar(item.valor_unitario)}</td>
-      <td>${formatar(item.total_item)}</td>
+      <td>${formatar(item.valor_total)}</td>
       <td>${item.data_entrega ? new Date(item.data_entrega).toLocaleDateString("pt-BR") : "-"}</td>
       <td>${item.status || "-"}</td>
-      <td class="col-acoes">
-        <button class="btn-remover" data-id="${item.id}">
-          Excluir
-        </button>
+      <td>
+        <button class="btn-remover" data-id="${item.id}">Excluir</button>
       </td>
     `;
 
@@ -110,7 +109,7 @@ async function carregarItens() {
 }
 
 // ===============================
-// EXCLUIR ITEM DO PEDIDO
+// EXCLUIR ITEM
 // ===============================
 async function excluirItem(itemId) {
   if (!confirm("Deseja realmente excluir este item?")) return;
@@ -130,7 +129,7 @@ async function excluirItem(itemId) {
 }
 
 // ===============================
-// FORMATAR NÚMEROS
+// FORMATADOR DE NÚMEROS
 // ===============================
 function formatar(v) {
   return Number(v || 0).toLocaleString("pt-BR", {
