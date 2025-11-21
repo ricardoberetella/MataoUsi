@@ -3,23 +3,30 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Lista de itens em memória (antes de salvar no banco)
 let itensPedido = [];
+// Cache de produtos para o modal
 let produtosCache = [];
 
+/* =========================================
+   AO CARREGAR A PÁGINA
+========================================= */
 document.addEventListener("DOMContentLoaded", () => {
   carregarClientes();
   configurarEventos();
   setHoje();
 });
 
+/* Define data de hoje como padrão no campo data_pedido */
 function setHoje() {
   const hoje = new Date().toISOString().substring(0, 10);
   const inputData = document.getElementById("data_pedido");
   if (inputData && !inputData.value) inputData.value = hoje;
 }
 
-/* ------------ CLIENTES ------------ */
-
+/* =========================================
+   CARREGAR CLIENTES
+========================================= */
 async function carregarClientes() {
   const select = document.getElementById("cliente_id");
   const { data, error } = await supabase
@@ -40,22 +47,39 @@ async function carregarClientes() {
   });
 }
 
-/* ------------ EVENTOS ------------ */
-
+/* =========================================
+   CONFIGURAÇÃO DE EVENTOS
+========================================= */
 function configurarEventos() {
-  document.getElementById("btnBuscarProduto").addEventListener("click", abrirModalProdutos);
-  document.getElementById("btnFecharModal").addEventListener("click", fecharModalProdutos);
-  document.getElementById("buscaProduto").addEventListener("input", filtrarProdutosModal);
-  document.getElementById("btnAddItem").addEventListener("click", adicionarItem);
-  document.getElementById("btnSalvarPedido").addEventListener("click", salvarPedido);
+  document
+    .getElementById("btnBuscarProduto")
+    .addEventListener("click", abrirModalProdutos);
+
+  document
+    .getElementById("btnFecharModal")
+    .addEventListener("click", fecharModalProdutos);
+
+  document
+    .getElementById("buscaProduto")
+    .addEventListener("input", filtrarProdutosModal);
+
+  document
+    .getElementById("btnAddItem")
+    .addEventListener("click", adicionarItem);
+
+  document
+    .getElementById("btnSalvarPedido")
+    .addEventListener("click", salvarPedido);
 }
 
-/* ------------ MODAL PRODUTOS ------------ */
-
+/* =========================================
+   MODAL DE PRODUTOS
+========================================= */
 async function abrirModalProdutos() {
   const modal = document.getElementById("modalProdutos");
   modal.style.display = "flex";
 
+  // Carrega produtos apenas uma vez (cache)
   if (produtosCache.length === 0) {
     const { data, error } = await supabase
       .from("produtos")
@@ -64,9 +88,10 @@ async function abrirModalProdutos() {
 
     if (error) {
       console.error(error);
+      alert("Erro ao carregar produtos.");
       return;
     }
-    produtosCache = data;
+    produtosCache = data || [];
   }
 
   renderizarProdutosModal(produtosCache);
@@ -77,15 +102,22 @@ function fecharModalProdutos() {
   modal.style.display = "none";
 }
 
+/* Filtro dentro do modal (código ou descrição) */
 function filtrarProdutosModal() {
-  const termo = document.getElementById("buscaProduto").value.trim().toLowerCase();
+  const termo = document
+    .getElementById("buscaProduto")
+    .value.trim()
+    .toLowerCase();
+
   const filtrados = produtosCache.filter(p =>
     p.codigo.toLowerCase().includes(termo) ||
     p.descricao.toLowerCase().includes(termo)
   );
+
   renderizarProdutosModal(filtrados);
 }
 
+/* Monta tabela de produtos dentro do modal */
 function renderizarProdutosModal(lista) {
   const tbody = document.getElementById("listaProdutosModal");
   tbody.innerHTML = "";
@@ -105,15 +137,17 @@ function renderizarProdutosModal(lista) {
     tbody.appendChild(tr);
   });
 
+  // Clique em "Selecionar"
   tbody.querySelectorAll("button[data-id]").forEach(btn => {
     btn.addEventListener("click", () => {
       const id = Number(btn.getAttribute("data-id"));
       const prod = produtosCache.find(p => p.id === id);
-      selecionarProduto(prod);
+      if (prod) selecionarProduto(prod);
     });
   });
 }
 
+/* Quando escolhe um produto no modal */
 function selecionarProduto(prod) {
   document.getElementById("item_codigo").value = prod.codigo;
   document.getElementById("item_descricao").value = prod.descricao;
@@ -122,8 +156,9 @@ function selecionarProduto(prod) {
   fecharModalProdutos();
 }
 
-/* ------------ ITENS EM MEMÓRIA ------------ */
-
+/* =========================================
+   ITENS EM MEMÓRIA (ANTES DO SALVAMENTO)
+========================================= */
 function adicionarItem() {
   const codigo = document.getElementById("item_codigo").value.trim();
   const descricao = document.getElementById("item_descricao").value.trim();
@@ -138,6 +173,7 @@ function adicionarItem() {
     msgErro.textContent = "Selecione um produto.";
     return;
   }
+
   if (!qtdStr || Number(qtdStr) <= 0) {
     msgErro.textContent = "Informe uma quantidade válida.";
     return;
@@ -147,6 +183,17 @@ function adicionarItem() {
   const produto_id = produto ? produto.id : null;
   const preco = parseNumero(precoStr);
   const quantidade = Number(qtdStr);
+
+  if (!produto_id) {
+    msgErro.textContent = "Produto não localizado. Use o botão Buscar.";
+    return;
+  }
+
+  if (Number.isNaN(preco) || preco <= 0) {
+    msgErro.textContent = "Informe um preço válido.";
+    return;
+  }
+
   const total = preco * quantidade;
 
   const item = {
@@ -156,7 +203,7 @@ function adicionarItem() {
     valor_unitario: preco,
     quantidade,
     data_entrega: dataEntrega || null,
-    quantidade_entregue: 0,
+    quantidade_entregue: 0, // Para controle de saída futura
     status: "Aberto",
     valor_total: total
   };
@@ -166,6 +213,7 @@ function adicionarItem() {
   renderizarItens();
 }
 
+/* Limpa os campos da linha de inclusão */
 function limparLinhaItem() {
   document.getElementById("item_codigo").value = "";
   document.getElementById("item_descricao").value = "";
@@ -174,6 +222,7 @@ function limparLinhaItem() {
   document.getElementById("item_data_entrega").value = "";
 }
 
+/* Desenha os itens na tabela */
 function renderizarItens() {
   const tbody = document.getElementById("tabelaItens");
   tbody.innerHTML = "";
@@ -200,6 +249,7 @@ function renderizarItens() {
     tbody.appendChild(tr);
   });
 
+  // Remover item
   tbody.querySelectorAll("button[data-del]").forEach(b => {
     b.addEventListener("click", () => {
       const idx = Number(b.getAttribute("data-del"));
@@ -208,7 +258,7 @@ function renderizarItens() {
     });
   });
 
-  // (edição simples - pode melhorar depois)
+  // Edição simples (quantidade)
   tbody.querySelectorAll("button[data-edit]").forEach(b => {
     b.addEventListener("click", () => {
       const idx = Number(b.getAttribute("data-edit"));
@@ -219,11 +269,12 @@ function renderizarItens() {
   document.getElementById("totalPedido").textContent = formatarMoeda(totalPedido);
 }
 
-/* edição básica de item */
+/* Edição básica de item (só quantidade, recalculando total) */
 function editarItem(idx) {
   const item = itensPedido[idx];
   const novaQtd = window.prompt("Nova quantidade:", item.quantidade);
   if (!novaQtd) return;
+
   const q = Number(novaQtd);
   if (Number.isNaN(q) || q <= 0) return;
 
@@ -232,8 +283,9 @@ function editarItem(idx) {
   renderizarItens();
 }
 
-/* ------------ SALVAR PEDIDO ------------ */
-
+/* =========================================
+   SALVAR PEDIDO + ITENS NO SUPABASE
+========================================= */
 async function salvarPedido() {
   const msgErro = document.getElementById("msgErro");
   msgErro.textContent = "";
@@ -253,7 +305,7 @@ async function salvarPedido() {
     return;
   }
 
-  // anti-duplicação: tipo + número
+  // Anti-duplicação: tipo + número
   const { data: jaExiste, error: errDupl } = await supabase
     .from("pedidos")
     .select("id")
@@ -273,7 +325,7 @@ async function salvarPedido() {
 
   const totalPedido = itensPedido.reduce((acc, it) => acc + it.valor_total, 0);
 
-  // 1) insere cabeçalho
+  // 1) Insere cabeçalho na tabela "pedidos"
   const { data: novoPedido, error: errPedido } = await supabase
     .from("pedidos")
     .insert({
@@ -294,7 +346,7 @@ async function salvarPedido() {
 
   const pedido_id = novoPedido.id;
 
-  // 2) insere itens
+  // 2) Monta o array de itens para salvar na tabela "pedido_itens"
   const itensParaInsert = itensPedido.map(it => ({
     pedido_id,
     produto_id: it.produto_id,
@@ -302,12 +354,12 @@ async function salvarPedido() {
     valor_unitario: it.valor_unitario,
     valor_total: it.valor_total,
     data_entrega: it.data_entrega,
-    quantidade_entregue: 0,
-    status: "Aberto"
+    quantidade_entregue: 0,   // começa zerado
+    status: "Aberto"          // status inicial
   }));
 
   const { error: errItens } = await supabase
-    .from("pedidos_itens")
+    .from("pedido_itens")  // <<< AQUI AGORA ESTÁ CORRETO
     .insert(itensParaInsert);
 
   if (errItens) {
@@ -320,8 +372,9 @@ async function salvarPedido() {
   window.location.href = "pedidos.html";
 }
 
-/* ------------ HELPERS ------------ */
-
+/* =========================================
+   HELPERS
+========================================= */
 function parseNumero(val) {
   if (!val) return 0;
   return Number(val.replace(/\./g, "").replace(",", "."));
