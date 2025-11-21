@@ -2,28 +2,29 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clientes - Matão Usinagem</title>
+    <title>Clientes</title>
     <link rel="stylesheet" href="css/clientes.css">
-    <script type="module" src="js/clientes.js"></script>
 </head>
 
 <body>
 
-<!-- CONTEÚDO SEM MENU LATERAL -->
-<main class="main-full">
-
     <h1 class="titulo">Clientes</h1>
 
-    <button id="btnNovoCliente" class="btn-neon">+ Cadastrar Novo Cliente</button>
+    <div class="area-acoes">
+        <button class="btn-primary" onclick="window.location.href='clientes_cadastrar.html'">
+            + Cadastrar Novo Cliente
+        </button>
+    </div>
 
-    <div id="listaClientes" class="lista-clientes"></div>
+    <div id="listaClientes" class="lista"></div>
 
-    <div id="detalhesCliente" class="detalhes hidden"></div>
+    <div id="detalhesCliente" class="detalhes"></div>
 
-    <a href="dashboard.html" class="btn-voltar">⟵ Voltar</a>
+    <button class="btn-secondary voltar" onclick="window.location.href='dashboard.html'">
+        ← Voltar
+    </button>
 
-</main>
+    <script type="module" src="js/clientes.js"></script>
 
 </body>
 </html>
