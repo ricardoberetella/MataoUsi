@@ -25,28 +25,23 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // REMOVE . / - AO SALVAR
+    // REMOVE MÁSCARA DO CNPJ
     const cnpjLimpo = cnpj.replace(/\D/g, "");
 
-    // FORMATAÇÃO PADRÃO AO EXIBIR FUTURAMENTE
-    function formataCNPJ(cnpj) {
-      return cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
-        "$1.$2.$3/$4-$5");
-    }
-
+    // FORMATA TELEFONE
     const telefoneLimpo = telefone.replace(/\D/g, "");
     const telefoneFormatado =
       telefoneLimpo.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1)$2-$3");
 
-    // 🚨 CONSULTA COM CAST PARA TEXTO
+    // 🔥 CONSULTA NA COLUNA CORRETA
     const { data: jaExiste, error: erroBusca } = await supabase
       .from("clientes")
       .select("id")
-      .filter("cnpj", "eq", cnpjLimpo);
+      .eq("cpf_cnpj", cnpjLimpo);
 
     if (erroBusca) {
       console.error(erroBusca);
-      msg.textContent = "Erro ao verificar CNPJ (400).";
+      msg.textContent = "Erro ao verificar CNPJ.";
       msg.classList.add("msg-error");
       return;
     }
@@ -57,10 +52,11 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // 🔥 SALVA USANDO A COLUNA CORRETA
     const { error } = await supabase.from("clientes").insert([
       {
         razao_social,
-        cnpj: cnpjLimpo, // SALVA SEM MÁSCARA
+        cpf_cnpj: cnpjLimpo,
         telefone: telefoneFormatado || null,
         email: email || null,
         endereco: endereco || null
@@ -74,7 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    msg.textContent = "Cliente cadastrado!";
+    msg.textContent = "Cliente cadastrado com sucesso!";
     msg.classList.add("msg-success");
 
     setTimeout(() => {
