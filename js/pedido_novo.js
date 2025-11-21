@@ -305,12 +305,12 @@ async function salvarPedido() {
     return;
   }
 
-  // Anti-duplicação: tipo + número
+  // Anti-duplicação: tipo + número (AGORA USANDO COLUNAS CERTAS DO BANCO)
   const { data: jaExiste, error: errDupl } = await supabase
     .from("pedidos")
     .select("id")
-    .eq("tipo_documento", tipo_documento)
-    .eq("numero_documento", numero_documento);
+    .eq("tipo_pedido", tipo_documento)
+    .eq("numero_pedido", numero_documento);
 
   if (errDupl) {
     console.error(errDupl);
@@ -325,14 +325,14 @@ async function salvarPedido() {
 
   const totalPedido = itensPedido.reduce((acc, it) => acc + it.valor_total, 0);
 
-  // 1) Insere cabeçalho na tabela "pedidos"
+  // 1) Insere cabeçalho na tabela "pedidos" (MAPPANDO PARA tipo_pedido / numero_pedido)
   const { data: novoPedido, error: errPedido } = await supabase
     .from("pedidos")
     .insert({
       cliente_id: Number(cliente_id),
       data_pedido,
-      tipo_documento,
-      numero_documento,
+      tipo_pedido: tipo_documento,
+      numero_pedido: numero_documento,
       total: totalPedido
     })
     .select("id")
@@ -346,7 +346,7 @@ async function salvarPedido() {
 
   const pedido_id = novoPedido.id;
 
-  // 2) Monta o array de itens para salvar na tabela "pedido_itens"
+  // 2) Monta o array de itens para salvar na tabela "pedidos_itens"
   const itensParaInsert = itensPedido.map(it => ({
     pedido_id,
     produto_id: it.produto_id,
@@ -359,7 +359,7 @@ async function salvarPedido() {
   }));
 
   const { error: errItens } = await supabase
-    .from("pedido_itens")  // <<< AQUI AGORA ESTÁ CORRETO
+    .from("pedidos_itens")  // NOME CORRETO DA TABELA
     .insert(itensParaInsert);
 
   if (errItens) {
@@ -369,7 +369,7 @@ async function salvarPedido() {
   }
 
   alert("Pedido salvo com sucesso!");
-  window.location.href = "pedidos.html";
+  window.location.href = "pedidos_lista.html"; // vai para a lista futurista
 }
 
 /* =========================================
