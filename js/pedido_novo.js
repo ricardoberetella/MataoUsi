@@ -1,17 +1,11 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
-// Inicializa o Supabase
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Variáveis globais
 let itensPedido = [];
 let produtoAtual = null;
 let pedidoId = null;
-
-/* ===========================================================
-   FUNÇÕES AUXILIARES
-   =========================================================== */
 
 function parseDecimalBR(str) {
   if (!str) return 0;
@@ -26,10 +20,6 @@ function formatDecimalBR(valor) {
   });
 }
 
-/* ===========================================================
-   AO CARREGAR A PÁGINA
-   =========================================================== */
-
 document.addEventListener("DOMContentLoaded", () => {
   carregarClientes();
 
@@ -37,7 +27,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (params.has("id")) {
     pedidoId = Number(params.get("id"));
     document.getElementById("tituloPagina").textContent = "Editar Pedido";
-
     carregarPedidoExistente(pedidoId);
   } else {
     document.getElementById("data_pedido").value = new Date()
@@ -45,7 +34,6 @@ document.addEventListener("DOMContentLoaded", () => {
       .slice(0, 10);
   }
 
-  // Eventos
   document
     .getElementById("btnBuscarProduto")
     .addEventListener("click", buscarProduto);
@@ -67,9 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
     .addEventListener("click", salvarPedido);
 });
 
-/* ===========================================================
-   BUSCAR PRODUTO PELO CÓDIGO
-   =========================================================== */
+/* ------------ BUSCAR PRODUTO POR CÓDIGO ------------ */
 
 async function buscarProduto() {
   const codigo = document.getElementById("codigo_produto").value.trim();
@@ -102,14 +88,12 @@ async function buscarProduto() {
 
   produtoAtual = data;
 
-  descricao.value = data.descricao;
+  descricao.value = data.descricao || "";
   precoInput.value = formatDecimalBR(data.preco_venda || 0);
   document.getElementById("quantidade").focus();
 }
 
-/* ===========================================================
-   ADICIONAR ITEM NA TABELA
-   =========================================================== */
+/* ------------ ADICIONAR ITEM ------------ */
 
 function adicionarItem() {
   if (!produtoAtual) {
@@ -138,12 +122,11 @@ function adicionarItem() {
     descricao: produtoAtual.descricao,
     quantidade: qtd,
     valor_unitario: preco,
-    total: preco * qtd,
+    total: qtd * preco,
   });
 
   produtoAtual = null;
 
-  // Limpar campos
   document.getElementById("codigo_produto").value = "";
   document.getElementById("descricao_produto").value = "";
   document.getElementById("preco_unitario").value = "";
@@ -152,9 +135,7 @@ function adicionarItem() {
   renderItens();
 }
 
-/* ===========================================================
-   REMOVER ITEM
-   =========================================================== */
+/* ------------ REMOVER ITEM ------------ */
 
 function removerItem(e) {
   const btn = e.target;
@@ -162,13 +143,10 @@ function removerItem(e) {
 
   const index = Number(btn.dataset.index);
   itensPedido.splice(index, 1);
-
   renderItens();
 }
 
-/* ===========================================================
-   ATUALIZAR TABELA DE ITENS
-   =========================================================== */
+/* ------------ RENDER ITENS ------------ */
 
 function renderItens() {
   const tbody = document.getElementById("tbodyItens");
@@ -206,20 +184,16 @@ function renderItens() {
   totalSpan.textContent = "R$ " + formatDecimalBR(totalGeral);
 }
 
-/* ===========================================================
-   SALVAR PEDIDO (NOVO OU EDITADO)
-   =========================================================== */
+/* ------------ SALVAR PEDIDO ------------ */
 
 async function salvarPedido() {
   const cliente = Number(document.getElementById("cliente").value);
   const dataPedido = document.getElementById("data_pedido").value;
-  const pc_oc = document.getElementById("pc_oc").value.trim();
-  const numero = document.getElementById("numero_pedido").value.trim();
-  const tipo = document.getElementById("tipo_pedido").value;
-  const obs = document.getElementById("observacoes").value.trim();
+  const tipoDoc = document.getElementById("tipo_documento").value;
+  const numeroDoc = document.getElementById("numero_documento").value.trim();
 
-  if (!cliente || !dataPedido || !numero || !tipo) {
-    alert("Preencha todos os campos obrigatórios.");
+  if (!cliente || !dataPedido || !tipoDoc || !numeroDoc) {
+    alert("Preencha todos os campos do cabeçalho.");
     return;
   }
 
@@ -228,33 +202,31 @@ async function salvarPedido() {
     return;
   }
 
-  // CHECAR DUPLICAÇÃO
+  // Verificar duplicidade de número de documento
   const { data: existe, error: erroCheck } = await supabase
     .from("pedidos")
     .select("id")
-    .eq("numero_pedido", numero)
+    .eq("numero_documento", numeroDoc)
     .maybeSingle();
 
   if (erroCheck) {
-    alert("Erro ao verificar número do pedido.");
+    alert("Erro ao verificar número do documento.");
     return;
   }
 
   if (!pedidoId && existe) {
-    alert("Já existe um pedido com esse número!");
+    alert("Já existe um pedido com esse número de documento!");
     return;
   }
 
   if (pedidoId && existe && existe.id !== pedidoId) {
-    alert("Já existe outro pedido com esse número!");
+    alert("Já existe outro pedido com esse número de documento!");
     return;
   }
 
   const total = itensPedido.reduce((acc, it) => acc + it.total, 0);
-
   let pedidoCriadoId = pedidoId;
 
-  /* SALVAR NOVO */
   if (!pedidoId) {
     const { data: novo, error } = await supabase
       .from("pedidos")
@@ -262,10 +234,8 @@ async function salvarPedido() {
         {
           cliente_id: cliente,
           data_pedido: dataPedido,
-          pc_oc,
-          observacoes: obs,
-          tipo_pedido: tipo,
-          numero_pedido: numero,
+          tipo_documento: tipoDoc,
+          numero_documento: numeroDoc,
           total,
         },
       ])
@@ -279,16 +249,13 @@ async function salvarPedido() {
 
     pedidoCriadoId = novo.id;
   } else {
-    /* ATUALIZAR EXISTENTE */
     const { error } = await supabase
       .from("pedidos")
       .update({
         cliente_id: cliente,
         data_pedido: dataPedido,
-        pc_oc,
-        observacoes: obs,
-        tipo_pedido: tipo,
-        numero_pedido: numero,
+        tipo_documento: tipoDoc,
+        numero_documento: numeroDoc,
         total,
       })
       .eq("id", pedidoId);
@@ -298,12 +265,10 @@ async function salvarPedido() {
       return;
     }
 
-    // limpar itens antigos
     await supabase.from("pedidos_itens").delete().eq("pedido_id", pedidoId);
   }
 
-  /* INSERIR ITENS */
-  const itensInsert = itensPedido.map((it) => ({
+  const itensInsert = itensPedido.map(it => ({
     pedido_id: pedidoCriadoId,
     produto_id: it.produto_id,
     quantidade: it.quantidade,
@@ -323,9 +288,7 @@ async function salvarPedido() {
   window.location.href = "pedidos.html";
 }
 
-/* ===========================================================
-   CARREGAR CLIENTES
-   =========================================================== */
+/* ------------ CARREGAR CLIENTES ------------ */
 
 async function carregarClientes() {
   const select = document.getElementById("cliente");
@@ -348,9 +311,7 @@ async function carregarClientes() {
   });
 }
 
-/* ===========================================================
-   CARREGAR PEDIDO PARA EDIÇÃO
-   =========================================================== */
+/* ------------ CARREGAR PEDIDO EXISTENTE ------------ */
 
 async function carregarPedidoExistente(id) {
   const { data: pedido, error } = await supabase
@@ -359,23 +320,25 @@ async function carregarPedidoExistente(id) {
     .eq("id", id)
     .single();
 
-  if (error) {
+  if (error || !pedido) {
     alert("Erro ao carregar pedido.");
     return;
   }
 
   document.getElementById("cliente").value = pedido.cliente_id;
   document.getElementById("data_pedido").value = pedido.data_pedido;
-  document.getElementById("pc_oc").value = pedido.pc_oc || "";
-  document.getElementById("numero_pedido").value = pedido.numero_pedido;
-  document.getElementById("tipo_pedido").value = pedido.tipo_pedido;
-  document.getElementById("observacoes").value = pedido.observacoes || "";
+  document.getElementById("tipo_documento").value = pedido.tipo_documento || "";
+  document.getElementById("numero_documento").value = pedido.numero_documento || "";
 
-  // Carregar itens
-  const { data: itens } = await supabase
+  const { data: itens, error: erroItens } = await supabase
     .from("pedidos_itens")
     .select("produto_id, quantidade, valor_unitario")
     .eq("pedido_id", id);
+
+  if (erroItens) {
+    alert("Erro ao carregar itens do pedido: " + erroItens.message);
+    return;
+  }
 
   itensPedido = [];
 
@@ -388,11 +351,11 @@ async function carregarPedidoExistente(id) {
 
     itensPedido.push({
       produto_id: it.produto_id,
-      codigo: prod.codigo,
-      descricao: prod.descricao,
+      codigo: prod?.codigo || "",
+      descricao: prod?.descricao || "",
       quantidade: Number(it.quantidade),
       valor_unitario: Number(it.valor_unitario),
-      total: it.quantidade * it.valor_unitario,
+      total: Number(it.quantidade) * Number(it.valor_unitario),
     });
   }
 
