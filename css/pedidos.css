@@ -67,7 +67,7 @@ body {
   padding: 8px 16px;
   font-size: 13px;
   cursor: pointer;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
+  transition: 0.15s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -81,8 +81,8 @@ body {
 }
 
 .btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 0 18px rgba(56, 189, 248, 0.8);
+  transform: translateY(-2px);
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.9);
 }
 
 .btn-secondary {
@@ -128,7 +128,7 @@ body {
 .card-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
   margin-bottom: 16px;
 }
 
@@ -142,11 +142,6 @@ body {
   margin: 4px 0 0;
   font-size: 12px;
   color: #9ca3af;
-}
-
-.card-actions {
-  display: flex;
-  gap: 10px;
 }
 
 /* ------------------------------ */
@@ -208,7 +203,7 @@ body {
   display: grid;
   grid-template-columns: 2fr 1.3fr 1.5fr 1.5fr 1.3fr;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 /* ------------------------------ */
@@ -216,20 +211,20 @@ body {
 /* ------------------------------ */
 
 .itens-section {
-  margin-top: 10px;
+  margin-top: 15px;
 }
 
 .itens-section h2 {
   font-size: 16px;
-  margin-bottom: 10px;
-  color: #e5e7eb;
+  color: #f3f4f6;
+  margin-bottom: 12px;
 }
 
 .itens-adicionar {
   display: grid;
-  grid-template-columns: 1.4fr 2.5fr 1.3fr 1.1fr 1fr 1fr;
+  grid-template-columns: 1.3fr 2.5fr 1.3fr 1.1fr 1fr 1fr;
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 /* ------------------------------ */
@@ -241,7 +236,7 @@ body {
   border: 1px solid #1f2937;
   overflow: hidden;
   background: #020617;
-  max-height: 360px;
+  max-height: 340px;
   overflow-y: auto;
 }
 
@@ -264,8 +259,8 @@ body {
 
 .tabela th {
   font-size: 11px;
-  text-transform: uppercase;
   letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: #9ca3af;
 }
 
@@ -278,17 +273,17 @@ body {
 /* ------------------------------ */
 
 .totais {
-  margin-top: 10px;
+  margin-top: 12px;
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
   align-items: center;
+  gap: 6px;
   font-size: 14px;
 }
 
 .totais strong {
-  font-size: 16px;
   color: #facc15;
+  font-size: 18px;
 }
 
 /* ------------------------------ */
@@ -307,10 +302,6 @@ body {
 /* ------------------------------ */
 
 @media (max-width: 900px) {
-  .card {
-    padding: 14px;
-  }
-
   .grid-header {
     grid-template-columns: 1fr 1fr;
   }
