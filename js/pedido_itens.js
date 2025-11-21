@@ -3,29 +3,29 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ===============================
-// PEGAR O ID PASSADO NA URL
-// ===============================
+// ============================================
+// PEGAR ID DA URL
+// ============================================
 const params = new URLSearchParams(window.location.search);
-const pedidoId = params.get("id"); // <--- CORRIGIDO
+const pedidoId = params.get("id");
 
 if (!pedidoId) {
   alert("ID do pedido não informado.");
   window.location.href = "pedidos_lista.html";
 }
 
-// ===============================
-// AO CARREGAR A PÁGINA
-// ===============================
+// ============================================
+// AO CARREGAR
+// ============================================
 document.addEventListener("DOMContentLoaded", () => {
-  carregarPedido();
+  carregarCabecalho();
   carregarItens();
 });
 
-// ===============================
-// CARREGAR INFO DO PEDIDO
-// ===============================
-async function carregarPedido() {
+// ============================================
+// CABEÇALHO DO PEDIDO
+// ============================================
+async function carregarCabecalho() {
   const { data, error } = await supabase
     .from("pedidos")
     .select(`
@@ -41,22 +41,23 @@ async function carregarPedido() {
 
   if (error || !data) {
     console.error(error);
-    alert("Erro ao carregar o pedido.");
     return;
   }
 
-  document.getElementById("pedidoNumero").textContent = data.numero_pedido;
-  document.getElementById("pedidoCliente").textContent = data.clientes?.razao_social || "—";
-  document.getElementById("pedidoData").textContent = new Date(data.data_pedido).toLocaleDateString("pt-BR");
-  document.getElementById("pedidoTipo").textContent = data.tipo_pedido;
-  document.getElementById("pedidoTotal").textContent = formatar(data.total);
+  const texto =
+    `Pedido Nº ${data.numero_pedido} — ` +
+    `${data.clientes?.razao_social || "—"} — ` +
+    `${new Date(data.data_pedido).toLocaleDateString("pt-BR")} — ` +
+    `Total: R$ ${formatar(data.total)}`;
+
+  document.getElementById("infoPedido").textContent = texto;
 }
 
-// ===============================
-// CARREGAR ITENS
-// ===============================
+// ============================================
+// LISTAR ITENS DO PEDIDO
+// ============================================
 async function carregarItens() {
-  const tbody = document.getElementById("tbodyItens");
+  const tbody = document.getElementById("listaItens");
   tbody.innerHTML = "";
 
   const { data, error } = await supabase
@@ -79,28 +80,34 @@ async function carregarItens() {
   }
 
   data.forEach((item) => {
-    const entrega = item.data_entrega
-      ? new Date(item.data_entrega).toLocaleDateString("pt-BR")
-      : "-";
+    const entregue = item.qtd_entregue ?? 0;
+    const restante = (item.quantidade ?? 0) - entregue;
 
     const tr = document.createElement("tr");
+
     tr.innerHTML = `
       <td>${item.produtos?.codigo || ""}</td>
       <td>${item.produtos?.descricao || ""}</td>
       <td>${formatar(item.quantidade)}</td>
+      <td>${formatar(entregue)}</td>
+      <td>${formatar(restante)}</td>
       <td>${formatar(item.valor_unitario)}</td>
       <td>${formatar(item.total_item)}</td>
-      <td>${entrega}</td>
+      <td>${item.data_entrega ? new Date(item.data_entrega).toLocaleDateString("pt-BR") : "-"}</td>
       <td>${item.status || "-"}</td>
+      <td>—</td>
     `;
 
     tbody.appendChild(tr);
   });
 }
 
+// ============================================
+// FORMATADOR
+// ============================================
 function formatar(v) {
   return Number(v || 0).toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    maximumFractionDigits: 2,
   });
 }
