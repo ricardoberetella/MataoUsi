@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pedidos - MataoUsi</title>
+  <title>Novo Pedido - MataoUsi</title>
   <link rel="stylesheet" href="css/pedidos.css">
 </head>
 
@@ -14,12 +14,12 @@
       <div class="logo-circle">MU</div>
       <div class="logo-text">
         <span class="app-name">Matao Usinagem</span>
-        <span class="app-subtitle">Módulo de Pedidos</span>
+        <span class="app-subtitle">Cadastro de Pedido</span>
       </div>
     </div>
 
-    <button class="btn btn-ghost" onclick="window.location.href='dashboard.html'">
-      Voltar ao Painel
+    <button class="btn btn-ghost" onclick="window.location.href='pedidos.html'">
+      Voltar à Lista
     </button>
   </header>
 
@@ -27,54 +27,138 @@
     <section class="card">
 
       <div class="card-header">
-        <div>
-          <h1>Pedidos</h1>
-          <p>Visualize, edite e exclua pedidos realizados.</p>
-        </div>
-
-        <button class="btn btn-primary" id="btnNovoPedido">
-          + Novo Pedido
-        </button>
+        <h1 id="tituloPagina">Novo Pedido</h1>
       </div>
 
-      <div class="filtros">
-        <div class="field">
-          <label>Número do Documento</label>
-          <input id="filtroNumero" placeholder="Ex: PC-345.980">
-        </div>
+      <!-- CABEÇALHO -->
+      <form class="grid-header" id="formPedido">
 
         <div class="field">
           <label>Cliente</label>
-          <input id="filtroCliente" placeholder="Parte do nome do cliente">
+          <select id="cliente" required>
+            <option value="">Selecione...</option>
+          </select>
         </div>
 
-        <div class="field field-small">
-          <label>&nbsp;</label>
-          <button class="btn btn-secondary" id="btnFiltrar">Filtrar</button>
+        <div class="field">
+          <label>Data Pedido</label>
+          <input type="date" id="data_pedido" required>
         </div>
-      </div>
 
-      <div class="table-wrapper">
-        <table class="tabela">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Tipo</th>
-              <th>Número</th>
-              <th>Cliente</th>
-              <th>Data</th>
-              <th>Total</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
+        <div class="field">
+          <label>Tipo</label>
+          <select id="tipo_documento" required>
+            <option value="">Selecione...</option>
+            <option value="PC">Pedido de Compra (PC)</option>
+            <option value="OC">Ordem de Compra (OC)</option>
+          </select>
+        </div>
 
-          <tbody id="tbodyPedidos"></tbody>
-        </table>
+        <div class="field">
+          <label>Número do Documento</label>
+          <input type="text" id="numero_documento" placeholder="Ex: PC-345.980" required>
+        </div>
+
+      </form>
+
+      <!-- ITENS -->
+      <section class="itens-section">
+
+        <h2>Itens do Pedido</h2>
+
+        <div class="itens-adicionar">
+
+          <div class="field">
+            <label>Código</label>
+            <input id="codigo_produto" placeholder="Clique para selecionar" readonly>
+          </div>
+
+          <div class="field">
+            <label>Descrição</label>
+            <input id="descricao_produto" disabled>
+          </div>
+
+          <div class="field">
+            <label>Preço R$</label>
+            <input id="preco_unitario" placeholder="0,00">
+          </div>
+
+          <div class="field">
+            <label>Qtd</label>
+            <input id="quantidade" type="number" step="0.01">
+          </div>
+
+          <button class="btn btn-secondary" id="btnBuscarProduto" type="button">Buscar</button>
+          <button class="btn btn-primary" id="btnAdicionarItem" type="button">+</button>
+
+        </div>
+
+        <div class="table-wrapper">
+          <table class="tabela">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Descrição</th>
+                <th>Qtd</th>
+                <th>Unit</th>
+                <th>Total</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+
+            <tbody id="tbodyItens"></tbody>
+
+          </table>
+        </div>
+
+        <div class="totais">
+          <span>Total:</span>
+          <strong id="totalPedido">R$ 0,00</strong>
+        </div>
+
+      </section>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" id="btnSalvarPedido" type="button">Salvar</button>
+        <button class="btn btn-ghost" type="button" onclick="window.location.href='pedidos.html'">
+          Cancelar
+        </button>
       </div>
 
     </section>
   </main>
 
-  <script type="module" src="js/pedidos.js"></script>
+  <!-- MODAL DE PRODUTOS -->
+  <div id="modalProdutos" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Selecionar Produto</h2>
+        <button type="button" class="btn btn-ghost btn-fechar-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label>Buscar produto</label>
+          <input id="buscaProduto" placeholder="Código ou descrição">
+        </div>
+        <div class="table-wrapper modal-table-wrapper">
+          <table class="tabela">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Descrição</th>
+                <th>Preço</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyModalProdutos">
+              <!-- produtos via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/pedido_novo.js"></script>
 </body>
 </html>
