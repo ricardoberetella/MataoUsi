@@ -3,58 +3,56 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// PEGAR ID DA URL
-const params = new URLSearchParams(window.location.search);
-const id = params.get("id");
-
-// CAMPOS
-const razao = document.getElementById("razao");
-const cnpj = document.getElementById("cnpj");
-const telefone = document.getElementById("telefone");
-const email = document.getElementById("email");
-const endereco = document.getElementById("endereco");
 const form = document.getElementById("formEditar");
 
+const urlParams = new URLSearchParams(window.location.search);
+const id = urlParams.get("id");
+
+// CARREGAR DADOS
 async function carregar() {
-  const { data, error } = await supabase
-    .from("clientes")
-    .select("*")
-    .eq("id", id)
-    .single();
+    const { data, error } = await supabase
+        .from("clientes")
+        .select("*")
+        .eq("id", id)
+        .single();
 
-  if (error) {
-    alert("Erro ao carregar dados");
-    return;
-  }
+    if (error) {
+        alert("Erro ao carregar dados");
+        return;
+    }
 
-  razao.value = data.razao_social;
-  cnpj.value = data.cpf_cnpj;
-  telefone.value = data.telefone;
-  email.value = data.email;
-  endereco.value = data.endereco;
+    document.getElementById("id").value = data.id;
+    document.getElementById("razao_social").value = data.razao_social;
+    document.getElementById("cpf_cnpj").value = data.cpf_cnpj;
+    document.getElementById("telefone").value = data.telefone;
+    document.getElementById("email").value = data.email;
+    document.getElementById("endereco").value = data.endereco;
 }
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const { error } = await supabase
-    .from("clientes")
-    .update({
-      razao_social: razao.value,
-      cpf_cnpj: cnpj.value,
-      telefone: telefone.value,
-      email: email.value,
-      endereco: endereco.value
-    })
-    .eq("id", id);
-
-  if (error) {
-    alert("Erro ao salvar");
-    return;
-  }
-
-  alert("Alterações salvas!");
-  window.location = "clientes.html";
-});
-
 carregar();
+
+// SALVAR ALTERAÇÕES
+form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const atualizado = {
+        razao_social: document.getElementById("razao_social").value,
+        cpf_cnpj: document.getElementById("cpf_cnpj").value,
+        telefone: document.getElementById("telefone").value,
+        email: document.getElementById("email").value,
+        endereco: document.getElementById("endereco").value
+    };
+
+    const { error } = await supabase
+        .from("clientes")
+        .update(atualizado)
+        .eq("id", id);
+
+    if (error) {
+        alert("Erro ao atualizar: " + error.message);
+        return;
+    }
+
+    alert("Cliente atualizado!");
+    window.location.href = "clientes.html";
+});
