@@ -3,94 +3,111 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let clienteSelecionado = null;
-
-/* ===========================
-   CARREGAR LISTA DE CLIENTES
-=========================== */
 document.addEventListener("DOMContentLoaded", () => {
-    carregarClientes();
-});
+  const form = document.getElementById("formCliente");
+  const btnCancelar = document.getElementById("btnCancelar");
+  const msg = document.getElementById("msg");
 
-async function carregarClientes() {
-    const lista = document.getElementById("listaClientes");
-    lista.innerHTML = "<p>Carregando...</p>";
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get("id");
 
-    const { data, error } = await supabase
-        .from("clientes")
-        .select("*")
-        .order("razao_social", { ascending: true });
+  if (!id) {
+    msg.textContent = "ID do cliente não informado.";
+    msg.classList.add("msg-error");
+    return;
+  }
 
-    if (error) {
-        lista.innerHTML = "<p>Erro ao carregar clientes.</p>";
-        console.log(error);
-        return;
+  carregarCliente(id);
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    msg.textContent = "";
+    msg.className = "msg";
+
+    const razao_social = document.getElementById("razao_social").value.trim();
+    const cnpj = document.getElementById("cnpj").value.trim();
+    const telefone = document.getElementById("telefone").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const endereco = document.getElementById("endereco").value.trim();
+
+    if (!razao_social || !cnpj) {
+      msg.textContent = "Preencha Razão Social e CNPJ.";
+      msg.classList.add("msg-error");
+      return;
     }
 
-    lista.innerHTML = "";
+    const cnpjLimpo = cnpj.replace(/\D/g, "");
 
-    data.forEach(c => {
-        const div = document.createElement("div");
-        div.classList.add("item-cliente");
+    // Anti duplicação ao editar: não deixar outro cliente com mesmo CNPJ
+    const { data: jaExiste, error: erroBusca } = await supabase
+      .from("clientes")
+      .select("id")
+      .eq("cnpj", cnpjLimpo)
+      .neq("id", id);
 
-        div.innerHTML = `
-            <strong>${c.razao_social}</strong><br>
-            <span>CNPJ: ${c.cnpj}</span>
-        `;
+    if (erroBusca) {
+      console.error(erroBusca);
+      msg.textContent = "Erro ao verificar CNPJ. Tente novamente.";
+      msg.classList.add("msg-error");
+      return;
+    }
 
-        // 🔵 Evento para abrir detalhes
-        div.addEventListener("click", () => abrirDetalhes(c));
-
-        lista.appendChild(div);
-    });
-}
-
-/* ===========================
-        ABRIR DETALHES
-=========================== */
-function abrirDetalhes(cliente) {
-    clienteSelecionado = cliente;
-
-    const det = document.getElementById("detalhesCliente");
-    det.classList.remove("hidden");
-
-    det.innerHTML = `
-        <h2 style="color:#00eaff;">${cliente.razao_social}</h2>
-
-        <p><strong>CNPJ:</strong> ${cliente.cnpj}</p>
-        <p><strong>Telefone:</strong> ${cliente.telefone || "-"}</p>
-        <p><strong>Email:</strong> ${cliente.email || "-"}</p>
-        <p><strong>Endereço:</strong> ${cliente.endereco || "-"}</p>
-
-        <button class="btn-editar" onclick="editarCliente(${cliente.id})">Editar</button>
-        <button class="btn-excluir" onclick="excluirCliente(${cliente.id})">Excluir</button>
-    `;
-}
-
-/* ===========================
-            EDITAR
-=========================== */
-window.editarCliente = function (id) {
-    window.location.href = `clientes_editar.html?id=${id}`;
-};
-
-/* ===========================
-            EXCLUIR
-=========================== */
-window.excluirCliente = async function (id) {
-    if (!confirm("Tem certeza que deseja excluir este cliente?")) return;
+    if (jaExiste && jaExiste.length > 0) {
+      msg.textContent = "Já existe outro cliente com esse CNPJ.";
+      msg.classList.add("msg-error");
+      return;
+    }
 
     const { error } = await supabase
-        .from("clientes")
-        .delete()
-        .eq("id", id);
+      .from("clientes")
+      .update({
+        razao_social,
+        cnpj: cnpjLimpo,
+        telefone: telefone || null,
+        email: email || null,
+        endereco: endereco || null
+      })
+      .eq("id", id);
 
     if (error) {
-        alert("Erro ao excluir cliente.");
-        return;
+      console.error(error);
+      msg.textContent = "Erro ao atualizar cliente.";
+      msg.classList.add("msg-error");
+      return;
     }
 
-    alert("Cliente excluído!");
-    carregarClientes();
-    document.getElementById("detalhesCliente").classList.add("hidden");
-};
+    msg.textContent = "Cliente atualizado com sucesso!";
+    msg.classList.add("msg-success");
+
+    setTimeout(() => {
+      window.location.href = "clientes.html";
+    }, 800);
+  });
+
+  btnCancelar.addEventListener("click", () => {
+    window.location.href = "clientes.html";
+  });
+});
+
+async function carregarCliente(id) {
+  const msg = document.getElementById("msg");
+
+  const { data, error } = await supabase
+    .from("clientes")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error || !data) {
+    console.error(error);
+    msg.textContent = "Erro ao carregar dados do cliente.";
+    msg.classList.add("msg-error");
+    return;
+  }
+
+  document.getElementById("razao_social").value = data.razao_social || "";
+  document.getElementById("cnpj").value = data.cnpj || "";
+  document.getElementById("telefone").value = data.telefone || "";
+  document.getElementById("email").value = data.email || "";
+  document.getElementById("endereco").value = data.endereco || "";
+}
