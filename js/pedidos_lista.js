@@ -71,7 +71,7 @@ async function carregarPedidos() {
       <td>${ped.tipo_pedido}</td>
       <td>R$ ${formatarValor(ped.total)}</td>
       <td class="acoes">
-        <a href="pedido_itens.html?id=${ped.id}" class="btn-ver">Ver</a>
+        <a href="pedidos_itens.html?id=${ped.id}" class="btn-ver">Ver</a>
       </td>
     `;
 
