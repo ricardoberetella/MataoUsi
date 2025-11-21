@@ -5,16 +5,20 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 document.addEventListener("DOMContentLoaded", () => {
   carregarPedidos();
-  document.getElementById("btnFiltrar").addEventListener("click", carregarPedidos);
+
+  const btnFiltrar = document.getElementById("btnFiltrar");
+  if (btnFiltrar) {
+    btnFiltrar.addEventListener("click", carregarPedidos);
+  }
 });
 
 /* ============================================================
    CARREGAR LISTA DE PEDIDOS
 ============================================================ */
 async function carregarPedidos() {
-  const filtroNumero = document.getElementById("filtroNumero").value.trim();
-  const filtroCliente = document.getElementById("filtroCliente").value.trim();
-  const filtroTipo = document.getElementById("filtroTipo").value;
+  const filtroNumero = document.getElementById("filtroNumero")?.value.trim() ?? "";
+  const filtroCliente = document.getElementById("filtroCliente")?.value.trim() ?? "";
+  const filtroTipo = document.getElementById("filtroTipo")?.value ?? "";
 
   let query = supabase
     .from("pedidos")
@@ -24,7 +28,7 @@ async function carregarPedidos() {
       data_pedido,
       tipo_pedido,
       total,
-      clientes:cliente_id ( id, razao_social )
+      clientes:cliente_id ( razao_social )
     `)
     .order("id", { ascending: false });
 
@@ -32,27 +36,32 @@ async function carregarPedidos() {
     query = query.ilike("numero_pedido", `%${filtroNumero}%`);
   }
 
-  if (filtroTipo && filtroTipo !== "TODOS") {
-    query = query.eq("tipo_pedido", filtroTipo);
-  }
-
   if (filtroCliente) {
     query = query.ilike("clientes.razao_social", `%${filtroCliente}%`);
+  }
+
+  if (filtroTipo && filtroTipo !== "Todos") {
+    query = query.eq("tipo_pedido", filtroTipo);
   }
 
   const { data, error } = await query;
 
   const tbody = document.getElementById("tbodyPedidos");
+  if (!tbody) return;
   tbody.innerHTML = "";
 
   if (error) {
     console.error("Erro ao carregar pedidos:", error);
-    tbody.innerHTML = `<tr><td colspan="6" class="erro">Erro ao carregar pedidos.</td></tr>`;
+    tbody.innerHTML = `
+      <tr><td colspan="6" class="erro">Erro ao carregar pedidos.</td></tr>
+    `;
     return;
   }
 
   if (!data || data.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="vazio">Nenhum pedido encontrado.</td></tr>`;
+    tbody.innerHTML = `
+      <tr><td colspan="6" class="vazio">Nenhum pedido encontrado.</td></tr>
+    `;
     return;
   }
 
@@ -61,7 +70,7 @@ async function carregarPedidos() {
       ? new Date(ped.data_pedido).toLocaleDateString("pt-BR")
       : "-";
 
-    const cliente = ped.clientes?.razao_social || "—";
+    const cliente = ped.clientes?.razao_social ?? "—";
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -80,11 +89,10 @@ async function carregarPedidos() {
 }
 
 /* ============================================================
-   FORMATAÇÃO
+   FORMATAR
 ============================================================ */
 function formatarValor(v) {
-  const val = Number(v || 0);
-  return val.toLocaleString("pt-BR", {
+  return Number(v || 0).toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
