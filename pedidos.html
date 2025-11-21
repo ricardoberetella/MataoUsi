@@ -6,8 +6,9 @@
   <title>Pedidos - MataoUsi</title>
   <link rel="stylesheet" href="css/pedidos.css">
 </head>
+
 <body>
-  <!-- Topbar -->
+
   <header class="topbar">
     <div class="logo-area">
       <div class="logo-circle">MU</div>
@@ -16,37 +17,40 @@
         <span class="app-subtitle">Módulo de Pedidos</span>
       </div>
     </div>
-    <button class="btn btn-ghost" type="button" onclick="window.location.href='dashboard.html'">
+
+    <button class="btn btn-ghost" onclick="window.location.href='dashboard.html'">
       Voltar ao Painel
     </button>
   </header>
 
   <main class="page">
     <section class="card">
+
       <div class="card-header">
         <div>
           <h1>Pedidos</h1>
           <p>Visualize, edite e exclua pedidos realizados.</p>
         </div>
-        <div class="card-actions">
-          <button id="btnNovoPedido" class="btn btn-primary" type="button">
-            + Novo Pedido
-          </button>
-        </div>
+
+        <button class="btn btn-primary" id="btnNovoPedido">
+          + Novo Pedido
+        </button>
       </div>
 
       <div class="filtros">
         <div class="field">
-          <label for="filtroNumero">Número do Pedido</label>
-          <input type="text" id="filtroNumero" placeholder="Ex: P-0001">
+          <label>Número do Pedido</label>
+          <input id="filtroNumero" placeholder="Ex: P-0001">
         </div>
+
         <div class="field">
-          <label for="filtroCliente">Cliente</label>
-          <input type="text" id="filtroCliente" placeholder="Parte do nome do cliente">
+          <label>Cliente</label>
+          <input id="filtroCliente" placeholder="Parte do nome do cliente">
         </div>
+
         <div class="field field-small">
           <label>&nbsp;</label>
-          <button id="btnFiltrar" class="btn btn-secondary" type="button">Filtrar</button>
+          <button class="btn btn-secondary" id="btnFiltrar">Filtrar</button>
         </div>
       </div>
 
@@ -63,14 +67,14 @@
               <th>Ações</th>
             </tr>
           </thead>
-          <tbody id="tbodyPedidos">
-            <!-- Linhas preenchidas via JS -->
-          </tbody>
+
+          <tbody id="tbodyPedidos"></tbody>
         </table>
       </div>
+
     </section>
   </main>
 
-  <script type="module" src="pedidos.js"></script>
+  <script type="module" src="js/pedidos.js"></script>
 </body>
 </html>
