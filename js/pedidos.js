@@ -3,10 +3,6 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* ----------------------------------- */
-/*      FORMATAÇÕES AUXILIARES         */
-/* ----------------------------------- */
-
 function formatDecimal(valor) {
   if (valor == null) return "R$ 0,00";
   const num = Number(valor);
@@ -24,10 +20,6 @@ function formatData(iso) {
   return d.toLocaleDateString("pt-BR");
 }
 
-/* ----------------------------------- */
-/*         CARREGAR TELA               */
-/* ----------------------------------- */
-
 document.addEventListener("DOMContentLoaded", () => {
   const tbody = document.getElementById("tbodyPedidos");
   const btnNovo = document.getElementById("btnNovoPedido");
@@ -35,12 +27,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const filtroNumero = document.getElementById("filtroNumero");
   const filtroCliente = document.getElementById("filtroCliente");
 
-  /* Botão Novo Pedido */
   btnNovo.addEventListener("click", () => {
     window.location.href = "pedido_novo.html";
   });
 
-  /* Filtros */
   btnFiltrar.addEventListener("click", carregarPedidos);
 
   filtroNumero.addEventListener("keyup", (e) => {
@@ -50,24 +40,20 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key === "Enter") carregarPedidos();
   });
 
-  /* Clique em Abrir / Excluir */
   document.addEventListener("click", async (e) => {
     const btn = e.target;
 
-    /* Abrir pedido */
     if (btn.matches(".btn-abrir-pedido")) {
       const id = btn.dataset.id;
       window.location.href = `pedido_novo.html?id=${id}`;
     }
 
-    /* Excluir pedido */
     if (btn.matches(".btn-excluir-pedido")) {
       const id = btn.dataset.id;
-      const numero = btn.dataset.numero || "";
+      const num = btn.dataset.numero || "";
 
-      if (confirm(`Tem certeza que deseja excluir o pedido ${numero}?`)) {
+      if (confirm(`Tem certeza que deseja excluir o documento ${num}?`)) {
         const { error } = await supabase.from("pedidos").delete().eq("id", id);
-
         if (error) {
           alert("Erro ao excluir pedido: " + error.message);
         } else {
@@ -80,10 +66,6 @@ document.addEventListener("DOMContentLoaded", () => {
   carregarPedidos();
 });
 
-/* ----------------------------------- */
-/*         CARREGAR PEDIDOS            */
-/* ----------------------------------- */
-
 async function carregarPedidos() {
   const tbody = document.getElementById("tbodyPedidos");
   const filtroNumero = document.getElementById("filtroNumero");
@@ -93,13 +75,13 @@ async function carregarPedidos() {
 
   let query = supabase
     .from("pedidos")
-    .select("id, cliente_id, data_pedido, tipo_pedido, total, numero_pedido")
+    .select("id, cliente_id, data_pedido, tipo_documento, numero_documento, total")
     .order("id", { ascending: false });
 
   const numero = filtroNumero.value.trim();
-  if (numero) query = query.ilike("numero_pedido", `%${numero}%`);
-
-  const clienteBuscar = filtroCliente.value.trim();
+  if (numero) {
+    query = query.ilike("numero_documento", `%${numero}%`);
+  }
 
   const { data: pedidos, error } = await query;
 
@@ -113,41 +95,35 @@ async function carregarPedidos() {
     return;
   }
 
-  /* Buscar nomes dos clientes */
-  const mapaClientes = await carregarNomesClientes(
-    pedidos.map((p) => p.cliente_id)
-  );
+  const clienteBusca = filtroCliente.value.trim().toLowerCase();
+  const mapaClientes = await carregarNomesClientes(pedidos.map(p => p.cliente_id));
 
-  /* Filtro por nome do cliente */
-  const pedidosFiltrados = pedidos.filter((p) => {
-    if (!clienteBuscar) return true;
+  const filtrados = pedidos.filter(p => {
+    if (!clienteBusca) return true;
     const nome = (mapaClientes.get(p.cliente_id) || "").toLowerCase();
-    return nome.includes(clienteBuscar.toLowerCase());
+    return nome.includes(clienteBusca);
   });
 
   tbody.innerHTML = "";
 
-  /* Renderizar */
-  for (const p of pedidosFiltrados) {
+  for (const p of filtrados) {
     const tr = document.createElement("tr");
-
     const nomeCliente = mapaClientes.get(p.cliente_id) || "-";
 
     tr.innerHTML = `
       <td>${p.id}</td>
-      <td>${p.numero_pedido}</td>
+      <td>${p.tipo_documento || ""}</td>
+      <td>${p.numero_documento || ""}</td>
       <td>${nomeCliente}</td>
       <td>${formatData(p.data_pedido)}</td>
-      <td>${p.tipo_pedido || ""}</td>
       <td>${formatDecimal(p.total)}</td>
       <td>
         <button class="btn btn-secondary btn-abrir-pedido" data-id="${p.id}">
           Abrir
         </button>
-
         <button class="btn btn-ghost btn-excluir-pedido" 
                 data-id="${p.id}" 
-                data-numero="${p.numero_pedido}">
+                data-numero="${p.numero_documento}">
           Excluir
         </button>
       </td>
@@ -157,20 +133,16 @@ async function carregarPedidos() {
   }
 }
 
-/* ----------------------------------- */
-/*       CARREGAR NOMES CLIENTES       */
-/* ----------------------------------- */
-
-async function carregarNomesClientes(listaIds) {
+async function carregarNomesClientes(ids) {
   const mapa = new Map();
-  const ids = [...new Set(listaIds.filter((v) => v != null))];
+  const unicos = [...new Set(ids.filter(id => id != null))];
 
-  if (ids.length === 0) return mapa;
+  if (unicos.length === 0) return mapa;
 
   const { data, error } = await supabase
     .from("clientes")
     .select("id, razao_social")
-    .in("id", ids);
+    .in("id", unicos);
 
   if (error || !data) return mapa;
 
