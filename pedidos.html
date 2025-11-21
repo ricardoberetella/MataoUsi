@@ -1,66 +1,94 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Pedidos - Matao Usinagem</title>
-  <link rel="stylesheet" href="CSS/pedidos.css">
-  <script type="module" src="js/pedidos.js" defer></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pedidos - MataoUsi</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="CSS/pedidos.css" />
 </head>
+
 <body>
-
-<header class="topbar">
-  <div class="logo">
-    <div class="logo-circle">MU</div>
-    <span>Matao Usinagem</span>
-  </div>
-  <button onclick="window.location.href='painel.html'" class="btn-ghost">Voltar ao Painel</button>
-</header>
-
-<div class="card">
-
-  <h1>Pedidos</h1>
-  <p class="descricao">Visualize, filtre e abra pedidos cadastrados.</p>
-
-  <!-- FILTROS -->
-  <div class="filtros">
-    <div class="field">
-      <label>Nº Documento</label>
-      <input id="f_numero" placeholder="Ex: 312.543" />
+  <!-- TOPO -->
+  <header class="topbar">
+    <div class="user-area">
+      <div class="logo-circle">MU</div>
+      <div class="logo-text">
+        <span class="app-name">Matao Usinagem</span>
+        <span class="app-subtitle">Módulo de Pedidos</span>
+      </div>
     </div>
-    <div class="field">
-      <label>Cliente</label>
-      <input id="f_cliente" placeholder="Parte do nome..." />
-    </div>
-    <div class="field">
-      <label>PC / OC</label>
-      <input id="f_tipo" placeholder="PC ou OC" />
-    </div>
-    <div class="field">
-      <label>Data</label>
-      <input type="date" id="f_data" />
-    </div>
-    <button id="btnFiltrar" class="btn-primary">Filtrar</button>
-    <button onclick="window.location.href='pedido_novo.html'" class="btn-blue">+ Novo Pedido</button>
-  </div>
 
-  <!-- LISTA -->
-  <div class="table-wrapper">
-    <table class="tabela">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Nº Documento</th>
-          <th>Cliente</th>
-          <th>Data</th>
-          <th>Total</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody id="listaPedidos"></tbody>
-    </table>
-  </div>
+    <button class="btn btn-ghost" onclick="window.location.href='painel.html'">
+      Voltar ao Painel
+    </button>
+  </header>
 
-</div>
+  <!-- CONTEÚDO -->
+  <main class="page">
+    <section class="card">
 
+      <div class="card-header">
+        <div>
+          <h1>Pedidos</h1>
+          <p class="texto-menor">
+            Visualize, filtre e abra pedidos realizados.
+          </p>
+        </div>
+        <button class="btn btn-primary" onclick="window.location.href='pedido_novo.html'">
+          + Novo Pedido
+        </button>
+      </div>
+
+      <!-- FILTROS -->
+      <section class="filtros">
+        <div class="field">
+          <label>NÚMERO DO PEDIDO</label>
+          <input id="f_numero" placeholder="Ex: 345.980" />
+        </div>
+
+        <div class="field">
+          <label>CLIENTE</label>
+          <input id="f_cliente" placeholder="Parte do nome do cliente" />
+        </div>
+
+        <div class="field">
+          <label>CÓDIGO DA PEÇA</label>
+          <input id="f_codigo" placeholder="Ex: CC31PR" />
+        </div>
+
+        <div class="field field-botao">
+          <button id="btnFiltrar" class="btn btn-secondary btn-filtrar">
+            Filtrar
+          </button>
+        </div>
+      </section>
+
+      <!-- TABELA -->
+      <div class="table-wrapper">
+        <table class="tabela">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>NÚMERO</th>
+              <th>CLIENTE</th>
+              <th>DATA</th>
+              <th>TIPO</th>
+              <th>TOTAL</th>
+              <th>AÇÕES</th>
+            </tr>
+          </thead>
+          <tbody id="listaPedidos"></tbody>
+        </table>
+      </div>
+
+      <p id="msgErro" class="msg-erro"></p>
+
+    </section>
+  </main>
+
+  <!-- JS -->
+  <script type="module" src="js/pedidos.js"></script>
 </body>
 </html>
