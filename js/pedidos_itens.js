@@ -61,7 +61,7 @@ async function carregarItens() {
       quantidade,
       quantidade_entregue,
       valor_unitario,
-      valor_total,
+      total_item,            -- ✔ CORRIGIDO
       data_entrega,
       status,
       produtos:produto_id ( codigo, descricao )
@@ -80,20 +80,20 @@ async function carregarItens() {
   }
 
   data.forEach(item => {
-    const entregue = Number(item.quantidade_entregue ?? 0);
-    const restante = Number(item.quantidade ?? 0) - entregue;
+    const entregue = Number(item.quantidade_entregue || 0);
+    const restante = Number(item.quantidade) - entregue;
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${item.produtos?.codigo ?? ""}</td>
-      <td>${item.produtos?.descricao ?? ""}</td>
+      <td>${item.produtos?.codigo || ""}</td>
+      <td>${item.produtos?.descricao || ""}</td>
       <td>${formatar(item.quantidade)}</td>
       <td>${formatar(entregue)}</td>
       <td>${formatar(restante)}</td>
       <td>${formatar(item.valor_unitario)}</td>
-      <td>${formatar(item.valor_total)}</td>
+      <td>${formatar(item.total_item)}</td>   <!-- ✔ CORRIGIDO -->
       <td>${item.data_entrega ? new Date(item.data_entrega).toLocaleDateString("pt-BR") : "-"}</td>
-      <td>${item.status ?? "-"}</td>
+      <td>${item.status || "-"}</td>
       <td><button class="btn-remover" data-id="${item.id}">Excluir</button></td>
     `;
     tbody.appendChild(tr);
