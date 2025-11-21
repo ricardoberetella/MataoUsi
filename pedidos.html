@@ -41,23 +41,17 @@
         </div>
 
         <div class="field-group">
-          <label for="tipo_pedido">Tipo de Pedido</label>
+          <label for="tipo_pedido">Tipo de Documento</label>
           <select id="tipo_pedido" required>
             <option value="">Selecione</option>
-            <option value="Venda">Venda</option>
-            <option value="Orçamento">Orçamento</option>
-            <option value="Interno">Interno</option>
+            <option value="PC">PC - Pedido de Compra</option>
+            <option value="OC">OC - Ordem de Compra</option>
           </select>
         </div>
 
         <div class="field-group">
-          <label for="numero_pedido">Número do Pedido</label>
-          <input type="text" id="numero_pedido" placeholder="Ex: 1024" required>
-        </div>
-
-        <div class="field-group field-full">
-          <label for="observacoes">Observações</label>
-          <textarea id="observacoes" rows="3" placeholder="Informações adicionais do pedido"></textarea>
+          <label for="numero_pedido">Número do Documento</label>
+          <input type="text" id="numero_pedido" placeholder="Ex: 345.980" required>
         </div>
 
         <div class="buttons-row field-full">
@@ -76,15 +70,16 @@
 
       <div class="itens-form-grid">
         <div class="field-group">
-          <label for="codigo_produto">Código do Produto</label>
-          <input type="text" id="codigo_produto" placeholder="Ex: 1234">
-        </div>
-
-        <div class="field-group">
-          <label>&nbsp;</label>
-          <button type="button" id="btnBuscarProduto" class="btn-secondary block">
-            Buscar Produto
-          </button>
+          <label for="codigo_produto">Produto (código)</label>
+          <input
+            type="text"
+            id="codigo_produto"
+            placeholder="Digite ou escolha o código"
+            list="listaProdutos"
+          >
+          <datalist id="listaProdutos">
+            <!-- opções preenchidas via JS -->
+          </datalist>
         </div>
 
         <div class="field-group">
@@ -100,6 +95,21 @@
         <div class="field-group">
           <label for="quantidade">Quantidade</label>
           <input type="number" id="quantidade" min="0" step="0.01" placeholder="0,00">
+        </div>
+
+        <div class="field-group">
+          <label for="data_entrega_item">Data de Entrega</label>
+          <input type="date" id="data_entrega_item">
+        </div>
+
+        <div class="field-group">
+          <label for="status_item">Status</label>
+          <select id="status_item">
+            <option value="">Selecione</option>
+            <option value="PENDENTE">Pendente</option>
+            <option value="ENTREGUE TOTAL">Entregue Total</option>
+            <option value="ENTREGUE PARCIAL">Entregue Parcial</option>
+          </select>
         </div>
 
         <div class="field-group">
@@ -119,6 +129,8 @@
               <th>Qtd</th>
               <th>Vlr Unit. (R$)</th>
               <th>Total (R$)</th>
+              <th>Entrega</th>
+              <th>Status</th>
               <th class="col-acoes">Remover</th>
             </tr>
           </thead>
