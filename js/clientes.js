@@ -78,10 +78,58 @@ function filtrarLista() {
 }
 
 /* ============================================
-   ABRIR
+   ABRIR DETALHES
 ============================================ */
 window.abrir = function (id) {
+  const cliente = listaCompleta.find(c => c.id === id);
+  abrirDetalhes(cliente);
+};
+
+function abrirDetalhes(cliente) {
+  const det = document.getElementById("detalhesCliente");
+  det.classList.remove("hidden");
+
+  det.innerHTML = `
+    <h2 style="color:#00eaff;">${cliente.razao_social}</h2>
+
+    <p><strong>CNPJ:</strong> ${formataCNPJ(cliente.cpf_cnpj)}</p>
+    <p><strong>Telefone:</strong> ${formataTelefone(cliente.telefone)}</p>
+    <p><strong>Email:</strong> ${cliente.email || "-"}</p>
+    <p><strong>Endereço:</strong> ${cliente.endereco || "-"}</p>
+
+    <div style="margin-top:20px; display:flex; gap:14px;">
+        <button class="btn-editar" onclick="editarCliente(${cliente.id})">Editar</button>
+        <button class="btn-excluir" onclick="excluirCliente(${cliente.id})">Excluir</button>
+    </div>
+  `;
+}
+
+/* ============================================
+   EDITAR
+============================================ */
+window.editarCliente = function (id) {
   window.location.href = `clientes_editar.html?id=${id}`;
+};
+
+/* ============================================
+   EXCLUIR
+============================================ */
+window.excluirCliente = async function (id) {
+  if (!confirm("Tem certeza que deseja excluir este cliente?")) return;
+
+  const { error } = await supabase
+    .from("clientes")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    alert("Erro ao excluir cliente.");
+    return;
+  }
+
+  alert("Cliente excluído!");
+  carregarClientes();
+  document.getElementById("detalhesCliente").classList.add("hidden");
 };
 
 /* ============================================
