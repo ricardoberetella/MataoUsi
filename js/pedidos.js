@@ -107,12 +107,15 @@ function exibirPedidos(pedidos) {
       : "-";
 
     const totalFormatado = formatMoney(p.total);
+    const numero = p.numero_pedido || "-";
+    const tipo = p.tipo_pedido || "";
 
     div.innerHTML = `
       <div class="pedido-info">
         <div class="pedido-top">
-          <span class="pedido-numero">PED #${p.id}</span>
+          <span class="pedido-numero">${tipo ? tipo + " - " : ""}${numero}</span>
           <span class="pedido-data">${dataFormatada}</span>
+          <span>#${p.id}</span>
         </div>
         <div class="pedido-cliente">${nomeCliente}</div>
         <div class="pedido-total">${totalFormatado}</div>
@@ -142,11 +145,15 @@ function filtrarPedidos() {
   const filtrado = pedidosCache.filter(p => {
     const cliente = clientesCache.find(c => c.id === p.cliente_id);
     const nomeCliente = cliente ? cliente.razao_social.toLowerCase() : "";
-    const numero = String(p.id);
+    const numero = (p.numero_pedido || "").toLowerCase();
+    const data = p.data_pedido ? p.data_pedido.split("-").reverse().join("/") : "";
+    const idStr = String(p.id);
 
     return (
       nomeCliente.includes(termo) ||
-      numero.includes(termo)
+      numero.includes(termo) ||
+      data.includes(termo) ||
+      idStr.includes(termo)
     );
   });
 
@@ -188,15 +195,15 @@ window.abrirPedido = async function (id) {
     linhasItens += `
       <tr>
         <td>${nomeProduto}</td>
-        <td>${it.quantidade}</td>
-        <td>${formatMoney(it.preco_unitario)}</td>
-        <td>${formatMoney(it.total_item)}</td>
+        <td>${Number(it.quantidade).toLocaleString("pt-BR")}</td>
+        <td>${formatMoney(it.valor_unitario)}</td>
+        <td>${formatMoney(it.valor_total)}</td>
       </tr>
     `;
   });
 
   det.innerHTML = `
-    <h2>Pedido #${pedido.id}</h2>
+    <h2>Pedido ${pedido.tipo_pedido ? pedido.tipo_pedido + " - " : ""}${pedido.numero_pedido || ""}</h2>
 
     <p><strong>Cliente:</strong> ${nomeCliente}</p>
     <p><strong>Data:</strong> ${dataFormatada}</p>
@@ -209,7 +216,7 @@ window.abrirPedido = async function (id) {
         <tr>
           <th>Produto</th>
           <th>Qtd</th>
-          <th>Preço Unit.</th>
+          <th>Valor Unit.</th>
           <th>Total</th>
         </tr>
       </thead>
@@ -230,27 +237,15 @@ window.abrirPedido = async function (id) {
 window.excluirPedido = async function (id) {
   if (!confirm("Tem certeza que deseja excluir este pedido e seus itens?")) return;
 
-  // Apaga itens primeiro
-  const { error: erroItens } = await supabase
-    .from("pedidos_itens")
-    .delete()
-    .eq("pedido_id", id);
-
-  if (erroItens) {
-    alert("Erro ao excluir itens do pedido.");
-    console.error(erroItens);
-    return;
-  }
-
-  // Depois apaga o pedido
-  const { error: erroPedido } = await supabase
+  // como o pedido_id tem ON DELETE CASCADE, basta apagar o pedido
+  const { error } = await supabase
     .from("pedidos")
     .delete()
     .eq("id", id);
 
-  if (erroPedido) {
+  if (error) {
     alert("Erro ao excluir pedido.");
-    console.error(erroPedido);
+    console.error(error);
     return;
   }
 
@@ -271,10 +266,11 @@ function iniciarNovoPedido() {
   const hoje = new Date().toISOString().slice(0, 10);
   document.getElementById("data_pedido").value = hoje;
 
-  document.getElementById("tbodyItens").innerHTML = "";
-  adicionarItemLinha();
-
   document.getElementById("formContainer").classList.remove("hidden");
+
+  const tbody = document.getElementById("tbodyItens");
+  tbody.innerHTML = "";
+  adicionarItemLinha();
 }
 
 function fecharFormPedido() {
@@ -288,7 +284,7 @@ function adicionarItemLinha() {
   const novo = {
     produto_id: "",
     quantidade: 1,
-    preco_unitario: 0,
+    valor_unitario: 0,
     total_item: 0
   };
   itensPedido.push(novo);
@@ -323,13 +319,16 @@ function renderizarItens() {
         </select>
       </td>
       <td>
-        <input type="number" min="1" step="1" data-index="${index}" class="inp-qtd" value="${item.quantidade}">
+        <input type="number" min="1" step="1" data-index="${index}"
+               class="inp-qtd" value="${item.quantidade}">
       </td>
       <td>
-        <input type="text" data-index="${index}" class="inp-preco" value="${formatNumberBR(item.preco_unitario)}">
+        <input type="text" data-index="${index}"
+               class="inp-valor" value="${formatNumberBR(item.valor_unitario)}">
       </td>
       <td>
-        <input type="text" class="inp-total" value="${formatNumberBR(item.total_item)}" disabled>
+        <input type="text" class="inp-total"
+               value="${formatNumberBR(item.total_item)}" disabled>
       </td>
       <td>
         <button type="button" class="btn-remover-linha" data-index="${index}">×</button>
@@ -345,11 +344,11 @@ function renderizarItens() {
   });
 
   tbody.querySelectorAll(".inp-qtd").forEach(inp => {
-    inp.addEventListener("input", onQtdOuPrecoChange);
+    inp.addEventListener("input", onQtdOuValorChange);
   });
 
-  tbody.querySelectorAll(".inp-preco").forEach(inp => {
-    inp.addEventListener("input", onQtdOuPrecoChange);
+  tbody.querySelectorAll(".inp-valor").forEach(inp => {
+    inp.addEventListener("input", onQtdOuValorChange);
   });
 
   tbody.querySelectorAll(".btn-remover-linha").forEach(btn => {
@@ -367,33 +366,33 @@ function onProdutoChange(e) {
 
   const prod = produtosCache.find(p => String(p.id) === String(produtoId));
   if (prod) {
-    itensPedido[index].preco_unitario = Number(prod.preco_venda || 0);
+    itensPedido[index].valor_unitario = Number(prod.preco_venda || 0);
   }
 
   recalcularItem(index);
 }
 
-function onQtdOuPrecoChange(e) {
+function onQtdOuValorChange(e) {
   const index = Number(e.target.getAttribute("data-index"));
   const linha = itensPedido[index];
 
   const tbody = document.getElementById("tbodyItens");
   const tr = tbody.querySelectorAll("tr")[index];
   const inpQtd = tr.querySelector(".inp-qtd");
-  const inpPreco = tr.querySelector(".inp-preco");
+  const inpValor = tr.querySelector(".inp-valor");
 
   const qtd = Number(inpQtd.value.replace(",", ".") || "0");
-  const preco = Number(inpPreco.value.replace(".", "").replace(",", ".") || "0");
+  const valor = parseDecimalBR(inpValor.value);
 
   linha.quantidade = qtd;
-  linha.preco_unitario = preco;
+  linha.valor_unitario = valor;
 
   recalcularItem(index);
 }
 
 function recalcularItem(index) {
   const linha = itensPedido[index];
-  linha.total_item = (linha.quantidade || 0) * (linha.preco_unitario || 0);
+  linha.total_item = (linha.quantidade || 0) * (linha.valor_unitario || 0);
 
   const tbody = document.getElementById("tbodyItens");
   const tr = tbody.querySelectorAll("tr")[index];
@@ -419,14 +418,20 @@ async function salvarPedido(e) {
   e.preventDefault();
 
   const clienteId = document.getElementById("cliente").value;
+  const tipo = document.getElementById("tipo_pedido").value;
+  const numeroBruto = document.getElementById("numero_pedido").value.trim();
   const dataPedido = document.getElementById("data_pedido").value;
   const observacoes = document.getElementById("observacoes").value.trim();
 
-  if (!clienteId || !dataPedido) {
-    alert("Preencha cliente e data do pedido.");
+  if (!clienteId || !tipo || !numeroBruto || !dataPedido) {
+    alert("Preencha cliente, tipo, número e data do pedido.");
     return;
   }
 
+  // monta numero_pedido com prefixo e sem zeros automáticos
+  const numeroCompleto = `${tipo}-${numeroBruto}`;
+
+  // itens válidos
   const itensValidos = itensPedido.filter(it => it.produto_id && it.quantidade > 0);
   if (itensValidos.length === 0) {
     alert("Adicione pelo menos um item ao pedido.");
@@ -435,6 +440,23 @@ async function salvarPedido(e) {
 
   const total = itensValidos.reduce((acc, it) => acc + (it.total_item || 0), 0);
 
+  // Bloqueio de número duplicado
+  const { data: jaExiste, error: erroDup } = await supabase
+    .from("pedidos")
+    .select("id")
+    .eq("numero_pedido", numeroCompleto);
+
+  if (erroDup) {
+    alert("Erro ao verificar número do pedido.");
+    console.error(erroDup);
+    return;
+  }
+
+  if (jaExiste && jaExiste.length > 0) {
+    alert("Já existe um pedido com este número.");
+    return;
+  }
+
   // 1) Inserir pedido
   const { data: novoPedido, error: erroPedido } = await supabase
     .from("pedidos")
@@ -442,7 +464,9 @@ async function salvarPedido(e) {
       cliente_id: Number(clienteId),
       data_pedido: dataPedido,
       observacoes,
-      total
+      total,
+      tipo_pedido: tipo,
+      numero_pedido: numeroCompleto
     }])
     .select("*")
     .single();
@@ -453,13 +477,12 @@ async function salvarPedido(e) {
     return;
   }
 
-  // 2) Inserir itens
+  // 2) Inserir itens (sem valor_total, o banco calcula)
   const itensToInsert = itensValidos.map(it => ({
     pedido_id: novoPedido.id,
     produto_id: Number(it.produto_id),
     quantidade: it.quantidade,
-    preco_unitario: it.preco_unitario,
-    total_item: it.total_item
+    valor_unitario: it.valor_unitario
   }));
 
   const { error: erroItens } = await supabase
@@ -489,9 +512,18 @@ function formatMoney(val) {
 }
 
 function formatNumberBR(val) {
-  if (!val) return "0,00";
+  if (!val) val = 0;
   return Number(val).toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
+}
+
+function parseDecimalBR(str) {
+  if (!str) return 0;
+  return Number(
+    String(str)
+      .replace(/\./g, "")
+      .replace(",", ".")
+  ) || 0;
 }
