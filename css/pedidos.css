@@ -1,17 +1,9 @@
-/* ------------------------------ */
-/*          GENERAL STYLE         */
-/* ------------------------------ */
-
 body {
   margin: 0;
   font-family: Arial, sans-serif;
   background: #020617;
   color: #e5e7eb;
 }
-
-/* ------------------------------ */
-/*             TOPBAR             */
-/* ------------------------------ */
 
 .topbar {
   background: #020617;
@@ -57,10 +49,6 @@ body {
   color: #9ca3af;
 }
 
-/* ------------------------------ */
-/*            BUTTONS             */
-/* ------------------------------ */
-
 .btn {
   border: none;
   border-radius: 999px;
@@ -105,10 +93,6 @@ body {
   background: #111827;
 }
 
-/* ------------------------------ */
-/*              PAGE              */
-/* ------------------------------ */
-
 .page {
   padding: 20px;
   display: flex;
@@ -143,10 +127,6 @@ body {
   font-size: 12px;
   color: #9ca3af;
 }
-
-/* ------------------------------ */
-/*            FILTERS             */
-/* ------------------------------ */
 
 .filtros {
   display: grid;
@@ -191,24 +171,12 @@ body {
   align-self: flex-end;
 }
 
-.field-full {
-  grid-column: 1 / -1;
-}
-
-/* ------------------------------ */
-/*           GRID HEADER          */
-/* ------------------------------ */
-
 .grid-header {
   display: grid;
-  grid-template-columns: 2fr 1.3fr 1.5fr 1.5fr 1.3fr;
+  grid-template-columns: 2fr 1.3fr 1.3fr 1.5fr; /* 4 colunas */
   gap: 12px;
   margin-bottom: 20px;
 }
-
-/* ------------------------------ */
-/*         ITENS DO PEDIDO        */
-/* ------------------------------ */
 
 .itens-section {
   margin-top: 15px;
@@ -226,10 +194,6 @@ body {
   gap: 10px;
   margin-bottom: 16px;
 }
-
-/* ------------------------------ */
-/*             TABLE              */
-/* ------------------------------ */
 
 .table-wrapper {
   border-radius: 10px;
@@ -268,10 +232,6 @@ body {
   background: rgba(15, 23, 42, 0.8);
 }
 
-/* ------------------------------ */
-/*             TOTAIS             */
-/* ------------------------------ */
-
 .totais {
   margin-top: 12px;
   display: flex;
@@ -286,20 +246,12 @@ body {
   font-size: 18px;
 }
 
-/* ------------------------------ */
-/*          FORM ACTIONS          */
-/* ------------------------------ */
-
 .form-actions {
   margin-top: 18px;
   display: flex;
   justify-content: flex-end;
   gap: 10px;
 }
-
-/* ------------------------------ */
-/*          RESPONSIVE            */
-/* ------------------------------ */
 
 @media (max-width: 900px) {
   .grid-header {
