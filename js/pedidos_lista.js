@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /* ============================================================
-   FUNÇÃO PRINCIPAL — CARREGAR LISTA DE PEDIDOS
+   CARREGAR LISTA DE PEDIDOS
 ============================================================ */
 async function carregarPedidos() {
   const filtroNumero = document.getElementById("filtroNumero").value.trim();
@@ -47,12 +47,12 @@ async function carregarPedidos() {
 
   if (error) {
     console.error("Erro ao carregar pedidos:", error);
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:10px;">Erro ao carregar pedidos.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="erro">Erro ao carregar pedidos.</td></tr>`;
     return;
   }
 
   if (!data || data.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:10px;">Nenhum pedido encontrado.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="vazio">Nenhum pedido encontrado.</td></tr>`;
     return;
   }
 
@@ -80,12 +80,12 @@ async function carregarPedidos() {
 }
 
 /* ============================================================
-   FORMATAÇÃO DE VALORES
+   FORMATAÇÃO
 ============================================================ */
 function formatarValor(v) {
   const val = Number(v || 0);
   return val.toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    maximumFractionDigits: 2,
   });
 }
