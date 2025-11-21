@@ -1,214 +1,159 @@
-/* ======================================================= */
-/*          ESTILO FUTURISTA - ITENS DO PEDIDO            */
-/* ======================================================= */
+/* ============================================================
+   ESTILO FUTURISTA – ITENS DO PEDIDO
+   MataoUsi System
+   ============================================================ */
 
+/* --------------------- GERAL --------------------- */
 body {
   margin: 0;
-  background: radial-gradient(circle at top, #020617 0, #000 45%, #020617 100%);
-  color: #e5e7eb;
-  font-family: Arial, sans-serif;
+  padding: 0;
+  font-family: "Inter", Arial, sans-serif;
+  background: radial-gradient(circle at top, #0b1221, #05080f);
+  color: #dbe4ff;
 }
 
-/* --------------------------------------------- */
-/* TOPBAR FUTURISTA */
-/* --------------------------------------------- */
-
+/* --------------------- TOPBAR --------------------- */
 .topbar {
-  position: fixed;
-  inset: 0 0 auto 0;
-  height: 60px;
-  padding: 10px 22px;
+  width: 100%;
+  background: rgba(10, 15, 30, 0.8);
+  border-bottom: 1px solid rgba(0, 209, 255, 0.2);
+  padding: 18px 32px;
+
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  background: linear-gradient(
-    90deg,
-    rgba(15, 23, 42, 0.96),
-    rgba(15, 23, 42, 0.85),
-    rgba(15, 23, 42, 0.96)
-  );
-  border-bottom: 1px solid rgba(148, 163, 184, 0.45);
-  backdrop-filter: blur(20px);
-  z-index: 100;
+  align-items: center;
 }
 
-.topbar-left {
+.logo-circle {
+  width: 48px;
+  height: 48px;
+  background: #00eaff;
+  color: #00141d;
+  font-weight: 800;
+  border-radius: 50%;
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 12px;
+  font-size: 20px;
 }
 
 .logo-text {
-  font-weight: 700;
-  color: #38bdf8;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  font-size: 0.95rem;
-}
-
-.topbar-module {
-  color: #9ca3af;
-  font-size: 0.85rem;
-}
-
-.topbar-right .btn-secondary {
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px solid rgba(148, 163, 184, 0.9);
-  color: #e5e7eb;
-  border-radius: 999px;
-  padding: 8px 16px;
-  font-size: 0.85rem;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.topbar-right .btn-secondary:hover {
-  border-color: #38bdf8;
-}
-
-/* --------------------------------------------- */
-/* LAYOUT */
-/* --------------------------------------------- */
-
-.page-container {
-  max-width: 1200px;
-  margin: 100px auto 40px;
-  padding: 0 18px;
-}
-
-/* --------------------------------------------- */
-/* CARD FUTURISTA */
-/* --------------------------------------------- */
-
-.card {
-  background: rgba(15, 23, 42, 0.82);
-  border-radius: 16px;
-  padding: 18px 22px;
-  margin-bottom: 25px;
-  border: 1px solid rgba(148, 163, 184, 0.4);
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(14px);
-}
-
-.titulo-card {
-  margin: 0;
-  font-size: 1.35rem;
-  color: #38bdf8;
-  letter-spacing: 0.05em;
-  font-weight: 700;
-}
-
-.info-texto {
-  margin-top: 6px;
-  color: #94a3b8;
-  font-size: 0.95rem;
-}
-
-/* --------------------------------------------- */
-/* CABEÇALHO CARD */
-/* --------------------------------------------- */
-
-.card-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
+  flex-direction: column;
+  margin-left: 12px;
 }
 
-.card-header h2 {
-  margin: 0;
-  font-size: 1.2rem;
-  color: #e2e8f0;
+.app-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #00eaff;
 }
 
-/* --------------------------------------------- */
-/* TABELA FUTURISTA */
-/* --------------------------------------------- */
-
-.tabela-wrapper {
-  border: 1px solid rgba(51, 65, 85, 0.8);
-  border-radius: 14px;
-  overflow-x: auto;
-  margin-top: 10px;
+.app-subtitle {
+  font-size: 12px;
+  color: #9ab3c9;
 }
 
-.tabela-futurista {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-}
-
-.tabela-futurista thead {
-  background: linear-gradient(
-    180deg,
-    rgba(15, 23, 42, 1) 0%,
-    rgba(15, 23, 42, 0.8) 100%
-  );
-}
-
-.tabela-futurista th {
-  padding: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: 0.75rem;
-  color: #94a3b8;
-  border-bottom: 1px solid rgba(51, 65, 85, 0.9);
-  background: rgba(15, 23, 42, 0.8);
-}
-
-.tabela-futurista td {
-  padding: 10px;
-  border-bottom: 1px solid rgba(30, 41, 59, 0.8);
-}
-
-.tabela-futurista tbody tr:nth-child(even) {
-  background: rgba(15, 23, 42, 0.8);
-}
-
-.tabela-futurista tbody tr:nth-child(odd) {
-  background: rgba(15, 23, 42, 0.6);
-}
-
-.tabela-futurista tbody tr:hover {
-  background: rgba(56, 189, 248, 0.15);
+/* BOTÃO DE VOLTAR */
+.btn-ghost {
+  background: transparent;
+  padding: 10px 22px;
+  border: 1px solid rgba(0, 195, 255, 0.5);
+  border-radius: 8px;
+  color: #00eaff;
+  cursor: pointer;
   transition: 0.25s;
 }
 
-.col-acoes {
-  width: 90px;
-  text-align: center;
+.btn-ghost:hover {
+  background: rgba(0, 195, 255, 0.08);
+  transform: translateY(-2px);
 }
 
-/* --------------------------------------------- */
-/* BOTÃO REMOVER */
-/* --------------------------------------------- */
+/* --------------------- PÁGINA --------------------- */
+.page {
+  max-width: 1300px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
 
-.btn-remover {
-  background: rgba(220, 38, 38, 0.9);
-  color: #fee2e2;
-  border: 1px solid rgba(239, 68, 68, 0.75);
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 0.75rem;
+/* --------------------- CARD --------------------- */
+.card {
+  background: rgba(10, 15, 30, 0.55);
+  backdrop-filter: blur(8px);
+  padding: 28px;
+  border-radius: 16px;
+
+  border: 1px solid rgba(0, 195, 255, 0.25);
+  box-shadow: 0 0 15px rgba(0, 195, 255, 0.15);
+}
+
+.card-header h1 {
+  color: #00eaff;
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.texto-menor {
+  font-size: 14px;
+  color: #9ab3c9;
+  margin-top: 6px;
+}
+
+/* --------------------- TABELA --------------------- */
+.table-wrapper {
+  overflow-x: auto;
+  margin-top: 25px;
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  color: #dbe4ff;
+}
+
+.tabela th {
+  text-align: left;
+  padding: 14px;
+  background: rgba(0, 195, 255, 0.08);
+  color: #00eaff;
+  font-size: 13px;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 1px;
+  border-bottom: 1px solid rgba(0, 195, 255, 0.15);
+}
+
+.tabela td {
+  padding: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tabela tr:hover {
+  background: rgba(0, 195, 255, 0.05);
+}
+
+/* --------------------- BOTÃO EXCLUIR --------------------- */
+.btn-remover {
+  background: #ff0033;
+  border: none;
+  padding: 8px 14px;
+  color: white;
+  border-radius: 6px;
+  font-size: 13px;
   cursor: pointer;
   transition: 0.2s;
 }
 
 .btn-remover:hover {
-  background: rgba(239, 68, 68, 1);
-  color: white;
+  background: #ff335c;
+  transform: scale(1.05);
 }
 
-/* --------------------------------------------- */
-/* RESPONSIVIDADE */
-/* --------------------------------------------- */
-
-@media (max-width: 768px) {
-  .tabela-futurista th,
-  .tabela-futurista td {
-    padding: 7px;
-    font-size: 0.78rem;
-  }
+/* --------------------- ERROS --------------------- */
+.msg-erro {
+  margin-top: 15px;
+  color: #ff6b6b;
+  font-size: 14px;
+  text-align: left;
 }
