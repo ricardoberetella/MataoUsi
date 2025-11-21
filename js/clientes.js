@@ -4,110 +4,111 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("formCliente");
-  const btnCancelar = document.getElementById("btnCancelar");
-  const msg = document.getElementById("msg");
-
-  const params = new URLSearchParams(window.location.search);
-  const id = params.get("id");
-
-  if (!id) {
-    msg.textContent = "ID do cliente não informado.";
-    msg.classList.add("msg-error");
-    return;
-  }
-
-  carregarCliente(id);
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    msg.textContent = "";
-    msg.className = "msg";
-
-    const razao_social = document.getElementById("razao_social").value.trim();
-    const cnpj = document.getElementById("cnpj").value.trim();
-    const telefone = document.getElementById("telefone").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const endereco = document.getElementById("endereco").value.trim();
-
-    if (!razao_social || !cnpj) {
-      msg.textContent = "Preencha Razão Social e CNPJ.";
-      msg.classList.add("msg-error");
-      return;
-    }
-
-    const cnpjLimpo = cnpj.replace(/\D/g, "");
-
-    // Anti duplicação ao editar: não deixar outro cliente com mesmo CNPJ
-    const { data: jaExiste, error: erroBusca } = await supabase
-      .from("clientes")
-      .select("id")
-      .eq("cnpj", cnpjLimpo)
-      .neq("id", id);
-
-    if (erroBusca) {
-      console.error(erroBusca);
-      msg.textContent = "Erro ao verificar CNPJ. Tente novamente.";
-      msg.classList.add("msg-error");
-      return;
-    }
-
-    if (jaExiste && jaExiste.length > 0) {
-      msg.textContent = "Já existe outro cliente com esse CNPJ.";
-      msg.classList.add("msg-error");
-      return;
-    }
-
-    const { error } = await supabase
-      .from("clientes")
-      .update({
-        razao_social,
-        cnpj: cnpjLimpo,
-        telefone: telefone || null,
-        email: email || null,
-        endereco: endereco || null
-      })
-      .eq("id", id);
-
-    if (error) {
-      console.error(error);
-      msg.textContent = "Erro ao atualizar cliente.";
-      msg.classList.add("msg-error");
-      return;
-    }
-
-    msg.textContent = "Cliente atualizado com sucesso!";
-    msg.classList.add("msg-success");
-
-    setTimeout(() => {
-      window.location.href = "clientes.html";
-    }, 800);
-  });
-
-  btnCancelar.addEventListener("click", () => {
-    window.location.href = "clientes.html";
-  });
+  carregarClientes();
 });
 
-async function carregarCliente(id) {
-  const msg = document.getElementById("msg");
+/* ============================================
+   LISTAR CLIENTES
+============================================ */
+async function carregarClientes() {
+  const lista = document.getElementById("listaClientes");
+  lista.innerHTML = "<p style='color:#00eaff;'>Carregando...</p>";
 
   const { data, error } = await supabase
     .from("clientes")
     .select("*")
-    .eq("id", id)
-    .single();
+    .order("razao_social", { ascending: true });
 
-  if (error || !data) {
+  if (error) {
+    lista.innerHTML = "<p style='color:red;'>Erro ao carregar clientes.</p>";
     console.error(error);
-    msg.textContent = "Erro ao carregar dados do cliente.";
-    msg.classList.add("msg-error");
     return;
   }
 
-  document.getElementById("razao_social").value = data.razao_social || "";
-  document.getElementById("cnpj").value = data.cnpj || "";
-  document.getElementById("telefone").value = data.telefone || "";
-  document.getElementById("email").value = data.email || "";
-  document.getElementById("endereco").value = data.endereco || "";
+  lista.innerHTML = "";
+
+  data.forEach(cliente => {
+    const item = document.createElement("div");
+    item.classList.add("item-cliente");
+
+    const cnpjFormatado = formataCNPJ(cliente.cpf_cnpj);
+    const telefoneFormatado = formataTelefone(cliente.telefone);
+
+    item.innerHTML = `
+      <strong>${cliente.razao_social}</strong><br>
+      <span>CNPJ: ${cnpjFormatado || "-"}</span><br>
+      <span>Telefone: ${telefoneFormatado || "-"}</span>
+    `;
+
+    item.addEventListener("click", () => abrirDetalhes(cliente));
+
+    lista.appendChild(item);
+  });
+}
+
+/* ============================================
+   EXIBIR DETALHES
+============================================ */
+function abrirDetalhes(cliente) {
+  const det = document.getElementById("detalhesCliente");
+  det.classList.remove("hidden");
+
+  const cnpjFormatado = formataCNPJ(cliente.cpf_cnpj);
+  const telefoneFormatado = formataTelefone(cliente.telefone);
+
+  det.innerHTML = `
+    <h2 style="color:#00eaff;">${cliente.razao_social}</h2>
+
+    <p><strong>CNPJ:</strong> ${cnpjFormatado || "-"}</p>
+    <p><strong>Telefone:</strong> ${telefoneFormatado || "-"}</p>
+    <p><strong>Email:</strong> ${cliente.email || "-"}</p>
+    <p><strong>Endereço:</strong> ${cliente.endereco || "-"}</p>
+
+    <button class="btn-editar" onclick="editarCliente(${cliente.id})">Editar</button>
+    <button class="btn-excluir" onclick="excluirCliente(${cliente.id})">Excluir</button>
+  `;
+}
+
+/* ============================================
+   EDITAR CLIENTE
+============================================ */
+window.editarCliente = function (id) {
+  window.location.href = `clientes_editar.html?id=${id}`;
+};
+
+/* ============================================
+   EXCLUIR CLIENTE
+============================================ */
+window.excluirCliente = async function (id) {
+  if (!confirm("Tem certeza que deseja excluir este cliente?")) return;
+
+  const { error } = await supabase
+    .from("clientes")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    alert("Erro ao excluir cliente.");
+    console.error(error);
+    return;
+  }
+
+  alert("Cliente excluído!");
+  carregarClientes();
+  document.getElementById("detalhesCliente").classList.add("hidden");
+};
+
+/* ============================================
+   FORMATADORES
+============================================ */
+function formataCNPJ(cnpj) {
+  if (!cnpj) return "";
+  const c = cnpj.replace(/\D/g, "");
+  return c.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
+}
+
+function formataTelefone(tel) {
+  if (!tel) return "";
+  const t = tel.replace(/\D/g, "");
+  return t.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1)$2-$3");
 }
