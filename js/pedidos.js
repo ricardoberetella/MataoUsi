@@ -3,237 +3,495 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let editandoId = null;
-let listaPedidos = [];
-let listaClientes = [];
+let clientesCache = [];
+let produtosCache = [];
+let pedidosCache = [];
+let itensPedido = [];
 
-/* =====================================================================
-   ALERTA FUTURISTA
-===================================================================== */
-function alerta(msg, tipo = "info") {
-  const div = document.createElement("div");
-  div.className = `alert ${tipo}`;
-  div.textContent = msg;
+document.addEventListener("DOMContentLoaded", () => {
+  carregarClientes();
+  carregarProdutos();
+  carregarPedidos();
 
-  document.body.appendChild(div);
-  setTimeout(() => div.classList.add("show"), 20);
-
-  setTimeout(() => {
-    div.classList.remove("show");
-    setTimeout(() => div.remove(), 300);
-  }, 3000);
-}
-
-/* =====================================================================
-   TROCA DE ABAS
-===================================================================== */
-document.querySelectorAll(".tab").forEach(tab => {
-  tab.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
-
-    tab.classList.add("active");
-    document.getElementById(tab.dataset.tab).classList.add("active");
-  });
+  document.getElementById("btnNovoPedido").addEventListener("click", iniciarNovoPedido);
+  document.getElementById("btnAdicionarItem").addEventListener("click", adicionarItemLinha);
+  document.getElementById("btnCancelarPedido").addEventListener("click", fecharFormPedido);
+  document.getElementById("formPedido").addEventListener("submit", salvarPedido);
+  document.getElementById("campoBuscaPedidos").addEventListener("input", filtrarPedidos);
 });
 
-/* =====================================================================
-   CARREGAR CLIENTES
-===================================================================== */
+/* ============================================
+   CARREGAR CLIENTES E PRODUTOS
+============================================ */
 async function carregarClientes() {
   const { data, error } = await supabase
     .from("clientes")
     .select("id, razao_social")
-    .order("razao_social");
+    .order("razao_social", { ascending: true });
 
   if (error) {
-    alerta("Erro ao carregar clientes!", "erro");
+    console.error("Erro ao carregar clientes:", error);
     return;
   }
 
-  listaClientes = data;
+  clientesCache = data || [];
 
-  const select = document.getElementById("cliente_id");
-  select.innerHTML = "";
+  const selectCliente = document.getElementById("cliente");
+  selectCliente.innerHTML = '<option value="">Selecione um cliente...</option>';
 
-  listaClientes.forEach(c => {
+  clientesCache.forEach(c => {
     const opt = document.createElement("option");
     opt.value = c.id;
     opt.textContent = c.razao_social;
-    select.appendChild(opt);
+    selectCliente.appendChild(opt);
   });
 }
 
-/* =====================================================================
-   CARREGAR PEDIDOS
-===================================================================== */
-async function carregarPedidos() {
+async function carregarProdutos() {
   const { data, error } = await supabase
-    .from("pedidos")
-    .select("*, clientes(razao_social)")
-    .order("id", { ascending: false });
+    .from("produtos")
+    .select("id, descricao, preco_venda")
+    .order("descricao", { ascending: true });
 
   if (error) {
-    alerta("Erro ao carregar pedidos!", "erro");
+    console.error("Erro ao carregar produtos:", error);
     return;
   }
 
-  listaPedidos = data;
-  renderTabela();
+  produtosCache = data || [];
 }
 
-/* =====================================================================
-   RENDER TABELA
-===================================================================== */
-function renderTabela() {
-  const tbody = document.getElementById("tabelaPedidos");
-  tbody.innerHTML = "";
+/* ============================================
+   CARREGAR PEDIDOS
+============================================ */
+async function carregarPedidos() {
+  const lista = document.getElementById("listaPedidos");
+  lista.innerHTML = "<p style='color:#00eaff;'>Carregando pedidos...</p>";
 
-  if (listaPedidos.length === 0) {
-    tbody.innerHTML = `
-      <tr><td colspan="5" style="text-align:center;">Nenhum pedido encontrado.</td></tr>
-    `;
-    return;
-  }
-
-  listaPedidos.forEach(p => {
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td>${p.id}</td>
-      <td>${p.clientes?.razao_social ?? "-"}</td>
-      <td>${p.data_pedido ?? "-"}</td>
-      <td>${p.status ?? "-"}</td>
-      <td>
-        <span class="action-btn" onclick="editarPedido(${p.id})">Editar</span>
-        <span class="action-btn" onclick="excluirPedido(${p.id})">Excluir</span>
-      </td>
-    `;
-
-    tbody.appendChild(tr);
-  });
-}
-
-/* =====================================================================
-   SALVAR / ATUALIZAR
-===================================================================== */
-document.getElementById("formPedido").addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const item = {
-    cliente_id: Number(document.getElementById("cliente_id").value),
-    data_pedido: document.getElementById("data_pedido").value,
-    status: document.getElementById("status").value.trim()
-  };
-
-  let result;
-
-  if (editandoId) {
-    result = await supabase.from("pedidos").update(item).eq("id", editandoId);
-  } else {
-    result = await supabase.from("pedidos").insert([item]);
-  }
-
-  if (result.error) {
-    alerta("Erro ao salvar pedido!", "erro");
-    return;
-  }
-
-  alerta(editandoId ? "Pedido atualizado!" : "Pedido cadastrado!", "sucesso");
-
-  limparFormulario();
-  carregarPedidos();
-});
-
-/* =====================================================================
-   EDITAR
-===================================================================== */
-window.editarPedido = async function (id) {
   const { data, error } = await supabase
     .from("pedidos")
     .select("*")
-    .eq("id", id)
-    .single();
+    .order("id", { ascending: false });
 
   if (error) {
-    alerta("Erro ao carregar dados!", "erro");
+    console.error("Erro ao carregar pedidos:", error);
+    lista.innerHTML = "<p style='color:red;'>Erro ao carregar pedidos.</p>";
     return;
   }
 
-  editandoId = id;
-
-  document.getElementById("cliente_id").value = data.cliente_id;
-  document.getElementById("data_pedido").value = data.data_pedido;
-  document.getElementById("status").value = data.status;
-
-  document.querySelector('.tab[data-tab="cadastro"]').click();
-  alerta("Editando pedido...", "info");
-};
-
-/* =====================================================================
-   EXCLUIR
-===================================================================== */
-window.excluirPedido = async function (id) {
-  if (!confirm("Deseja excluir este pedido?")) return;
-
-  const { error } = await supabase.from("pedidos").delete().eq("id", id);
-
-  if (error) {
-    alerta("Erro ao excluir pedido!", "erro");
-    return;
-  }
-
-  alerta("Pedido removido!", "sucesso");
-  carregarPedidos();
-};
-
-/* =====================================================================
-   LIMPAR FORMULÁRIO
-===================================================================== */
-function limparFormulario() {
-  editandoId = null;
-  document.getElementById("formPedido").reset();
+  pedidosCache = data || [];
+  exibirPedidos(pedidosCache);
 }
 
-/* =====================================================================
-   BUSCA (search bar)
-===================================================================== */
-document.getElementById("buscarPedido")?.addEventListener("keyup", () => {
-  const termo = document.getElementById("buscarPedido").value.toLowerCase();
+/* ============================================
+   EXIBIR LISTA DE PEDIDOS
+============================================ */
+function exibirPedidos(pedidos) {
+  const lista = document.getElementById("listaPedidos");
+  lista.innerHTML = "";
 
-  const filtrados = listaPedidos.filter((p) => {
-    const cliente = p.clientes?.razao_social?.toLowerCase() ?? "";
-    const status = p.status?.toLowerCase() ?? "";
+  if (!pedidos || pedidos.length === 0) {
+    lista.innerHTML = "<p>Nenhum pedido encontrado.</p>";
+    return;
+  }
+
+  pedidos.forEach(p => {
+    const div = document.createElement("div");
+    div.classList.add("item-pedido");
+
+    const cliente = clientesCache.find(c => c.id === p.cliente_id);
+    const nomeCliente = cliente ? cliente.razao_social : `Cliente #${p.cliente_id}`;
+
+    const dataFormatada = p.data_pedido
+      ? p.data_pedido.split("-").reverse().join("/")
+      : "-";
+
+    const totalFormatado = formatMoney(p.total);
+
+    div.innerHTML = `
+      <div class="pedido-info">
+        <div class="pedido-top">
+          <span class="pedido-numero">PED #${p.id}</span>
+          <span class="pedido-data">${dataFormatada}</span>
+        </div>
+        <div class="pedido-cliente">${nomeCliente}</div>
+        <div class="pedido-total">${totalFormatado}</div>
+      </div>
+      <button class="btn-abrir" onclick="abrirPedido(${p.id})">Abrir →</button>
+    `;
+
+    lista.appendChild(div);
+  });
+}
+
+/* ============================================
+   FILTRAR PEDIDOS
+============================================ */
+function filtrarPedidos() {
+  const termo = document
+    .getElementById("campoBuscaPedidos")
+    .value
+    .toLowerCase()
+    .trim();
+
+  if (!termo) {
+    exibirPedidos(pedidosCache);
+    return;
+  }
+
+  const filtrado = pedidosCache.filter(p => {
+    const cliente = clientesCache.find(c => c.id === p.cliente_id);
+    const nomeCliente = cliente ? cliente.razao_social.toLowerCase() : "";
+    const numero = String(p.id);
+
     return (
-      cliente.includes(termo) ||
-      status.includes(termo) ||
-      String(p.id).includes(termo)
+      nomeCliente.includes(termo) ||
+      numero.includes(termo)
     );
   });
 
-  const tbody = document.getElementById("tabelaPedidos");
+  exibirPedidos(filtrado);
+}
+
+/* ============================================
+   ABRIR DETALHES DO PEDIDO
+============================================ */
+window.abrirPedido = async function (id) {
+  const pedido = pedidosCache.find(p => p.id === id);
+  if (!pedido) return;
+
+  const { data: itens, error } = await supabase
+    .from("pedidos_itens")
+    .select("*")
+    .eq("pedido_id", id);
+
+  if (error) {
+    console.error("Erro ao carregar itens do pedido:", error);
+    return;
+  }
+
+  const det = document.getElementById("detalhesPedido");
+  det.classList.remove("hidden");
+
+  const cliente = clientesCache.find(c => c.id === pedido.cliente_id);
+  const nomeCliente = cliente ? cliente.razao_social : `Cliente #${pedido.cliente_id}`;
+
+  const dataFormatada = pedido.data_pedido
+    ? pedido.data_pedido.split("-").reverse().join("/")
+    : "-";
+
+  let linhasItens = "";
+  (itens || []).forEach(it => {
+    const prod = produtosCache.find(p => p.id === it.produto_id);
+    const nomeProduto = prod ? prod.descricao : `Produto #${it.produto_id}`;
+
+    linhasItens += `
+      <tr>
+        <td>${nomeProduto}</td>
+        <td>${it.quantidade}</td>
+        <td>${formatMoney(it.preco_unitario)}</td>
+        <td>${formatMoney(it.total_item)}</td>
+      </tr>
+    `;
+  });
+
+  det.innerHTML = `
+    <h2>Pedido #${pedido.id}</h2>
+
+    <p><strong>Cliente:</strong> ${nomeCliente}</p>
+    <p><strong>Data:</strong> ${dataFormatada}</p>
+    <p><strong>Total:</strong> ${formatMoney(pedido.total)}</p>
+    <p><strong>Observações:</strong> ${pedido.observacoes || "-"}</p>
+
+    <h3>Itens</h3>
+    <table class="tabela-itens-det">
+      <thead>
+        <tr>
+          <th>Produto</th>
+          <th>Qtd</th>
+          <th>Preço Unit.</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${linhasItens || `<tr><td colspan="4">Nenhum item registrado.</td></tr>`}
+      </tbody>
+    </table>
+
+    <div class="detalhes-acoes">
+      <button class="btn-excluir" onclick="excluirPedido(${pedido.id})">Excluir Pedido</button>
+    </div>
+  `;
+};
+
+/* ============================================
+   EXCLUIR PEDIDO
+============================================ */
+window.excluirPedido = async function (id) {
+  if (!confirm("Tem certeza que deseja excluir este pedido e seus itens?")) return;
+
+  // Apaga itens primeiro
+  const { error: erroItens } = await supabase
+    .from("pedidos_itens")
+    .delete()
+    .eq("pedido_id", id);
+
+  if (erroItens) {
+    alert("Erro ao excluir itens do pedido.");
+    console.error(erroItens);
+    return;
+  }
+
+  // Depois apaga o pedido
+  const { error: erroPedido } = await supabase
+    .from("pedidos")
+    .delete()
+    .eq("id", id);
+
+  if (erroPedido) {
+    alert("Erro ao excluir pedido.");
+    console.error(erroPedido);
+    return;
+  }
+
+  alert("Pedido excluído com sucesso!");
+  document.getElementById("detalhesPedido").classList.add("hidden");
+  carregarPedidos();
+}
+
+/* ============================================
+   FORMULÁRIO DE NOVO PEDIDO
+============================================ */
+function iniciarNovoPedido() {
+  itensPedido = [];
+  document.getElementById("formPedido").reset();
+  document.getElementById("totalGeral").textContent = "R$ 0,00";
+  document.getElementById("tituloForm").textContent = "Novo Pedido";
+
+  const hoje = new Date().toISOString().slice(0, 10);
+  document.getElementById("data_pedido").value = hoje;
+
+  document.getElementById("tbodyItens").innerHTML = "";
+  adicionarItemLinha();
+
+  document.getElementById("formContainer").classList.remove("hidden");
+}
+
+function fecharFormPedido() {
+  document.getElementById("formContainer").classList.add("hidden");
+}
+
+/* ============================================
+   ITENS DO PEDIDO NO FORM
+============================================ */
+function adicionarItemLinha() {
+  const novo = {
+    produto_id: "",
+    quantidade: 1,
+    preco_unitario: 0,
+    total_item: 0
+  };
+  itensPedido.push(novo);
+  renderizarItens();
+  atualizarTotalGeral();
+}
+
+function removerItemLinha(index) {
+  itensPedido.splice(index, 1);
+  renderizarItens();
+  atualizarTotalGeral();
+}
+
+function renderizarItens() {
+  const tbody = document.getElementById("tbodyItens");
   tbody.innerHTML = "";
 
-  filtrados.forEach(p => {
+  itensPedido.forEach((item, index) => {
     const tr = document.createElement("tr");
 
+    const prodOptions = produtosCache.map(p =>
+      `<option value="${p.id}" ${String(p.id) === String(item.produto_id) ? "selected" : ""}>
+        ${p.descricao}
+      </option>`
+    ).join("");
+
     tr.innerHTML = `
-      <td>${p.id}</td>
-      <td>${p.clientes?.razao_social ?? "-"}</td>
-      <td>${p.data_pedido}</td>
-      <td>${p.status}</td>
       <td>
-        <span class="action-btn" onclick="editarPedido(${p.id})">Editar</span>
-        <span class="action-btn" onclick="excluirPedido(${p.id})">Excluir</span>
+        <select data-index="${index}" class="sel-produto">
+          <option value="">Selecione...</option>
+          ${prodOptions}
+        </select>
+      </td>
+      <td>
+        <input type="number" min="1" step="1" data-index="${index}" class="inp-qtd" value="${item.quantidade}">
+      </td>
+      <td>
+        <input type="text" data-index="${index}" class="inp-preco" value="${formatNumberBR(item.preco_unitario)}">
+      </td>
+      <td>
+        <input type="text" class="inp-total" value="${formatNumberBR(item.total_item)}" disabled>
+      </td>
+      <td>
+        <button type="button" class="btn-remover-linha" data-index="${index}">×</button>
       </td>
     `;
 
     tbody.appendChild(tr);
   });
-});
 
-/* =====================================================================
-   INICIALIZAR
-===================================================================== */
-carregarClientes();
-carregarPedidos();
+  // Eventos
+  tbody.querySelectorAll(".sel-produto").forEach(sel => {
+    sel.addEventListener("change", onProdutoChange);
+  });
+
+  tbody.querySelectorAll(".inp-qtd").forEach(inp => {
+    inp.addEventListener("input", onQtdOuPrecoChange);
+  });
+
+  tbody.querySelectorAll(".inp-preco").forEach(inp => {
+    inp.addEventListener("input", onQtdOuPrecoChange);
+  });
+
+  tbody.querySelectorAll(".btn-remover-linha").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const idx = Number(btn.getAttribute("data-index"));
+      removerItemLinha(idx);
+    });
+  });
+}
+
+function onProdutoChange(e) {
+  const index = Number(e.target.getAttribute("data-index"));
+  const produtoId = e.target.value;
+  itensPedido[index].produto_id = produtoId;
+
+  const prod = produtosCache.find(p => String(p.id) === String(produtoId));
+  if (prod) {
+    itensPedido[index].preco_unitario = Number(prod.preco_venda || 0);
+  }
+
+  recalcularItem(index);
+}
+
+function onQtdOuPrecoChange(e) {
+  const index = Number(e.target.getAttribute("data-index"));
+  const linha = itensPedido[index];
+
+  const tbody = document.getElementById("tbodyItens");
+  const tr = tbody.querySelectorAll("tr")[index];
+  const inpQtd = tr.querySelector(".inp-qtd");
+  const inpPreco = tr.querySelector(".inp-preco");
+
+  const qtd = Number(inpQtd.value.replace(",", ".") || "0");
+  const preco = Number(inpPreco.value.replace(".", "").replace(",", ".") || "0");
+
+  linha.quantidade = qtd;
+  linha.preco_unitario = preco;
+
+  recalcularItem(index);
+}
+
+function recalcularItem(index) {
+  const linha = itensPedido[index];
+  linha.total_item = (linha.quantidade || 0) * (linha.preco_unitario || 0);
+
+  const tbody = document.getElementById("tbodyItens");
+  const tr = tbody.querySelectorAll("tr")[index];
+  if (!tr) return;
+
+  const inpTotal = tr.querySelector(".inp-total");
+  if (inpTotal) {
+    inpTotal.value = formatNumberBR(linha.total_item);
+  }
+
+  atualizarTotalGeral();
+}
+
+function atualizarTotalGeral() {
+  const total = itensPedido.reduce((acc, it) => acc + (it.total_item || 0), 0);
+  document.getElementById("totalGeral").textContent = formatMoney(total);
+}
+
+/* ============================================
+   SALVAR PEDIDO
+============================================ */
+async function salvarPedido(e) {
+  e.preventDefault();
+
+  const clienteId = document.getElementById("cliente").value;
+  const dataPedido = document.getElementById("data_pedido").value;
+  const observacoes = document.getElementById("observacoes").value.trim();
+
+  if (!clienteId || !dataPedido) {
+    alert("Preencha cliente e data do pedido.");
+    return;
+  }
+
+  const itensValidos = itensPedido.filter(it => it.produto_id && it.quantidade > 0);
+  if (itensValidos.length === 0) {
+    alert("Adicione pelo menos um item ao pedido.");
+    return;
+  }
+
+  const total = itensValidos.reduce((acc, it) => acc + (it.total_item || 0), 0);
+
+  // 1) Inserir pedido
+  const { data: novoPedido, error: erroPedido } = await supabase
+    .from("pedidos")
+    .insert([{
+      cliente_id: Number(clienteId),
+      data_pedido: dataPedido,
+      observacoes,
+      total
+    }])
+    .select("*")
+    .single();
+
+  if (erroPedido) {
+    alert("Erro ao salvar pedido.");
+    console.error(erroPedido);
+    return;
+  }
+
+  // 2) Inserir itens
+  const itensToInsert = itensValidos.map(it => ({
+    pedido_id: novoPedido.id,
+    produto_id: Number(it.produto_id),
+    quantidade: it.quantidade,
+    preco_unitario: it.preco_unitario,
+    total_item: it.total_item
+  }));
+
+  const { error: erroItens } = await supabase
+    .from("pedidos_itens")
+    .insert(itensToInsert);
+
+  if (erroItens) {
+    alert("Erro ao salvar itens do pedido.");
+    console.error(erroItens);
+    return;
+  }
+
+  alert("Pedido salvo com sucesso!");
+  fecharFormPedido();
+  carregarPedidos();
+}
+
+/* ============================================
+   FORMATADORES
+============================================ */
+function formatMoney(val) {
+  if (val == null) val = 0;
+  return Number(val).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL"
+  });
+}
+
+function formatNumberBR(val) {
+  if (!val) return "0,00";
+  return Number(val).toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
