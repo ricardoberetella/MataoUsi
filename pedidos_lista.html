@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pedidos - Lista</title>
+
+  <!-- Tema geral futurista -->
+  <link rel="stylesheet" href="css/dashboard.css">
+  <!-- CSS específico de pedidos -->
+  <link rel="stylesheet" href="css/pedidos.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="logo-text">MataoUsi</span>
+      <span class="topbar-module">Pedidos</span>
+    </div>
+    <div class="topbar-right">
+      <a href="dashboard.html" class="btn-secondary">Voltar ao Painel</a>
+      <a href="pedidos.html" class="btn-primary">Novo Pedido</a>
+    </div>
+  </header>
+
+  <main class="page-container">
+    <section class="card">
+      <div class="card-header">
+        <h1>Lista de Pedidos</h1>
+        <div class="card-actions">
+          <button id="btnAtualizar" class="btn-outline">Atualizar</button>
+        </div>
+      </div>
+
+      <div class="filtros-row">
+        <div class="field-group">
+          <label for="filtroNumero">Nº Pedido</label>
+          <input type="text" id="filtroNumero" placeholder="Ex: 1024">
+        </div>
+        <div class="field-group">
+          <label for="filtroCliente">Cliente</label>
+          <input type="text" id="filtroCliente" placeholder="Razão social">
+        </div>
+        <div class="field-group">
+          <label for="filtroTipo">Tipo</label>
+          <select id="filtroTipo">
+            <option value="">Todos</option>
+            <option value="Venda">Venda</option>
+            <option value="Orçamento">Orçamento</option>
+            <option value="Interno">Interno</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="tabela-wrapper">
+        <table class="tabela-futurista">
+          <thead>
+            <tr>
+              <th>Nº Pedido</th>
+              <th>Data</th>
+              <th>Cliente</th>
+              <th>Tipo</th>
+              <th>Total (R$)</th>
+              <th class="col-acoes">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyPedidos">
+            <!-- Preenchido via JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="empty-state" id="emptyStatePedidos" style="display: none;">
+        <p>Nenhum pedido encontrado.</p>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="js/pedidos_lista.js"></script>
+</body>
+</html>
