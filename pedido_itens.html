@@ -1,57 +1,62 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Itens do Pedido</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Itens do Pedido - MataoUsi</title>
 
-  <link rel="stylesheet" href="css/pedido_itens.css">
+  <link rel="stylesheet" href="CSS/pedidos_itens.css" />
 </head>
 
 <body>
-
-  <!-- TOPBAR -->
   <header class="topbar">
-    <button class="btn-voltar" onclick="window.location.href='pedidos.html'">⬅ Voltar</button>
-    <h1>Itens do Pedido</h1>
-    <button id="btnAddItem" class="btn-novo">+ Adicionar Item</button>
-  </header>
-
-  <section class="container">
-    <h2>Itens</h2>
-
-    <div id="listaItens" class="lista">
-      <!-- Itens carregados pelo JS -->
-    </div>
-
-    <div class="total-container">
-      <h3>Total do Pedido: R$ <span id="totalPedido">0,00</span></h3>
-    </div>
-  </section>
-
-  <!-- MODAL -->
-  <div id="modalItem" class="modal hidden">
-    <div class="modal-content">
-      <h3>Adicionar Item</h3>
-
-      <label>Produto</label>
-      <select id="produtoId"></select>
-
-      <label>Quantidade</label>
-      <input type="number" id="quantidade" min="1" value="1">
-
-      <label>Preço Unitário</label>
-      <input type="text" id="preco">
-
-      <div class="actions">
-        <button id="btnSalvarItem" class="btn-salvar">Salvar</button>
-        <button id="btnCancelarItem" class="btn-cancelar">Cancelar</button>
+    <div class="user-area">
+      <div class="logo-circle">MU</div>
+      <div class="logo-text">
+        <span class="app-name">Matao Usinagem</span>
+        <span class="app-subtitle">Itens do Pedido</span>
       </div>
     </div>
-  </div>
 
-  <script type="module" src="js/pedido_itens.js"></script>
+    <button class="btn btn-ghost" onclick="window.location.href='pedidos.html'">
+      Voltar aos Pedidos
+    </button>
+  </header>
+
+  <main class="page">
+    <section class="card">
+
+      <div class="card-header">
+        <div>
+          <h1>Itens do Pedido</h1>
+          <p class="texto-menor" id="infoPedido"></p>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="tabela">
+          <thead>
+            <tr>
+              <th>CÓDIGO</th>
+              <th>DESCRIÇÃO</th>
+              <th>QTD SOL.</th>
+              <th>QTD ENTREGUE</th>
+              <th>RESTANTE</th>
+              <th>UNIT</th>
+              <th>TOTAL</th>
+              <th>DATA ENTREGA</th>
+              <th>STATUS</th>
+              <th>AÇÕES</th>
+            </tr>
+          </thead>
+          <tbody id="listaItens"></tbody>
+        </table>
+      </div>
+
+      <p id="msgErro" class="msg-erro"></p>
+    </section>
+  </main>
+
+  <script type="module" src="js/pedidos_itens.js"></script>
 </body>
-
 </html>
