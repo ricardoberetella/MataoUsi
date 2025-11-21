@@ -25,24 +25,34 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Remover caracteres não numéricos do CNPJ
+    // REMOVE . / - AO SALVAR
     const cnpjLimpo = cnpj.replace(/\D/g, "");
 
-    // 🔒 Anti duplicação por CNPJ
+    // FORMATAÇÃO PADRÃO AO EXIBIR FUTURAMENTE
+    function formataCNPJ(cnpj) {
+      return cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
+        "$1.$2.$3/$4-$5");
+    }
+
+    const telefoneLimpo = telefone.replace(/\D/g, "");
+    const telefoneFormatado =
+      telefoneLimpo.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1)$2-$3");
+
+    // 🚨 CONSULTA COM CAST PARA TEXTO
     const { data: jaExiste, error: erroBusca } = await supabase
       .from("clientes")
       .select("id")
-      .eq("cnpj", cnpjLimpo);
+      .filter("cnpj", "eq", cnpjLimpo);
 
     if (erroBusca) {
       console.error(erroBusca);
-      msg.textContent = "Erro ao verificar CNPJ. Tente novamente.";
+      msg.textContent = "Erro ao verificar CNPJ (400).";
       msg.classList.add("msg-error");
       return;
     }
 
     if (jaExiste && jaExiste.length > 0) {
-      msg.textContent = "Já existe um cliente cadastrado com esse CNPJ.";
+      msg.textContent = "Já existe um cliente com esse CNPJ.";
       msg.classList.add("msg-error");
       return;
     }
@@ -50,8 +60,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const { error } = await supabase.from("clientes").insert([
       {
         razao_social,
-        cnpj: cnpjLimpo,
-        telefone: telefone || null,
+        cnpj: cnpjLimpo, // SALVA SEM MÁSCARA
+        telefone: telefoneFormatado || null,
         email: email || null,
         endereco: endereco || null
       }
@@ -64,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    msg.textContent = "Cliente cadastrado com sucesso!";
+    msg.textContent = "Cliente cadastrado!";
     msg.classList.add("msg-success");
 
     setTimeout(() => {
