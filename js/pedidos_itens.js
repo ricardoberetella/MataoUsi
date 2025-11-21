@@ -3,191 +3,285 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* =====================================================================
-   ELEMENTOS
-===================================================================== */
-const listaItens = document.getElementById("listaItens");
-const modal = document.getElementById("modalItem");
-const produtoSelect = document.getElementById("produtoId");
-const totalSpan = document.getElementById("totalPedido");
+let pedidoId = null;
+let itens = [];
 
-document.getElementById("btnAddItem").onclick = () => abrirModal();
-document.getElementById("btnCancelarItem").onclick = () => fecharModal();
-document.getElementById("btnSalvarItem").onclick = () => salvarItem();
-
-/* =====================================================================
-   PEGAR ID DO PEDIDO (via URL)
-===================================================================== */
-const urlParams = new URLSearchParams(window.location.search);
-const pedidoId = urlParams.get("pedido");
-
-/* =====================================================================
-   ALERTA FUTURISTA
-===================================================================== */
-function alerta(msg, tipo = "info") {
-  const box = document.createElement("div");
-  box.className = `alert ${tipo}`;
-  box.innerText = msg;
-
-  document.body.appendChild(box);
-  setTimeout(() => box.classList.add("show"), 20);
-
-  setTimeout(() => {
-    box.classList.remove("show");
-    setTimeout(() => box.remove(), 300);
-  }, 3000);
-}
-
-/* =====================================================================
-   FORMATADOR BR
-===================================================================== */
-function formatBR(v) {
-  return Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
-}
-
-/* =====================================================================
-   INICIALIZAÇÃO
-===================================================================== */
 document.addEventListener("DOMContentLoaded", () => {
-  carregarProdutos();
+  const params = new URLSearchParams(window.location.search);
+  pedidoId = Number(params.get("pedido_id"));
+
+  if (!pedidoId) {
+    alert("ID do pedido não informado.");
+    window.location.href = "pedidos.html";
+    return;
+  }
+
+  carregarPedido();
   carregarItens();
 });
 
-/* =====================================================================
-   CARREGAR PRODUTOS
-===================================================================== */
-async function carregarProdutos() {
+async function carregarPedido() {
+  const info = document.getElementById("infoPedido");
+
   const { data, error } = await supabase
-    .from("produtos")
-    .select("*")
-    .order("descricao");
+    .from("pedidos")
+    .select(`
+      id,
+      data_pedido,
+      tipo_documento,
+      numero_documento,
+      total,
+      clientes ( razao_social )
+    `)
+    .eq("id", pedidoId)
+    .single();
 
   if (error) {
-    alerta("Erro ao carregar produtos!", "erro");
+    console.error(error);
+    info.textContent = "Erro ao carregar cabeçalho do pedido.";
     return;
   }
 
-  produtoSelect.innerHTML = "";
-
-  data.forEach(p => {
-    const op = document.createElement("option");
-    op.value = p.id;
-    op.textContent = `${p.codigo} - ${p.descricao}`;
-    produtoSelect.appendChild(op);
-  });
+  info.textContent =
+    `Pedido ${data.tipo_documento} ${data.numero_documento} • ` +
+    `${data.clientes?.razao_social || ""} • ` +
+    `Data: ${formatarDataBR(data.data_pedido)} • Total: ${formatarMoeda(data.total)}`;
 }
 
-/* =====================================================================
-   CARREGAR ITENS DO PEDIDO
-===================================================================== */
 async function carregarItens() {
-  const { data: itens, error } = await supabase
+  const msgErro = document.getElementById("msgErro");
+  msgErro.textContent = "";
+
+  const { data, error } = await supabase
     .from("pedidos_itens")
-    .select("*, produtos(codigo, descricao)")
+    .select(`
+      id,
+      produto_id,
+      quantidade,
+      valor_unitario,
+      valor_total,
+      data_entrega,
+      quantidade_entregue,
+      status,
+      produtos ( codigo, descricao )
+    `)
     .eq("pedido_id", pedidoId)
-    .order("id", { ascending: true });
+    .order("id");
 
   if (error) {
-    alerta("Erro ao carregar itens!", "erro");
+    console.error(error);
+    msgErro.textContent = "Erro ao carregar itens: " + error.message;
     return;
   }
 
-  listaItens.innerHTML = "";
+  itens = data;
+  montarTabelaItens();
+}
+
+function montarTabelaItens() {
+  const tbody = document.getElementById("listaItens");
+  tbody.innerHTML = "";
 
   if (!itens || itens.length === 0) {
-    listaItens.innerHTML = `<div class="item" style="opacity:0.7;">Nenhum item adicionado.</div>`;
-    totalSpan.textContent = "0,00";
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 10;
+    td.textContent = "Nenhum item encontrado para este pedido.";
+    td.style.textAlign = "center";
+    td.style.color = "#9ca3af";
+    tr.appendChild(td);
+    tbody.appendChild(tr);
     return;
   }
 
-  let totalPedido = 0;
+  itens.forEach(item => {
+    const restante = Number(item.quantidade) - Number(item.quantidade_entregue || 0);
 
-  itens.forEach(i => {
-    totalPedido += Number(i.total);
-
-    const div = document.createElement("div");
-    div.className = "item";
-    div.innerHTML = `
-      <div>
-        <strong>${i.produtos.codigo} - ${i.produtos.descricao}</strong><br>
-        Qtd: ${i.quantidade} — Preço: R$ ${formatBR(i.preco)}<br>
-        <small>Total: R$ ${formatBR(i.total)}</small>
-      </div>
-      <button class="btn-excluir" onclick="excluirItem(${i.id})">Excluir</button>
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${item.produtos?.codigo || ""}</td>
+      <td>${item.produtos?.descricao || ""}</td>
+      <td>${item.quantidade}</td>
+      <td>${item.quantidade_entregue || "0"}</td>
+      <td>${restante}</td>
+      <td>${formatarMoeda(item.valor_unitario)}</td>
+      <td>${formatarMoeda(item.valor_total)}</td>
+      <td>${item.data_entrega ? formatarDataBR(item.data_entrega) : ""}</td>
+      <td>${item.status || "Aberto"}</td>
+      <td>
+        <button class="btn btn-secondary btn-sm" data-entrega="${item.id}">Entregar</button>
+        <button class="btn btn-secondary btn-sm" data-editar="${item.id}">Editar</button>
+        <button class="btn btn-danger btn-sm" data-excluir="${item.id}">Excluir</button>
+      </td>
     `;
-
-    listaItens.appendChild(div);
+    tbody.appendChild(tr);
   });
 
-  totalSpan.textContent = formatBR(totalPedido);
+  tbody.querySelectorAll("button[data-entrega]").forEach(b => {
+    b.addEventListener("click", () => {
+      const id = Number(b.getAttribute("data-entrega"));
+      registrarEntrega(id);
+    });
+  });
 
-  // Atualiza total no pedido
-  await supabase
-    .from("pedidos")
-    .update({ total: totalPedido })
-    .eq("id", pedidoId);
+  tbody.querySelectorAll("button[data-editar]").forEach(b => {
+    b.addEventListener("click", () => {
+      const id = Number(b.getAttribute("data-editar"));
+      editarItem(id);
+    });
+  });
+
+  tbody.querySelectorAll("button[data-excluir]").forEach(b => {
+    b.addEventListener("click", () => {
+      const id = Number(b.getAttribute("data-excluir"));
+      excluirItem(id);
+    });
+  });
 }
 
-/* =====================================================================
-   EXCLUIR ITEM
-===================================================================== */
-window.excluirItem = async function (id) {
+/* ----------- REGISTRAR ENTREGA COM HISTÓRICO ----------- */
+
+async function registrarEntrega(itemId) {
+  const item = itens.find(i => i.id === itemId);
+  if (!item) return;
+
+  const restante = Number(item.quantidade) - Number(item.quantidade_entregue || 0);
+  if (restante <= 0) {
+    alert("Este item já está totalmente entregue.");
+    return;
+  }
+
+  const qtdStr = window.prompt(`Quantidade a entregar (restam ${restante}):`, restante);
+  if (!qtdStr) return;
+
+  const qtd = Number(qtdStr);
+  if (Number.isNaN(qtd) || qtd <= 0 || qtd > restante) {
+    alert("Quantidade inválida.");
+    return;
+  }
+
+  // histórico: insere em pedidos_itens_entregas
+  const { error: errHist } = await supabase
+    .from("pedidos_itens_entregas")
+    .insert({
+      pedido_item_id: itemId,
+      quantidade: qtd
+      // data_entrega = hoje (default)
+    });
+
+  if (errHist) {
+    console.error(errHist);
+    alert("Erro ao registrar entrega (histórico).");
+    return;
+  }
+
+  // atualiza quantidade_entregue no item
+  const novaEntregue = Number(item.quantidade_entregue || 0) + qtd;
+  let novoStatus = "Aberto";
+  if (novaEntregue >= item.quantidade) {
+    novoStatus = "Entregue";
+  } else if (novaEntregue > 0 && novaEntregue < item.quantidade) {
+    novoStatus = "Parcial";
+  }
+
+  const { error: errItem } = await supabase
+    .from("pedidos_itens")
+    .update({
+      quantidade_entregue: novaEntregue,
+      status: novoStatus
+    })
+    .eq("id", itemId);
+
+  if (errItem) {
+    console.error(errItem);
+    alert("Erro ao atualizar item.");
+    return;
+  }
+
+  await carregarItens();
+}
+
+/* ----------- EDIÇÃO SIMPLES DE ITEM ----------- */
+
+async function editarItem(itemId) {
+  const item = itens.find(i => i.id === itemId);
+  if (!item) return;
+
+  const novaQtdStr = window.prompt("Nova quantidade solicitada:", item.quantidade);
+  if (!novaQtdStr) return;
+  const novaQtd = Number(novaQtdStr);
+  if (Number.isNaN(novaQtd) || novaQtd <= 0) {
+    alert("Quantidade inválida.");
+    return;
+  }
+
+  const novoUnitStr = window.prompt("Novo valor unitário:", item.valor_unitario);
+  if (!novoUnitStr) return;
+  const novoUnit = Number(novoUnitStr.replace(",", "."));
+  if (Number.isNaN(novoUnit) || novoUnit < 0) {
+    alert("Valor inválido.");
+    return;
+  }
+
+  const novaData = window.prompt(
+    "Nova data de entrega (AAAA-MM-DD) ou deixe em branco:",
+    item.data_entrega || ""
+  );
+
+  const novoTotal = novaQtd * novoUnit;
+
+  const { error } = await supabase
+    .from("pedidos_itens")
+    .update({
+      quantidade: novaQtd,
+      valor_unitario: novoUnit,
+      valor_total: novoTotal,
+      data_entrega: novaData || null
+    })
+    .eq("id", itemId);
+
+  if (error) {
+    console.error(error);
+    alert("Erro ao editar item.");
+    return;
+  }
+
+  await carregarItens();
+}
+
+/* ----------- EXCLUIR ITEM ----------- */
+
+async function excluirItem(itemId) {
+  if (!window.confirm("Deseja realmente excluir este item?")) return;
+
+  // histórico será removido automaticamente se FK tiver ON DELETE CASCADE
   const { error } = await supabase
     .from("pedidos_itens")
     .delete()
-    .eq("id", id);
+    .eq("id", itemId);
 
   if (error) {
-    alerta("Erro ao excluir item!", "erro");
+    console.error(error);
+    alert("Erro ao excluir item.");
     return;
   }
 
-  alerta("Item removido!", "sucesso");
-  carregarItens();
-};
-
-/* =====================================================================
-   MODAL
-===================================================================== */
-function abrirModal() {
-  document.getElementById("quantidade").value = "";
-  document.getElementById("preco").value = "";
-  modal.classList.remove("hidden");
+  await carregarItens();
 }
 
-function fecharModal() {
-  modal.classList.add("hidden");
-}
+/* ----------- HELPERS ----------- */
 
-/* =====================================================================
-   SALVAR ITEM
-===================================================================== */
-async function salvarItem() {
-  const produto_id = produtoSelect.value;
-  const qtd = Number(document.getElementById("quantidade").value);
-  let preco = document.getElementById("preco").value.replace(",", ".");
-
-  if (!produto_id) return alerta("Selecione um produto!", "erro");
-  if (!qtd || qtd <= 0) return alerta("Quantidade inválida!", "erro");
-  if (!preco || isNaN(preco)) return alerta("Preço inválido!", "erro");
-
-  preco = Number(preco);
-  const total = qtd * preco;
-
-  const { error } = await supabase.from("pedidos_itens").insert({
-    pedido_id: pedidoId,
-    produto_id,
-    quantidade: qtd,
-    preco,
-    total
+function formatarMoeda(v) {
+  if (v == null) return "";
+  return Number(v).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL"
   });
+}
 
-  if (error) {
-    alerta("Erro ao adicionar item!", "erro");
-    return;
-  }
-
-  alerta("Item adicionado!", "sucesso");
-  fecharModal();
-  carregarItens();
+function formatarDataBR(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("pt-BR");
 }
