@@ -32,13 +32,14 @@ body {
 .sidebar {
   background: #020617;
   border-right: 1px solid #111827;
-  padding: 8px 18px 24px;      /* bem perto do topo */
+  padding: 0 18px 24px;   /* COLADO NO TOPO */
+  margin-top: 0 !important;
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-/* Título "MATÃO USINAGEM" no menu lateral */
+/* Título "MATÃO USINAGEM" */
 .logo-sistema {
   font-size: 22px;
   font-weight: bold;
@@ -46,7 +47,7 @@ body {
   letter-spacing: 0.18em;
   color: #38bdf8;
   text-align: center;
-  margin-top: 4px;
+  margin-top: 5px;
   margin-bottom: 10px;
 }
 
@@ -87,7 +88,8 @@ body {
    CONTEÚDO PRINCIPAL
 ================================= */
 .main {
-  padding: 12px 26px 32px;    /* conteudo bem próximo do topo */
+  padding: 0 26px 32px;   /* TOTALMENTE SUBIDO */
+  margin-top: 0 !important;
   display: flex;
   flex-direction: column;
   gap: 22px;
@@ -96,13 +98,14 @@ body {
 /* LOGO CENTRAL NO TOPO DO PAINEL */
 .topo-dashboard {
   text-align: center;
-  margin-top: 0;
+  margin-top: -10px !important;  /* SUBIDO */
 }
 
 .logo-dashboard {
-  width: 320px;               /* logo grande (dobrado) */
+  width: 320px;
   display: block;
-  margin: 8px auto 6px auto;  /* bem perto da margem superior */
+  margin: -10px auto 5px auto;   /* COLADO NO TOPO */
+  padding-top: 0;
 }
 
 .titulo-principal {
@@ -124,7 +127,8 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 18px;
-  margin-top: 10px;
+  margin-top: 0 !important;      /* SUBIDO */
+  padding-top: 0 !important;
 }
 
 .card {
