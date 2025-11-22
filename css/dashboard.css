@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard - MataoUsi</title>
 
-  <link rel="stylesheet" href="css/dashboard.css">
+  <!-- O CERTO: pasta em MAIÚSCULO -->
+  <link rel="stylesheet" href="CSS/dashboard.css">
 </head>
 
 <body>
@@ -47,7 +48,7 @@
             <div class="card-legenda">Gerenciar cadastro</div>
           </a>
 
-          <!-- O LOGO AGORA FICA CENTRALIZADO ALINHADO A ESTE CARD -->
+          <!-- O LOGO ESTÁ CENTRALIZADO ALINHADO A ESTE CARD -->
           <a class="card" href="pedidos_lista.html" id="botao-pedidos">
             <div class="card-titulo">Pedidos</div>
             <div class="card-legenda">Lista de pedidos</div>
