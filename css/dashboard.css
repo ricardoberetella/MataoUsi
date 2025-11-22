@@ -79,7 +79,7 @@ body {
 .logo-dashboard {
   width: 300px;
   position: absolute;
-  top: 5px;              /* ENCAIXADO NO TOPO */
+  top: 0px;              /* ENCAIXADO NO TOPO */
   left: calc(50% + 130px);
   transform: translateX(-50%);
   z-index: 10;
