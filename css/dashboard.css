@@ -1,0 +1,249 @@
+/* ===============================
+   ESTILO GERAL
+================================= */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: radial-gradient(circle at top, #020617, #020617 40%, #000 100%);
+  color: #e5e7eb;
+}
+
+/* ===============================
+   LAYOUT DASHBOARD
+================================= */
+.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 100vh;
+}
+
+/* SIDEBAR */
+.sidebar {
+  background: linear-gradient(180deg, #020617 0%, #020617 40%, #020617 100%);
+  border-right: 1px solid #111827;
+  padding: 24px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.logo-sistema {
+  font-size: 20px;
+  font-weight: bold;
+  color: #38bdf8;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+/* MENU LATERAL */
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.menu-titulo {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.menu-item {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 999px;
+  font-size: 14px;
+  color: #e5e7eb;
+  text-decoration: none;
+  background: transparent;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.menu-item:hover {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.3);
+  transform: translateX(3px);
+}
+
+/* CONTEÚDO PRINCIPAL */
+.main {
+  padding: 24px 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* TOPO DO DASHBOARD */
+.topo-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.titulo-principal {
+  font-size: 24px;
+  font-weight: 600;
+  color: #f9fafb;
+}
+
+.subtitulo {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+/* GRID DE CARDS */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 18px;
+  margin-top: 10px;
+}
+
+.card {
+  background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), #020617 45%);
+  border-radius: 18px;
+  padding: 18px 18px 16px;
+  border: 1px solid rgba(15, 23, 42, 0.9);
+  box-shadow: 0 0 24px rgba(15, 23, 42, 0.8);
+  text-decoration: none;
+  color: #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(56, 189, 248, 0.7);
+  box-shadow: 0 0 32px rgba(56, 189, 248, 0.35);
+}
+
+.card-titulo {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.card-legenda {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* RODAPÉ DO PAINEL/SEÇÃO */
+.secao-painel {
+  margin-top: 10px;
+}
+
+/* ---------------------------
+   TOPBAR USADA EM PEDIDOS
+---------------------------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  border-bottom: 1px solid #111827;
+  background: linear-gradient(90deg, #020617 0%, #020617 40%, #020617 100%);
+}
+
+.topbar-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.logo-text {
+  font-size: 18px;
+  color: #38bdf8;
+  font-weight: bold;
+}
+
+.topbar-module {
+  font-size: 14px;
+  color: #9ca3af;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* BOTÕES GENÉRICOS */
+.btn-primary,
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: #38bdf8;
+  color: #020617;
+}
+
+.btn-primary:hover {
+  background: #0ea5e9;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #e5e7eb;
+  border-color: #4b5563;
+}
+
+.btn-secondary:hover {
+  border-color: #9ca3af;
+  background: rgba(148, 163, 184, 0.1);
+}
+
+/* LAYOUT DE PÁGINA (PEDIDOS, LISTA, ETC.) */
+.page-container {
+  padding: 20px 24px 28px;
+}
+
+.page-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.1fr);
+  gap: 18px;
+}
+
+/* RESPONSIVO */
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .menu {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .page-grid {
+    grid-template-columns: 1fr;
+  }
+}
