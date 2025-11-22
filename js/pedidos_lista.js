@@ -6,19 +6,18 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 document.addEventListener("DOMContentLoaded", () => {
   carregarPedidos();
 
-  const btnFiltrar = document.getElementById("btnFiltrar");
-  if (btnFiltrar) {
-    btnFiltrar.addEventListener("click", carregarPedidos);
-  }
+  document.getElementById("btnFiltrar").onclick = carregarPedidos;
+  document.getElementById("btnAtualizar").onclick = carregarPedidos;
 });
 
 /* ============================================================
-   CARREGAR LISTA DE PEDIDOS
+   LISTAR PEDIDOS
 ============================================================ */
 async function carregarPedidos() {
-  const filtroNumero = document.getElementById("filtroNumero")?.value.trim() ?? "";
-  const filtroCliente = document.getElementById("filtroCliente")?.value.trim() ?? "";
-  const filtroTipo = document.getElementById("filtroTipo")?.value ?? "";
+  const fNum = document.getElementById("filtroNumero").value.trim();
+  const fCli = document.getElementById("filtroCliente").value.trim();
+  const fTipo = document.getElementById("filtroTipo").value;
+  const fCod = document.getElementById("filtroCodigo").value.trim();
 
   let query = supabase
     .from("pedidos")
@@ -28,72 +27,59 @@ async function carregarPedidos() {
       data_pedido,
       tipo_pedido,
       total,
-      clientes:cliente_id ( razao_social )
+      clientes:cliente_id ( razao_social ),
+      pedidos_itens (*, produtos:produto_id (codigo))
     `)
     .order("id", { ascending: false });
 
-  if (filtroNumero) {
-    query = query.ilike("numero_pedido", `%${filtroNumero}%`);
-  }
+  if (fNum) query = query.ilike("numero_pedido", `%${fNum}%`);
 
-  if (filtroCliente) {
-    query = query.ilike("clientes.razao_social", `%${filtroCliente}%`);
-  }
+  if (fCli)
+    query = query.contains("clientes", { razao_social: fCli });
 
-  if (filtroTipo && filtroTipo !== "Todos") {
-    query = query.eq("tipo_pedido", filtroTipo);
-  }
+  if (fTipo)
+    query = query.eq("tipo_pedido", fTipo);
+
+  if (fCod)
+    query = query.contains("pedidos_itens", {
+      produtos: { codigo: fCod }
+    });
 
   const { data, error } = await query;
 
   const tbody = document.getElementById("tbodyPedidos");
-  if (!tbody) return;
   tbody.innerHTML = "";
 
   if (error) {
-    console.error("Erro ao carregar pedidos:", error);
-    tbody.innerHTML = `
-      <tr><td colspan="6" class="erro">Erro ao carregar pedidos.</td></tr>
-    `;
+    tbody.innerHTML = `<tr><td colspan="6">Erro ao carregar.</td></tr>`;
+    console.error(error);
     return;
   }
 
   if (!data || data.length === 0) {
-    tbody.innerHTML = `
-      <tr><td colspan="6" class="vazio">Nenhum pedido encontrado.</td></tr>
-    `;
+    tbody.innerHTML = `<tr><td colspan="6">Nenhum pedido encontrado.</td></tr>`;
     return;
   }
 
   for (const ped of data) {
-    const dataBR = ped.data_pedido
-      ? new Date(ped.data_pedido).toLocaleDateString("pt-BR")
-      : "-";
-
-    const cliente = ped.clientes?.razao_social ?? "—";
-
     const tr = document.createElement("tr");
+
     tr.innerHTML = `
       <td>${ped.numero_pedido}</td>
-      <td>${dataBR}</td>
-      <td>${cliente}</td>
+      <td>${new Date(ped.data_pedido).toLocaleDateString("pt-BR")}</td>
+      <td>${ped.clientes?.razao_social ?? "--"}</td>
       <td>${ped.tipo_pedido}</td>
       <td>R$ ${formatarValor(ped.total)}</td>
-      <td class="acoes">
-        <a href="pedidos_itens.html?id=${ped.id}" class="btn-ver">Ver</a>
-      </td>
+      <td><a href="pedidos_itens.html?id=${ped.id}" class="btn-primary">Ver</a></td>
     `;
 
     tbody.appendChild(tr);
   }
 }
 
-/* ============================================================
-   FORMATAR
-============================================================ */
 function formatarValor(v) {
   return Number(v || 0).toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    maximumFractionDigits: 2
   });
 }
