@@ -1,0 +1,187 @@
+/* ===============================
+   CLIENTES - LISTA E DETALHES
+================================= */
+
+body {
+  font-family: Arial, sans-serif;
+  background: radial-gradient(circle at top, #020617, #020617 40%, #000 100%);
+  color: #e5e7eb;
+  padding: 24px;
+}
+
+/* TÍTULO */
+.titulo {
+  font-size: 24px;
+  color: #38bdf8;
+  margin-bottom: 12px;
+}
+
+/* BUSCA */
+.area-busca {
+  margin-bottom: 18px;
+}
+
+.input-busca {
+  width: 100%;
+  max-width: 480px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid #1f2937;
+  background: #020617;
+  color: #e5e7eb;
+  outline: none;
+  font-size: 14px;
+}
+
+.input-busca::placeholder {
+  color: #6b7280;
+}
+
+.input-busca:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.6);
+}
+
+/* BOTÃO "NOVO CLIENTE" (CASO VOCÊ USE) */
+.btn-novo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  color: #e5e7eb;
+  text-decoration: none;
+  font-size: 13px;
+  margin-bottom: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-novo:hover {
+  background: #38bdf8;
+  color: #020617;
+}
+
+/* LISTA */
+.lista-clientes {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item-cliente {
+  background: linear-gradient(90deg, #020617, #020617 60%, #000 100%);
+  border-radius: 12px;
+  padding: 10px 14px;
+  border: 1px solid #111827;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.4);
+}
+
+.item-info {
+  font-size: 14px;
+  color: #e5e7eb;
+}
+
+.icone-cliente {
+  margin-right: 8px;
+  color: #38bdf8;
+}
+
+/* BOTÃO ABRIR */
+.btn-abrir {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #38bdf8;
+  background: transparent;
+  color: #e5e7eb;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-abrir:hover {
+  background: #38bdf8;
+  color: #020617;
+}
+
+/* DETALHES DO CLIENTE */
+.detalhes {
+  margin-top: 20px;
+  padding: 18px 18px 16px;
+  border-radius: 14px;
+  border: 1px solid #1f2937;
+  background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.16), #020617 45%);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.9);
+}
+
+.detalhes p {
+  margin: 4px 0;
+  font-size: 14px;
+}
+
+.hidden {
+  display: none;
+}
+
+/* BOTÕES EDITAR / EXCLUIR */
+.btn-editar,
+.btn-excluir {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-editar {
+  background: #22c55e;
+  border-color: #16a34a;
+  color: #020617;
+}
+
+.btn-editar:hover {
+  background: #16a34a;
+}
+
+.btn-excluir {
+  background: #b91c1c;
+  border-color: #ef4444;
+  color: #f9fafb;
+}
+
+.btn-excluir:hover {
+  background: #ef4444;
+}
+
+/* BOTÃO VOLTAR */
+.btn-voltar {
+  display: inline-block;
+  margin-top: 22px;
+  font-size: 13px;
+  color: #38bdf8;
+  text-decoration: none;
+}
+
+.btn-voltar:hover {
+  text-decoration: underline;
+}
+
+/* RESPONSIVO */
+@media (max-width: 640px) {
+  .item-cliente {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .btn-abrir {
+    align-self: flex-end;
+  }
+}
