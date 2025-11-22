@@ -36,7 +36,7 @@ body {
   font-weight: bold;
   text-align: center;
   color: #38bdf8;
-  margin-bottom: 1px;
+  margin-bottom: 50px;
 }
 
 .menu-titulo {
@@ -44,7 +44,7 @@ body {
   text-transform: uppercase;
   letter-spacing: 2px;
   color: #9ca3af;
-  margin-bottom: 20px;
+  margin-bottom: 80px;
 }
 
 .menu-item {
