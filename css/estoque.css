@@ -1,0 +1,205 @@
+/* ===============================
+   ESTOQUE - PAINEL
+================================= */
+
+body {
+  font-family: Arial, sans-serif;
+  background: radial-gradient(circle at top, #020617, #020617 40%, #000 100%);
+  color: #e5e7eb;
+  padding: 24px;
+}
+
+/* CONTAINER PRINCIPAL */
+.estoque-page {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* TÍTULO */
+.estoque-titulo {
+  font-size: 22px;
+  color: #38bdf8;
+  margin-bottom: 14px;
+}
+
+/* ALERTAS FUTURISTAS */
+.alert-container {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 50;
+}
+
+.alert {
+  background: #020617;
+  border-radius: 12px;
+  border: 1px solid #1f2937;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: all 0.25s;
+}
+
+.alert.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.alert.info {
+  border-color: #38bdf8;
+}
+
+.alert.success {
+  border-color: #22c55e;
+}
+
+.alert.error {
+  border-color: #ef4444;
+}
+
+/* ABAS */
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.tab {
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid #1f2937;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab.active {
+  background: #38bdf8;
+  color: #020617;
+  border-color: #38bdf8;
+}
+
+.tab:hover {
+  border-color: #38bdf8;
+}
+
+/* CONTEÚDO DAS ABAS */
+.tab-content {
+  display: none;
+  margin-top: 8px;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* FORMULÁRIO */
+#formEstoque {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #020617;
+  border-radius: 16px;
+  border: 1px solid #111827;
+  padding: 14px 16px;
+  box-shadow: 0 0 24px rgba(15, 23, 42, 0.8);
+}
+
+label {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #1f2937;
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 14px;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.6);
+}
+
+/* BOTÕES */
+.estoque-botoes {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: #38bdf8;
+  color: #020617;
+}
+
+.btn-primary:hover {
+  background: #0ea5e9;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #e5e7eb;
+  border-color: #4b5563;
+}
+
+.btn-secondary:hover {
+  background: rgba(148, 163, 184, 0.12);
+}
+
+/* TABELA DE ESTOQUE */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 14px;
+  font-size: 13px;
+}
+
+thead {
+  background: #020617;
+}
+
+th,
+td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #111827;
+}
+
+th {
+  text-align: left;
+  font-weight: 500;
+  color: #9ca3af;
+}
+
+tbody tr:nth-child(even) {
+  background: rgba(15, 23, 42, 0.7);
+}
+
+/* RESPONSIVO */
+@media (max-width: 768px) {
+  body {
+    padding: 14px;
+  }
+}
