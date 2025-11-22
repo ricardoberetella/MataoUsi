@@ -15,6 +15,8 @@ body {
   font-family: Arial, sans-serif;
   background: radial-gradient(circle at top, #020617, #020617 40%, #000 100%);
   color: #e5e7eb;
+  padding-top: 0 !important;
+  margin-top: 0 !important;
 }
 
 /* ==============================
@@ -32,7 +34,7 @@ body {
 .sidebar {
   background: #020617;
   border-right: 1px solid #111827;
-  padding: 0 18px 24px;   /* COLADO NO TOPO */
+  padding: 0 18px 24px !important;  /* COLADO NO TOPO */
   margin-top: 0 !important;
   display: flex;
   flex-direction: column;
@@ -47,8 +49,8 @@ body {
   letter-spacing: 0.18em;
   color: #38bdf8;
   text-align: center;
-  margin-top: 5px;
-  margin-bottom: 10px;
+  margin-top: 0px !important;
+  margin-bottom: 8px;
 }
 
 /* Menu */
@@ -88,8 +90,8 @@ body {
    CONTEÚDO PRINCIPAL
 ================================= */
 .main {
-  padding: 0 26px 32px;   /* TOTALMENTE SUBIDO */
-  margin-top: 0 !important;
+  padding: 0 26px 32px !important;  /* SUBIDO */
+  margin-top: -20px !important;     /* SUBIDO */
   display: flex;
   flex-direction: column;
   gap: 22px;
@@ -98,13 +100,14 @@ body {
 /* LOGO CENTRAL NO TOPO DO PAINEL */
 .topo-dashboard {
   text-align: center;
-  margin-top: -10px !important;  /* SUBIDO */
+  margin-top: -30px !important;  /* SUBIDO */
 }
 
 .logo-dashboard {
   width: 320px;
   display: block;
-  margin: -10px auto 5px auto;   /* COLADO NO TOPO */
+  margin-top: -45px !important;   /* LOGO COLADO NO TOPO */
+  margin-bottom: -10px !important;
   padding-top: 0;
 }
 
@@ -127,7 +130,7 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 18px;
-  margin-top: 0 !important;      /* SUBIDO */
+  margin-top: -5px !important;   /* SUBIDO */
   padding-top: 0 !important;
 }
 
