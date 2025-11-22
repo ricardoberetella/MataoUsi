@@ -1,13 +1,179 @@
-/* SUBIR TUDO PARA O TOPO */
+/* ==============================
+   RESET / BASE
+================================= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
 body {
-  padding-top: 0px !important;
+  font-family: Arial, sans-serif;
+  background: radial-gradient(circle at top, #020617, #020617 40%, #000 100%);
+  color: #e5e7eb;
 }
 
-/* Ajustar topo geral */
-.main {
-  padding-top: 10px !important;
+/* ==============================
+   LAYOUT GERAL
+================================= */
+.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 100vh;
 }
 
+/* ==============================
+   SIDEBAR (PAINEL LATERAL)
+================================= */
 .sidebar {
-  padding-top: 10px !important;
+  background: #020617;
+  border-right: 1px solid #111827;
+  padding: 8px 18px 24px;      /* bem perto do topo */
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Título "MATÃO USINAGEM" no menu lateral */
+.logo-sistema {
+  font-size: 22px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: #38bdf8;
+  text-align: center;
+  margin-top: 4px;
+  margin-bottom: 10px;
+}
+
+/* Menu */
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.menu-titulo {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.20em;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.menu-item {
+  display: block;
+  padding: 9px 12px;
+  border-radius: 999px;
+  font-size: 14px;
+  color: #e5e7eb;
+  text-decoration: none;
+  border: 1px solid transparent;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+.menu-item:hover {
+  background: rgba(56, 189, 248, 0.09);
+  border-color: rgba(56, 189, 248, 0.45);
+  transform: translateX(3px);
+}
+
+/* ==============================
+   CONTEÚDO PRINCIPAL
+================================= */
+.main {
+  padding: 12px 26px 32px;    /* conteudo bem próximo do topo */
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* LOGO CENTRAL NO TOPO DO PAINEL */
+.topo-dashboard {
+  text-align: center;
+  margin-top: 0;
+}
+
+.logo-dashboard {
+  width: 320px;               /* logo grande (dobrado) */
+  display: block;
+  margin: 8px auto 6px auto;  /* bem perto da margem superior */
+}
+
+.titulo-principal {
+  font-size: 24px;
+  font-weight: 600;
+  color: #f9fafb;
+  margin-bottom: 4px;
+}
+
+.subtitulo {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+/* ==============================
+   CARDS DE ATALHO
+================================= */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 18px;
+  margin-top: 10px;
+}
+
+.card {
+  background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.14), #020617 45%);
+  border-radius: 18px;
+  padding: 18px 18px 16px;
+  border: 1px solid rgba(15, 23, 42, 0.95);
+  box-shadow: 0 0 24px rgba(15, 23, 42, 0.9);
+  text-decoration: none;
+  color: #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(56, 189, 248, 0.8);
+  box-shadow: 0 0 32px rgba(56, 189, 248, 0.5);
+}
+
+.card-titulo {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.card-legenda {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* ==============================
+   RESPONSIVO
+================================= */
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .menu {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
 }
