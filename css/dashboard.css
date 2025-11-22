@@ -26,7 +26,7 @@ body {
 .sidebar {
   width: 260px;
   background: #0d1224;
-  padding: 40px 20px;
+  padding: 10px 20px;
   border-right: 2px solid rgba(0, 255, 255, 0.1);
   height: 100vh;
 }
