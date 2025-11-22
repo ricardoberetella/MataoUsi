@@ -1,75 +1,123 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard - MataoUsi</title>
+/* ============================= */
+/*      ESTILO DO DASHBOARD      */
+/* ============================= */
 
-  <!-- O CERTO: pasta em MAIÚSCULO -->
-  <link rel="stylesheet" href="CSS/dashboard.css">
-</head>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(to bottom right, #0a0f1f, #000);
+  color: #e5e7eb;
+  overflow-x: hidden;
+}
 
-<body>
+/* ============================= */
+/*       LAYOUT PRINCIPAL        */
+/* ============================= */
 
-  <!-- LOGO CENTRALIZADO ACIMA DO BOTÃO PEDIDOS -->
-  <div class="logo-area" style="width: 100%; text-align: center; margin-top: 0;">
-    <img src="imagem/logo-mataousi.png" class="logo-dashboard">
-  </div>
+.layout {
+  display: flex;
+  margin-top: 0;
+}
 
-  <div class="layout">
+/* ============================= */
+/*        MENU LATERAL           */
+/* ============================= */
 
-    <!-- MENU LATERAL -->
-    <aside class="sidebar">
-      <div class="logo-sistema">MATÃO USINAGEM</div>
+.sidebar {
+  width: 260px;
+  background: #0d1224;
+  padding: 40px 20px;
+  border-right: 2px solid rgba(0, 255, 255, 0.1);
+  height: 100vh;
+}
 
-      <nav class="menu">
-        <div class="menu-titulo">Módulos</div>
+.logo-sistema {
+  font-size: 26px;
+  font-weight: bold;
+  text-align: center;
+  color: #38bdf8;
+  margin-bottom: 40px;
+}
 
-        <a href="clientes.html" class="menu-item">👤 Clientes</a>
-        <a href="pedidos_lista.html" class="menu-item">📑 Pedidos</a>
-        <a href="produtos.html" class="menu-item">📦 Produtos</a>
-        <a href="estoque.html" class="menu-item">📊 Estoque</a>
-        <a href="movimentacoes.html" class="menu-item">🔄 Movimentações</a>
-      </nav>
-    </aside>
+.menu-titulo {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #9ca3af;
+  margin-bottom: 20px;
+}
 
-    <!-- CONTEÚDO PRINCIPAL -->
-    <main class="main">
+.menu-item {
+  display: block;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  text-decoration: none;
+  color: #cbd5e1;
+  transition: 0.3s;
+}
 
-      <!-- REMOVIDO O “Painel Principal” -->
+.menu-item:hover {
+  background: rgba(0, 255, 255, 0.15);
+  color: #fff;
+}
 
-      <section class="secao-painel">
+/* ============================= */
+/*         CONTEÚDO              */
+/* ============================= */
 
-        <!-- GRID DE BOTÕES -->
-        <div class="cards-grid" style="margin-top: -10px;">
-          
-          <a class="card" href="clientes.html">
-            <div class="card-titulo">Clientes</div>
-            <div class="card-legenda">Gerenciar cadastro</div>
-          </a>
+.main {
+  flex: 1;
+  padding: 20px 40px;
+}
 
-          <!-- O LOGO ESTÁ CENTRALIZADO ALINHADO A ESTE CARD -->
-          <a class="card" href="pedidos_lista.html" id="botao-pedidos">
-            <div class="card-titulo">Pedidos</div>
-            <div class="card-legenda">Lista de pedidos</div>
-          </a>
+/* ============================= */
+/*            LOGO               */
+/* ============================= */
 
-          <a class="card" href="produtos.html">
-            <div class="card-titulo">Produtos</div>
-            <div class="card-legenda">Cadastro de peças</div>
-          </a>
+.logo-dashboard {
+  width: 380px;
+  margin: 10px auto 10px auto;
+  display: block;
+}
 
-          <a class="card" href="estoque.html">
-            <div class="card-titulo">Estoque</div>
-            <div class="card-legenda">Controle de entradas/saídas</div>
-          </a>
+/* ============================= */
+/*         GRID DE CARDS         */
+/* ============================= */
 
-        </div>
-      </section>
+.cards-grid {
+  margin-top: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
 
-    </main>
+.card {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 25px;
+  border-radius: 20px;
+  text-decoration: none;
+  color: #e2e8f0;
+  border: 1px solid rgba(0, 255, 255, 0.1);
+  transition: 0.3s;
+}
 
-  </div>
+.card:hover {
+  background: rgba(0, 255, 255, 0.1);
+  border-color: rgba(0, 255, 255, 0.3);
+}
 
-</body>
-</html>
+.card-titulo {
+  font-size: 22px;
+  color: #38bdf8;
+  margin-bottom: 10px;
+}
+
+.card-legenda {
+  font-size: 14px;
+  color: #cbd5e1;
+}
+
+/* ============================= */
+
