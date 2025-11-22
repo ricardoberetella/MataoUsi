@@ -8,11 +8,36 @@
   <link rel="stylesheet" href="css/dashboard.css">
 
   <style>
-    /* LOGO MAIOR E GRUDADO NO TOPO */
+    /* LOGO GRANDE COLADO NO TOPO */
     .logo-dashboard {
-      width: 320px;       /* dobro do tamanho */
+      width: 320px;
       display: block;
-      margin: 5px auto 10px auto; /* bem perto do topo */
+      margin: 0 auto 5px auto; /* encostar no topo */
+    }
+
+    /* SUBIR TUDO PARA O TOPO */
+    body {
+      padding-top: 0 !important;
+    }
+
+    .sidebar {
+      padding-top: 0 !important;
+    }
+
+    .main {
+      padding-top: 0 !important;
+    }
+
+    /* Ajustar o título do menu lateral */
+    .logo-sistema {
+      font-size: 22px;
+      font-weight: bold;
+      color: #38bdf8;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 20px;
+      margin-top: 5px; /* grudadinho no topo */
+      text-align: center;
     }
   </style>
 </head>
@@ -25,8 +50,10 @@
   <div class="layout">
 
     <!-- MENU LATERAL -->
-    <aside class="sidebar" style="padding-top: 10px;"> <!-- subido para o topo -->
-      <div class="logo-sistema">MataoUsi</div>
+    <aside class="sidebar">
+
+      <!-- ALTERADO: agora aparece MATÃO USINAGEM -->
+      <div class="logo-sistema">MATÃO USINAGEM</div>
 
       <nav class="menu">
         <div class="menu-titulo">Módulos</div>
@@ -40,7 +67,8 @@
     </aside>
 
     <!-- CONTEÚDO PRINCIPAL -->
-    <main class="main" style="padding-top: 10px;"> <!-- subido também -->
+    <main class="main">
+
       <section class="topo-dashboard">
         <h1 class="titulo-principal">Painel Principal</h1>
         <p class="subtitulo">Selecione um módulo no menu ao lado.</p>
@@ -71,6 +99,7 @@
 
         </div>
       </section>
+
     </main>
 
   </div>
