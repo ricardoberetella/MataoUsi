@@ -5,54 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard - MataoUsi</title>
 
-  <link rel="stylesheet" href="css/dashboard.css">
-
-  <style>
-    /* LOGO GRANDE COLADO NO TOPO */
-    .logo-dashboard {
-      width: 320px;
-      display: block;
-      margin: 0 auto 5px auto; /* encostar no topo */
-    }
-
-    /* SUBIR TUDO PARA O TOPO */
-    body {
-      padding-top: 0 !important;
-    }
-
-    .sidebar {
-      padding-top: 0 !important;
-    }
-
-    .main {
-      padding-top: 0 !important;
-    }
-
-    /* Ajustar o título do menu lateral */
-    .logo-sistema {
-      font-size: 22px;
-      font-weight: bold;
-      color: #38bdf8;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      margin-bottom: 20px;
-      margin-top: 5px; /* grudadinho no topo */
-      text-align: center;
-    }
-  </style>
+  <!-- ATENÇÃO: pasta é CSS (MAIÚSCULO) -->
+  <link rel="stylesheet" href="CSS/dashboard.css">
 </head>
 
 <body>
 
-  <!-- LOGO GRANDE NO TOPO -->
-  <img src="img/logo-mataousi.png" class="logo-dashboard">
+  <!-- LOGO CENTRALIZADO ACIMA DO BOTÃO PEDIDOS -->
+  <div style="width: 100%; text-align: center; margin-top: 0;">
+    <img src="imagem/logo-mataousi.png" class="logo-dashboard">
+  </div>
 
   <div class="layout">
 
     <!-- MENU LATERAL -->
     <aside class="sidebar">
-
-      <!-- ALTERADO: agora aparece MATÃO USINAGEM -->
       <div class="logo-sistema">MATÃO USINAGEM</div>
 
       <nav class="menu">
@@ -69,20 +36,20 @@
     <!-- CONTEÚDO PRINCIPAL -->
     <main class="main">
 
-      <section class="topo-dashboard">
-        <h1 class="titulo-principal">Painel Principal</h1>
-        <p class="subtitulo">Selecione um módulo no menu ao lado.</p>
-      </section>
+      <!-- REMOVIDO “Painel Principal” -->
 
       <section class="secao-painel">
-        <div class="cards-grid">
+
+        <!-- GRID DE BOTÕES -->
+        <div class="cards-grid" style="margin-top: -5px;">
 
           <a class="card" href="clientes.html">
             <div class="card-titulo">Clientes</div>
             <div class="card-legenda">Gerenciar cadastro</div>
           </a>
 
-          <a class="card" href="pedidos_lista.html">
+          <!-- LOGO CENTRALIZADO ACIMA DESTE CARD -->
+          <a class="card" href="pedidos_lista.html" id="botao-pedidos">
             <div class="card-titulo">Pedidos</div>
             <div class="card-legenda">Lista de pedidos</div>
           </a>
