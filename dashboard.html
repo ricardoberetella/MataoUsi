@@ -8,28 +8,27 @@
   <link rel="stylesheet" href="css/dashboard.css">
 
   <style>
-    /* LOGO SUPERIOR */
+    /* LOGO MAIOR E GRUDADO NO TOPO */
     .logo-dashboard {
-      width: 160px;
+      width: 320px;       /* dobro do tamanho */
       display: block;
-      margin: 20px auto 10px auto;
+      margin: 5px auto 10px auto; /* bem perto do topo */
     }
   </style>
 </head>
 
 <body>
 
-  <!-- LOGO PEQUENO NO TOPO -->
+  <!-- LOGO GRANDE NO TOPO -->
   <img src="img/logo-mataousi.png" class="logo-dashboard">
 
   <div class="layout">
 
     <!-- MENU LATERAL -->
-    <aside class="sidebar">
+    <aside class="sidebar" style="padding-top: 10px;"> <!-- subido para o topo -->
       <div class="logo-sistema">MataoUsi</div>
 
       <nav class="menu">
-
         <div class="menu-titulo">Módulos</div>
 
         <a href="clientes.html" class="menu-item">👤 Clientes</a>
@@ -41,17 +40,15 @@
     </aside>
 
     <!-- CONTEÚDO PRINCIPAL -->
-    <main class="main">
-
+    <main class="main" style="padding-top: 10px;"> <!-- subido também -->
       <section class="topo-dashboard">
         <h1 class="titulo-principal">Painel Principal</h1>
         <p class="subtitulo">Selecione um módulo no menu ao lado.</p>
       </section>
 
       <section class="secao-painel">
-
-        <!-- BOTÕES DE ATALHO -->
         <div class="cards-grid">
+
           <a class="card" href="clientes.html">
             <div class="card-titulo">Clientes</div>
             <div class="card-legenda">Gerenciar cadastro</div>
@@ -71,10 +68,9 @@
             <div class="card-titulo">Estoque</div>
             <div class="card-legenda">Controle de entradas/saídas</div>
           </a>
+
         </div>
-
       </section>
-
     </main>
 
   </div>
