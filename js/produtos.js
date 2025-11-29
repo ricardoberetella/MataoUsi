@@ -19,33 +19,26 @@ function parseBR(v) {
     return Number(v.replace(/\./g, "").replace(",", ".")) || 0;
 }
 
-/* ==================================================================
-   LISTA DE PRODUTOS
-===================================================================*/
-if (document.body.contains(document.getElementById("listaProdutos"))) {
+/* ===========================================
+   CARREGAR LISTA NA TELA
+===========================================*/
+if (document.getElementById("listaProdutos")) {
     carregarLista();
-
-    // Eventos do modal de filtros
-    document.getElementById("btnFiltros").onclick = abrirModalFiltros;
-    document.getElementById("btnAplicar").onclick = aplicarFiltros;
-    document.getElementById("btnLimpar").onclick = limparFiltros;
-    document.getElementById("modalClose").onclick = fecharModalFiltros;
+    carregarCodigosFiltro();
 }
 
+/* ===== Carrega lista principal ===== */
 async function carregarLista(filtros = {}) {
-    let query = supabase.from("produtos").select("*");
+    let query = supabase.from("produtos").select("*").order("codigo");
 
     if (filtros.codigo && filtros.codigo !== "todos") {
         query = query.eq("codigo", filtros.codigo);
-    }
-    if (filtros.descricao && filtros.descricao.trim() !== "") {
-        query = query.ilike("descricao", `%${filtros.descricao}%`);
     }
     if (filtros.acabamento && filtros.acabamento !== "todos") {
         query = query.eq("acabamento", filtros.acabamento);
     }
 
-    const { data } = await query.order("codigo");
+    const { data } = await query;
 
     const tbody = document.getElementById("listaProdutos");
     tbody.innerHTML = "";
@@ -72,46 +65,81 @@ async function carregarLista(filtros = {}) {
     });
 }
 
+/* ========== EXCLUIR PRODUTO ========== */
 window.excluir = async (id) => {
     if (!confirm("Excluir produto?")) return;
     await supabase.from("produtos").delete().eq("id", id);
     carregarLista();
 };
 
-/* ==================================================================
-   SISTEMA DE FILTROS
-===================================================================*/
-function abrirModalFiltros() {
-    document.getElementById("modalFiltros").style.display = "flex";
+/* ===========================================
+   CARREGAR CÓDIGOS NO FILTRO
+===========================================*/
+async function carregarCodigosFiltro() {
+    const { data } = await supabase.from("produtos").select("codigo").order("codigo");
+
+    const select = document.getElementById("filtroCodigo");
+    if (!select) return;
+
+    select.innerHTML = `<option value="todos">Todos</option>`;
+
+    const usados = new Set();
+
+    data.forEach(p => {
+        if (!usados.has(p.codigo)) {
+            usados.add(p.codigo);
+
+            const opt = document.createElement("option");
+            opt.value = p.codigo;
+            opt.textContent = p.codigo;
+
+            select.appendChild(opt);
+        }
+    });
 }
 
-function fecharModalFiltros() {
-    document.getElementById("modalFiltros").style.display = "none";
-}
+/* ===========================================
+   BOTÃO APLICAR FILTROS
+===========================================*/
+if (document.getElementById("btnAplicar")) {
+    document.getElementById("btnAplicar").onclick = () => {
+        const codigo = document.getElementById("filtroCodigo").value;
+        const acabamento = document.getElementById("filtroAcabamento").value;
 
-function limparFiltros() {
-    document.getElementById("filtroCodigo").value = "todos";
-    document.getElementById("filtroDescricao").value = "";
-    document.getElementById("filtroAcabamento").value = "todos";
+        carregarLista({ codigo, acabamento });
 
-    carregarLista();
-    fecharModalFiltros();
-}
-
-function aplicarFiltros() {
-    const filtros = {
-        codigo: document.getElementById("filtroCodigo").value,
-        descricao: document.getElementById("filtroDescricao").value,
-        acabamento: document.getElementById("filtroAcabamento").value
+        document.getElementById("modalFiltros").style.display = "none";
     };
-
-    carregarLista(filtros);
-    fecharModalFiltros();
 }
 
-/* ==================================================================
-   CADASTRAR PRODUTO
-===================================================================*/
+/* LIMPAR FILTROS */
+if (document.getElementById("btnLimpar")) {
+    document.getElementById("btnLimpar").onclick = () => {
+        document.getElementById("filtroCodigo").value = "todos";
+        document.getElementById("filtroAcabamento").value = "todos";
+        carregarLista();
+    };
+}
+
+/* ===========================================
+   ABRIR / FECHAR MODAL
+===========================================*/
+if (document.getElementById("btnFiltros")) {
+    btnFiltros.onclick = () => {
+        document.getElementById("modalFiltros").style.display = "flex";
+        carregarCodigosFiltro();
+    };
+}
+
+if (document.getElementById("modalClose")) {
+    modalClose.onclick = () => {
+        document.getElementById("modalFiltros").style.display = "none";
+    };
+}
+
+/* ===========================================
+   TELA NOVO PRODUTO
+===========================================*/
 if (document.getElementById("btnSalvarNovo")) {
     document.getElementById("btnSalvarNovo").onclick = salvarNovo;
 }
@@ -123,16 +151,15 @@ async function salvarNovo() {
 
     if (resp.error) {
         alert("Erro ao salvar");
-        console.log(resp.error);
         return;
     }
 
     location.href = "produtos_lista.html";
 }
 
-/* ==================================================================
-   EDITAR PRODUTO
-===================================================================*/
+/* ===========================================
+   TELA EDITAR PRODUTO
+===========================================*/
 if (location.search.includes("id=")) {
     carregarProduto();
 }
@@ -169,9 +196,9 @@ async function salvarEdicao() {
     location.href = "produtos_lista.html";
 }
 
-/* ==================================================================
-   FUNÇÃO COLETAR DADOS
-===================================================================*/
+/* ===========================================
+   COLETAR FORMULÁRIO
+===========================================*/
 function coletarDados() {
     return {
         descricao: descricao.value.trim(),
