@@ -71,95 +71,97 @@
         /* ========================================================= */
         /*              IMPRESSÃO IGUAL IMPRESSÃO DE PEDIDOS        */
         /* ========================================================= */
-        @media print {
+      @media print {
 
-            body * {
-                visibility: hidden;
-            }
+    body * {
+        visibility: hidden;
+    }
 
-            #printArea, #printArea * {
-                visibility: visible !important;
-            }
+    #printArea, #printArea * {
+        visibility: visible !important;
+    }
 
-            #printArea {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                padding: 20px 40px; /* alinhado ao padrão pedidos */
-                font-family: Arial, sans-serif;
-            }
+    #printArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 20px 40px;
+        font-family: Arial, sans-serif;
+        overflow: visible !important; /* EVITA CORTE DA BORDA DIREITA */
+    }
 
-            /* ====== CABEÇALHO ====== */
-            .print-header {
-                width: 100%;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 12px;
-            }
+    /* ====== CABEÇALHO ====== */
+    .print-header {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
 
-            .print-info-left {
-                display: flex;
-                align-items: flex-start;
-                flex-direction: column;
-                gap: 2px;
-            }
+    .print-info-left {
+        display: flex;
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 2px;
+    }
 
-            .print-logo {
-                width: 110px;
-                margin-bottom: 2px;
-            }
+    .print-logo {
+        width: 110px;
+        margin-bottom: 2px;
+    }
 
-            .print-company {
-                font-size: 14px;
-                font-weight: bold;
-            }
+    .print-company {
+        font-size: 14px;
+        font-weight: bold;
+    }
 
-            .print-info-right {
-                text-align: right;
-            }
+    .print-info-right {
+        text-align: right;
+    }
 
-            .print-title {
-                font-size: 14px;
-                font-weight: bold;
-                margin-top: 3px;
-            }
+    .print-title {
+        font-size: 14px;
+        font-weight: bold;
+        margin-top: 3px;
+    }
 
-            .print-sub {
-                font-size: 11px;
-            }
+    .print-sub {
+        font-size: 11px;
+    }
 
-            /* ====== TABELA ====== */
-            .print-table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 8px;
-                table-layout: auto;
+    /* ====== TABELA ====== */
+    .print-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 8px;
 
-                border: 1px solid #000; /* BORDA EXTERNA COMPLETA */
-            }
+        /* FORÇA BORDA EXTERNA COMPLETA */
+        border-top: 1px solid #000;
+        border-left: 1px solid #000;
+        border-right: 1px solid #000;
+        border-bottom: 1px solid #000;
+    }
 
-            .print-table th {
-                font-size: 12px;
-                font-weight: bold;
-                padding: 6px;
-                text-align: left;
+    .print-table th,
+    .print-table td {
+        padding: 6px;
+        font-size: 12px;
 
-                border: 1px solid #000;
-            }
+        /* FORÇA TODAS AS BORDAS INTERNAS */
+        border: 1px solid #000 !important;
 
-            .print-table td {
-                font-size: 12px;
-                padding: 6px;
+        /* EVITA QUEBRA DE COLUNA E CORTE */
+        white-space: nowrap;
+    }
 
-                border: 1px solid #000;
-            }
+    /* Ocultar elementos da tela */
+    .no-print {
+        display: none !important;
+    }
+}
 
-            .no-print {
-                display: none !important;
-            }
-        }
     </style>
 </head>
 
