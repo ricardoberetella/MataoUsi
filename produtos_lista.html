@@ -71,12 +71,14 @@
         /* ========================================================= */
         /*              IMPRESSÃO IGUAL IMPRESSÃO DE PEDIDOS        */
         /* ========================================================= */
-      @media print {
+    @media print {
 
+    /* limpa tudo da tela */
     body * {
         visibility: hidden;
     }
 
+    /* libera somente a área de impressão */
     #printArea, #printArea * {
         visibility: visible !important;
     }
@@ -85,10 +87,12 @@
         position: absolute;
         left: 0;
         top: 0;
+
         width: 100%;
-        padding: 20px 40px;
+        padding: 40px 40px 0 40px; /* AQUI — mesma margem do relatório de pedidos */
         font-family: Arial, sans-serif;
-        overflow: visible !important; /* EVITA CORTE DA BORDA DIREITA */
+
+        overflow: visible !important;
     }
 
     /* ====== CABEÇALHO ====== */
@@ -97,19 +101,11 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 12px;
-    }
-
-    .print-info-left {
-        display: flex;
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 2px;
+        margin-bottom: 18px; /* MAIS ABERTO como pedidos */
     }
 
     .print-logo {
         width: 110px;
-        margin-bottom: 2px;
     }
 
     .print-company {
@@ -135,32 +131,29 @@
     .print-table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 8px;
 
-        /* FORÇA BORDA EXTERNA COMPLETA */
-        border-top: 1px solid #000;
-        border-left: 1px solid #000;
-        border-right: 1px solid #000;
-        border-bottom: 1px solid #000;
+        /* bordas externas */
+        border: 1px solid #000;
+
+        /* impede encolhimento */
+        table-layout: fixed;
     }
 
     .print-table th,
     .print-table td {
-        padding: 6px;
         font-size: 12px;
+        padding: 6px;
 
-        /* FORÇA TODAS AS BORDAS INTERNAS */
         border: 1px solid #000 !important;
 
-        /* EVITA QUEBRA DE COLUNA E CORTE */
         white-space: nowrap;
     }
 
-    /* Ocultar elementos da tela */
     .no-print {
         display: none !important;
     }
 }
+
 
     </style>
 </head>
