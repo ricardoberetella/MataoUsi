@@ -20,52 +20,40 @@ function parseBR(v) {
 }
 
 /* ===========================================
-   CARREGAR LISTA NA TELA
+   LISTAR PRODUTOS
 ===========================================*/
-if (document.getElementById("listaProdutos")) {
-    carregarLista();
-    carregarCodigosFiltro();
+if (document.getElementById("listaProdutos")) carregarLista();
+
+async function carregarLista() {
+    const { data } = await supabase.from("produtos").select("*").order("codigo");
+    montarTabela(data);
 }
 
-/* ===== Carrega lista principal ===== */
-async function carregarLista(filtros = {}) {
-    let query = supabase.from("produtos").select("*").order("codigo");
-
-    if (filtros.codigo && filtros.codigo !== "todos") {
-        query = query.eq("codigo", filtros.codigo);
-    }
-    if (filtros.acabamento && filtros.acabamento !== "todos") {
-        query = query.eq("acabamento", filtros.acabamento);
-    }
-
-    const { data } = await query;
-
+function montarTabela(data) {
     const tbody = document.getElementById("listaProdutos");
     tbody.innerHTML = "";
 
     data.forEach(p => {
-        let tr = document.createElement("tr");
-
-        tr.innerHTML = `
-            <td>${p.codigo}</td>
-            <td>${p.descricao}</td>
-            <td>${fmt1(p.comprimento_mm)}</td>
-            <td>${fmt3(p.peso_liquido)}</td>
-            <td>${fmt3(p.peso_bruto)}</td>
-            <td>${fmt2(p.valor_unitario)}</td>
-            <td>${p.acabamento}</td>
-            <td>
-                <a href="produtos_editar.html?id=${p.id}">
-                    <button class="btn-editar">Editar</button>
-                </a>
-                <button class="btn-excluir" onclick="excluir(${p.id})">Excluir</button>
-            </td>
+        tbody.innerHTML += `
+            <tr>
+                <td>${p.codigo}</td>
+                <td>${p.descricao}</td>
+                <td>${fmt1(p.comprimento_mm)}</td>
+                <td>${fmt3(p.peso_liquido)}</td>
+                <td>${fmt3(p.peso_bruto)}</td>
+                <td>${fmt2(p.valor_unitario)}</td>
+                <td>${p.acabamento}</td>
+                <td>
+                    <a href="produtos_editar.html?id=${p.id}">
+                        <button class="btn-editar">Editar</button>
+                    </a>
+                    <button class="btn-excluir" onclick="excluir(${p.id})">Excluir</button>
+                </td>
+            </tr>
         `;
-        tbody.appendChild(tr);
     });
 }
 
-/* ========== EXCLUIR PRODUTO ========== */
 window.excluir = async (id) => {
     if (!confirm("Excluir produto?")) return;
     await supabase.from("produtos").delete().eq("id", id);
@@ -73,102 +61,89 @@ window.excluir = async (id) => {
 };
 
 /* ===========================================
-   CARREGAR CÓDIGOS NO FILTRO
+   FILTROS – MODAL
 ===========================================*/
+
+const modal = document.getElementById("modalFiltros");
+const btnFiltros = document.getElementById("btnFiltros");
+const btnFecharFiltros = document.getElementById("btnFecharFiltros");
+const filtroCodigo = document.getElementById("filtroCodigo");
+const filtroAcabamento = document.getElementById("filtroAcabamento");
+const btnAplicarFiltros = document.getElementById("btnAplicarFiltros");
+const btnLimparFiltros = document.getElementById("btnLimparFiltros");
+
+// Abrir modal
+btnFiltros.onclick = () => {
+    modal.style.display = "flex";
+    carregarCodigosFiltro();
+};
+
+// Fechar modal
+btnFecharFiltros.onclick = () => {
+    modal.style.display = "none";
+};
+
+window.onclick = (ev) => {
+    if (ev.target === modal) modal.style.display = "none";
+};
+
+// Carregar lista de códigos
 async function carregarCodigosFiltro() {
     const { data } = await supabase.from("produtos").select("codigo").order("codigo");
 
-    const select = document.getElementById("filtroCodigo");
-    if (!select) return;
-
-    select.innerHTML = `<option value="todos">Todos</option>`;
-
-    const usados = new Set();
+    filtroCodigo.innerHTML = `<option value="todos">Todos</option>`;
 
     data.forEach(p => {
-        if (!usados.has(p.codigo)) {
-            usados.add(p.codigo);
-
-            const opt = document.createElement("option");
-            opt.value = p.codigo;
-            opt.textContent = p.codigo;
-
-            select.appendChild(opt);
-        }
+        filtroCodigo.innerHTML += `<option value="${p.codigo}">${p.codigo}</option>`;
     });
 }
 
-/* ===========================================
-   BOTÃO APLICAR FILTROS
-===========================================*/
-if (document.getElementById("btnAplicar")) {
-    document.getElementById("btnAplicar").onclick = () => {
-        const codigo = document.getElementById("filtroCodigo").value;
-        const acabamento = document.getElementById("filtroAcabamento").value;
+// Aplicar filtros
+btnAplicarFiltros.onclick = () => {
+    carregarListaComFiltros(
+        filtroCodigo.value,
+        filtroAcabamento.value
+    );
+    modal.style.display = "none";
+};
 
-        carregarLista({ codigo, acabamento });
+// Limpar filtros
+btnLimparFiltros.onclick = () => {
+    filtroCodigo.value = "todos";
+    filtroAcabamento.value = "todos";
+    carregarLista();
+    modal.style.display = "none";
+};
 
-        document.getElementById("modalFiltros").style.display = "none";
-    };
-}
+// Carregar lista filtrada
+async function carregarListaComFiltros(codigo, acabamento) {
 
-/* LIMPAR FILTROS */
-if (document.getElementById("btnLimpar")) {
-    document.getElementById("btnLimpar").onclick = () => {
-        document.getElementById("filtroCodigo").value = "todos";
-        document.getElementById("filtroAcabamento").value = "todos";
-        carregarLista();
-    };
-}
+    let query = supabase.from("produtos").select("*").order("codigo");
 
-/* ===========================================
-   ABRIR / FECHAR MODAL
-===========================================*/
-if (document.getElementById("btnFiltros")) {
-    btnFiltros.onclick = () => {
-        document.getElementById("modalFiltros").style.display = "flex";
-        carregarCodigosFiltro();
-    };
-}
-
-if (document.getElementById("modalClose")) {
-    modalClose.onclick = () => {
-        document.getElementById("modalFiltros").style.display = "none";
-    };
-}
-
-/* ===========================================
-   TELA NOVO PRODUTO
-===========================================*/
-if (document.getElementById("btnSalvarNovo")) {
-    document.getElementById("btnSalvarNovo").onclick = salvarNovo;
-}
-
-async function salvarNovo() {
-    const produto = coletarDados();
-
-    const resp = await supabase.from("produtos").insert([produto]);
-
-    if (resp.error) {
-        alert("Erro ao salvar");
-        return;
+    if (codigo !== "todos") {
+        query = query.eq("codigo", codigo);
     }
 
-    location.href = "produtos_lista.html";
+    if (acabamento !== "todos") {
+        query = query.eq("acabamento", acabamento);
+    }
+
+    const { data } = await query;
+    montarTabela(data);
 }
 
 /* ===========================================
-   TELA EDITAR PRODUTO
+   TELA EDITAR / NOVO – permanece igual
 ===========================================*/
-if (location.search.includes("id=")) {
-    carregarProduto();
-}
+
+if (location.search.includes("id=")) carregarProduto();
 
 async function carregarProduto() {
     const id = new URLSearchParams(location.search).get("id");
     editandoId = id;
 
-    const { data } = await supabase.from("produtos").select("*").eq("id", id).single();
+    const { data } = await supabase.from("produtos")
+        .select("*").eq("id", id).single();
 
     descricao.value = data.descricao;
     codigo.value = data.codigo;
@@ -186,19 +161,10 @@ if (document.getElementById("btnSalvarEdicao")) {
 async function salvarEdicao() {
     const produto = coletarDados();
 
-    const resp = await supabase.from("produtos").update(produto).eq("id", editandoId);
-
-    if (resp.error) {
-        alert("Erro ao salvar alterações");
-        return;
-    }
-
+    await supabase.from("produtos").update(produto).eq("id", editandoId);
     location.href = "produtos_lista.html";
 }
 
-/* ===========================================
-   COLETAR FORMULÁRIO
-===========================================*/
 function coletarDados() {
     return {
         descricao: descricao.value.trim(),
