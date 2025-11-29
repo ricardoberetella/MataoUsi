@@ -5,21 +5,23 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let editandoId = null;
 
-/* =====================
-   FORMATADORES
-===================== */
-function fmt1(v) { return Number(v).toFixed(1).replace(".", ","); }
-function fmt2(v) { return "R$ " + Number(v).toFixed(2).replace(".", ","); }
-function fmt3(v) { return Number(v).toFixed(3).replace(".", ","); }
-function parseBR(v) { return Number(v.replace(".", "").replace(",", ".")) || 0; }
+/* FORMATADORES */
+function fmt1(v){ return Number(v).toFixed(1).replace(".", ","); }
+function fmt3(v){ return Number(v).toFixed(3).replace(".", ","); }
+function fmt2(v){ return "R$ " + Number(v).toFixed(2).replace(".", ","); }
+function parseBR(v){ return Number(v.replace(/\./g,"").replace(",",".")) || 0; }
 
-/* ==========================
+/* ===========================================
    LISTAR PRODUTOS
-========================== */
+===========================================*/
 if (document.getElementById("listaProdutos")) carregarLista();
 
 async function carregarLista() {
-    const { data } = await supabase.from("produtos").select("*").order("codigo");
+    const { data } = await supabase
+        .from("produtos")
+        .select("*")
+        .order("codigo");
+
     montarTabela(data);
 }
 
@@ -37,11 +39,15 @@ function montarTabela(data) {
                 <td>${fmt3(p.peso_bruto)}</td>
                 <td>${fmt2(p.valor_unitario)}</td>
                 <td>${p.acabamento}</td>
+
                 <td>
                     <a href="produtos_editar.html?id=${p.id}">
                         <button class="btn-editar">Editar</button>
                     </a>
-                    <button class="btn-excluir" onclick="excluir(${p.id})">Excluir</button>
+
+                    <button class="btn-excluir" onclick="excluir(${p.id})">
+                        Excluir
+                    </button>
                 </td>
             </tr>
         `;
@@ -50,13 +56,14 @@ function montarTabela(data) {
 
 window.excluir = async (id) => {
     if (!confirm("Excluir produto?")) return;
+
     await supabase.from("produtos").delete().eq("id", id);
     carregarLista();
 };
 
-/* ==========================
-   MODAL DE FILTROS
-========================== */
+/* ===========================================
+   FILTROS – MODAL
+===========================================*/
 
 const modal = document.getElementById("modalFiltros");
 const btnFiltros = document.getElementById("btnFiltros");
@@ -66,13 +73,11 @@ const filtroAcabamento = document.getElementById("filtroAcabamento");
 const btnAplicarFiltros = document.getElementById("btnAplicarFiltros");
 const btnLimparFiltros = document.getElementById("btnLimparFiltros");
 
-/* Abrir modal */
 btnFiltros.onclick = () => {
     modal.style.display = "flex";
     carregarCodigosFiltro();
 };
 
-/* Fechar modal */
 btnFecharFiltros.onclick = () => {
     modal.style.display = "none";
 };
@@ -81,27 +86,38 @@ window.onclick = (ev) => {
     if (ev.target === modal) modal.style.display = "none";
 };
 
-/* Carregar códigos existentes */
 async function carregarCodigosFiltro() {
-    const { data } = await supabase.from("produtos").select("codigo").order("codigo");
+
+    const { data } = await supabase
+        .from("produtos")
+        .select("codigo")
+        .order("codigo");
 
     filtroCodigo.innerHTML = `<option value="todos">Todos</option>`;
 
-    [...new Set(data.map(i => i.codigo))].forEach(c => {
-        filtroCodigo.innerHTML += `<option value="${c}">${c}</option>`;
+    data.forEach(p => {
+        filtroCodigo.innerHTML += `
+          <option value="${p.codigo}">${p.codigo}</option>
+        `;
     });
 }
 
-/* Aplicar filtros */
-btnAplicarFiltros.onclick = () => {
-    carregarListaComFiltros(
-        filtroCodigo.value,
-        filtroAcabamento.value
-    );
+btnAplicarFiltros.onclick = async () => {
+
+    let query = supabase.from("produtos").select("*").order("codigo");
+
+    if (filtroCodigo.value !== "todos")
+        query = query.eq("codigo", filtroCodigo.value);
+
+    if (filtroAcabamento.value !== "todos")
+        query = query.eq("acabamento", filtroAcabamento.value);
+
+    const { data } = await query;
+    montarTabela(data);
+
     modal.style.display = "none";
 };
 
-/* Limpar filtros */
 btnLimparFiltros.onclick = () => {
     filtroCodigo.value = "todos";
     filtroAcabamento.value = "todos";
@@ -109,28 +125,22 @@ btnLimparFiltros.onclick = () => {
     modal.style.display = "none";
 };
 
-/* Lista filtrada */
-async function carregarListaComFiltros(codigo, acabamento) {
-
-    let query = supabase.from("produtos").select("*").order("codigo");
-
-    if (codigo !== "todos") query = query.eq("codigo", codigo);
-
-    if (acabamento !== "todos") query = query.eq("acabamento", acabamento);
-
-    const { data } = await query;
-    montarTabela(data);
-}
-
-/* ==========================
-   IMPRIMIR (layout igual pedidos)
-========================== */
+/* ===========================================
+   IMPRESSÃO — FORMATO IGUAL AOS PEDIDOS
+===========================================*/
 
 document.getElementById("btnImprimir").onclick = async () => {
 
-    const { data } = await supabase.from("produtos").select("*").order("codigo");
+    const { data } = await supabase
+        .from("produtos")
+        .select("*")
+        .order("codigo");
+
+    document.getElementById("printDataHora").innerText =
+        new Date().toLocaleString("pt-BR");
 
     const tabela = document.getElementById("printTable");
+
     tabela.innerHTML = `
         <tr>
             <th>Código</th>
@@ -145,15 +155,16 @@ document.getElementById("btnImprimir").onclick = async () => {
 
     data.forEach(p => {
         tabela.innerHTML += `
-        <tr>
-            <td>${p.codigo}</td>
-            <td>${p.descricao}</td>
-            <td>${fmt1(p.comprimento_mm)}</td>
-            <td>${fmt3(p.peso_liquido)}</td>
-            <td>${fmt3(p.peso_bruto)}</td>
-            <td>${fmt2(p.valor_unitario)}</td>
-            <td>${p.acabamento}</td>
-        </tr>`;
+            <tr>
+                <td>${p.codigo}</td>
+                <td>${p.descricao}</td>
+                <td>${fmt1(p.comprimento_mm)}</td>
+                <td>${fmt3(p.peso_liquido)}</td>
+                <td>${fmt3(p.peso_bruto)}</td>
+                <td>${fmt2(p.valor_unitario)}</td>
+                <td>${p.acabamento}</td>
+            </tr>
+        `;
     });
 
     document.getElementById("printArea").style.display = "block";
@@ -161,9 +172,9 @@ document.getElementById("btnImprimir").onclick = async () => {
     document.getElementById("printArea").style.display = "none";
 };
 
-/* ==========================
+/* ===========================================
    EDITAR PRODUTO
-========================== */
+===========================================*/
 
 if (location.search.includes("id=")) carregarProduto();
 
@@ -172,7 +183,11 @@ async function carregarProduto() {
     const id = new URLSearchParams(location.search).get("id");
     editandoId = id;
 
-    const { data } = await supabase.from("produtos").select("*").eq("id", id).single();
+    const { data } = await supabase
+        .from("produtos")
+        .select("*")
+        .eq("id", id)
+        .single();
 
     descricao.value = data.descricao;
     codigo.value = data.codigo;
@@ -183,17 +198,25 @@ async function carregarProduto() {
     acabamento.value = data.acabamento;
 }
 
-if (document.getElementById("btnSalvarEdicao")) {
+if (document.getElementById("btnSalvarEdicao"))
+{
     document.getElementById("btnSalvarEdicao").onclick = salvarEdicao;
 }
 
 async function salvarEdicao() {
+
     const produto = coletarDados();
-    await supabase.from("produtos").update(produto).eq("id", editandoId);
+
+    await supabase
+        .from("produtos")
+        .update(produto)
+        .eq("id", editandoId);
+
     location.href = "produtos_lista.html";
 }
 
 function coletarDados() {
+
     return {
         descricao: descricao.value.trim(),
         codigo: codigo.value.trim(),
