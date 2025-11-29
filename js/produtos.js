@@ -19,15 +19,33 @@ function parseBR(v) {
     return Number(v.replace(/\./g, "").replace(",", ".")) || 0;
 }
 
-/* ===========================================
-   TELA DE LISTA
-===========================================*/
+/* ==================================================================
+   LISTA DE PRODUTOS
+===================================================================*/
 if (document.body.contains(document.getElementById("listaProdutos"))) {
     carregarLista();
+
+    // Eventos do modal de filtros
+    document.getElementById("btnFiltros").onclick = abrirModalFiltros;
+    document.getElementById("btnAplicar").onclick = aplicarFiltros;
+    document.getElementById("btnLimpar").onclick = limparFiltros;
+    document.getElementById("modalClose").onclick = fecharModalFiltros;
 }
 
-async function carregarLista() {
-    const { data } = await supabase.from("produtos").select("*").order("codigo");
+async function carregarLista(filtros = {}) {
+    let query = supabase.from("produtos").select("*");
+
+    if (filtros.codigo && filtros.codigo !== "todos") {
+        query = query.eq("codigo", filtros.codigo);
+    }
+    if (filtros.descricao && filtros.descricao.trim() !== "") {
+        query = query.ilike("descricao", `%${filtros.descricao}%`);
+    }
+    if (filtros.acabamento && filtros.acabamento !== "todos") {
+        query = query.eq("acabamento", filtros.acabamento);
+    }
+
+    const { data } = await query.order("codigo");
 
     const tbody = document.getElementById("listaProdutos");
     tbody.innerHTML = "";
@@ -60,9 +78,40 @@ window.excluir = async (id) => {
     carregarLista();
 };
 
-/* ===========================================
-   TELA NOVO PRODUTO
-===========================================*/
+/* ==================================================================
+   SISTEMA DE FILTROS
+===================================================================*/
+function abrirModalFiltros() {
+    document.getElementById("modalFiltros").style.display = "flex";
+}
+
+function fecharModalFiltros() {
+    document.getElementById("modalFiltros").style.display = "none";
+}
+
+function limparFiltros() {
+    document.getElementById("filtroCodigo").value = "todos";
+    document.getElementById("filtroDescricao").value = "";
+    document.getElementById("filtroAcabamento").value = "todos";
+
+    carregarLista();
+    fecharModalFiltros();
+}
+
+function aplicarFiltros() {
+    const filtros = {
+        codigo: document.getElementById("filtroCodigo").value,
+        descricao: document.getElementById("filtroDescricao").value,
+        acabamento: document.getElementById("filtroAcabamento").value
+    };
+
+    carregarLista(filtros);
+    fecharModalFiltros();
+}
+
+/* ==================================================================
+   CADASTRAR PRODUTO
+===================================================================*/
 if (document.getElementById("btnSalvarNovo")) {
     document.getElementById("btnSalvarNovo").onclick = salvarNovo;
 }
@@ -81,9 +130,9 @@ async function salvarNovo() {
     location.href = "produtos_lista.html";
 }
 
-/* ===========================================
-   TELA EDITAR PRODUTO
-===========================================*/
+/* ==================================================================
+   EDITAR PRODUTO
+===================================================================*/
 if (location.search.includes("id=")) {
     carregarProduto();
 }
@@ -120,9 +169,9 @@ async function salvarEdicao() {
     location.href = "produtos_lista.html";
 }
 
-/* ===========================================
-   FUNÇÃO COLETAR FORMULÁRIO
-===========================================*/
+/* ==================================================================
+   FUNÇÃO COLETAR DADOS
+===================================================================*/
 function coletarDados() {
     return {
         descricao: descricao.value.trim(),
