@@ -68,35 +68,47 @@
             justify-content: space-between;
         }
 
-        /* ===== IMPRESSÃO ===== */
+        /* ========================================================= */
+        /*              IMPRESSÃO IGUAL IMPRESSÃO DE PEDIDOS        */
+        /* ========================================================= */
         @media print {
+
             body * {
                 visibility: hidden;
             }
+
             #printArea, #printArea * {
                 visibility: visible !important;
             }
+
             #printArea {
                 position: absolute;
                 left: 0;
                 top: 0;
                 width: 100%;
-                padding: 20px;
+                padding: 20px 40px; /* alinhado ao padrão pedidos */
+                font-family: Arial, sans-serif;
             }
 
-            /* Cabeçalho padrão igual pedidos */
+            /* ====== CABEÇALHO ====== */
             .print-header {
+                width: 100%;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                width: 100%;
-                margin-bottom: 15px;
+                margin-bottom: 12px;
             }
 
             .print-info-left {
                 display: flex;
+                align-items: flex-start;
                 flex-direction: column;
-                gap: 4px;
+                gap: 2px;
+            }
+
+            .print-logo {
+                width: 110px;
+                margin-bottom: 2px;
             }
 
             .print-company {
@@ -109,37 +121,39 @@
             }
 
             .print-title {
-                font-size: 15px;
+                font-size: 14px;
                 font-weight: bold;
+                margin-top: 3px;
             }
 
             .print-sub {
                 font-size: 11px;
             }
 
-            .print-logo {
-                width: 140px;
-                margin-bottom: 5px;
-            }
-
+            /* ====== TABELA ====== */
             .print-table {
                 width: 100%;
                 border-collapse: collapse;
-                margin-top: 10px;
-                table-layout: fixed;
+                margin-top: 8px;
+                table-layout: auto;
 
-                border-left: 1px solid #000; /* FECHA borda esquerda */
-                border-right: 1px solid #000; /* FECHA borda direita */
+                border: 1px solid #000; /* BORDA EXTERNA COMPLETA */
             }
 
-            .print-table th,
-            .print-table td {
-                border-top: 1px solid #000;
-                border-bottom: 1px solid #000;
-                border-left: 1px solid #000;
-                border-right: 1px solid #000;
-                padding: 6px;
+            .print-table th {
                 font-size: 12px;
+                font-weight: bold;
+                padding: 6px;
+                text-align: left;
+
+                border: 1px solid #000;
+            }
+
+            .print-table td {
+                font-size: 12px;
+                padding: 6px;
+
+                border: 1px solid #000;
             }
 
             .no-print {
