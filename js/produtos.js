@@ -72,48 +72,57 @@ const filtroAcabamento = document.getElementById("filtroAcabamento");
 const btnAplicarFiltros = document.getElementById("btnAplicarFiltros");
 const btnLimparFiltros = document.getElementById("btnLimparFiltros");
 
-// Abrir modal
-btnFiltros.onclick = () => {
-    modal.style.display = "flex";
-    carregarCodigosFiltro();
-};
+/* ——— Correção importante: só adiciona eventos se existir o modal ——— */
+if (btnFiltros && modal) {
+    btnFiltros.onclick = () => {
+        modal.style.display = "flex";
+        carregarCodigosFiltro();
+    };
+}
 
-// Fechar modal
-btnFecharFiltros.onclick = () => {
-    modal.style.display = "none";
-};
+if (btnFecharFiltros && modal) {
+    btnFecharFiltros.onclick = () => {
+        modal.style.display = "none";
+    };
+}
 
 window.onclick = (ev) => {
     if (ev.target === modal) modal.style.display = "none";
 };
 
-// Carregar lista de códigos
+// Carregar lista de códigos sem duplicar
 async function carregarCodigosFiltro() {
     const { data } = await supabase.from("produtos").select("codigo").order("codigo");
 
     filtroCodigo.innerHTML = `<option value="todos">Todos</option>`;
 
-    data.forEach(p => {
-        filtroCodigo.innerHTML += `<option value="${p.codigo}">${p.codigo}</option>`;
+    const codigosUnicos = [...new Set(data.map(p => p.codigo))];
+
+    codigosUnicos.forEach(cod => {
+        filtroCodigo.innerHTML += `<option value="${cod}">${cod}</option>`;
     });
 }
 
 // Aplicar filtros
-btnAplicarFiltros.onclick = () => {
-    carregarListaComFiltros(
-        filtroCodigo.value,
-        filtroAcabamento.value
-    );
-    modal.style.display = "none";
-};
+if (btnAplicarFiltros) {
+    btnAplicarFiltros.onclick = () => {
+        carregarListaComFiltros(
+            filtroCodigo.value,
+            filtroAcabamento.value
+        );
+        modal.style.display = "none";
+    };
+}
 
 // Limpar filtros
-btnLimparFiltros.onclick = () => {
-    filtroCodigo.value = "todos";
-    filtroAcabamento.value = "todos";
-    carregarLista();
-    modal.style.display = "none";
-};
+if (btnLimparFiltros) {
+    btnLimparFiltros.onclick = () => {
+        filtroCodigo.value = "todos";
+        filtroAcabamento.value = "todos";
+        carregarLista();
+        modal.style.display = "none";
+    };
+}
 
 // Carregar lista filtrada
 async function carregarListaComFiltros(codigo, acabamento) {
@@ -133,7 +142,7 @@ async function carregarListaComFiltros(codigo, acabamento) {
 }
 
 /* ===========================================
-   TELA EDITAR / NOVO – permanece igual
+   EDITAR PRODUTO
 ===========================================*/
 
 if (location.search.includes("id=")) carregarProduto();
