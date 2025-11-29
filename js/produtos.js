@@ -5,23 +5,17 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let editandoId = null;
 
-/* FORMATADORES */
-function fmt1(v) {
-    return Number(v).toFixed(1).replace(".", ",");
-}
-function fmt3(v) {
-    return Number(v).toFixed(3).replace(".", ",");
-}
-function fmt2(v) {
-    return "R$ " + Number(v).toFixed(2).replace(".", ",");
-}
-function parseBR(v) {
-    return Number(v.replace(/\./g, "").replace(",", ".")) || 0;
-}
+/* =====================
+   FORMATADORES
+===================== */
+function fmt1(v) { return Number(v).toFixed(1).replace(".", ","); }
+function fmt2(v) { return "R$ " + Number(v).toFixed(2).replace(".", ","); }
+function fmt3(v) { return Number(v).toFixed(3).replace(".", ","); }
+function parseBR(v) { return Number(v.replace(".", "").replace(",", ".")) || 0; }
 
-/* ===========================================
+/* ==========================
    LISTAR PRODUTOS
-===========================================*/
+========================== */
 if (document.getElementById("listaProdutos")) carregarLista();
 
 async function carregarLista() {
@@ -60,9 +54,9 @@ window.excluir = async (id) => {
     carregarLista();
 };
 
-/* ===========================================
-   FILTROS – MODAL
-===========================================*/
+/* ==========================
+   MODAL DE FILTROS
+========================== */
 
 const modal = document.getElementById("modalFiltros");
 const btnFiltros = document.getElementById("btnFiltros");
@@ -72,87 +66,113 @@ const filtroAcabamento = document.getElementById("filtroAcabamento");
 const btnAplicarFiltros = document.getElementById("btnAplicarFiltros");
 const btnLimparFiltros = document.getElementById("btnLimparFiltros");
 
-/* ——— Correção importante: só adiciona eventos se existir o modal ——— */
-if (btnFiltros && modal) {
-    btnFiltros.onclick = () => {
-        modal.style.display = "flex";
-        carregarCodigosFiltro();
-    };
-}
+/* Abrir modal */
+btnFiltros.onclick = () => {
+    modal.style.display = "flex";
+    carregarCodigosFiltro();
+};
 
-if (btnFecharFiltros && modal) {
-    btnFecharFiltros.onclick = () => {
-        modal.style.display = "none";
-    };
-}
+/* Fechar modal */
+btnFecharFiltros.onclick = () => {
+    modal.style.display = "none";
+};
 
 window.onclick = (ev) => {
     if (ev.target === modal) modal.style.display = "none";
 };
 
-// Carregar lista de códigos sem duplicar
+/* Carregar códigos existentes */
 async function carregarCodigosFiltro() {
     const { data } = await supabase.from("produtos").select("codigo").order("codigo");
 
     filtroCodigo.innerHTML = `<option value="todos">Todos</option>`;
 
-    const codigosUnicos = [...new Set(data.map(p => p.codigo))];
-
-    codigosUnicos.forEach(cod => {
-        filtroCodigo.innerHTML += `<option value="${cod}">${cod}</option>`;
+    [...new Set(data.map(i => i.codigo))].forEach(c => {
+        filtroCodigo.innerHTML += `<option value="${c}">${c}</option>`;
     });
 }
 
-// Aplicar filtros
-if (btnAplicarFiltros) {
-    btnAplicarFiltros.onclick = () => {
-        carregarListaComFiltros(
-            filtroCodigo.value,
-            filtroAcabamento.value
-        );
-        modal.style.display = "none";
-    };
-}
+/* Aplicar filtros */
+btnAplicarFiltros.onclick = () => {
+    carregarListaComFiltros(
+        filtroCodigo.value,
+        filtroAcabamento.value
+    );
+    modal.style.display = "none";
+};
 
-// Limpar filtros
-if (btnLimparFiltros) {
-    btnLimparFiltros.onclick = () => {
-        filtroCodigo.value = "todos";
-        filtroAcabamento.value = "todos";
-        carregarLista();
-        modal.style.display = "none";
-    };
-}
+/* Limpar filtros */
+btnLimparFiltros.onclick = () => {
+    filtroCodigo.value = "todos";
+    filtroAcabamento.value = "todos";
+    carregarLista();
+    modal.style.display = "none";
+};
 
-// Carregar lista filtrada
+/* Lista filtrada */
 async function carregarListaComFiltros(codigo, acabamento) {
 
     let query = supabase.from("produtos").select("*").order("codigo");
 
-    if (codigo !== "todos") {
-        query = query.eq("codigo", codigo);
-    }
+    if (codigo !== "todos") query = query.eq("codigo", codigo);
 
-    if (acabamento !== "todos") {
-        query = query.eq("acabamento", acabamento);
-    }
+    if (acabamento !== "todos") query = query.eq("acabamento", acabamento);
 
     const { data } = await query;
     montarTabela(data);
 }
 
-/* ===========================================
+/* ==========================
+   IMPRIMIR (layout igual pedidos)
+========================== */
+
+document.getElementById("btnImprimir").onclick = async () => {
+
+    const { data } = await supabase.from("produtos").select("*").order("codigo");
+
+    const tabela = document.getElementById("printTable");
+    tabela.innerHTML = `
+        <tr>
+            <th>Código</th>
+            <th>Descrição</th>
+            <th>Comp. (mm)</th>
+            <th>Peso Líq.</th>
+            <th>Peso Bruto</th>
+            <th>Valor Unit.</th>
+            <th>Acabamento</th>
+        </tr>
+    `;
+
+    data.forEach(p => {
+        tabela.innerHTML += `
+        <tr>
+            <td>${p.codigo}</td>
+            <td>${p.descricao}</td>
+            <td>${fmt1(p.comprimento_mm)}</td>
+            <td>${fmt3(p.peso_liquido)}</td>
+            <td>${fmt3(p.peso_bruto)}</td>
+            <td>${fmt2(p.valor_unitario)}</td>
+            <td>${p.acabamento}</td>
+        </tr>`;
+    });
+
+    document.getElementById("printArea").style.display = "block";
+    window.print();
+    document.getElementById("printArea").style.display = "none";
+};
+
+/* ==========================
    EDITAR PRODUTO
-===========================================*/
+========================== */
 
 if (location.search.includes("id=")) carregarProduto();
 
 async function carregarProduto() {
+
     const id = new URLSearchParams(location.search).get("id");
     editandoId = id;
 
-    const { data } = await supabase.from("produtos")
-        .select("*").eq("id", id).single();
+    const { data } = await supabase.from("produtos").select("*").eq("id", id).single();
 
     descricao.value = data.descricao;
     codigo.value = data.codigo;
@@ -169,7 +189,6 @@ if (document.getElementById("btnSalvarEdicao")) {
 
 async function salvarEdicao() {
     const produto = coletarDados();
-
     await supabase.from("produtos").update(produto).eq("id", editandoId);
     location.href = "produtos_lista.html";
 }
