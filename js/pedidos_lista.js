@@ -3,103 +3,226 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-document.addEventListener("DOMContentLoaded", () => {
-    carregarPedidos();
-});
+let editandoId = null;
 
-/* ============================= */
-/*       CARREGAR PEDIDOS        */
-/* ============================= */
+/* FORMATADORES */
+function fmt1(v) {
+    return Number(v).toFixed(1).replace(".", ",");
+}
+function fmt3(v) {
+    return Number(v).toFixed(3).replace(".", ",");
+}
+function fmt2(v) {
+    return "R$ " + Number(v).toFixed(2).replace(".", ",");
+}
+function parseBR(v) {
+    return Number(v.replace(/\./g, "").replace(",", ".")) || 0;
+}
 
-async function carregarPedidos() {
-    const tbody = document.getElementById("listaPedidos");
-    tbody.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
+/* ===========================================
+   LISTAR PRODUTOS
+===========================================*/
+if (document.getElementById("listaProdutos")) carregarLista();
 
-    const { data, error } = await supabase
-        .from("pedidos")
-        .select("id, numero_pedido, data_pedido, total, clientes(razao_social)")
-        .order("id", { ascending: false });
+async function carregarLista() {
+    const { data } = await supabase
+        .from("produtos")
+        .select("*")
+        .order("codigo");
 
-    if (error) {
-        console.log(error);
-        return;
-    }
+    montarTabela(data);
+}
 
+function montarTabela(data) {
+    const tbody = document.getElementById("listaProdutos");
     tbody.innerHTML = "";
 
-    data.forEach(pedido => {
-        const tr = document.createElement("tr");
-
-        tr.innerHTML = `
-            <td>${pedido.numero_pedido}</td>
-            <td>${pedido.clientes.razao_social}</td>
-            <td>${formatarData(pedido.data_pedido)}</td>
-            <td>${formatarMoeda(pedido.total)}</td>
-
-            <td class="acoes">
-                <button class="btn-editar" onclick="editarPedido(${pedido.id})">Editar</button>
-                <button class="btn-excluir" onclick="excluirPedido(${pedido.id})">Excluir</button>
-            </td>
+    data.forEach(p => {
+        tbody.innerHTML += `
+            <tr>
+                <td>${p.codigo}</td>
+                <td>${p.descricao}</td>
+                <td>${fmt1(p.comprimento_mm)}</td>
+                <td>${fmt3(p.peso_liquido)}</td>
+                <td>${fmt3(p.peso_bruto)}</td>
+                <td>${fmt2(p.valor_unitario)}</td>
+                <td>${p.acabamento}</td>
+                <td>
+                    <a href="produtos_editar.html?id=${p.id}">
+                        <button class="btn-editar">Editar</button>
+                    </a>
+                    <button class="btn-excluir" onclick="excluir(${p.id})">Excluir</button>
+                </td>
+            </tr>
         `;
-
-        tbody.appendChild(tr);
     });
 }
 
-/* ============================= */
-/*       EXCLUIR PEDIDO          */
-/* ============================= */
+window.excluir = async (id) => {
+    if (!confirm("Excluir produto?")) return;
 
-window.excluirPedido = async function(id) {
+    await supabase.from("produtos").delete().eq("id", id);
+    carregarLista();
+};
 
-    const confirmar = confirm("Tem certeza que deseja EXCLUIR este pedido?\n\nEssa ação remove também todos os itens.");
+/* ===========================================
+   FILTROS – MODAL
+===========================================*/
 
-    if (!confirmar) return;
+const modal = document.getElementById("modalFiltros");
+const btnFiltros = document.getElementById("btnFiltros");
+const btnFecharFiltros = document.getElementById("btnFecharFiltros");
+const filtroCodigo = document.getElementById("filtroCodigo");
+const filtroAcabamento = document.getElementById("filtroAcabamento");
+const btnAplicarFiltros = document.getElementById("btnAplicarFiltros");
+const btnLimparFiltros = document.getElementById("btnLimparFiltros");
 
-    // Exclui itens primeiro
-    await supabase
-        .from("pedidos_itens")
-        .delete()
-        .eq("pedido_id", id);
+// Abrir modal
+btnFiltros.onclick = () => {
+    modal.style.display = "flex";
+    carregarCodigosFiltro();
+};
 
-    // Exclui o pedido
-    const { error } = await supabase
-        .from("pedidos")
-        .delete()
-        .eq("id", id);
+// Fechar modal
+btnFecharFiltros.onclick = () => {
+    modal.style.display = "none";
+};
 
-    if (error) {
-        alert("Erro ao excluir pedido.");
-        console.log(error);
-        return;
+// Fechar clicando fora
+window.onclick = (ev) => {
+    if (ev.target === modal) modal.style.display = "none";
+};
+
+// Buscar lista de códigos
+async function carregarCodigosFiltro() {
+    const { data } = await supabase
+        .from("produtos")
+        .select("codigo")
+        .order("codigo");
+
+    filtroCodigo.innerHTML = `<option value="todos">Todos</option>`;
+
+    data.forEach(p => {
+        filtroCodigo.innerHTML += `<option value="${p.codigo}">${p.codigo}</option>`;
+    });
+}
+
+/* Aplicar filtragem */
+btnAplicarFiltros.onclick = async () => {
+    let query = supabase.from("produtos").select("*").order("codigo");
+
+    if (filtroCodigo.value !== "todos") {
+        query = query.eq("codigo", filtroCodigo.value);
     }
 
-    alert("Pedido excluído com sucesso!");
-    carregarPedidos();
+    if (filtroAcabamento.value !== "todos") {
+        query = query.eq("acabamento", filtroAcabamento.value);
+    }
+
+    const { data } = await query;
+    montarTabela(data);
+
+    modal.style.display = "none";
 };
 
-
-/* ============================= */
-/*       EDITAR PEDIDO           */
-/* ============================= */
-
-window.editarPedido = function(id) {
-    window.location.href = `pedidos_editar.html?id=${id}`;
+/* Limpar filtros */
+btnLimparFiltros.onclick = () => {
+    filtroCodigo.value = "todos";
+    filtroAcabamento.value = "todos";
+    carregarLista();
+    modal.style.display = "none";
 };
 
+/* ===========================================
+   IMPRESSÃO
+===========================================*/
 
-/* ============================= */
-/*     FORMATAÇÕES AUXILIARES    */
-/* ============================= */
+document.getElementById("btnImprimir").onclick = async () => {
+    const { data } = await supabase
+        .from("produtos")
+        .select("*")
+        .order("codigo");
 
-function formatarData(dataISO) {
-    const partes = dataISO.split("-");
-    return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    const tabela = document.getElementById("printTable");
+    tabela.innerHTML = `
+        <tr>
+            <th>Código</th>
+            <th>Descrição</th>
+            <th>Comp. (mm)</th>
+            <th>Peso Líq.</th>
+            <th>Peso Bruto</th>
+            <th>Valor Unit.</th>
+            <th>Acabamento</th>
+        </tr>
+    `;
+
+    data.forEach(p => {
+        tabela.innerHTML += `
+            <tr>
+                <td>${p.codigo}</td>
+                <td>${p.descricao}</td>
+                <td>${fmt1(p.comprimento_mm)}</td>
+                <td>${fmt3(p.peso_liquido)}</td>
+                <td>${fmt3(p.peso_bruto)}</td>
+                <td>${fmt2(p.valor_unitario)}</td>
+                <td>${p.acabamento}</td>
+            </tr>
+        `;
+    });
+
+    document.getElementById("printArea").style.display = "block";
+    window.print();
+    document.getElementById("printArea").style.display = "none";
+};
+
+/* ===========================================
+   EDITAR / SALVAR PRODUTO
+===========================================*/
+
+if (location.search.includes("id=")) carregarProduto();
+
+async function carregarProduto() {
+    const id = new URLSearchParams(location.search).get("id");
+    editandoId = id;
+
+    const { data } = await supabase
+        .from("produtos")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+    descricao.value = data.descricao;
+    codigo.value = data.codigo;
+    comprimento.value = fmt1(data.comprimento_mm);
+    peso_liquido.value = fmt3(data.peso_liquido);
+    peso_bruto.value = fmt3(data.peso_bruto);
+    valor_unitario.value = data.valor_unitario.toString().replace(".", ",");
+    acabamento.value = data.acabamento;
 }
 
-function formatarMoeda(valor) {
-    return Number(valor).toLocaleString("pt-BR", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    });
+if (document.getElementById("btnSalvarEdicao")) {
+    document.getElementById("btnSalvarEdicao").onclick = salvarEdicao;
+}
+
+async function salvarEdicao() {
+    const produto = coletarDados();
+
+    await supabase
+        .from("produtos")
+        .update(produto)
+        .eq("id", editandoId);
+
+    location.href = "produtos_lista.html";
+}
+
+function coletarDados() {
+    return {
+        descricao: descricao.value.trim(),
+        codigo: codigo.value.trim(),
+        comprimento_mm: parseBR(comprimento.value),
+        peso_liquido: parseBR(peso_liquido.value),
+        peso_bruto: parseBR(peso_bruto.value),
+        valor_unitario: parseBR(valor_unitario.value),
+        acabamento: acabamento.value
+    };
 }
