@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clientes</title>
+
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/clientes.css">
+</head>
+<body>
+
+<header class="topbar">
+    <h1 class="topbar-title">Clientes</h1>
+
+    <a href="dashboard.html">
+        <button class="btn-voltar-menu">← Voltar ao Menu</button>
+    </a>
+</header>
+
+<div class="container">
+
+    <div class="acoes">
+        <button id="btnNovo" class="btn-primario">Cadastrar Novo Cliente</button>
+    </div>
+
+    <section class="card">
+        <h2 class="card-title">Clientes Cadastrados</h2>
+
+        <table class="tabela-futurista">
+            <thead>
+                <tr>
+                    <th>Razão Social</th>
+                    <th>CNPJ</th>
+                    <th style="width:180px;">Ações</th>
+                </tr>
+            </thead>
+
+            <tbody id="listaClientes"></tbody>
+        </table>
+    </section>
+
+</div>
+
+<script type="module" src="js/clientes.js"></script>
+<script src="js/mascaras.js"></script>
+</body>
+</html>

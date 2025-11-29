@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Pedidos</title>
+
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/pedidos_lista.css">
+</head>
+<body>
+
+<!-- =============================== -->
+<!--        TOPO FUTURISTA          -->
+<!-- =============================== -->
+<header class="topbar">
+
+    <!-- BOTÃO VOLTAR AO MENU -->
+    <a href="dashboard.html">
+        <button class="btn-voltar">⬅ Voltar ao Menu</button>
+    </a>
+
+    <h1 class="topbar-title">Lista de Pedidos</h1>
+
+    <!-- REMOVIDO O BOTÃO VOLTAR (MANTIDO TODO RESTANTE) -->
+</header>
+
+<div class="container">
+
+    <!-- =============================== -->
+    <!--      PAINEL DE PEDIDOS         -->
+    <!-- =============================== -->
+    <section class="card">
+
+        <h2 class="card-title">Pedidos Cadastrados</h2>
+
+        <div class="acoes">
+            <a href="pedidos_novo.html">
+                <button class="btn-primario">Novo Pedido</button>
+            </a>
+
+            <a href="pedidos_filtros.html">
+                <button class="btn-primario">Filtros</button>
+            </a>
+        </div>
+
+        <!-- =============================== -->
+        <!--            TABELA              -->
+        <!-- =============================== -->
+        <table class="tabela-futurista">
+            <thead>
+                <tr>
+                    <th>Nº Pedido</th>
+                    <th>Cliente</th>
+                    <th>Data Pedido</th>
+                    <th>Total (R$)</th>
+                    <th style="width:160px;">Ações</th>
+                </tr>
+            </thead>
+
+            <tbody id="listaPedidos"></tbody>
+        </table>
+    </section>
+</div>
+
+<script type="module" src="js/pedidos_lista.js"></script>
+
+</body>
+</html>

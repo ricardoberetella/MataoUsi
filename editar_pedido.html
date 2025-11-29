@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Pedido</title>
+
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/pedidos_novo.css"> <!-- mesmo estilo do cadastro -->
+</head>
+<body>
+
+<header class="topbar">
+    <h1>Editar Pedido</h1>
+    <a href="pedidos_lista.html"><button class="btn-voltar">Voltar</button></a>
+</header>
+
+<div class="container">
+
+    <!-- ========================================================= -->
+    <!--  DADOS DO PEDIDO                                           -->
+    <!-- ========================================================= -->
+    <section class="card">
+        <h2>Dados do Pedido</h2>
+
+        <label>Cliente</label>
+        <select id="cliente"></select>
+
+        <label>Data do Pedido</label>
+        <input type="date" id="data_pedido">
+
+        <label>Número do Pedido</label>
+        <input type="text" id="numero_pedido" placeholder="Ex: 123.456">
+    </section>
+
+    <!-- ========================================================= -->
+    <!--  ITENS DO PEDIDO                                           -->
+    <!-- ========================================================= -->
+    <section class="card">
+        <h2>Itens do Pedido</h2>
+
+        <!-- Produto -->
+        <label>Produto (código)</label>
+        <select id="produto">
+            <option value="">Selecione...</option>
+        </select>
+
+        <!-- Descrição -->
+        <input type="text" id="descricao" placeholder="Descrição" disabled>
+
+        <!-- Quantidade -->
+        <label>Quantidade</label>
+        <input type="number" id="quantidade" min="1" value="1">
+
+        <!-- Valor Unitário -->
+        <label>Valor Unitário (R$)</label>
+        <input type="text" id="valor_unit" disabled>
+
+        <!-- Data de entrega -->
+        <label>Data de Entrega do Item</label>
+        <input type="date" id="data_entrega_item">
+
+        <button id="btnAdicionarItem" class="btn-primary" style="margin-top: 15px;">
+            Adicionar / Atualizar Item
+        </button>
+
+        <!-- TABELA DOS ITENS -->
+        <table id="tabelaItens">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Descrição</th>
+                    <th>Qtd</th>
+                    <th>Vlr Unit. (R$)</th>
+                    <th>Data Entrega</th>
+                    <th>Subtotal (R$)</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- carregado via JS -->
+            </tbody>
+        </table>
+
+        <h3 style="margin-top:20px;">
+            Total do Pedido: R$ <span id="totalGeral">0,00</span>
+        </h3>
+
+        <button id="btnSalvar" class="btn-primary" style="margin-top:20px;">Salvar Alterações</button>
+        <button class="btn-cancelar" onclick="window.location.href='pedidos_lista.html'">Cancelar</button>
+    </section>
+
+</div>
+
+<script type="module" src="js/editar_pedido.js"></script>
+</body>
+</html>

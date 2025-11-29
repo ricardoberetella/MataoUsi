@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - MataoUsi</title>
+
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+
+<body>
+
+  <!-- LOGO FIXO NO TOPO -->
+  <img src="img/logo-mataousi.png" class="logo-dashboard">
+
+  <div class="layout">
+
+    <!-- MENU LATERAL -->
+    <aside class="sidebar">
+      <div class="logo-sistema">MATÃO USINAGEM</div>
+
+      <nav class="menu">
+        <div class="menu-titulo">Módulos</div>
+
+        <a href="clientes.html" class="menu-item">👤 Clientes</a>
+        <a href="pedidos_lista.html" class="menu-item">📑 Pedidos</a>
+
+        <!-- 🔥 ATUALIZADO AQUI -->
+        <a href="produtos_lista.html" class="menu-item">📦 Produtos</a>
+
+        <a href="estoque.html" class="menu-item">📊 Estoque</a>
+        <a href="movimentacoes.html" class="menu-item">🔄 Movimentações</a>
+      </nav>
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="main">
+
+      <section class="secao-painel">
+
+        <div class="cards-grid">
+          
+          <a class="card" href="clientes.html">
+            <div class="card-titulo">Clientes</div>
+            <div class="card-legenda">Gerenciar cadastro</div>
+          </a>
+
+          <a class="card" href="pedidos_lista.html">
+            <div class="card-titulo">Pedidos</div>
+            <div class="card-legenda">Lista de pedidos</div>
+          </a>
+
+          <!-- 🔥 ATUALIZADO AQUI -->
+          <a class="card" href="produtos_lista.html">
+            <div class="card-titulo">Produtos</div>
+            <div class="card-legenda">Cadastro de peças</div>
+          </a>
+
+          <a class="card" href="estoque.html">
+            <div class="card-titulo">Estoque</div>
+            <div class="card-legenda">Controle de entradas/saídas</div>
+          </a>
+
+        </div>
+
+      </section>
+
+    </main>
+
+  </div>
+
+</body>
+</html>

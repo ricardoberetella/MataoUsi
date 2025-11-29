@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redefinir Senha - MataoUsi</title>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+    import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const form = document.getElementById("resetForm");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const senha = document.getElementById("senha").value;
+
+        const { error } = await supabase.auth.updateUser({
+          password: senha
+        });
+
+        if (error) {
+          alert("Erro ao alterar senha: " + error.message);
+        } else {
+          alert("Senha alterada com sucesso!");
+          window.location.href = "/index.html";
+        }
+      });
+    });
+  </script>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #0f172a;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .box {
+      background: #1e293b;
+      padding: 30px;
+      border-radius: 10px;
+      width: 300px;
+      text-align: center;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: none;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #38bdf8;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background: #0ea5e9;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="box">
+    <h2>Redefinir Senha</h2>
+
+    <form id="resetForm">
+      <input type="password" id="senha" placeholder="Nova senha" required />
+      <button type="submit">Salvar Nova Senha</button>
+    </form>
+  </div>
+</body>
+</html>

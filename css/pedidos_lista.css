@@ -1,0 +1,172 @@
+/* ============================ */
+/*   ESTILO GERAL DA TELA       */
+/* ============================ */
+
+.container {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 20px;
+}
+
+.topbar {
+    background: #07101f;
+    padding: 18px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(0,255,255,0.2);
+}
+
+.topbar-title {
+    font-size: 26px;
+    color: #38bdf8;
+    font-weight: bold;
+}
+
+/* BOTÕES SUPERIORES */
+.btn-voltar {
+    background: transparent;
+    border: 2px solid #38bdf8;
+    color: #38bdf8;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-voltar:hover {
+    background: rgba(56,189,248,0.15);
+}
+
+.btn-outline {
+    background: transparent;
+    border: 2px solid #38bdf8;
+    color: #38bdf8;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-outline:hover {
+    background: rgba(56,189,248,0.15);
+}
+
+/* ============================ */
+/*   CARD FUTURISTA             */
+/* ============================ */
+.card {
+    background: #0a1624;
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid rgba(0,255,255,0.15);
+    box-shadow: 0 0 8px rgba(0,255,255,0.06);
+    margin-top: 30px;
+}
+
+.card-title {
+    font-size: 24px;
+    color: #38bdf8;
+    margin-bottom: 20px;
+}
+
+/* ============================ */
+/*   BOTÕES PRINCIPAIS          */
+/* ============================ */
+
+.btn-primario {
+    background: #38bdf8;
+    color: #000;
+    padding: 12px 22px;
+    border-radius: 10px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.btn-primario:hover {
+    background: #0ea5e9;
+}
+
+/* ============================ */
+/*   TABELA FUTURISTA           */
+/* ============================ */
+
+.tabela-futurista {
+    width: 100%;
+    border-collapse: collapse;
+    background: #07101f;
+    color: #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 20px;
+}
+
+.tabela-futurista thead {
+    background: #0b2a3d;
+}
+
+.tabela-futurista th {
+    padding: 12px;
+    color: #38bdf8;
+    text-align: left;
+    font-size: 15px;
+    border-bottom: 1px solid rgba(0,255,255,0.2);
+}
+
+.tabela-futurista td {
+    padding: 14px;
+    font-size: 15px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.tabela-futurista tr:hover {
+    background: rgba(56,189,248,0.06);
+}
+
+/* ============================ */
+/*   BOTÕES DE AÇÃO (CORRIGIDO) */
+/* ============================ */
+
+td.col-acoes,
+td:last-child {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    white-space: nowrap;
+}
+
+/* ação – editar */
+.btn-azul {
+    background: #38bdf8;
+    color: #000;
+    padding: 6px 16px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    min-width: 80px;
+}
+
+.btn-azul:hover {
+    background: #0ea5e9;
+}
+
+/* ação – excluir */
+.btn-vermelho {
+    background: #ef4444;
+    color: #fff;
+    padding: 6px 16px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    min-width: 80px;
+}
+
+.btn-vermelho:hover {
+    background: #dc2626;
+}

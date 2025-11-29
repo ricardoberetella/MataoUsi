@@ -1,0 +1,123 @@
+/* ============================= */
+/*      ESTILO DO DASHBOARD      */
+/* ============================= */
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(to bottom right, #0a0f1f, #000);
+  color: #e5e7eb;
+  overflow-x: hidden;
+}
+
+/* ============================= */
+/*       LAYOUT PRINCIPAL        */
+/* ============================= */
+
+.layout {
+  display: flex;
+}
+
+/* ============================= */
+/*        MENU LATERAL           */
+/* ============================= */
+
+.sidebar {
+  width: 260px;
+  background: #0d1224;
+  padding: 5px 20px;  /* <-- quase encostado no topo */
+  border-right: 2px solid rgba(0, 255, 255, 0.1);
+  height: 100vh;
+}
+
+.logo-sistema {
+  font-size: 26px;
+  font-weight: bold;
+  text-align: center;
+  color: #38bdf8;
+  margin-bottom: 30px;
+}
+
+.menu-titulo {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #9ca3af;
+  margin-bottom: 20px;
+}
+
+.menu-item {
+  display: block;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  text-decoration: none;
+  color: #cbd5e1;
+  transition: 0.3s;
+}
+
+.menu-item:hover {
+  background: rgba(0, 255, 255, 0.15);
+  color: #fff;
+}
+
+/* ============================= */
+/*         CONTEÚDO              */
+/* ============================= */
+
+.main {
+  flex: 1;
+  padding: 20px 40px;
+  margin-top: 120px; /* para não ficar em cima do logo */
+}
+
+/* ============================= */
+/*            LOGO               */
+/* ============================= */
+
+.logo-dashboard {
+  width: 300px;
+  position: absolute;
+  top: -80px;              /* ENCAIXADO NO TOPO */
+  left: calc(50% + 130px);
+  transform: translateX(-50%);
+  z-index: 10;
+}
+
+/* ============================= */
+/*         GRID DE CARDS         */
+/* ============================= */
+
+.cards-grid {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.card {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 25px;
+  border-radius: 20px;
+  text-decoration: none;
+  color: #e2e8f0;
+  border: 1px solid rgba(0, 255, 255, 0.1);
+  transition: 0.3s;
+}
+
+.card:hover {
+  background: rgba(0, 255, 255, 0.1);
+  border-color: rgba(0, 255, 255, 0.3);
+}
+
+.card-titulo {
+  font-size: 22px;
+  color: #38bdf8;
+  margin-bottom: 10px;
+}
+
+.card-legenda {
+  font-size: 14px;
+  color: #cbd5e1;
+}

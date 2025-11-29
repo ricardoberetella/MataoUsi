@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Pedido</title>
+
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/pedidos_editar.css">
+</head>
+
+<body>
+
+<header class="topbar">
+    <h1 class="topbar-title">Editar Pedido</h1>
+    <a href="pedidos_lista.html"><button class="btn-voltar">← Voltar</button></a>
+</header>
+
+<div class="container">
+
+    <!-- ======================================= -->
+    <!--          DADOS DO PEDIDO               -->
+    <!-- ======================================= -->
+    <section class="card">
+
+        <h2>Dados do Pedido</h2>
+
+        <label>Cliente</label>
+        <select id="cliente"></select>
+
+        <label>Data do Pedido</label>
+        <input type="date" id="data_pedido">
+
+        <label>Número do Pedido</label>
+        <input type="text" id="numero_pedido">
+    </section>
+
+
+    <!-- ======================================= -->
+    <!--          ITENS DO PEDIDO               -->
+    <!-- ======================================= -->
+    <section class="card">
+
+        <h2>Itens do Pedido</h2>
+
+        <!-- BLOCO PARA ADICIONAR ITENS -->
+        <div class="add-item-box">
+
+            <label>Produto</label>
+            <select id="selectProduto">
+                <option value="">Carregando...</option>
+            </select>
+
+            <label>Quantidade</label>
+            <input type="number" id="inputQtd" min="1" value="1">
+
+            <label>Valor Unitário (R$)</label>
+            <input type="number" id="inputValor" step="0.01">
+
+            <label>Data Entrega</label>
+            <input type="date" id="inputEntrega">
+
+            <button id="btnConfirmarItem" class="btn-primario">Adicionar Item</button>
+        </div>
+
+        <!-- TABELA -->
+        <table class="tabela">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Produto</th>
+                    <th>Qtd</th>
+                    <th>Valor Unit.</th>
+                    <th>Data Entrega</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+
+            <tbody id="listaItens"></tbody>
+
+            <tfoot>
+                <tr>
+                    <td colspan="6" class="total-footer">
+                        <strong>Total: R$ <span id="totalPedido">0,00</span></strong>
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <button id="btnSalvar" class="btn-salvar">Salvar Alterações</button>
+    </section>
+
+</div>
+
+<script type="module" src="js/pedidos_editar.js"></script>
+
+</body>
+</html>
