@@ -215,18 +215,22 @@
 <!-- ÁREA DE IMPRESSÃO     -->
 <!-- ===================== -->
 <div id="printArea" style="display:none;">
+<div class="print-header">
 
-    <div class="print-header">
-        <div class="print-info-left">
-            <img src="img/logo-mataousi2.png" class="print-logo">
-            <div class="print-company">MATÃO USINAGEM</div>
-        </div>
+    <div class="print-info-left">
+        <img src="img/logo-mataousi2.png" class="print-logo">
 
-        <div class="print-info-right">
-            <div class="print-sub">Relatório gerado em: <span id="printDataHora"></span></div>
-            <div class="print-title">Lista de Produtos</div>
-        </div>
+        <div class="print-company">MATÃO USINAGEM</div>
+
+        <!-- Horário abaixo igual pedidos -->
+        <div class="print-sub">Relatório gerado em: <span id="printDataHora"></span></div>
     </div>
+
+    <div class="print-info-right">
+        <div class="print-title">Lista de Produtos</div>
+    </div>
+
+</div>
 
     <table class="print-table" id="printTable"></table>
 </div>
