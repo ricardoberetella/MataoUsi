@@ -3,227 +3,292 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let editandoId = null;
+// Lista completa (sem filtro) em memória
+let listaCompletaProdutos = [];
 
-/* FORMATADORES */
-function fmt1(v){ return Number(v).toFixed(1).replace(".", ","); }
-function fmt3(v){ return Number(v).toFixed(3).replace(".", ","); }
-function fmt2(v){ return "R$ " + Number(v).toFixed(2).replace(".", ","); }
-function parseBR(v){ return Number(v.replace(/\./g,"").replace(",",".")) || 0; }
+/* ===========================
+   INICIALIZAÇÃO
+=========================== */
+document.addEventListener("DOMContentLoaded", () => {
+  carregarListaProdutos();
+  configurarModalFiltros();
+  configurarImpressao();
+});
 
-/* ===========================================
-   LISTAR PRODUTOS
-===========================================*/
-if (document.getElementById("listaProdutos")) carregarLista();
+/* ===========================
+   CARREGAR PRODUTOS
+=========================== */
+async function carregarListaProdutos() {
+  const { data, error } = await supabase
+    .from("produtos")
+    .select("*")
+    .order("codigo", { ascending: true });
 
-async function carregarLista() {
-    const { data } = await supabase
-        .from("produtos")
-        .select("*")
-        .order("codigo");
+  if (error) {
+    console.error("Erro ao carregar produtos:", error);
+    alert("Erro ao carregar produtos.");
+    return;
+  }
 
-    montarTabela(data);
+  listaCompletaProdutos = data || [];
+  renderizarTabela(listaCompletaProdutos);
+  preencherFiltroCodigo(listaCompletaProdutos);
 }
 
-function montarTabela(data) {
-    const tbody = document.getElementById("listaProdutos");
-    tbody.innerHTML = "";
+/* ===========================
+   RENDERIZAR TABELA
+=========================== */
+function renderizarTabela(lista) {
+  const tbody = document.getElementById("listaProdutos");
+  if (!tbody) return;
 
-    data.forEach(p => {
-        tbody.innerHTML += `
-            <tr>
-                <td>${p.codigo}</td>
-                <td>${p.descricao}</td>
-                <td>${fmt1(p.comprimento_mm)}</td>
-                <td>${fmt3(p.peso_liquido)}</td>
-                <td>${fmt3(p.peso_bruto)}</td>
-                <td>${fmt2(p.valor_unitario)}</td>
-                <td>${p.acabamento}</td>
+  tbody.innerHTML = "";
 
-                <td>
-                    <a href="produtos_editar.html?id=${p.id}">
-                        <button class="btn-editar">Editar</button>
-                    </a>
+  if (!lista || lista.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" style="text-align:center;">
+          Nenhum produto encontrado.
+        </td>
+      </tr>
+    `;
+    return;
+  }
 
-                    <button class="btn-excluir" onclick="excluir(${p.id})">
-                        Excluir
-                    </button>
-                </td>
-            </tr>
-        `;
-    });
-}
+  lista.forEach((p) => {
+    const tr = document.createElement("tr");
 
-window.excluir = async (id) => {
-    if (!confirm("Excluir produto?")) return;
-
-    await supabase.from("produtos").delete().eq("id", id);
-    carregarLista();
-};
-
-/* ===========================================
-   FILTROS – MODAL
-===========================================*/
-
-const modal = document.getElementById("modalFiltros");
-const btnFiltros = document.getElementById("btnFiltros");
-const btnFecharFiltros = document.getElementById("btnFecharFiltros");
-const filtroCodigo = document.getElementById("filtroCodigo");
-const filtroAcabamento = document.getElementById("filtroAcabamento");
-const btnAplicarFiltros = document.getElementById("btnAplicarFiltros");
-const btnLimparFiltros = document.getElementById("btnLimparFiltros");
-
-btnFiltros.onclick = () => {
-    modal.style.display = "flex";
-    carregarCodigosFiltro();
-};
-
-btnFecharFiltros.onclick = () => {
-    modal.style.display = "none";
-};
-
-window.onclick = (ev) => {
-    if (ev.target === modal) modal.style.display = "none";
-};
-
-async function carregarCodigosFiltro() {
-
-    const { data } = await supabase
-        .from("produtos")
-        .select("codigo")
-        .order("codigo");
-
-    filtroCodigo.innerHTML = `<option value="todos">Todos</option>`;
-
-    data.forEach(p => {
-        filtroCodigo.innerHTML += `
-          <option value="${p.codigo}">${p.codigo}</option>
-        `;
-    });
-}
-
-btnAplicarFiltros.onclick = async () => {
-
-    let query = supabase.from("produtos").select("*").order("codigo");
-
-    if (filtroCodigo.value !== "todos")
-        query = query.eq("codigo", filtroCodigo.value);
-
-    if (filtroAcabamento.value !== "todos")
-        query = query.eq("acabamento", filtroAcabamento.value);
-
-    const { data } = await query;
-    montarTabela(data);
-
-    modal.style.display = "none";
-};
-
-btnLimparFiltros.onclick = () => {
-    filtroCodigo.value = "todos";
-    filtroAcabamento.value = "todos";
-    carregarLista();
-    modal.style.display = "none";
-};
-
-/* ===========================================
-   IMPRESSÃO — FORMATO IGUAL AOS PEDIDOS
-===========================================*/
-
-document.getElementById("btnImprimir").onclick = async () => {
-
-    const { data } = await supabase
-        .from("produtos")
-        .select("*")
-        .order("codigo");
-
-    document.getElementById("printDataHora").innerText =
-        new Date().toLocaleString("pt-BR");
-
-    const tabela = document.getElementById("printTable");
-
-    tabela.innerHTML = `
-        <tr>
-            <th>Código</th>
-            <th>Descrição</th>
-            <th>Comp. (mm)</th>
-            <th>Peso Líq.</th>
-            <th>Peso Bruto</th>
-            <th>Valor Unit.</th>
-            <th>Acabamento</th>
-        </tr>
+    tr.innerHTML = `
+      <td>${p.codigo ?? ""}</td>
+      <td>${p.descricao ?? ""}</td>
+      <td>${formatNumero(p.comprimento_mm)}</td>
+      <td>${formatNumero(p.peso_liquido)}</td>
+      <td>${formatNumero(p.peso_bruto)}</td>
+      <td>${formatNumero(p.valor_unitario)}</td>
+      <td>${p.acabamento ?? ""}</td>
+      <td>
+        <button class="btn-primario btn-acao" data-tipo="editar" data-id="${p.id}">
+          Editar
+        </button>
+        <button class="btn-excluir btn-acao" data-tipo="excluir" data-id="${p.id}">
+          Excluir
+        </button>
+      </td>
     `;
 
-    data.forEach(p => {
-        tabela.innerHTML += `
-            <tr>
-                <td>${p.codigo}</td>
-                <td>${p.descricao}</td>
-                <td>${fmt1(p.comprimento_mm)}</td>
-                <td>${fmt3(p.peso_liquido)}</td>
-                <td>${fmt3(p.peso_bruto)}</td>
-                <td>${fmt2(p.valor_unitario)}</td>
-                <td>${p.acabamento}</td>
-            </tr>
-        `;
+    tbody.appendChild(tr);
+  });
+
+  // Eventos dos botões Editar/Excluir
+  tbody.querySelectorAll(".btn-acao").forEach((btn) => {
+    btn.addEventListener("click", onClickAcaoProduto);
+  });
+}
+
+/* ===========================
+   FORMATAÇÃO NÚMEROS
+=========================== */
+function formatNumero(valor) {
+  if (valor === null || valor === undefined || valor === "") return "";
+  const num = Number(valor);
+  if (Number.isNaN(num)) return "";
+  return num.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+/* ===========================
+   PREENCHER FILTRO CÓDIGO
+=========================== */
+function preencherFiltroCodigo(lista) {
+  const select = document.getElementById("filtroCodigo");
+  if (!select) return;
+
+  // limpa e coloca "Todos"
+  select.innerHTML = `<option value="todos">Todos</option>`;
+
+  const codigosUnicos = [
+    ...new Set(
+      lista
+        .map((p) => p.codigo)
+        .filter((c) => c !== null && c !== undefined && c !== "")
+    ),
+  ];
+
+  codigosUnicos.forEach((codigo) => {
+    const opt = document.createElement("option");
+    opt.value = codigo;
+    opt.textContent = codigo;
+    select.appendChild(opt);
+  });
+}
+
+/* ===========================
+   MODAL DE FILTROS
+=========================== */
+function configurarModalFiltros() {
+  const modal = document.getElementById("modalFiltros");
+  const btnAbrir = document.getElementById("btnFiltros");
+  const btnFechar = document.getElementById("btnFecharFiltros");
+  const btnAplicar = document.getElementById("btnAplicarFiltros");
+  const btnLimpar = document.getElementById("btnLimparFiltros");
+
+  if (!modal) return;
+
+  if (btnAbrir) {
+    btnAbrir.addEventListener("click", () => {
+      modal.style.display = "flex";
+    });
+  }
+
+  if (btnFechar) {
+    btnFechar.addEventListener("click", () => {
+      modal.style.display = "none";
+    });
+  }
+
+  // Fechar clicando fora do conteúdo
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      modal.style.display = "none";
+    }
+  });
+
+  if (btnAplicar) {
+    btnAplicar.addEventListener("click", aplicarFiltros);
+  }
+
+  if (btnLimpar) {
+    btnLimpar.addEventListener("click", () => {
+      const selCodigo = document.getElementById("filtroCodigo");
+      const selAcab = document.getElementById("filtroAcabamento");
+      if (selCodigo) selCodigo.value = "todos";
+      if (selAcab) selAcab.value = "todos";
+      renderizarTabela(listaCompletaProdutos);
+    });
+  }
+}
+
+/* ===========================
+   APLICAR FILTROS
+=========================== */
+function aplicarFiltros() {
+  const selCodigo = document.getElementById("filtroCodigo");
+  const selAcab = document.getElementById("filtroAcabamento");
+
+  const codigoFiltro = selCodigo ? selCodigo.value : "todos";
+  const acabamentoFiltro = selAcab ? selAcab.value : "todos";
+
+  let filtrados = [...listaCompletaProdutos];
+
+  if (codigoFiltro && codigoFiltro !== "todos") {
+    filtrados = filtrados.filter((p) => p.codigo === codigoFiltro);
+  }
+
+  if (acabamentoFiltro && acabamentoFiltro !== "todos") {
+    filtrados = filtrados.filter(
+      (p) => (p.acabamento || "") === acabamentoFiltro
+    );
+  }
+
+  renderizarTabela(filtrados);
+
+  const modal = document.getElementById("modalFiltros");
+  if (modal) modal.style.display = "none";
+}
+
+/* ===========================
+   IMPRESSÃO (USA FILTRO ATUAL)
+=========================== */
+function configurarImpressao() {
+  const btn = document.getElementById("btnImprimir");
+  if (!btn) return;
+
+  btn.addEventListener("click", () => {
+    const printTable = document.getElementById("printTable");
+    const corpoLista = document.getElementById("listaProdutos");
+    if (!printTable || !corpoLista) return;
+
+    // Monta cabeçalho da tabela de impressão
+    printTable.innerHTML = `
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Descrição</th>
+          <th>Comp. (mm)</th>
+          <th>Peso Líq.</th>
+          <th>Peso Bruto</th>
+          <th>Valor Unit.</th>
+          <th>Acabamento</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    `;
+
+    const tbodyPrint = printTable.querySelector("tbody");
+
+    // Pega as linhas atualmente exibidas (já filtradas)
+    const linhas = corpoLista.querySelectorAll("tr");
+    linhas.forEach((linha) => {
+      const clone = linha.cloneNode(true);
+
+      // remove coluna de Ações (última)
+      while (clone.cells.length > 7) {
+        clone.deleteCell(clone.cells.length - 1);
+      }
+
+      tbodyPrint.appendChild(clone);
     });
 
-    document.getElementById("printArea").style.display = "block";
-    window.print();
-    document.getElementById("printArea").style.display = "none";
-};
+    // Data/hora já é atualizada no inline script do HTML,
+    // mas reforçamos aqui para garantir
+    const spanDataHora = document.getElementById("printDataHora");
+    if (spanDataHora) {
+      spanDataHora.textContent = new Date().toLocaleString("pt-BR");
+    }
 
-/* ===========================================
-   EDITAR PRODUTO
-===========================================*/
-
-if (location.search.includes("id=")) carregarProduto();
-
-async function carregarProduto() {
-
-    const id = new URLSearchParams(location.search).get("id");
-    editandoId = id;
-
-    const { data } = await supabase
-        .from("produtos")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-    descricao.value = data.descricao;
-    codigo.value = data.codigo;
-    comprimento.value = fmt1(data.comprimento_mm);
-    peso_liquido.value = fmt3(data.peso_liquido);
-    peso_bruto.value = fmt3(data.peso_bruto);
-    valor_unitario.value = data.valor_unitario.toString().replace(".", ",");
-    acabamento.value = data.acabamento;
+    // Mostra área de impressão, chama print, depois esconde
+    const printArea = document.getElementById("printArea");
+    if (printArea) {
+      printArea.style.display = "block";
+      window.print();
+      printArea.style.display = "none";
+    }
+  });
 }
 
-if (document.getElementById("btnSalvarEdicao"))
-{
-    document.getElementById("btnSalvarEdicao").onclick = salvarEdicao;
-}
+/* ===========================
+   AÇÕES: EDITAR / EXCLUIR
+=========================== */
+async function onClickAcaoProduto(event) {
+  const btn = event.currentTarget;
+  const tipo = btn.dataset.tipo;
+  const id = btn.dataset.id;
 
-async function salvarEdicao() {
+  if (!id) return;
 
-    const produto = coletarDados();
+  if (tipo === "editar") {
+    // abre cadastro com ID para edição
+    window.location.href = `produtos_novo.html?id=${id}`;
+    return;
+  }
 
-    await supabase
-        .from("produtos")
-        .update(produto)
-        .eq("id", editandoId);
+  if (tipo === "excluir") {
+    const ok = confirm("Confirma a exclusão deste produto?");
+    if (!ok) return;
 
-    location.href = "produtos_lista.html";
-}
+    const { error } = await supabase
+      .from("produtos")
+      .delete()
+      .eq("id", id);
 
-function coletarDados() {
+    if (error) {
+      console.error("Erro ao excluir produto:", error);
+      alert("Erro ao excluir produto.");
+      return;
+    }
 
-    return {
-        descricao: descricao.value.trim(),
-        codigo: codigo.value.trim(),
-        comprimento_mm: parseBR(comprimento.value),
-        peso_liquido: parseBR(peso_liquido.value),
-        peso_bruto: parseBR(peso_bruto.value),
-        valor_unitario: parseBR(valor_unitario.value),
-        acabamento: acabamento.value
-    };
+    await carregarListaProdutos();
+  }
 }
