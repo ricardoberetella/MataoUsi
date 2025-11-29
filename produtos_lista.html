@@ -30,12 +30,6 @@
             border-radius: 12px;
             color: white;
             box-shadow: 0 0 20px rgba(0,255,255,0.3);
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.96); }
-            to { opacity: 1; transform: scale(1); }
         }
 
         .modal-conteudo h2 {
@@ -74,19 +68,62 @@
             display: flex;
             justify-content: space-between;
         }
+
+        /* ===== PRINT CSS ===== */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printArea, #printArea * {
+                visibility: visible;
+            }
+            #printArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 20px;
+            }
+
+            .print-logo {
+                width: 180px;
+                margin-bottom: 10px;
+            }
+
+            .print-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 15px;
+            }
+
+            .print-table th {
+                border: 1px solid #000;
+                padding: 6px;
+                font-weight: bold;
+            }
+
+            .print-table td {
+                border: 1px solid #000;
+                padding: 6px;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 
 <body>
 
-<header class="topbar">
+<header class="topbar no-print">
     <a href="dashboard.html" class="btn-voltar-menu">⬅ Voltar ao Menu</a>
     <h1 class="titulo-pagina">Lista de Produtos</h1>
 </header>
 
 <main class="page-container">
 
-    <section class="card-externo">
+    <section class="card-externo no-print">
         <section class="card-interno">
 
             <h2 class="titulo-card">Produtos Cadastrados</h2>
@@ -97,6 +134,8 @@
                 </a>
 
                 <button id="btnFiltros" class="btn-primario">Filtros</button>
+
+                <button id="btnImprimir" class="btn-primario" style="background:#10b981;">Imprimir</button>
             </div>
 
             <table class="tabela">
@@ -119,6 +158,15 @@
     </section>
 
 </main>
+
+<!-- ÁREA DE IMPRESSÃO -->
+<div id="printArea" style="display:none;">
+    <img src="img/logo-mataousi2.png" class="print-logo">
+
+    <h2 style="margin-top:0;">Lista de Produtos</h2>
+
+    <table class="print-table" id="printTable"></table>
+</div>
 
 <!-- =========================== -->
 <!-- MODAL DE FILTROS COMPLETO   -->
