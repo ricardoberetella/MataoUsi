@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -31,7 +31,7 @@ async function carregarCliente() {
         .single();
 
     if (error || !data) {
-        console.error(error);
+        console.error("Erro ao carregar:", error);
         alert("Erro ao carregar dados do cliente.");
         return;
     }
@@ -68,7 +68,7 @@ async function salvarEdicao() {
         .eq("id", editId);
 
     if (error) {
-        console.error(error);
+        console.error("Erro ao salvar:", error);
         alert("Erro ao salvar alterações.");
         return;
     }
