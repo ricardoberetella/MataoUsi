@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,105 +10,162 @@
     <link rel="stylesheet" href="css/produtos.css">
 
     <style>
+        /* Layout geral */
+        .card-filtro {
+            max-width: 1100px;
+            margin: 20px auto;
+        }
+
         .linha-filtro {
             display: flex;
-            gap: 12px;
+            flex-wrap: wrap;
+            gap: 15px;
             align-items: center;
             margin-bottom: 20px;
-            flex-wrap: wrap;
         }
 
-        #campoBusca {
-            padding: 10px;
-            min-width: 260px;
-            border-radius: 8px;
-            border: 1px solid #38bdf8;
-            background: #020617;
-            color: white;
+        .linha-filtro input {
+            width: 350px;
         }
 
-        #tabelaResultados th,
-        #tabelaResultados td {
-            text-align: left;
+        #btnImprimir {
+            background: #22c55e !important;
+            color: #000 !important;
+            font-weight: bold;
         }
 
-        /* Impressão corrigida */
+        /* Cabeçalho de impressão escondido */
+        .print-header,
+        .print-info {
+            display: none;
+        }
+
+        /* ===== IMPRESSÃO ===== */
         @media print {
+
+            * {
+                background: #fff !important;
+                color: #000 !important;
+                box-shadow: none !important;
+            }
 
             .topbar,
             .linha-filtro,
-            .btn-primario {
+            .btn-primario,
+            h2.card-title {
                 display: none !important;
+            }
+
+            .container,
+            .card {
+                background: transparent !important;
+                border: none !important;
+                padding: 0 !important;
+            }
+
+            .print-header {
+                display: flex !important;
+                align-items: center;
+                gap: 15px;
+                margin: 10px;
+            }
+
+            .logo-print {
+                width: 60px !important;
+            }
+
+            .titulo-print {
+                font-size: 22px !important;
+                font-weight: bold !important;
+            }
+
+            .print-info {
+                display: block !important;
+                margin-left: 10px;
+                margin-bottom: 10px;
             }
 
             #tabelaResultados {
                 width: 95% !important;
-                border-collapse: collapse !important;
                 margin-left: 10px !important;
-            }
-
-            #tabelaResultados th {
-                background: #e5e7eb !important;
-                color: #000 !important;
+                border-collapse: collapse !important;
                 border: 1px solid #000 !important;
-                padding: 6px !important;
             }
 
+            #tabelaResultados th,
             #tabelaResultados td {
                 border: 1px solid #000 !important;
                 padding: 6px !important;
-                color: #000 !important;
             }
 
+            #tabelaResultados th {
+                background: #f1f1f1 !important;
+                font-weight: bold !important;
+            }
         }
-
     </style>
 </head>
 
 <body>
 
-<header class="topbar">
-    <h1 class="topbar-title">Filtro de Produtos — Lista Completa</h1>
+    <header class="topbar">
+        <h1 class="topbar-title">Filtro de Produtos — Lista Completa</h1>
 
-    <a href="produtos_filtros.html">
-        <button class="btn-voltar">Voltar</button>
-    </a>
-</header>
+        <a href="produtos_filtros.html">
+            <button class="btn-voltar">Voltar</button>
+        </a>
+    </header>
 
-<div class="container">
+    <div class="container">
 
-    <!-- Filtros -->
-    <section class="card card-filtro">
-
-        <h2 class="card-title">Listar / Filtrar Produtos</h2>
-
-        <div class="linha-filtro">
-            <label for="campoBusca">Buscar</label>
-            <input id="campoBusca" placeholder="Código ou descrição...">
-
-            <button id="btnBuscar" class="btn-primario">Buscar</button>
-            <button id="btnImprimir" class="btn-primario">Imprimir</button>
+        <!-- Cabeçalho impressão -->
+        <div class="print-header">
+            <img src="img/logo-mataousi2.png" class="logo-print">
+            <span class="titulo-print">MATÃO USINAGEM</span>
         </div>
 
-        <table id="tabelaResultados" class="tabela">
-            <thead>
-                <tr>
-                    <th>Código</th>
-                    <th>Descrição</th>
-                    <th>Comp. (mm)</th>
-                    <th>Peso Líq.</th>
-                    <th>Peso Bruto</th>
-                    <th>Valor Unit.</th>
-                    <th>Acabamento</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+        <div class="print-info">
+            Relatório gerado em: <span id="dataGeradaPrint"></span>
+        </div>
 
-    </section>
-</div>
+        <section class="card card-filtro">
 
-<script type="module" src="js/produtos_filtro.js"></script>
+            <h2 class="card-title">Listar / Filtrar Produtos</h2>
+
+            <div class="linha-filtro">
+                <label for="campoBusca">Buscar</label>
+
+                <!-- CAMPO DE BUSCA COM DATALIST -->
+                <input list="listaProdutosDatalist" id="campoBusca" placeholder="Código ou descrição...">
+
+                <!-- LISTA QUE O JS IRÁ POPULAR -->
+                <datalist id="listaProdutosDatalist"></datalist>
+
+                <button id="btnBuscar" class="btn-primario">Buscar</button>
+                <button id="btnImprimir" class="btn-primario">Imprimir</button>
+            </div>
+
+            <table id="tabelaResultados" class="tabela">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Descrição</th>
+                        <th>Comp. (mm)</th>
+                        <th>Peso Líq.</th>
+                        <th>Peso Bruto</th>
+                        <th>Valor Unit.</th>
+                        <th>Acabamento</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+
+        </section>
+    </div>
+
+    <script type="module" src="js/produtos_filtro.js"></script>
 
 </body>
+
 </html>
