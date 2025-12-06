@@ -10,7 +10,6 @@
     <link rel="stylesheet" href="css/produtos.css">
 
     <style>
-        /* Layout geral */
         .card-filtro {
             max-width: 1100px;
             margin: 20px auto;
@@ -24,8 +23,20 @@
             margin-bottom: 20px;
         }
 
-        .linha-filtro input {
+        /* NOVO SELECT */
+        #selectBusca {
             width: 350px;
+            padding: 10px;
+            background: #020617;
+            color: #e2e8f0;
+            border: 1px solid #38bdf8;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        #selectBusca option {
+            background: #020617;
+            color: #fff;
         }
 
         #btnImprimir {
@@ -34,19 +45,17 @@
             font-weight: bold;
         }
 
-        /* Cabeçalho de impressão escondido */
+        /* Cabeçalho impressão escondido */
         .print-header,
         .print-info {
             display: none;
         }
 
-        /* ===== IMPRESSÃO ===== */
         @media print {
 
             * {
                 background: #fff !important;
                 color: #000 !important;
-                box-shadow: none !important;
             }
 
             .topbar,
@@ -89,7 +98,6 @@
                 width: 95% !important;
                 margin-left: 10px !important;
                 border-collapse: collapse !important;
-                border: 1px solid #000 !important;
             }
 
             #tabelaResultados th,
@@ -108,63 +116,61 @@
 
 <body>
 
-    <header class="topbar">
-        <h1 class="topbar-title">Filtro de Produtos — Lista Completa</h1>
+<header class="topbar">
+    <h1 class="topbar-title">Filtro de Produtos — Lista Completa</h1>
 
-        <a href="produtos_filtros.html">
-            <button class="btn-voltar">Voltar</button>
-        </a>
-    </header>
+    <a href="produtos_filtros.html">
+        <button class="btn-voltar">Voltar</button>
+    </a>
+</header>
 
-    <div class="container">
+<div class="container">
 
-        <!-- Cabeçalho impressão -->
-        <div class="print-header">
-            <img src="img/logo-mataousi2.png" class="logo-print">
-            <span class="titulo-print">MATÃO USINAGEM</span>
-        </div>
-
-        <div class="print-info">
-            Relatório gerado em: <span id="dataGeradaPrint"></span>
-        </div>
-
-        <section class="card card-filtro">
-
-            <h2 class="card-title">Listar / Filtrar Produtos</h2>
-
-            <div class="linha-filtro">
-                <label for="campoBusca">Buscar</label>
-
-                <!-- CAMPO DE BUSCA COM DATALIST -->
-                <input list="listaProdutosDatalist" id="campoBusca" placeholder="Código ou descrição...">
-
-                <!-- LISTA QUE O JS IRÁ POPULAR -->
-                <datalist id="listaProdutosDatalist"></datalist>
-
-                <button id="btnBuscar" class="btn-primario">Buscar</button>
-                <button id="btnImprimir" class="btn-primario">Imprimir</button>
-            </div>
-
-            <table id="tabelaResultados" class="tabela">
-                <thead>
-                    <tr>
-                        <th>Código</th>
-                        <th>Descrição</th>
-                        <th>Comp. (mm)</th>
-                        <th>Peso Líq.</th>
-                        <th>Peso Bruto</th>
-                        <th>Valor Unit.</th>
-                        <th>Acabamento</th>
-                    </tr>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
-
-        </section>
+    <!-- Cabeçalho impressão -->
+    <div class="print-header">
+        <img src="img/logo-mataousi2.png" class="logo-print">
+        <span class="titulo-print">MATÃO USINAGEM</span>
     </div>
 
-    <script type="module" src="js/produtos_filtro.js"></script>
+    <div class="print-info">
+        Relatório gerado em: <span id="dataGeradaPrint"></span>
+    </div>
+
+    <section class="card card-filtro">
+
+        <h2 class="card-title">Listar / Filtrar Produtos</h2>
+
+        <div class="linha-filtro">
+            <label for="selectBusca">Buscar</label>
+
+            <!-- NOVO SELECT (SEM DATALIST) -->
+            <select id="selectBusca">
+                <option value="">Carregando...</option>
+            </select>
+
+            <button id="btnBuscar" class="btn-primario">Buscar</button>
+            <button id="btnImprimir" class="btn-primario">Imprimir</button>
+        </div>
+
+        <table id="tabelaResultados" class="tabela">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Descrição</th>
+                    <th>Comp. (mm)</th>
+                    <th>Peso Líq.</th>
+                    <th>Peso Bruto</th>
+                    <th>Valor Unit.</th>
+                    <th>Acabamento</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+    </section>
+</div>
+
+<script type="module" src="js/produtos_filtro.js"></script>
 
 </body>
 
