@@ -107,3 +107,24 @@ function preencherTabela(lista) {
 document.getElementById("btnImprimir").addEventListener("click", () => {
   window.print();
 });
+/* ============================================
+   DATA E HORA NA IMPRESSÃO
+============================================ */
+function atualizarDataImpressao() {
+    const agora = new Date();
+
+    const dataFormatada =
+        agora.toLocaleDateString("pt-BR") +
+        " às " +
+        agora.toLocaleTimeString("pt-BR");
+
+    const span = document.getElementById("dataGeradaPrint");
+
+    if (span) span.textContent = dataFormatada;
+}
+
+// Atualiza a data sempre que clicar em imprimir
+document.getElementById("btnImprimir").addEventListener("click", () => {
+    atualizarDataImpressao();
+    window.print();
+});
