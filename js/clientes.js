@@ -2,44 +2,35 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-window.supabase = supabase; // debug opcional
-
-let role = "viewer"; // padrão seguro
+let role = "viewer"; // padrão
 
 /* ============================
       VERIFICAR USUÁRIO
 ============================ */
 async function verificarUsuario() {
-    const sessionData = await supabase.auth.getSession();
-    const user = sessionData?.data?.session?.user;
-
-    console.log("USER =", user);
+    const { data } = await supabase.auth.getSession();
+    const user = data?.session?.user;
 
     if (user?.user_metadata?.role) {
         role = user.user_metadata.role;
     }
 
-    console.log("ROLE =", role);
+    console.log("Usuário logado:", user?.email);
+    console.log("Papel:", role);
 }
 
 /* ============================
-      APLICAR PERMISSÕES
+      PERMISSÕES
 ============================ */
 function aplicarPermissoes() {
-
-    // Botão novo cliente
     const btnNovo = document.getElementById("btnNovo");
-    if (btnNovo)
-        btnNovo.style.display = (role === "admin") ? "inline-block" : "none";
-
-    // Cabeçalho ações
     const thAcoes = document.getElementById("thAcoesClientes");
-    if (thAcoes)
-        thAcoes.style.display = (role === "admin") ? "" : "none";
 
-    // Células ações
-    document.querySelectorAll(".acoes-col").forEach(td => {
-        td.style.display = (role === "admin") ? "" : "none";
+    if (btnNovo) btnNovo.style.display = role === "admin" ? "inline-block" : "none";
+    if (thAcoes) thAcoes.style.display = role === "admin" ? "" : "none";
+
+    document.querySelectorAll(".acoes-col").forEach(col => {
+        col.style.display = role === "admin" ? "" : "none";
     });
 }
 
@@ -48,11 +39,35 @@ function aplicarPermissoes() {
 ============================ */
 async function carregarClientes() {
     const tbody = document.getElementById("listaClientes");
+    tbody.innerHTML = `
+        <tr><td colspan="3" style="text-align:center;color:#aaa;">Carregando...</td></tr>
+    `;
 
     const { data, error } = await supabase
         .from("clientes")
         .select("*")
         .order("razao_social", { ascending: true });
+
+    if (error) {
+        console.error("Erro ao consultar tabela clientes:", error);
+
+        tbody.innerHTML = `
+            <tr><td colspan="3" style="color:red;text-align:center;">
+                Erro ao carregar clientes.<br>
+                Verifique RLS, permissões ou nomes das colunas.
+            </td></tr>
+        `;
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        tbody.innerHTML = `
+            <tr><td colspan="3" style="text-align:center;color:#aaa;">
+                Nenhum cliente encontrado.
+            </td></tr>
+        `;
+        return;
+    }
 
     tbody.innerHTML = "";
 
@@ -60,8 +75,8 @@ async function carregarClientes() {
         const tr = document.createElement("tr");
 
         tr.innerHTML = `
-            <td>${c.razao_social}</td>
-            <td>${c.cpf_cnpj}</td>
+            <td>${c.razao_social || ""}</td>
+            <td>${c.cpf_cnpj || ""}</td>
 
             <td class="acoes-col">
                 <button class="btn-azul" onclick="editarCliente(${c.id})">Editar</button>
@@ -72,7 +87,7 @@ async function carregarClientes() {
         tbody.appendChild(tr);
     });
 
-    aplicarPermissoes(); // agora funciona corretamente
+    aplicarPermissoes();
 }
 
 /* ============================
@@ -89,27 +104,27 @@ window.editarCliente = (id) => {
 window.excluirCliente = async (id) => {
     if (role !== "admin") return;
 
-    if (!confirm("Excluir este cliente?")) return;
+    if (!confirm("Deseja realmente excluir este cliente?")) return;
 
     await supabase.from("clientes").delete().eq("id", id);
     carregarClientes();
 };
 
 /* ============================
-       BOTÃO NOVO CLIENTE
+      BOTÃO NOVO CLIENTE
 ============================ */
 document.addEventListener("DOMContentLoaded", () => {
     const btnNovo = document.getElementById("btnNovo");
     if (btnNovo) {
-        btnNovo.addEventListener("click", () => {
+        btnNovo.onclick = () => {
             if (role !== "admin") return;
             window.location.href = "clientes_novo.html";
-        });
+        };
     }
 });
 
 /* ============================
-      ORDEM CORRETA
+      INICIAR TELA
 ============================ */
 document.addEventListener("DOMContentLoaded", async () => {
     await verificarUsuario();
