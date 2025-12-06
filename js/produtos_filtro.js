@@ -9,100 +9,77 @@ const SUPABASE_ANON_KEY =
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// =========================================
-// ELEMENTOS DA PÁGINA
-// =========================================
-const selectProduto = document.getElementById("produtoSelect");
-const tabela = document.querySelector("#tabelaResultados tbody");
-const btnFiltrar = document.getElementById("btnFiltrar");
+// ELEMENTOS
+const campoBusca = document.getElementById("campoBusca");
+const btnBuscar = document.getElementById("btnBuscar");
 const btnImprimir = document.getElementById("btnImprimir");
+const tabela = document.querySelector("#tabelaResultados tbody");
 
 // =========================================
-// CARREGAR LISTA DE PRODUTOS NO SELECT
+// CARREGAR LISTA COMPLETA AO ABRIR
 // =========================================
-async function carregarProdutosSelect() {
-    const { data, error } = await supabase
-        .from("produtos")
-        .select("id, codigo, descricao")
-        .order("codigo");
+buscar();
+
+// =========================================
+// BUSCAR TODOS OU PARCIAL
+// =========================================
+async function buscar() {
+    const termo = campoBusca.value.trim();
+    let query = supabase.from("produtos").select("*");
+
+    if (termo !== "") {
+        query = query.or(`codigo.ilike.%${termo}%,descricao.ilike.%${termo}%`);
+    }
+
+    const { data, error } = await query.order("codigo", { ascending: true });
 
     if (error) {
-        console.error("Erro ao carregar produtos:", error);
+        console.error("Erro ao carregar:", error);
+        alert("Erro ao buscar produtos.");
         return;
     }
 
-    selectProduto.innerHTML = `<option value="">Selecione...</option>`;
+    preencherTabela(data);
+}
 
-    data.forEach(p => {
-        const opt = document.createElement("option");
-        opt.value = p.id;
-        opt.textContent = `${p.codigo} - ${p.descricao}`;
-        selectProduto.appendChild(opt);
+// =========================================
+// PREENCHER A TABELA COM TODOS OS PRODUTOS
+// =========================================
+function preencherTabela(lista) {
+    tabela.innerHTML = "";
+
+    if (!lista || lista.length === 0) {
+        tabela.innerHTML = `
+            <tr><td colspan="7" style="text-align:center">Nenhum produto encontrado.</td></tr>
+        `;
+        return;
+    }
+
+    lista.forEach(p => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td>${p.codigo}</td>
+            <td>${p.descricao}</td>
+            <td>${p.comprimento_mm}</td>
+            <td>${p.peso_liquido}</td>
+            <td>${p.peso_bruto}</td>
+            <td>${p.valor_unitario}</td>
+            <td>${p.acabamento}</td>
+        `;
+
+        tabela.appendChild(tr);
     });
 }
 
 // =========================================
-// FILTRAR PRODUTO ÚNICO SELECIONADO
-// =========================================
-async function filtrar() {
-    const id = selectProduto.value;
-
-    if (!id) {
-        tabela.innerHTML = `
-            <tr><td colspan="7" style="text-align:center">Selecione um produto.</td></tr>
-        `;
-        return;
-    }
-
-    const { data, error } = await supabase
-        .from("produtos")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-    if (error || !data) {
-        tabela.innerHTML = `
-            <tr><td colspan="7" style="text-align:center">Nenhum resultado.</td></tr>
-        `;
-        return;
-    }
-
-    tabela.innerHTML = `
-        <tr>
-            <td>${data.codigo}</td>
-            <td>${data.descricao}</td>
-            <td>${data.comprimento_mm}</td>
-            <td>${data.peso_liquido}</td>
-            <td>${data.peso_bruto}</td>
-            <td>${data.valor_unitario}</td>
-            <td>${data.acabamento}</td>
-        </tr>
-    `;
-
-    // preenchendo info para impressão
-    document.getElementById("dataGeradaPrint").textContent =
-        new Date().toLocaleString("pt-BR");
-    document.getElementById("nomeProdutoPrint").textContent =
-        `${data.codigo} - ${data.descricao}`;
-}
-
-// =========================================
-// IMPRIMIR RELATÓRIO
+// IMPRIMIR
 // =========================================
 btnImprimir.addEventListener("click", () => {
-    if (!selectProduto.value) {
-        alert("Selecione um produto antes de imprimir.");
-        return;
-    }
     window.print();
 });
 
 // =========================================
-// EVENTOS
+// BOTÃO BUSCAR
 // =========================================
-btnFiltrar.addEventListener("click", filtrar);
-
-// =========================================
-// INICIAR PÁGINA
-// =========================================
-carregarProdutosSelect();
+btnBuscar.addEventListener("click", buscar);
