@@ -5,11 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - Matão Usinagem</title>
 
-  <!-- Se você já tiver um login.css, pode usar isso aqui -->
-  <!-- <link rel="stylesheet" href="css/login.css"> -->
-
   <style>
-    /* ESTILO SIMPLES SÓ PARA GARANTIR QUE APAREÇA ALGO NA TELA */
     * {
       box-sizing: border-box;
       font-family: Arial, sans-serif;
@@ -113,31 +109,35 @@
     <button id="btnLogin">Entrar</button>
   </div>
 
-  <!-- SCRIPT DO LOGIN COM SUPABASE -->
+  <!-- SCRIPT CORRIGIDO — SEM IMPORT EXTERNO  -->
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-    import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
+
+    // CONFIG DIRETA — GARANTE QUE FUNCIONE NO VERCEL
+    const SUPABASE_URL = "https://uxtgicfuggpuyjybwawa.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg";
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    window.addEventListener("DOMContentLoaded", () => {
-      const btn = document.getElementById("btnLogin");
+    document.getElementById("btnLogin").addEventListener("click", async () => {
+      const email = document.getElementById("email").value.trim();
+      const senha = document.getElementById("senha").value.trim();
 
-      btn.addEventListener("click", async () => {
-        const email = document.getElementById("email").value;
-        const senha = document.getElementById("senha").value;
+      if (!email || !senha) {
+        alert("Preencha o e-mail e a senha!");
+        return;
+      }
 
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password: senha
-        });
-
-        if (error) {
-          alert("Erro ao fazer login: " + error.message);
-        } else {
-          window.location.href = "/dashboard.html";
-        }
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: senha
       });
+
+      if (error) {
+        alert("Erro ao fazer login: " + error.message);
+      } else {
+        window.location.href = "/dashboard.html";
+      }
     });
   </script>
 
