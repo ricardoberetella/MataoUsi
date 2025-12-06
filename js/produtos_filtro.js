@@ -9,77 +9,145 @@ const SUPABASE_ANON_KEY =
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ELEMENTOS
-const campoBusca = document.getElementById("campoBusca");
-const btnBuscar = document.getElementById("btnBuscar");
+// ELEMENTOS DA TELA
+const selectProduto = document.getElementById("produtoSelect");
+const tbody = document.querySelector("#tabelaResultados tbody");
+const btnFiltrar = document.getElementById("btnFiltrar");
 const btnImprimir = document.getElementById("btnImprimir");
-const tabela = document.querySelector("#tabelaResultados tbody");
+
+const spanDataPrint = document.getElementById("dataGeradaPrint");
+const spanNomeProdutoPrint = document.getElementById("nomeProdutoPrint");
+
+// Cache local de produtos para não ficar consultando toda hora
+let produtosCache = [];
 
 // =========================================
-// CARREGAR LISTA COMPLETA AO ABRIR
+// INICIALIZAÇÃO
 // =========================================
-buscar();
+iniciar();
 
-// =========================================
-// BUSCAR TODOS OU PARCIAL
-// =========================================
-async function buscar() {
-    const termo = campoBusca.value.trim();
-    let query = supabase.from("produtos").select("*");
-
-    if (termo !== "") {
-        query = query.or(`codigo.ilike.%${termo}%,descricao.ilike.%${termo}%`);
-    }
-
-    const { data, error } = await query.order("codigo", { ascending: true });
-
-    if (error) {
-        console.error("Erro ao carregar:", error);
-        alert("Erro ao buscar produtos.");
-        return;
-    }
-
-    preencherTabela(data);
+async function iniciar() {
+  await carregarProdutos();
+  preencherSelect();
+  preencherTabela(produtosCache);      // início: lista completa
+  atualizarInfoPrintTodos();
 }
 
 // =========================================
-// PREENCHER A TABELA COM TODOS OS PRODUTOS
+// CARREGAR PRODUTOS DO SUPABASE
+// =========================================
+async function carregarProdutos() {
+  const { data, error } = await supabase
+    .from("produtos")
+    .select("*")
+    .order("codigo", { ascending: true });
+
+  if (error) {
+    console.error("Erro ao carregar produtos:", error);
+    alert("Erro ao carregar produtos.");
+    return;
+  }
+
+  produtosCache = data || [];
+}
+
+// =========================================
+// PREENCHER SELECT COM "TODOS" + TODOS OS CÓDIGOS/DESCRIÇÕES
+// =========================================
+function preencherSelect() {
+  selectProduto.innerHTML = "";
+
+  // opção "TODOS"
+  const optTodos = document.createElement("option");
+  optTodos.value = "";
+  optTodos.textContent = "TODOS OS PRODUTOS";
+  selectProduto.appendChild(optTodos);
+
+  // demais produtos
+  produtosCache.forEach((p) => {
+    const opt = document.createElement("option");
+    opt.value = p.id; // usamos o id para filtrar depois
+    opt.textContent = `${p.codigo} - ${p.descricao}`;
+    selectProduto.appendChild(opt);
+  });
+}
+
+// =========================================
+// PREENCHER TABELA (LISTA COMPLETA OU FILTRADA)
 // =========================================
 function preencherTabela(lista) {
-    tabela.innerHTML = "";
+  tbody.innerHTML = "";
 
-    if (!lista || lista.length === 0) {
-        tabela.innerHTML = `
-            <tr><td colspan="7" style="text-align:center">Nenhum produto encontrado.</td></tr>
-        `;
-        return;
-    }
+  if (!lista || lista.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align:center">Nenhum produto encontrado.</td>
+      </tr>
+    `;
+    return;
+  }
 
-    lista.forEach(p => {
-        const tr = document.createElement("tr");
+  lista.forEach((p) => {
+    const tr = document.createElement("tr");
 
-        tr.innerHTML = `
-            <td>${p.codigo}</td>
-            <td>${p.descricao}</td>
-            <td>${p.comprimento_mm}</td>
-            <td>${p.peso_liquido}</td>
-            <td>${p.peso_bruto}</td>
-            <td>${p.valor_unitario}</td>
-            <td>${p.acabamento}</td>
-        `;
+    tr.innerHTML = `
+      <td>${p.codigo}</td>
+      <td>${p.descricao}</td>
+      <td>${p.comprimento_mm}</td>
+      <td>${p.peso_liquido}</td>
+      <td>${p.peso_bruto}</td>
+      <td>${p.valor_unitario}</td>
+      <td>${p.acabamento}</td>
+    `;
 
-        tabela.appendChild(tr);
-    });
+    tbody.appendChild(tr);
+  });
 }
 
 // =========================================
-// IMPRIMIR
+// FILTRAR QUANDO CLICA EM "FILTRAR"
 // =========================================
-btnImprimir.addEventListener("click", () => {
-    window.print();
+btnFiltrar.addEventListener("click", () => {
+  const idSelecionado = selectProduto.value;
+
+  // Se for vazio → TODOS
+  if (!idSelecionado) {
+    preencherTabela(produtosCache);
+    atualizarInfoPrintTodos();
+    return;
+  }
+
+  // Filtra apenas o produto selecionado
+  const selecionado = produtosCache.find((p) => String(p.id) === String(idSelecionado));
+
+  if (!selecionado) {
+    preencherTabela([]);
+    spanNomeProdutoPrint.textContent = "Produto não encontrado";
+    return;
+  }
+
+  preencherTabela([selecionado]);
+  atualizarInfoPrintProduto(selecionado);
 });
 
 // =========================================
-// BOTÃO BUSCAR
+// IMPRESSÃO
 // =========================================
-btnBuscar.addEventListener("click", buscar);
+btnImprimir.addEventListener("click", () => {
+  // Atualiza data da impressão sempre que imprimir
+  spanDataPrint.textContent = new Date().toLocaleString("pt-BR");
+  window.print();
+});
+
+// =========================================
+// ATUALIZA TEXTO DO CABEÇALHO DE IMPRESSÃO
+// =========================================
+function atualizarInfoPrintTodos() {
+  spanDataPrint.textContent = new Date().toLocaleString("pt-BR");
+  spanNomeProdutoPrint.textContent = "TODOS OS PRODUTOS";
+}
+
+function atualizarInfoPrintProduto(p) {
+  spanDataPrint.textContent = new Date().toLocaleString("pt-BR");
+  spanNomeProdutoPrint.textContent = `${p.codigo} - ${p.descricao}`;
+}
