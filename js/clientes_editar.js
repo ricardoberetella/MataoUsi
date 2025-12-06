@@ -1,72 +1,88 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let editId = null;
 
-/* ============================
-      PEGAR ID DO CLIENTE
-============================ */
-const url = new URL(window.location.href);
-const id = url.searchParams.get("id");
-
-if (!id) {
-    alert("Erro: ID do cliente não informado.");
-    window.location.href = "clientes.html";
+/* =========================================================
+    PEGAR ID DA URL
+========================================================= */
+function getIdUrl() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("id");
 }
 
-/* ============================
-      CARREGAR DADOS
-============================ */
+/* =========================================================
+    CARREGAR DADOS DO CLIENTE NO FORMULÁRIO
+========================================================= */
 async function carregarCliente() {
+    editId = getIdUrl();
+
+    if (!editId) {
+        alert("Nenhum cliente selecionado!");
+        window.location.href = "clientes.html";
+        return;
+    }
 
     const { data, error } = await supabase
         .from("clientes")
         .select("*")
-        .eq("id", id)
+        .eq("id", editId)
         .single();
 
     if (error || !data) {
-        alert("Erro ao carregar dados do cliente.");
         console.error(error);
+        alert("Erro ao carregar dados do cliente.");
         return;
     }
 
-    document.getElementById("razao_social").value = data.razao_social ?? "";
-    document.getElementById("cpf_cnpj").value = data.cpf_cnpj ?? "";
-    document.getElementById("telefone").value = data.telefone ?? "";
-    document.getElementById("email").value = data.email ?? "";
-    document.getElementById("endereco").value = data.endereco ?? "";
+    // Preencher os campos
+    document.getElementById("razao_social").value = data.razao_social || "";
+    document.getElementById("cpf_cnpj").value = data.cpf_cnpj || "";
+    document.getElementById("telefone").value = data.telefone || "";
+    document.getElementById("email").value = data.email || "";
+    document.getElementById("endereco").value = data.endereco || "";
+    document.getElementById("cidade").value = data.cidade || "";
+    document.getElementById("estado").value = data.estado || "";
+    document.getElementById("cep").value = data.cep || "";
 }
 
-/* ============================
-      SALVAR ALTERAÇÕES
-============================ */
-document.getElementById("btnSalvarEdicao").addEventListener("click", async () => {
-
-    const dadosAtualizados = {
-        razao_social: document.getElementById("razao_social").value,
-        cpf_cnpj: document.getElementById("cpf_cnpj").value,
-        telefone: document.getElementById("telefone").value,
-        email: document.getElementById("email").value,
-        endereco: document.getElementById("endereco").value
+/* =========================================================
+    SALVAR ALTERAÇÕES
+========================================================= */
+async function salvarEdicao() {
+    const body = {
+        razao_social: document.getElementById("razao_social").value.trim(),
+        cpf_cnpj: document.getElementById("cpf_cnpj").value.trim(),
+        telefone: document.getElementById("telefone").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        endereco: document.getElementById("endereco").value.trim(),
+        cidade: document.getElementById("cidade").value.trim(),
+        estado: document.getElementById("estado").value.trim(),
+        cep: document.getElementById("cep").value.trim(),
     };
 
     const { error } = await supabase
         .from("clientes")
-        .update(dadosAtualizados)
-        .eq("id", id);
+        .update(body)
+        .eq("id", editId);
 
     if (error) {
-        alert("Erro ao salvar alterações.");
         console.error(error);
+        alert("Erro ao salvar alterações.");
         return;
     }
 
     alert("Cliente atualizado com sucesso!");
     window.location.href = "clientes.html";
-});
+}
 
-/* ============================
-         INICIALIZAÇÃO
-============================ */
+/* =========================================================
+    EVENTOS
+========================================================= */
+document.getElementById("btnSalvar").addEventListener("click", salvarEdicao);
+
+/* =========================================================
+    INICIAR PÁGINA
+========================================================= */
 carregarCliente();
