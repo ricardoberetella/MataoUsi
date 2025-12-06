@@ -8,94 +8,102 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ELEMENTOS
 const campoBusca = document.getElementById("campoBusca");
+const datalist = document.getElementById("listaProdutosDatalist");
 const btnBuscar = document.getElementById("btnBuscar");
-const btnImprimir = document.getElementById("btnImprimir");
 const tabela = document.querySelector("#tabelaResultados tbody");
 
-// =========================================
-// CARREGAR LISTA COMPLETA AO ABRIR
-// =========================================
-carregarTodos();
+let produtosCache = [];
 
-// =========================================
-// FUNÇÃO BUSCAR (código ou descrição)
-// =========================================
-btnBuscar.addEventListener("click", buscar);
+// NÃO CARREGA TABELA AO ABRIR
+carregarProdutosParaDatalist();
 
-async function buscar() {
-    const termo = campoBusca.value.trim();
+/* ============================================
+   CARREGAR PRODUTOS E POPULAR A LISTA SUSPENSA
+============================================ */
+async function carregarProdutosParaDatalist() {
+  const { data, error } = await supabase
+    .from("produtos")
+    .select("*")
+    .order("codigo");
 
-    let query = supabase.from("produtos").select("*");
+  if (error) {
+    console.error(error);
+    alert("Erro ao carregar produtos");
+    return;
+  }
 
-    // Filtro por código ou descrição
-    if (termo !== "") {
-        query = query.or(`codigo.ilike.%${termo}%,descricao.ilike.%${termo}%`);
-    }
+  produtosCache = data;
 
-    const { data, error } = await query.order("codigo");
+  datalist.innerHTML = "";
 
-    if (error) {
-        console.error("Erro ao buscar:", error);
-        alert("Erro ao buscar produtos");
-        return;
-    }
+  // Opção TODOS
+  const optTodos = document.createElement("option");
+  optTodos.value = "TODOS";
+  datalist.appendChild(optTodos);
 
-    preencherTabela(data);
+  // Demais produtos
+  data.forEach((p) => {
+    const opt = document.createElement("option");
+    opt.value = `${p.codigo} - ${p.descricao}`;
+    opt.dataset.id = p.id; // Guarda ID oculto
+    datalist.appendChild(opt);
+  });
 }
 
-// =========================================
-// CARREGAR TUDO SEM FILTRO
-// =========================================
-async function carregarTodos() {
-    const { data, error } = await supabase
-        .from("produtos")
-        .select("*")
-        .order("codigo");
+/* ============================================
+               BOTÃO BUSCAR
+============================================ */
+btnBuscar.addEventListener("click", filtrar);
 
-    if (error) {
-        console.error(error);
-        alert("Erro ao carregar produtos.");
-        return;
-    }
+function filtrar() {
+  const valor = campoBusca.value.trim();
 
-    preencherTabela(data);
+  // Se selecionar TODOS
+  if (valor === "TODOS") {
+    preencherTabela(produtosCache);
+    return;
+  }
+
+  // Achar item selecionado
+  const produto = produtosCache.find(p => `${p.codigo} - ${p.descricao}` === valor);
+
+  if (!produto) {
+    tabela.innerHTML = `
+      <tr><td colspan="7" style="text-align:center">Nenhum produto encontrado</td></tr>
+    `;
+    return;
+  }
+
+  // Exibir somente o produto escolhido
+  preencherTabela([produto]);
 }
 
-// =========================================
-// PREENCHER TABELA
-// =========================================
+/* ============================================
+           PREENCHER TABELA RESULTADO
+============================================ */
 function preencherTabela(lista) {
-    tabela.innerHTML = "";
+  tabela.innerHTML = "";
 
-    if (!lista || lista.length === 0) {
-        tabela.innerHTML = `
-            <tr>
-                <td colspan="7" style="text-align:center;">Nenhum produto encontrado</td>
-            </tr>
-        `;
-        return;
-    }
+  lista.forEach((p) => {
+    const tr = document.createElement("tr");
 
-    lista.forEach(p => {
-        const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${p.codigo}</td>
+      <td>${p.descricao}</td>
+      <td>${p.comprimento_mm}</td>
+      <td>${p.peso_liquido}</td>
+      <td>${p.peso_bruto}</td>
+      <td>${p.valor_unitario}</td>
+      <td>${p.acabamento}</td>
+    `;
 
-        tr.innerHTML = `
-            <td>${p.codigo}</td>
-            <td>${p.descricao}</td>
-            <td>${p.comprimento_mm}</td>
-            <td>${p.peso_liquido}</td>
-            <td>${p.peso_bruto}</td>
-            <td>${p.valor_unitario}</td>
-            <td>${p.acabamento}</td>
-        `;
-
-        tabela.appendChild(tr);
-    });
+    tabela.appendChild(tr);
+  });
 }
 
-// =========================================
-// IMPRIMIR
-// =========================================
-btnImprimir.addEventListener("click", () => {
-    window.print();
+/* ============================================
+                 IMPRIMIR
+============================================ */
+document.getElementById("btnImprimir").addEventListener("click", () => {
+  window.print();
 });
