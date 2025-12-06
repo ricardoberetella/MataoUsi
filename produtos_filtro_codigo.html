@@ -1,202 +1,113 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Filtro de Produtos por Código / Descrição</title>
+    <title>Filtro de Produtos — Lista Completa</title>
 
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/produtos.css">
 
     <style>
-        /* ===========================
-           VISUAL NORMAL
-        =========================== */
-
-        .card-filtro {
-            max-width: 1100px;
-            margin: 20px auto;
-        }
-
         .linha-filtro {
             display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
+            gap: 12px;
             align-items: center;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
 
-        .linha-filtro label {
-            font-weight: bold;
+        #campoBusca {
+            padding: 10px;
+            min-width: 260px;
+            border-radius: 8px;
+            border: 1px solid #38bdf8;
+            background: #020617;
+            color: white;
         }
 
-        .linha-filtro select {
-            min-width: 280px;
+        #tabelaResultados th,
+        #tabelaResultados td {
+            text-align: left;
         }
 
-        .linha-filtro button {
-            min-width: 120px;
-        }
-
-        /* CORRIGIDO → botão imprimir verde */
-        #btnImprimir {
-            background: #22c55e !important;  /* VERDE */
-            color: #000 !important;
-            font-weight: bold;
-        }
-
-        /* CABEÇALHO IMPRESSÃO OCULTO NO NORMAL */
-        .print-header,
-        .print-info {
-            display: none;
-        }
-
-        /* =============================
-           IMPRESSÃO FINAL (IGUAL PEDIDOS)
-        ============================= */
+        /* Impressão corrigida */
         @media print {
 
-            * {
-                background: #fff !important;
-                color: #000 !important;
-                box-shadow: none !important;
-            }
-
-            html, body {
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-
-            /* Oculta tudo do modo tela */
             .topbar,
             .linha-filtro,
-            .btn-primario,
-            h2.card-title {
+            .btn-primario {
                 display: none !important;
             }
 
-            /* Remove molduras e sombras */
-            .container,
-            .card,
-            .card-filtro {
-                background: transparent !important;
-                border: none !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                box-shadow: none !important;
-            }
-
-            /* ===== CABEÇALHO IMPRESSÃO ===== */
-            .print-header {
-                display: flex !important;
-                align-items: center;
-                gap: 15px;
-                margin-left: 10px;
-                margin-top: 10px;
-                margin-bottom: 5px;
-            }
-
-            .logo-print {
-                width: 60px !important;
-            }
-
-            .titulo-print {
-                font-size: 22px !important;
-                font-weight: bold !important;
-            }
-
-            .print-info {
-                display: block !important;
-                margin-left: 10px;
-                font-size: 14px !important;
-                margin-bottom: 10px;
-            }
-
-            /* ===== TABELA — IGUAL PEDIDOS ===== */
             #tabelaResultados {
                 width: 95% !important;
-                margin-left: 10px !important;
                 border-collapse: collapse !important;
-                border: 1px solid #000 !important;
+                margin-left: 10px !important;
             }
 
             #tabelaResultados th {
-                background: #f2f2f2 !important;
-                border: 1px solid #000 !important;
-                font-weight: bold !important;
-                padding: 6px !important;
-                font-size: 14px !important;
+                background: #e5e7eb !important;
                 color: #000 !important;
+                border: 1px solid #000 !important;
+                padding: 6px !important;
             }
 
             #tabelaResultados td {
                 border: 1px solid #000 !important;
                 padding: 6px !important;
-                font-size: 14px !important;
                 color: #000 !important;
             }
+
         }
+
     </style>
 </head>
 
 <body>
 
-    <header class="topbar">
-        <h1 class="topbar-title">Filtro de Produtos por Código / Descrição</h1>
+<header class="topbar">
+    <h1 class="topbar-title">Filtro de Produtos — Lista Completa</h1>
 
-        <a href="produtos_filtros.html">
-            <button class="btn-voltar">Voltar</button>
-        </a>
-    </header>
+    <a href="produtos_filtros.html">
+        <button class="btn-voltar">Voltar</button>
+    </a>
+</header>
 
-    <div class="container">
+<div class="container">
 
-        <!-- =============================
-             CABEÇALHO IMPRESSÃO
-        ============================== -->
-        <div class="print-header">
-            <img src="img/logo-mataousi2.png" class="logo-print">
-            <span class="titulo-print">MATÃO USINAGEM</span>
+    <!-- Filtros -->
+    <section class="card card-filtro">
+
+        <h2 class="card-title">Listar / Filtrar Produtos</h2>
+
+        <div class="linha-filtro">
+            <label for="campoBusca">Buscar</label>
+            <input id="campoBusca" placeholder="Código ou descrição...">
+
+            <button id="btnBuscar" class="btn-primario">Buscar</button>
+            <button id="btnImprimir" class="btn-primario">Imprimir</button>
         </div>
 
-        <div class="print-info">
-            Relatório gerado em: <span id="dataGeradaPrint"></span><br>
-            Produto selecionado: <span id="nomeProdutoPrint"></span>
-        </div>
+        <table id="tabelaResultados" class="tabela">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Descrição</th>
+                    <th>Comp. (mm)</th>
+                    <th>Peso Líq.</th>
+                    <th>Peso Bruto</th>
+                    <th>Valor Unit.</th>
+                    <th>Acabamento</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
 
-        <section class="card card-filtro">
+    </section>
+</div>
 
-            <h2 class="card-title">Selecione o Produto</h2>
-
-            <div class="linha-filtro">
-                <label for="produtoSelect">Produto</label>
-                <select id="produtoSelect"></select>
-
-                <button id="btnFiltrar" class="btn-primario">Filtrar</button>
-                <button id="btnImprimir" class="btn-primario">Imprimir</button>
-            </div>
-
-            <table id="tabelaResultados" class="tabela">
-                <thead>
-                    <tr>
-                        <th>Código</th>
-                        <th>Descrição</th>
-                        <th>Comp. (mm)</th>
-                        <th>Peso Líq.</th>
-                        <th>Peso Bruto</th>
-                        <th>Valor Unit.</th>
-                        <th>Acabamento</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-
-        </section>
-    </div>
-
-    <script type="module" src="js/produtos_filtro.js"></script>
+<script type="module" src="js/produtos_filtro.js"></script>
 
 </body>
-
 </html>
