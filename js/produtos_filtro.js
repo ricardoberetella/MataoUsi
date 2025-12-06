@@ -3,74 +3,43 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-document.addEventListener("DOMContentLoaded", () => {
-    carregarProdutos();
+document.getElementById("btnBuscar").addEventListener("click", buscar);
 
-    // DATA/HORA (TELA e IMPRESSÃO)
-    const agora = new Date().toLocaleString("pt-BR");
-    document.getElementById("dataGeradaPrint").textContent = agora;
+async function buscar() {
+    const termo = document.getElementById("campoBusca").value.trim();
 
-    document.getElementById("btnFiltrar").addEventListener("click", filtrar);
-    document.getElementById("btnImprimir").addEventListener("click", () => window.print());
-});
+    let query = supabase.from("produtos").select("*");
 
-/* =====================================
-   CARREGAR PRODUTOS + OPÇÃO "TODOS"
-===================================== */
-async function carregarProdutos() {
-    const select = document.getElementById("produtoSelect");
+    if (termo !== "") {
+        query = query.or(`codigo.ilike.%${termo}%,descricao.ilike.%${termo}%`);
+    }
 
-    const { data } = await supabase
-        .from("produtos")
-        .select("*")
-        .order("descricao");
+    const { data, error } = await query.order("codigo");
 
-    select.innerHTML = "";
+    if (error) {
+        console.error(error);
+        alert("Erro ao buscar.");
+        return;
+    }
 
-    // 🔵 OPÇÃO TODOS
-    select.innerHTML = `<option value="todos">Todos</option>`;
-
-    data.forEach(p => {
-        select.innerHTML += `<option value="${p.id}">${p.codigo} — ${p.descricao}</option>`;
-    });
+    preencherTabela(data);
 }
 
-/* =====================================
-   FILTRAR
-===================================== */
-async function filtrar() {
-    const produtoID = document.getElementById("produtoSelect").value;
-    const tbody = document.querySelector("#tabelaResultados tbody");
+function preencherTabela(lista) {
+    const tbody = document.getElementById("listaProdutos");
     tbody.innerHTML = "";
 
-    // Nome para impressão
-    document.getElementById("nomeProdutoPrint").textContent =
-        produtoID === "todos"
-            ? "Todos os Produtos"
-            : document.getElementById("produtoSelect").selectedOptions[0].textContent;
-
-    let query = supabase.from("produtos").select("*").order("descricao");
-
-    if (produtoID !== "todos") query.eq("id", produtoID);
-
-    const { data } = await query;
-
-    data.forEach(p => {
-        tbody.innerHTML += `
-            <tr>
-                <td>${p.codigo}</td>
-                <td>${p.descricao}</td>
-                <td>${format1(p.comprimento_mm)}</td>
-                <td>${format3(p.peso_liquido)}</td>
-                <td>${format3(p.peso_bruto)}</td>
-                <td>${format2(p.valor_unitario)}</td>
-                <td>${p.acabamento}</td>
-            </tr>
+    lista.forEach(p => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${p.codigo}</td>
+            <td>${p.descricao}</td>
+            <td>${p.comprimento_mm}</td>
+            <td>${p.peso_liquido}</td>
+            <td>${p.peso_bruto}</td>
+            <td>${p.valor_unitario}</td>
+            <td>${p.acabamento}</td>
         `;
+        tbody.appendChild(tr);
     });
 }
-
-/* Formatadores */
-function format1(v) { return Number(v).toFixed(1).replace(".", ","); }
-function format3(v) { return Number(v).toFixed(3).replace(".", ","); }
-function format2(v) { return "R$ " + Number(v).toFixed(2).replace(".", ","); }
