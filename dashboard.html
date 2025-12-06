@@ -29,7 +29,7 @@
         <a href="movimentacoes.html" class="menu-item">🔄 Movimentações</a>
       </nav>
 
-      <!-- 🔥 BOTÃO SAIR ADICIONADO AQUI — SEM MUDAR NADA NO RESTO -->
+      <!-- BOTÃO SAIR -->
       <button id="btnLogout" class="menu-item botao-sair">
         🚪 Sair
       </button>
@@ -70,16 +70,32 @@
 
   </div>
 
-  <!-- Auto logout + botão sair -->
-  <script type="module" src="js/logout.js"></script>
-
-  <!-- Script do botão sair -->
+  <!-- SCRIPT SUPABASE + SESSÃO + LOGOUT -->
   <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-    import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    const SUPABASE_URL = "https://uxtgicfuggpuyjybwawa.supabase.co";
+    const SUPABASE_ANON_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg";
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // PROTEGER A PÁGINA – NÃO PERMITIR ACESSO SEM LOGIN
+    async function verificarSessao() {
+      const { data } = await supabase.auth.getUser();
+
+      if (!data.user) {
+        // Não está logado → voltar ao login
+        window.location.href = "index.html";
+        return;
+      }
+
+      console.log("Usuário logado:", data.user.email);
+    }
+
+    verificarSessao();
+
+    // BOTÃO SAIR
     document.getElementById("btnLogout").addEventListener("click", async () => {
       await supabase.auth.signOut();
       window.location.href = "index.html";
