@@ -42,9 +42,6 @@ async function carregarCliente() {
     document.getElementById("telefone").value = data.telefone || "";
     document.getElementById("email").value = data.email || "";
     document.getElementById("endereco").value = data.endereco || "";
-    document.getElementById("cidade").value = data.cidade || "";
-    document.getElementById("estado").value = data.estado || "";
-    document.getElementById("cep").value = data.cep || "";
 }
 
 /* =========================================================
@@ -57,9 +54,6 @@ async function salvarEdicao() {
         telefone: document.getElementById("telefone").value.trim(),
         email: document.getElementById("email").value.trim(),
         endereco: document.getElementById("endereco").value.trim(),
-        cidade: document.getElementById("cidade").value.trim(),
-        estado: document.getElementById("estado").value.trim(),
-        cep: document.getElementById("cep").value.trim(),
     };
 
     const { error } = await supabase
@@ -80,7 +74,7 @@ async function salvarEdicao() {
 /* =========================================================
     EVENTOS
 ========================================================= */
-document.getElementById("btnSalvar").addEventListener("click", salvarEdicao);
+document.getElementById("btnSalvarEdicao").addEventListener("click", salvarEdicao);
 
 /* =========================================================
     INICIAR PÁGINA
