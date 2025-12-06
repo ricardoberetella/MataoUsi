@@ -1,4 +1,4 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -15,20 +15,28 @@ async function verificarUsuario() {
         role = user.user_metadata.role;
     }
 
-    console.log("Usuário logado:", user?.email);
+    console.log("Usuário logado:", user?.email || "(nenhum)");
     console.log("Papel:", role);
 }
 
 /* ============================
-      PERMISSÕES
+          PERMISSÕES
 ============================ */
 function aplicarPermissoes() {
     const btnNovo = document.getElementById("btnNovo");
     const thAcoes = document.getElementById("thAcoesClientes");
 
-    if (btnNovo) btnNovo.style.display = role === "admin" ? "inline-block" : "none";
-    if (thAcoes) thAcoes.style.display = role === "admin" ? "" : "none";
+    // botão "Cadastrar Novo Cliente"
+    if (btnNovo) {
+        btnNovo.style.display = role === "admin" ? "inline-block" : "none";
+    }
 
+    // cabeçalho Ações
+    if (thAcoes) {
+        thAcoes.style.display = role === "admin" ? "" : "none";
+    }
+
+    // células da coluna de ações
     document.querySelectorAll(".acoes-col").forEach(col => {
         col.style.display = role === "admin" ? "" : "none";
     });
@@ -40,7 +48,11 @@ function aplicarPermissoes() {
 async function carregarClientes() {
     const tbody = document.getElementById("listaClientes");
     tbody.innerHTML = `
-        <tr><td colspan="3" style="text-align:center;color:#aaa;">Carregando...</td></tr>
+        <tr>
+            <td colspan="3" style="text-align:center; color:#94a3b8;">
+                Carregando clientes...
+            </td>
+        </tr>
     `;
 
     const { data, error } = await supabase
@@ -50,22 +62,26 @@ async function carregarClientes() {
 
     if (error) {
         console.error("Erro ao consultar tabela clientes:", error);
-
         tbody.innerHTML = `
-            <tr><td colspan="3" style="color:red;text-align:center;">
-                Erro ao carregar clientes.<br>
-                Verifique RLS, permissões ou nomes das colunas.
-            </td></tr>
+            <tr>
+                <td colspan="3" style="text-align:center; color:red;">
+                    Erro ao carregar clientes.<br>
+                    Verifique RLS, permissões ou nomes das colunas.
+                </td>
+            </tr>
         `;
         return;
     }
 
     if (!data || data.length === 0) {
         tbody.innerHTML = `
-            <tr><td colspan="3" style="text-align:center;color:#aaa;">
-                Nenhum cliente encontrado.
-            </td></tr>
+            <tr>
+                <td colspan="3" style="text-align:center; color:#94a3b8;">
+                    Nenhum cliente cadastrado.
+                </td>
+            </tr>
         `;
+        aplicarPermissoes();
         return;
     }
 
@@ -77,7 +93,6 @@ async function carregarClientes() {
         tr.innerHTML = `
             <td>${c.razao_social || ""}</td>
             <td>${c.cpf_cnpj || ""}</td>
-
             <td class="acoes-col">
                 <button class="btn-azul" onclick="editarCliente(${c.id})">Editar</button>
                 <button class="btn-vermelho" onclick="excluirCliente(${c.id})">Excluir</button>
