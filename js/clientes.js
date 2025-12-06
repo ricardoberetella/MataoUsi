@@ -8,7 +8,11 @@ let role = "viewer"; // padrão
       VERIFICAR USUÁRIO
 ============================ */
 async function verificarUsuario() {
-    const { data } = await supabase.auth.getSession();
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+        console.error("Erro getSession:", error);
+    }
+
     const user = data?.session?.user;
 
     if (user?.user_metadata?.role) {
@@ -59,6 +63,8 @@ async function carregarClientes() {
         .from("clientes")
         .select("*")
         .order("razao_social", { ascending: true });
+
+    console.log("Resultado clientes:", data, "Erro:", error);
 
     if (error) {
         console.error("Erro ao consultar tabela clientes:", error);
