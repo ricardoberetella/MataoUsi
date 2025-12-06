@@ -4,8 +4,18 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 document.addEventListener("DOMContentLoaded", async () => {
-    const { data: { session } } = await supabase.auth.getSession();
 
+    let session = null;
+
+    // Coleta segura da sessão (SEM quebrar o Supabase)
+    try {
+        const result = await supabase.auth.getSession();
+        session = result?.data?.session || null;
+    } catch (e) {
+        console.error("Erro ao obter sessão:", e);
+    }
+
+    // Se não estiver logado → volta ao login
     if (!session) {
         window.location.href = "index.html";
     }
