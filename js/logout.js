@@ -1,31 +1,21 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const SUPABASE_URL = "https://uxtgicfuggpuyjybwawa.supabase.co";
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// tempo de inatividade: 5 minutos
-const INATIVIDADE_MS = 5 * 60 * 1000;
-let timer = null;
-
-function resetTimer() {
-  clearTimeout(timer);
-
-  timer = setTimeout(async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch (e) {
-      console.error("Erro ao deslogar automaticamente:", e);
-    }
-
-    // volta para a tela de login
-    window.location.href = "/index.html";
-  }, INATIVIDADE_MS);
+// logout automático ao clicar
+export async function logout() {
+  await supabase.auth.signOut();
+  window.location.href = "index.html";
 }
 
-// Qualquer ação do usuário reseta o timer
-["mousemove", "keydown", "click", "scroll", "touchstart"].forEach(evt => {
-  document.addEventListener(evt, resetTimer);
+// para funcionar no botão padrão do dashboard
+document.addEventListener("DOMContentLoaded", () => {
+  const botao = document.getElementById("btnLogout");
+  if (botao) {
+    botao.addEventListener("click", logout);
+  }
 });
-
-// inicia o timer na abertura da página
-resetTimer();
