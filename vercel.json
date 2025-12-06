@@ -1,17 +1,9 @@
 {
-  "cleanUrls": true,
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/$1.html" }
+  "version": 2,
+  "framework": null,
+  "routes": [
+    { "src": "/(.*)", "dest": "/$1" }
   ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store"
-        }
-      ]
-    }
-  ]
+  "analytics": false,
+  "speedInsights": false
 }
