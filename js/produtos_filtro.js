@@ -13,11 +13,29 @@ const tabela = document.querySelector("#tabelaResultados tbody");
 
 let produtosCache = [];
 
+/* ============================
+   FORMATADORES IGUAIS PRODUTOS
+============================ */
+function fmt1(v) {
+  if (v == null) return "";
+  return Number(v).toFixed(1).replace(".", ",");
+}
+
+function fmt3(v) {
+  if (v == null) return "";
+  return Number(v).toFixed(3).replace(".", ",");
+}
+
+function fmt2money(v) {
+  if (v == null) return "R$ 0,00";
+  return "R$ " + Number(v).toFixed(2).replace(".", ",");
+}
+
 // CARREGAR ITENS NO SELECT AO ABRIR
 carregarProdutosParaSelect();
 
 /* ============================================================
-   CARREGA PRODUTOS PARA O SELECT (SEM POPUP GIGANTE)
+   CARREGA PRODUTOS PARA O SELECT
 ============================================================ */
 async function carregarProdutosParaSelect() {
   const { data, error } = await supabase
@@ -33,7 +51,6 @@ async function carregarProdutosParaSelect() {
 
   produtosCache = data;
 
-  // Limpa select
   selectBusca.innerHTML = "";
 
   // Opção TODOS
@@ -42,7 +59,7 @@ async function carregarProdutosParaSelect() {
   optTodos.textContent = "TODOS";
   selectBusca.appendChild(optTodos);
 
-  // Adiciona produtos
+  // Demais produtos
   data.forEach((p) => {
     const opt = document.createElement("option");
     opt.value = p.id;
@@ -90,10 +107,10 @@ function preencherTabela(lista) {
     tr.innerHTML = `
       <td>${p.codigo}</td>
       <td>${p.descricao}</td>
-      <td>${p.comprimento_mm}</td>
-      <td>${p.peso_liquido}</td>
-      <td>${p.peso_bruto}</td>
-      <td>${p.valor_unitario}</td>
+      <td>${fmt1(p.comprimento_mm)}</td>
+      <td>${fmt3(p.peso_liquido)}</td>
+      <td>${fmt3(p.peso_bruto)}</td>
+      <td>${fmt2money(p.valor_unitario)}</td>
       <td>${p.acabamento}</td>
     `;
 
@@ -106,6 +123,7 @@ function preencherTabela(lista) {
 ============================================================ */
 document.getElementById("btnImprimir").addEventListener("click", () => {
   const dataHora = new Date().toLocaleString("pt-BR");
-  document.getElementById("dataGeradaPrint").textContent = dataHora;
+  const span = document.getElementById("dataGeradaPrint");
+  if (span) span.textContent = dataHora;
   window.print();
 });
