@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Pedidos</title>
+
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/pedidos_lista.css">
+</head>
+<body data-role="">
+
+<header class="topbar">
+    <a href="dashboard.html">
+        <button class="btn-voltar">⬅ Voltar ao Menu</button>
+    </a>
+
+    <h1 class="topbar-title">Lista de Pedidos</h1>
+</header>
+
+<div class="container">
+
+    <section class="card">
+
+        <h2 class="card-title">Pedidos Cadastrados</h2>
+
+        <div class="acoes" id="areaBotoes">
+            <a href="pedidos_novo.html">
+                <button class="btn-primario">Novo Pedido</button>
+            </a>
+
+            <a href="pedidos_filtros.html">
+                <button class="btn-primario">Filtros</button>
+            </a>
+        </div>
+
+        <table class="tabela-futurista">
+            <thead>
+                <tr>
+                    <th>Nº Pedido</th>
+                    <th>Cliente</th>
+                    <th>Data Pedido</th>
+                    <th>Total (R$)</th>
+                    <th id="colAcoes" style="width:160px;">Ações</th>
+                </tr>
+            </thead>
+
+            <tbody id="listaPedidos"></tbody>
+        </table>
+    </section>
+</div>
+
+<script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+    import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ============================================
+    // DEFINIR ROLE DO USUÁRIO LOGADO
+    // ============================================
+    const userRole = localStorage.getItem("user_role") || "viewer";
+    document.body.setAttribute("data-role", userRole);
+
+    // ============================================
+    // OCULTAR ELEMENTOS SE FOR VISUALIZADOR
+    // ============================================
+    function aplicarPermissoes() {
+        if (userRole === "viewer") {
+            // Ocultar a coluna AÇÕES (cabeçalho)
+            const colAcoes = document.getElementById("colAcoes");
+            if (colAcoes) colAcoes.style.display = "none";
+
+            // Ocultar botão NOVO PEDIDO (mas manter FILTRO)
+            const areaBotoes = document.getElementById("areaBotoes");
+            if (areaBotoes) {
+                const botoes = areaBotoes.querySelectorAll("a");
+                if (botoes[0]) botoes[0].style.display = "none"; // botão NOVO PEDIDO
+            }
+        }
+    }
+
+    aplicarPermissoes();
+</script>
+
+<script type="module" src="js/pedidos_lista.js"></script>
+
+</body>
+</html>
