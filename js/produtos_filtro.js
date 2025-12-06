@@ -7,20 +7,19 @@ const SUPABASE_ANON_KEY =
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ELEMENTOS
-const campoBusca = document.getElementById("campoBusca");
-const datalist = document.getElementById("listaProdutosDatalist");
+const selectBusca = document.getElementById("selectBusca");
 const btnBuscar = document.getElementById("btnBuscar");
 const tabela = document.querySelector("#tabelaResultados tbody");
 
 let produtosCache = [];
 
-// Carregar lista para o campo buscar
-carregarProdutosParaDatalist();
+// CARREGAR ITENS NO SELECT AO ABRIR
+carregarProdutosParaSelect();
 
-/* ============================================
-   CARREGAR PRODUTOS NO DATALIST
-============================================ */
-async function carregarProdutosParaDatalist() {
+/* ============================================================
+   CARREGA PRODUTOS PARA O SELECT (SEM POPUP GIGANTE)
+============================================================ */
+async function carregarProdutosParaSelect() {
   const { data, error } = await supabase
     .from("produtos")
     .select("*")
@@ -34,39 +33,40 @@ async function carregarProdutosParaDatalist() {
 
   produtosCache = data;
 
-  datalist.innerHTML = "";
+  // Limpa select
+  selectBusca.innerHTML = "";
 
   // Opção TODOS
   const optTodos = document.createElement("option");
   optTodos.value = "TODOS";
-  datalist.appendChild(optTodos);
+  optTodos.textContent = "TODOS";
+  selectBusca.appendChild(optTodos);
 
-  // Demais opções
+  // Adiciona produtos
   data.forEach((p) => {
     const opt = document.createElement("option");
-    opt.value = `${p.codigo} - ${p.descricao}`;
-    datalist.appendChild(opt);
+    opt.value = p.id;
+    opt.textContent = `${p.codigo} - ${p.descricao}`;
+    selectBusca.appendChild(opt);
   });
 }
 
-/* ============================================
-                 BUSCAR
-============================================ */
+/* ============================================================
+                       FILTRAR
+============================================================ */
 btnBuscar.addEventListener("click", filtrar);
 
 function filtrar() {
-  const valor = campoBusca.value.trim();
+  const valor = selectBusca.value;
 
-  // Se selecionar TODOS → exibe lista inteira
-  if (valor === "TODOS" || valor === "") {
+  // Se selecionar TODOS
+  if (valor === "TODOS") {
     preencherTabela(produtosCache);
     return;
   }
 
-  // Filtra item selecionado
-  const produto = produtosCache.find(
-    (p) => `${p.codigo} - ${p.descricao}` === valor
-  );
+  // Busca produto pelo ID
+  const produto = produtosCache.find((p) => p.id == valor);
 
   if (!produto) {
     tabela.innerHTML = `
@@ -78,9 +78,9 @@ function filtrar() {
   preencherTabela([produto]);
 }
 
-/* ============================================
-        PREENCHER TABELA
-============================================ */
+/* ============================================================
+                   PREENCHER TABELA
+============================================================ */
 function preencherTabela(lista) {
   tabela.innerHTML = "";
 
@@ -101,25 +101,11 @@ function preencherTabela(lista) {
   });
 }
 
-/* ============================================
-        DATA E HORA IMPRESSÃO
-============================================ */
-function atualizarDataImpressao() {
-  const agora = new Date();
-
-  const dataFormatada =
-    agora.toLocaleDateString("pt-BR") +
-    " às " +
-    agora.toLocaleTimeString("pt-BR");
-
-  const span = document.getElementById("dataGeradaPrint");
-  if (span) span.textContent = dataFormatada;
-}
-
-/* ============================================
-                IMPRIMIR
-============================================ */
+/* ============================================================
+                        IMPRIMIR
+============================================================ */
 document.getElementById("btnImprimir").addEventListener("click", () => {
-  atualizarDataImpressao();
+  const dataHora = new Date().toLocaleString("pt-BR");
+  document.getElementById("dataGeradaPrint").textContent = dataHora;
   window.print();
 });
