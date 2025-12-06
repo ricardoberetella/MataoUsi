@@ -14,11 +14,11 @@ const tabela = document.querySelector("#tabelaResultados tbody");
 
 let produtosCache = [];
 
-// NÃO CARREGA TABELA AO ABRIR
+// Carregar lista para o campo buscar
 carregarProdutosParaDatalist();
 
 /* ============================================
-   CARREGAR PRODUTOS E POPULAR A LISTA SUSPENSA
+   CARREGAR PRODUTOS NO DATALIST
 ============================================ */
 async function carregarProdutosParaDatalist() {
   const { data, error } = await supabase
@@ -41,31 +41,32 @@ async function carregarProdutosParaDatalist() {
   optTodos.value = "TODOS";
   datalist.appendChild(optTodos);
 
-  // Demais produtos
+  // Demais opções
   data.forEach((p) => {
     const opt = document.createElement("option");
     opt.value = `${p.codigo} - ${p.descricao}`;
-    opt.dataset.id = p.id; // Guarda ID oculto
     datalist.appendChild(opt);
   });
 }
 
 /* ============================================
-               BOTÃO BUSCAR
+                 BUSCAR
 ============================================ */
 btnBuscar.addEventListener("click", filtrar);
 
 function filtrar() {
   const valor = campoBusca.value.trim();
 
-  // Se selecionar TODOS
-  if (valor === "TODOS") {
+  // Se selecionar TODOS → exibe lista inteira
+  if (valor === "TODOS" || valor === "") {
     preencherTabela(produtosCache);
     return;
   }
 
-  // Achar item selecionado
-  const produto = produtosCache.find(p => `${p.codigo} - ${p.descricao}` === valor);
+  // Filtra item selecionado
+  const produto = produtosCache.find(
+    (p) => `${p.codigo} - ${p.descricao}` === valor
+  );
 
   if (!produto) {
     tabela.innerHTML = `
@@ -74,12 +75,11 @@ function filtrar() {
     return;
   }
 
-  // Exibir somente o produto escolhido
   preencherTabela([produto]);
 }
 
 /* ============================================
-           PREENCHER TABELA RESULTADO
+        PREENCHER TABELA
 ============================================ */
 function preencherTabela(lista) {
   tabela.innerHTML = "";
@@ -102,29 +102,24 @@ function preencherTabela(lista) {
 }
 
 /* ============================================
-                 IMPRIMIR
-============================================ */
-document.getElementById("btnImprimir").addEventListener("click", () => {
-  window.print();
-});
-/* ============================================
-   DATA E HORA NA IMPRESSÃO
+        DATA E HORA IMPRESSÃO
 ============================================ */
 function atualizarDataImpressao() {
-    const agora = new Date();
+  const agora = new Date();
 
-    const dataFormatada =
-        agora.toLocaleDateString("pt-BR") +
-        " às " +
-        agora.toLocaleTimeString("pt-BR");
+  const dataFormatada =
+    agora.toLocaleDateString("pt-BR") +
+    " às " +
+    agora.toLocaleTimeString("pt-BR");
 
-    const span = document.getElementById("dataGeradaPrint");
-
-    if (span) span.textContent = dataFormatada;
+  const span = document.getElementById("dataGeradaPrint");
+  if (span) span.textContent = dataFormatada;
 }
 
-// Atualiza a data sempre que clicar em imprimir
+/* ============================================
+                IMPRIMIR
+============================================ */
 document.getElementById("btnImprimir").addEventListener("click", () => {
-    atualizarDataImpressao();
-    window.print();
+  atualizarDataImpressao();
+  window.print();
 });
