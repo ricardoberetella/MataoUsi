@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     role = user.user_metadata?.role || "viewer";
 
-    aplicarPermissoesTela();
+    aplicarPermissoes();
     iniciar();
 });
 
@@ -31,9 +31,9 @@ const btnEditar = document.getElementById("btnEditar");
 const btnExcluir = document.getElementById("btnExcluir");
 
 // ================================================
-// APLICAR PERMISSÕES (ADMIN x VISUALIZADOR)
+// APLICAR PERMISSÕES (VISUALIZADOR x ADMIN)
 // ================================================
-function aplicarPermissoesTela() {
+function aplicarPermissoes() {
     if (role !== "admin") {
         if (btnEditar) btnEditar.style.display = "none";
         if (btnExcluir) btnExcluir.style.display = "none";
@@ -52,7 +52,7 @@ async function iniciar() {
 ============================================================ */
 async function carregarPedido() {
 
-    const { data: pedido, error: erroPedido } = await supabase
+    const { data: pedido, error } = await supabase
         .from("pedidos")
         .select(`
             id,
@@ -64,14 +64,13 @@ async function carregarPedido() {
         .eq("id", id)
         .single();
 
-    if (erroPedido || !pedido) {
+    if (error || !pedido) {
         alert("Erro ao carregar pedido.");
-        console.error(erroPedido);
+        console.error(error);
         return;
     }
 
     const clienteNome = pedido.clientes?.razao_social ?? "—";
-
     const dataPed = pedido.data_pedido
         ? new Date(pedido.data_pedido).toLocaleDateString("pt-BR")
         : "—";
@@ -129,32 +128,33 @@ async function carregarItens() {
 }
 
 /* ============================================================
-   BOTÃO EDITAR (SÓ ADMIN)
+   BOTÕES (SOMENTE ADMIN)
 ============================================================ */
-btnEditar?.addEventListener("click", () => {
-    if (role !== "admin") return;
-    window.location.href = `pedidos_editar.html?id=${id}`;
-});
+if (btnEditar) {
+    btnEditar.addEventListener("click", () => {
+        if (role !== "admin") return;
+        window.location.href = `pedidos_editar.html?id=${id}`;
+    });
+}
 
-/* ============================================================
-   BOTÃO EXCLUIR (SÓ ADMIN)
-============================================================ */
-btnExcluir?.addEventListener("click", async () => {
+if (btnExcluir) {
+    btnExcluir.addEventListener("click", async () => {
 
-    if (role !== "admin") return;
+        if (role !== "admin") return;
 
-    if (!confirm("Tem certeza que deseja excluir este pedido?")) return;
+        if (!confirm("Tem certeza que deseja excluir este pedido?")) return;
 
-    await supabase.from("pedidos_itens").delete().eq("pedido_id", id);
+        await supabase.from("pedidos_itens").delete().eq("pedido_id", id);
 
-    const { error } = await supabase.from("pedidos").delete().eq("id", id);
+        const { error } = await supabase.from("pedidos").delete().eq("id", id);
 
-    if (error) {
-        alert("Erro ao excluir pedido.");
-        console.error(error);
-        return;
-    }
+        if (error) {
+            alert("Erro ao excluir pedido.");
+            console.error(error);
+            return;
+        }
 
-    alert("Pedido excluído com sucesso!");
-    window.location.href = "pedidos_lista.html";
-});
+        alert("Pedido excluído com sucesso!");
+        window.location.href = "pedidos_lista.html";
+    });
+}
