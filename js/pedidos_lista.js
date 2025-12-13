@@ -18,24 +18,32 @@ async function carregarUsuario() {
 }
 
 // ===============================================
-// PERMISSÕES (OCULTA A COLUNA COMPLETA SE VIEWER)
+// PERMISSÕES (BOTÕES POR ROLE)
 // ===============================================
-function aplicarPermissoesTabela() {
-    if (role !== "admin") {
+function montarBotoesAcoes(pedidoId) {
 
-        // Oculta coluna do cabeçalho
-        const col = document.querySelector("#colAcoes");
-        if (col) col.style.display = "none";
+    let botoes = `
+        <button class="btn-azul" onclick="visualizarPedido(${pedidoId})">
+            Visualizar
+        </button>
 
-        // Oculta todas as células da coluna "Ações"
-        document.querySelectorAll(".acoes").forEach(td => {
-            td.style.display = "none";
-        });
+        <button class="btn-verde" onclick="imprimirPedido(${pedidoId})">
+            Imprimir
+        </button>
+    `;
 
-        // Oculta botão "Novo Pedido"
-        const novoPedidoBtn = document.getElementById("btnNovoPedido");
-        if (novoPedidoBtn) novoPedidoBtn.style.display = "none";
+    if (role === "admin") {
+        botoes += `
+            <button class="btn-azul" onclick="editarPedido(${pedidoId})">
+                Editar
+            </button>
+            <button class="btn-vermelho" onclick="excluirPedido(${pedidoId})">
+                Excluir
+            </button>
+        `;
     }
+
+    return botoes;
 }
 
 // ===============================================
@@ -49,7 +57,6 @@ async function carregarPedidos() {
     const tbody = document.getElementById("listaPedidos");
     tbody.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
 
-    // Ordena pela data mais recente primeiro
     const { data, error } = await supabase
         .from("pedidos")
         .select("id, numero_pedido, data_pedido, total, clientes(razao_social)")
@@ -61,7 +68,7 @@ async function carregarPedidos() {
         return;
     }
 
-    // 🔥 Ordenar clientes alfabeticamente no front-end
+    // 🔥 Ordenar clientes alfabeticamente
     data.sort((a, b) => {
         const cliA = a.clientes?.razao_social || "";
         const cliB = b.clientes?.razao_social || "";
@@ -85,10 +92,7 @@ async function carregarPedidos() {
                 const separador = document.createElement("tr");
                 separador.innerHTML = `
                     <td colspan="5"
-                        style="
-                            border-bottom: 2px solid rgba(56,189,248,0.25);
-                            padding: 4px 0;
-                        ">
+                        style="border-bottom:2px solid rgba(56,189,248,0.25);padding:4px 0;">
                     </td>
                 `;
                 tbody.appendChild(separador);
@@ -107,20 +111,31 @@ async function carregarPedidos() {
             <td>${new Date(p.data_pedido).toLocaleDateString("pt-BR")}</td>
             <td>${Number(p.total).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
 
-            <td class="acoes" style="${role !== "admin" ? "display:none" : ""}">
-                <button class="btn-azul" onclick="editarPedido(${p.id})">Editar</button>
-                <button class="btn-vermelho" onclick="excluirPedido(${p.id})">Excluir</button>
+            <td class="acoes">
+                ${montarBotoesAcoes(p.id)}
             </td>
         `;
 
         tbody.appendChild(tr);
     });
-
-    aplicarPermissoesTabela();
 }
 
 // ===============================================
-// EDITAR PEDIDO
+// VISUALIZAR PEDIDO (ADMIN + VIEWER)
+// ===============================================
+window.visualizarPedido = (id) => {
+    window.location.href = `pedidos_visualizar.html?id=${id}`;
+};
+
+// ===============================================
+// IMPRIMIR PEDIDO (ADMIN + VIEWER)
+// ===============================================
+window.imprimirPedido = (id) => {
+    window.location.href = `pedidos_imprimir.html?id=${id}`;
+};
+
+// ===============================================
+// EDITAR PEDIDO (SÓ ADMIN)
 // ===============================================
 window.editarPedido = (id) => {
     if (role !== "admin") return;
@@ -128,7 +143,7 @@ window.editarPedido = (id) => {
 };
 
 // ===============================================
-// EXCLUIR PEDIDO
+// EXCLUIR PEDIDO (SÓ ADMIN)
 // ===============================================
 window.excluirPedido = async (id) => {
     if (role !== "admin") {
@@ -155,8 +170,6 @@ window.excluirPedido = async (id) => {
 // INICIAR
 // ===============================================
 document.addEventListener("DOMContentLoaded", async () => {
-
-    // 🔐 Proteção de login no início da página
     const user = await verificarLogin();
     if (!user) return;
 
