@@ -152,12 +152,12 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 5px;     /* aproxima da borda superior */
-  margin-bottom: 0px;  /* aproxima dos cards */
+  margin-top: 0px;     /* aproxima da borda superior */
+  margin-bottom: -10px;  /* aproxima dos cards */
 }
 
 .logo-painel img {
-  width: 330px;         /* tamanho equilibrado */
+  width: 310px;         /* tamanho equilibrado */
   max-width: 90%;
   height: auto;
   display: block;
