@@ -1,18 +1,23 @@
 import { supabase, verificarLogin } from "./auth.js";
 
+let role = "viewer";
+
 // 🔐 BLOQUEIA ACESSO SEM LOGIN
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
 
+    role = user.user_metadata?.role || "viewer";
+
+    aplicarPermissoesTela();
     iniciar();
 });
 
 // ================================================
 // PEGAR ID da URL
 // ================================================
-let params = new URLSearchParams(window.location.search);
-let id = params.get("id");
+const params = new URLSearchParams(window.location.search);
+const id = params.get("id");
 
 if (!id) {
     alert("ID do pedido não informado.");
@@ -26,6 +31,16 @@ const btnEditar = document.getElementById("btnEditar");
 const btnExcluir = document.getElementById("btnExcluir");
 
 // ================================================
+// APLICAR PERMISSÕES (ADMIN x VISUALIZADOR)
+// ================================================
+function aplicarPermissoesTela() {
+    if (role !== "admin") {
+        if (btnEditar) btnEditar.style.display = "none";
+        if (btnExcluir) btnExcluir.style.display = "none";
+    }
+}
+
+// ================================================
 // INICIAR
 // ================================================
 async function iniciar() {
@@ -36,8 +51,6 @@ async function iniciar() {
    CARREGAR DADOS DO PEDIDO
 ============================================================ */
 async function carregarPedido() {
-
-    await verificarLogin();
 
     const { data: pedido, error: erroPedido } = await supabase
         .from("pedidos")
@@ -59,10 +72,9 @@ async function carregarPedido() {
 
     const clienteNome = pedido.clientes?.razao_social ?? "—";
 
-    const dataPed =
-        pedido.data_pedido
-            ? new Date(pedido.data_pedido).toLocaleDateString("pt-BR")
-            : "—";
+    const dataPed = pedido.data_pedido
+        ? new Date(pedido.data_pedido).toLocaleDateString("pt-BR")
+        : "—";
 
     dadosContainer.innerHTML = `
         <p><strong>Número do Pedido:</strong> ${pedido.numero_pedido}</p>
@@ -78,8 +90,6 @@ async function carregarPedido() {
    CARREGAR ITENS DO PEDIDO
 ============================================================ */
 async function carregarItens() {
-
-    await verificarLogin();
 
     const { data: itens, error } = await supabase
         .from("pedidos_itens")
@@ -119,19 +129,19 @@ async function carregarItens() {
 }
 
 /* ============================================================
-   BOTÃO EDITAR
+   BOTÃO EDITAR (SÓ ADMIN)
 ============================================================ */
-btnEditar.addEventListener("click", async () => {
-    await verificarLogin();
+btnEditar?.addEventListener("click", () => {
+    if (role !== "admin") return;
     window.location.href = `pedidos_editar.html?id=${id}`;
 });
 
 /* ============================================================
-   BOTÃO EXCLUIR
+   BOTÃO EXCLUIR (SÓ ADMIN)
 ============================================================ */
-btnExcluir.addEventListener("click", async () => {
+btnExcluir?.addEventListener("click", async () => {
 
-    await verificarLogin();
+    if (role !== "admin") return;
 
     if (!confirm("Tem certeza que deseja excluir este pedido?")) return;
 
