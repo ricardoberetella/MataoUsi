@@ -5,6 +5,27 @@
 import { supabase, verificarLogin } from "./auth.js";
 
 let role = "viewer";
+import { verificarLogin } from "./auth.js";
+
+let role = "viewer";
+
+async function aplicarPermissoesDetalhes() {
+    const user = await verificarLogin();
+    if (!user) return;
+
+    role = user.user_metadata?.role || "viewer";
+
+    if (role !== "admin") {
+
+        // ❌ Esconder botão Editar
+        const btnEditar = document.getElementById("btnEditar");
+        if (btnEditar) btnEditar.style.display = "none";
+
+        // ❌ Esconder botão Excluir
+        const btnExcluir = document.getElementById("btnExcluir");
+        if (btnExcluir) btnExcluir.style.display = "none";
+    }
+}
 
 // ===============================================
 // CARREGAR USUÁRIO (VERIFICA ROLE)
