@@ -60,3 +60,27 @@ export async function sair() {
     await supabase.auth.signOut();
     window.location.href = "login.html";
 }
+// ===============================================
+// AUTO LOGOUT POR INATIVIDADE
+// ===============================================
+
+const TEMPO_MAXIMO = 30 * 60 * 1000; // 30 minutos
+let timeoutLogout;
+
+function iniciarTimeoutLogout() {
+    clearTimeout(timeoutLogout);
+
+    timeoutLogout = setTimeout(async () => {
+        await supabase.auth.signOut();
+        alert("Sessão expirada. Faça login novamente.");
+        window.location.href = "login.html";
+    }, TEMPO_MAXIMO);
+}
+
+// Reinicia o tempo quando o usuário interagir
+["click", "mousemove", "keydown", "scroll"].forEach(evento => {
+    document.addEventListener(evento, iniciarTimeoutLogout);
+});
+
+// Inicia ao carregar a página
+iniciarTimeoutLogout();
