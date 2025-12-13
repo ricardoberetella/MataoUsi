@@ -109,6 +109,29 @@ async function carregarPedidos() {
     }
 
     const itensSeguros = itens || [];
+    // ====================================================
+// PREENCHER CABEÇALHO (CLIENTE E PRODUTO)
+// ====================================================
+const clienteSelect = document.getElementById("clienteFiltro");
+const produtoSelect = document.getElementById("produtoFiltro");
+
+const clienteHeader = document.getElementById("clienteHeader");
+const produtoHeader = document.getElementById("produtoHeader");
+
+if (clienteHeader) {
+    clienteHeader.textContent =
+        clienteSelect?.value
+            ? clienteSelect.options[clienteSelect.selectedIndex].text
+            : "Todos os Clientes";
+}
+
+if (produtoHeader) {
+    produtoHeader.textContent =
+        produtoSelect?.value
+            ? produtoSelect.options[produtoSelect.selectedIndex].text
+            : "Todos os Produtos";
+}
+
     if (itensSeguros.length === 0) {
         renderizarTabela([]);
         return;
