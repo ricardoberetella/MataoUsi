@@ -18,28 +18,28 @@ async function carregarUsuario() {
 }
 
 // ===============================================
-// PERMISSÕES DE TELA (VISUALIZADOR)
+// PERMISSÕES DE TELA (VISUALIZADOR x ADMIN)
 // ===============================================
 function aplicarPermissoesTela() {
 
     if (role !== "admin") {
 
-        // ❌ Oculta botão "Novo Pedido"
+        // ❌ Esconder botão "Novo Pedido"
         const btnNovo = document.getElementById("btnNovoPedido");
         if (btnNovo) btnNovo.style.display = "none";
 
-        // ❌ Oculta coluna Ações (cabeçalho)
+        // ✅ Garantir que o botão Filtros fique visível
+        const btnFiltros = document.getElementById("btnFiltros");
+        if (btnFiltros) btnFiltros.style.display = "inline-block";
+
+        // ❌ Esconder coluna "Ações" (cabeçalho)
         const colAcoes = document.getElementById("colAcoes");
         if (colAcoes) colAcoes.style.display = "none";
 
-        // ❌ Oculta todas as ações por linha
-        document.querySelectorAll(".acoes").forEach(td => {
+        // ❌ Esconder SOMENTE as células da coluna Ações da tabela
+        document.querySelectorAll("td.acoes").forEach(td => {
             td.style.display = "none";
         });
-
-        // ✅ Botão Filtros continua visível
-        const btnFiltros = document.getElementById("btnFiltros");
-        if (btnFiltros) btnFiltros.style.display = "inline-block";
     }
 }
 
@@ -107,19 +107,27 @@ async function carregarPedidos() {
         tbody.appendChild(tr);
     });
 
+    // 🔐 APLICA PERMISSÕES APÓS RENDERIZAR A TABELA
     aplicarPermissoesTela();
 }
 
 // ===============================================
-// EDITAR / EXCLUIR (PROTEGIDOS)
+// EDITAR PEDIDO (SÓ ADMIN)
 // ===============================================
 window.editarPedido = (id) => {
     if (role !== "admin") return;
     window.location.href = `pedidos_editar.html?id=${id}`;
 };
 
+// ===============================================
+// EXCLUIR PEDIDO (SÓ ADMIN)
+// ===============================================
 window.excluirPedido = async (id) => {
-    if (role !== "admin") return;
+
+    if (role !== "admin") {
+        alert("Ação não permitida!");
+        return;
+    }
 
     if (!confirm("Confirmar exclusão?")) return;
 
@@ -139,9 +147,4 @@ window.excluirPedido = async (id) => {
 // ===============================================
 // INICIAR
 // ===============================================
-document.addEventListener("DOMContentLoaded", async () => {
-    const user = await verificarLogin();
-    if (!user) return;
-
-    carregarPedidos();
-});
+document.addEventListener("DOMContentLoaded", carregarPedidos);
