@@ -150,15 +150,17 @@ body {
 .logo-painel {
   width: 100%;
   display: flex;
-  justify-content: center;   /* centraliza horizontal */
+  justify-content: center;
   align-items: center;
-  margin: 10px 0 10px;       /* espaço igual ao retângulo vermelho */
+  margin-top: 15px;     /* aproxima da borda superior */
+  margin-bottom: 20px;  /* aproxima dos cards */
 }
 
 .logo-painel img {
-  width: 200px;              /* TAMANHO REAL DO LOGO */
+  width: 380px;         /* tamanho equilibrado */
   max-width: 90%;
   height: auto;
   display: block;
   opacity: 0.95;
 }
+
