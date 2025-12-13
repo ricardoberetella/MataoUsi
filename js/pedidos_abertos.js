@@ -78,6 +78,7 @@ async function carregarPedidos() {
 
         if (pedidosIds.length === 0) {
             renderizarTabela([]);
+            atualizarCabecalhoPrint();
             return;
         }
     }
@@ -109,28 +110,9 @@ async function carregarPedidos() {
     }
 
     const itensSeguros = itens || [];
-    // ====================================================
-// PREENCHER CABEÇALHO (CLIENTE E PRODUTO)
-// ====================================================
-const clienteSelect = document.getElementById("clienteFiltro");
-const produtoSelect = document.getElementById("produtoFiltro");
 
-const clienteHeader = document.getElementById("clienteHeader");
-const produtoHeader = document.getElementById("produtoHeader");
-
-if (clienteHeader) {
-    clienteHeader.textContent =
-        clienteSelect?.value
-            ? clienteSelect.options[clienteSelect.selectedIndex].text
-            : "Todos os Clientes";
-}
-
-if (produtoHeader) {
-    produtoHeader.textContent =
-        produtoSelect?.value
-            ? produtoSelect.options[produtoSelect.selectedIndex].text
-            : "Todos os Produtos";
-}
+    // 👉 ATUALIZA CABEÇALHO DO PRINT (CLIENTE / PRODUTO)
+    atualizarCabecalhoPrint();
 
     if (itensSeguros.length === 0) {
         renderizarTabela([]);
@@ -138,7 +120,6 @@ if (produtoHeader) {
     }
 
     // 3) Buscar baixas na tabela REAL: notas_pedidos_baixas
-    //    Relacionamento mais confiável: pedido_item_id -> pedidos_itens.id
     const itemIds = itensSeguros.map(i => i.id);
 
     const { data: baixas, error: errBaixas } = await supabase
@@ -147,7 +128,6 @@ if (produtoHeader) {
         .in("pedido_item_id", itemIds);
 
     if (errBaixas) {
-        // Se RLS bloquear, pelo menos não quebra; baixado ficará 0
         console.error("Erro baixas (notas_pedidos_baixas):", errBaixas);
     }
 
@@ -169,7 +149,32 @@ if (produtoHeader) {
 }
 
 // ====================================================
-// RENDERIZAR TABELA (AGRUPADO + ORDENADO + ATRASADOS)
+// ATUALIZAR CABEÇALHO DO PRINT
+// ====================================================
+function atualizarCabecalhoPrint() {
+    const clienteSelect = document.getElementById("clienteFiltro");
+    const produtoSelect = document.getElementById("produtoFiltro");
+
+    const relCliente = document.getElementById("relCliente");
+    const relProduto = document.getElementById("relProduto");
+
+    if (relCliente) {
+        relCliente.textContent =
+            clienteSelect && clienteSelect.value
+                ? clienteSelect.options[clienteSelect.selectedIndex].text
+                : "Todos";
+    }
+
+    if (relProduto) {
+        relProduto.textContent =
+            produtoSelect && produtoSelect.value
+                ? produtoSelect.options[produtoSelect.selectedIndex].text
+                : "Todos";
+    }
+}
+
+// ====================================================
+// RENDERIZAR TABELA
 // ====================================================
 function renderizarTabela(dados) {
     const tbody = document.getElementById("listaPedidos");
@@ -188,7 +193,6 @@ function renderizarTabela(dados) {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
 
-    // Agrupar por produto
     const grupos = {};
     dados.forEach(item => {
         const codigo = item.produtos.codigo;
@@ -197,28 +201,21 @@ function renderizarTabela(dados) {
     });
 
     Object.values(grupos).forEach(itensProduto => {
-
-        // Ordem por data crescente
         itensProduto.sort((a, b) => new Date(a.data_entrega) - new Date(b.data_entrega));
 
         itensProduto.forEach(item => {
-
             const total = Number(item.quantidade || 0);
             const baixado = Number(item._baixado_calc || 0);
             const emAberto = total - baixado;
-
-            // Mostrar somente os que ainda têm saldo em aberto
             if (emAberto <= 0) return;
 
             const dataEntregaObj = new Date(item.data_entrega + "T00:00:00");
             const atrasado = dataEntregaObj < hoje;
 
             const tr = document.createElement("tr");
-
             if (atrasado) {
                 tr.style.background = "rgba(220,38,38,0.15)";
                 tr.style.color = "#fecaca";
-                tr.title = "Pedido atrasado";
             }
 
             tr.innerHTML = `
@@ -233,7 +230,6 @@ function renderizarTabela(dados) {
             tbody.appendChild(tr);
         });
 
-        // separador entre produtos
         const sep = document.createElement("tr");
         sep.innerHTML = `<td colspan="6" style="background:#0b1f33;height:6px;"></td>`;
         tbody.appendChild(sep);
