@@ -18,13 +18,23 @@ async function carregarUsuario() {
 }
 
 // ===============================================
-// PERMISSÕES (VIEWER: SEM NOVO/EDITAR/EXCLUIR)
+// PERMISSÕES (OCULTA A COLUNA COMPLETA SE VIEWER)
 // ===============================================
 function aplicarPermissoesTabela() {
-    // Oculta botão "Novo Pedido" para viewer
-    const novoPedidoBtn = document.getElementById("btnNovoPedido");
-    if (novoPedidoBtn && role !== "admin") {
-        novoPedidoBtn.style.display = "none";
+    if (role !== "admin") {
+
+        // Oculta coluna do cabeçalho "Ações"
+        const col = document.querySelector("#colAcoes");
+        if (col) col.style.display = "none";
+
+        // Oculta todas as células da coluna "Ações"
+        document.querySelectorAll(".acoes").forEach(td => {
+            td.style.display = "none";
+        });
+
+        // Oculta botão "Novo Pedido"
+        const novoPedidoBtn = document.getElementById("btnNovoPedido");
+        if (novoPedidoBtn) novoPedidoBtn.style.display = "none";
     }
 }
 
@@ -32,11 +42,12 @@ function aplicarPermissoesTabela() {
 // CARREGAR PEDIDOS (ORDENAR E AGRUPAR POR CLIENTE)
 // ===============================================
 async function carregarPedidos() {
+
     const user = await carregarUsuario();
     if (!user) return;
 
     const tbody = document.getElementById("listaPedidos");
-    tbody.innerHTML = "<tr><td colspan='6'>Carregando...</td></tr>";
+    tbody.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
 
     // Ordena pela data mais recente primeiro
     const { data, error } = await supabase
@@ -46,7 +57,7 @@ async function carregarPedidos() {
 
     if (error) {
         console.error(error);
-        tbody.innerHTML = "<tr><td colspan='6'>Erro ao carregar.</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar.</td></tr>";
         return;
     }
 
@@ -62,21 +73,24 @@ async function carregarPedidos() {
     let ultimoCliente = "";
 
     data.forEach((p) => {
+
         const clienteNome = p.clientes?.razao_social || "Cliente Não Informado";
 
         // ============================================================
         // SEPARADOR QUANDO MUDA DE CLIENTE
         // ============================================================
         if (clienteNome !== ultimoCliente) {
+
             if (ultimoCliente !== "") {
                 const separador = document.createElement("tr");
                 separador.innerHTML = `
-                    <td colspan="6"
+                    <td colspan="5"
                         style="border-bottom: 2px solid rgba(56,189,248,0.25); padding: 4px 0;">
                     </td>
                 `;
                 tbody.appendChild(separador);
             }
+
             ultimoCliente = clienteNome;
         }
 
@@ -84,25 +98,16 @@ async function carregarPedidos() {
         // LINHA DO PEDIDO
         // ============================================================
         const tr = document.createElement("tr");
-
-        // VIEWER: Visualizar + Imprimir
-        // ADMIN: Editar + Excluir + (Visualizar opcional via Editar)
-        const acoesHtml = (role === "admin")
-            ? `
-                <button class="btn-azul" onclick="editarPedido(${p.id})">Editar</button>
-                <button class="btn-vermelho" onclick="excluirPedido(${p.id})">Excluir</button>
-              `
-            : `
-                <button class="btn-azul" onclick="visualizarPedido(${p.id})">Visualizar</button>
-                <button class="btn-verde" onclick="imprimirPedido(${p.id})">Imprimir</button>
-              `;
-
         tr.innerHTML = `
             <td>${p.numero_pedido}</td>
             <td>${clienteNome}</td>
             <td>${new Date(p.data_pedido).toLocaleDateString("pt-BR")}</td>
             <td>${Number(p.total).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
-            <td class="acoes">${acoesHtml}</td>
+
+            <td class="acoes">
+                <button class="btn-azul" onclick="editarPedido(${p.id})">Editar</button>
+                <button class="btn-vermelho" onclick="excluirPedido(${p.id})">Excluir</button>
+            </td>
         `;
 
         tbody.appendChild(tr);
@@ -110,24 +115,6 @@ async function carregarPedidos() {
 
     aplicarPermissoesTabela();
 }
-
-// ===============================================
-// VISUALIZAR PEDIDO (VIEWER)
-// -> sem criar tela nova: usa a tela existente de editar,
-//    mas o próprio backend/role deve impedir salvar/alterar.
-// ===============================================
-window.visualizarPedido = (id) => {
-    window.location.href = `pedidos_editar.html?id=${id}`;
-};
-
-// ===============================================
-// IMPRIMIR PEDIDO (VIEWER)
-// -> sem criar tela nova: abre a mesma tela com flag de impressão.
-//    (se sua tela de editar já tiver botão imprimir, você pode ignorar a flag)
-// ===============================================
-window.imprimirPedido = (id) => {
-    window.location.href = `pedidos_editar.html?id=${id}&imprimir=1`;
-};
 
 // ===============================================
 // EDITAR PEDIDO (SÓ ADMIN)
