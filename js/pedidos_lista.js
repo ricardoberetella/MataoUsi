@@ -1,5 +1,5 @@
 // ===============================================
-// LISTA DE PEDIDOS – ORDEM CORRETA + AGRUPAMENTO
+// LISTA DE PEDIDOS – CLIQUE NA LINHA PARA VISUALIZAR
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -28,15 +28,15 @@ function aplicarPermissoesTela() {
         const btnNovo = document.getElementById("btnNovoPedido");
         if (btnNovo) btnNovo.style.display = "none";
 
-        // ✅ Garantir que o botão Filtros fique visível
+        // ✅ Filtros sempre visível
         const btnFiltros = document.getElementById("btnFiltros");
         if (btnFiltros) btnFiltros.style.display = "inline-block";
 
-        // ❌ Esconder coluna "Ações" (cabeçalho)
+        // ❌ Esconder coluna Ações
         const colAcoes = document.getElementById("colAcoes");
         if (colAcoes) colAcoes.style.display = "none";
 
-        // ❌ Esconder SOMENTE Editar/Excluir (Visualizar permanece)
+        // ❌ Esconder botões Editar / Excluir
         document.querySelectorAll(".btn-admin").forEach(btn => {
             btn.style.display = "none";
         });
@@ -65,7 +65,7 @@ async function carregarPedidos() {
         return;
     }
 
-    // Ordenar clientes alfabeticamente
+    // Ordenar por cliente
     data.sort((a, b) => {
         const aCli = a.clientes?.razao_social || "";
         const bCli = b.clientes?.razao_social || "";
@@ -93,27 +93,34 @@ async function carregarPedidos() {
         }
 
         const tr = document.createElement("tr");
+
+        // 👉 CLIQUE NA LINHA ABRE O PEDIDO
+        tr.style.cursor = "pointer";
+        tr.addEventListener("click", () => {
+            window.location.href = `pedidos_detalhes.html?id=${p.id}`;
+        });
+
         tr.innerHTML = `
             <td>${p.numero_pedido}</td>
             <td>${clienteNome}</td>
             <td>${new Date(p.data_pedido).toLocaleDateString("pt-BR")}</td>
             <td>${Number(p.total).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
             <td class="acoes">
-
-                <!-- VISUALIZAR (ADMIN E VISUALIZADOR) -->
-                <button class="btn-cinza" onclick="visualizarPedido(${p.id})">
-                    Visualizar
-                </button>
-
-                <!-- EDITAR / EXCLUIR (SOMENTE ADMIN) -->
-                <button class="btn-azul btn-admin" onclick="editarPedido(${p.id})">
-                    Editar
-                </button>
-                <button class="btn-vermelho btn-admin" onclick="excluirPedido(${p.id})">
-                    Excluir
-                </button>
+                <button class="btn-azul btn-admin">Editar</button>
+                <button class="btn-vermelho btn-admin">Excluir</button>
             </td>
         `;
+
+        // 👉 Impede que clicar nos botões dispare o clique da linha
+        tr.querySelectorAll("button").forEach(btn => {
+            btn.addEventListener("click", e => e.stopPropagation());
+        });
+
+        // Ações admin
+        const [btnEditar, btnExcluir] = tr.querySelectorAll(".btn-admin");
+
+        btnEditar.addEventListener("click", () => editarPedido(p.id));
+        btnExcluir.addEventListener("click", () => excluirPedido(p.id));
 
         tbody.appendChild(tr);
     });
@@ -122,29 +129,19 @@ async function carregarPedidos() {
 }
 
 // ===============================================
-// VISUALIZAR PEDIDO (ADMIN E VISUALIZADOR)
+// EDITAR (ADMIN)
 // ===============================================
-window.visualizarPedido = (id) => {
-    window.location.href = `pedidos_detalhes.html?id=${id}`;
-};
-
-// ===============================================
-// EDITAR PEDIDO (SÓ ADMIN)
-// ===============================================
-window.editarPedido = (id) => {
+function editarPedido(id) {
     if (role !== "admin") return;
     window.location.href = `pedidos_editar.html?id=${id}`;
-};
+}
 
 // ===============================================
-// EXCLUIR PEDIDO (SÓ ADMIN)
+// EXCLUIR (ADMIN)
 // ===============================================
-window.excluirPedido = async (id) => {
+async function excluirPedido(id) {
 
-    if (role !== "admin") {
-        alert("Ação não permitida!");
-        return;
-    }
+    if (role !== "admin") return;
 
     if (!confirm("Confirmar exclusão?")) return;
 
@@ -159,7 +156,7 @@ window.excluirPedido = async (id) => {
     }
 
     carregarPedidos();
-};
+}
 
 // ===============================================
 // INICIAR
