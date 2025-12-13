@@ -14,40 +14,6 @@
       padding: 10px;
       text-align: center;
     }
-
-    .btn-acoes {
-      display: flex;
-      gap: 15px;
-      margin-top: 20px;
-    }
-
-    .btn-edit {
-      background: #00bfff;
-      border: none;
-      padding: 10px 25px;
-      color: black;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    .btn-edit:hover {
-      background: #33c9ff;
-    }
-
-    .btn-delete {
-      background: red;
-      border: none;
-      padding: 10px 25px;
-      color: white;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    .btn-delete:hover {
-      background: darkred;
-    }
   </style>
 </head>
 
@@ -69,7 +35,9 @@
         <!-- Dados carregados via JS -->
       </div>
 
-      <h2 class="titulo" style="font-size:24px; margin-top:30px;">Itens do Pedido</h2>
+      <h2 class="titulo" style="font-size:24px; margin-top:30px;">
+        Itens do Pedido
+      </h2>
 
       <table class="tabela-futurista">
         <thead>
@@ -83,10 +51,8 @@
         <tbody id="tbodyItens"></tbody>
       </table>
 
-      <div class="btn-acoes">
-        <button class="btn-edit" id="btnEditar">✏️ Editar</button>
-        <button class="btn-delete" id="btnExcluir">🗑 Excluir</button>
-      </div>
+      <!-- ❌ BOTÕES EDITAR / EXCLUIR REMOVIDOS DEFINITIVAMENTE -->
+      <!-- ESTA TELA É SOMENTE VISUALIZAÇÃO -->
 
     </section>
 
@@ -95,5 +61,4 @@
   <script type="module" src="js/pedidos_detalhes.js"></script>
 
 </body>
-
 </html>
