@@ -152,8 +152,8 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: -10px;     /* aproxima da borda superior */
-  margin-bottom: -20px;  /* aproxima dos cards */
+  margin-top: -30px;     /* aproxima da borda superior */
+  margin-bottom: -30px;  /* aproxima dos cards */
 }
 
 .logo-painel img {
