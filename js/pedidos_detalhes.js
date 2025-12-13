@@ -1,15 +1,10 @@
 import { supabase, verificarLogin } from "./auth.js";
 
-let role = "viewer";
-
 // 🔐 BLOQUEIA ACESSO SEM LOGIN
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
 
-    role = user.user_metadata?.role || "viewer";
-
-    aplicarPermissoes();
     iniciar();
 });
 
@@ -27,19 +22,6 @@ if (!id) {
 // ELEMENTOS
 const dadosContainer = document.getElementById("dadosPedido");
 const tbodyItens = document.getElementById("tbodyItens");
-const btnEditar = document.getElementById("btnEditar");
-const btnExcluir = document.getElementById("btnExcluir");
-
-// ================================================
-// APLICAR PERMISSÕES (VISUALIZADOR x ADMIN)
-// ================================================
-function aplicarPermissoes() {
-    if (role !== "admin") {
-        document.querySelectorAll(".btn-edit, .btn-delete").forEach(btn => {
-            btn.style.display = "none";
-        });
-    }
-}
 
 // ================================================
 // INICIAR
@@ -125,37 +107,5 @@ async function carregarItens() {
                 <td>R$ ${subtotal.toFixed(2)}</td>
             </tr>
         `;
-    });
-}
-
-/* ============================================================
-   BOTÕES (SOMENTE ADMIN)
-============================================================ */
-if (btnEditar) {
-    btnEditar.addEventListener("click", () => {
-        if (role !== "admin") return;
-        window.location.href = `pedidos_editar.html?id=${id}`;
-    });
-}
-
-if (btnExcluir) {
-    btnExcluir.addEventListener("click", async () => {
-
-        if (role !== "admin") return;
-
-        if (!confirm("Tem certeza que deseja excluir este pedido?")) return;
-
-        await supabase.from("pedidos_itens").delete().eq("pedido_id", id);
-
-        const { error } = await supabase.from("pedidos").delete().eq("id", id);
-
-        if (error) {
-            alert("Erro ao excluir pedido.");
-            console.error(error);
-            return;
-        }
-
-        alert("Pedido excluído com sucesso!");
-        window.location.href = "pedidos_lista.html";
     });
 }
