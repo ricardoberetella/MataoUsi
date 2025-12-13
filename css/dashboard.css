@@ -152,11 +152,11 @@ body {
   display: flex;
   justify-content: center;   /* centraliza horizontal */
   align-items: center;
-  margin: 60px 0 50px;       /* espaço igual ao retângulo vermelho */
+  margin: 10px 0 10px;       /* espaço igual ao retângulo vermelho */
 }
 
 .logo-painel img {
-  width: 420px;              /* TAMANHO REAL DO LOGO */
+  width: 200px;              /* TAMANHO REAL DO LOGO */
   max-width: 90%;
   height: auto;
   display: block;
