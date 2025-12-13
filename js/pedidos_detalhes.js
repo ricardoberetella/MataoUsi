@@ -35,8 +35,9 @@ const btnExcluir = document.getElementById("btnExcluir");
 // ================================================
 function aplicarPermissoes() {
     if (role !== "admin") {
-        if (btnEditar) btnEditar.style.display = "none";
-        if (btnExcluir) btnExcluir.style.display = "none";
+        document.querySelectorAll(".btn-edit, .btn-delete").forEach(btn => {
+            btn.style.display = "none";
+        });
     }
 }
 
