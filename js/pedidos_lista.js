@@ -49,7 +49,6 @@ async function carregarPedidos() {
     const tbody = document.getElementById("listaPedidos");
     tbody.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
 
-    // Ordena pela data mais recente primeiro
     const { data, error } = await supabase
         .from("pedidos")
         .select("id, numero_pedido, data_pedido, total, clientes(razao_social)")
@@ -61,7 +60,7 @@ async function carregarPedidos() {
         return;
     }
 
-    // 🔥 Ordenar clientes alfabeticamente no front-end
+    // 🔥 Ordenar clientes alfabeticamente
     data.sort((a, b) => {
         const cliA = a.clientes?.razao_social || "";
         const cliB = b.clientes?.razao_social || "";
@@ -69,7 +68,6 @@ async function carregarPedidos() {
     });
 
     tbody.innerHTML = "";
-
     let ultimoCliente = "";
 
     data.forEach((p) => {
@@ -80,20 +78,15 @@ async function carregarPedidos() {
         // SEPARADOR QUANDO MUDA DE CLIENTE
         // ============================================================
         if (clienteNome !== ultimoCliente) {
-
             if (ultimoCliente !== "") {
                 const separador = document.createElement("tr");
                 separador.innerHTML = `
                     <td colspan="5"
-                        style="
-                            border-bottom: 2px solid rgba(56,189,248,0.25);
-                            padding: 4px 0;
-                        ">
+                        style="border-bottom:2px solid rgba(56,189,248,0.25);padding:4px 0;">
                     </td>
                 `;
                 tbody.appendChild(separador);
             }
-
             ultimoCliente = clienteNome;
         }
 
@@ -101,13 +94,28 @@ async function carregarPedidos() {
         // LINHA DO PEDIDO
         // ============================================================
         const tr = document.createElement("tr");
+
+        // 🔹 NOVO: viewer pode clicar para visualizar
+        if (role !== "admin") {
+            tr.style.cursor = "pointer";
+            tr.title = "Clique para visualizar / duplo clique para imprimir";
+
+            tr.addEventListener("click", () => {
+                window.location.href = `pedidos_editar.html?id=${p.id}`;
+            });
+
+            tr.addEventListener("dblclick", () => {
+                window.location.href = `pedidos_editar.html?id=${p.id}&imprimir=1`;
+            });
+        }
+
         tr.innerHTML = `
             <td>${p.numero_pedido}</td>
             <td>${clienteNome}</td>
             <td>${new Date(p.data_pedido).toLocaleDateString("pt-BR")}</td>
             <td>${Number(p.total).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
 
-            <td class="acoes" style="${role !== "admin" ? "display:none" : ""}">
+            <td class="acoes">
                 <button class="btn-azul" onclick="editarPedido(${p.id})">Editar</button>
                 <button class="btn-vermelho" onclick="excluirPedido(${p.id})">Excluir</button>
             </td>
@@ -120,7 +128,7 @@ async function carregarPedidos() {
 }
 
 // ===============================================
-// EDITAR PEDIDO
+// EDITAR PEDIDO (SÓ ADMIN)
 // ===============================================
 window.editarPedido = (id) => {
     if (role !== "admin") return;
@@ -128,7 +136,7 @@ window.editarPedido = (id) => {
 };
 
 // ===============================================
-// EXCLUIR PEDIDO
+// EXCLUIR PEDIDO (SÓ ADMIN)
 // ===============================================
 window.excluirPedido = async (id) => {
     if (role !== "admin") {
@@ -155,8 +163,6 @@ window.excluirPedido = async (id) => {
 // INICIAR
 // ===============================================
 document.addEventListener("DOMContentLoaded", async () => {
-
-    // 🔐 Proteção de login no início da página
     const user = await verificarLogin();
     if (!user) return;
 
