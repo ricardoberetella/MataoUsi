@@ -36,9 +36,9 @@ function aplicarPermissoesTela() {
         const colAcoes = document.getElementById("colAcoes");
         if (colAcoes) colAcoes.style.display = "none";
 
-        // ❌ Esconder SOMENTE as células da coluna Ações da tabela
-        document.querySelectorAll("td.acoes").forEach(td => {
-            td.style.display = "none";
+        // ❌ Esconder SOMENTE Editar/Excluir (td.acoes continua por causa do Visualizar)
+        document.querySelectorAll("td.acoes .btn-admin").forEach(btn => {
+            btn.style.display = "none";
         });
     }
 }
@@ -99,8 +99,19 @@ async function carregarPedidos() {
             <td>${new Date(p.data_pedido).toLocaleDateString("pt-BR")}</td>
             <td>${Number(p.total).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
             <td class="acoes">
-                <button class="btn-azul" onclick="editarPedido(${p.id})">Editar</button>
-                <button class="btn-vermelho" onclick="excluirPedido(${p.id})">Excluir</button>
+
+                <!-- VISUALIZAR (ADMIN E VISUALIZADOR) -->
+                <button class="btn-cinza" onclick="visualizarPedido(${p.id})">
+                    Visualizar
+                </button>
+
+                <!-- EDITAR / EXCLUIR (SOMENTE ADMIN) -->
+                <button class="btn-azul btn-admin" onclick="editarPedido(${p.id})">
+                    Editar
+                </button>
+                <button class="btn-vermelho btn-admin" onclick="excluirPedido(${p.id})">
+                    Excluir
+                </button>
             </td>
         `;
 
@@ -110,6 +121,13 @@ async function carregarPedidos() {
     // 🔐 APLICA PERMISSÕES APÓS RENDERIZAR A TABELA
     aplicarPermissoesTela();
 }
+
+// ===============================================
+// VISUALIZAR PEDIDO (ADMIN E VISUALIZADOR)
+// ===============================================
+window.visualizarPedido = (id) => {
+    window.location.href = `pedidos_visualizar.html?id=${id}`;
+};
 
 // ===============================================
 // EDITAR PEDIDO (SÓ ADMIN)
