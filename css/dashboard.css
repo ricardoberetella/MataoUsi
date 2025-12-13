@@ -144,20 +144,21 @@ body {
   background: #be123c;
 }
 
-/* =====================================================
-   LOGO CENTRAL MATÃO USINAGEM — BASE64 (SEM HTML)
-===================================================== */
+/* ===================================================== */
+/* LOGO CENTRAL NO TOPO DO PAINEL (DASHBOARD) */
+/* ===================================================== */
+.logo-painel {
+  width: 100%;
+  display: flex;
+  justify-content: center;   /* centraliza horizontal */
+  align-items: center;
+  margin: 60px 0 50px;       /* espaço igual ao retângulo vermelho */
+}
 
-.main::before {
-  content: "";
+.logo-painel img {
+  width: 420px;              /* TAMANHO REAL DO LOGO */
+  max-width: 90%;
+  height: auto;
   display: block;
-  width: 620px;
-  height: 290px;
-  margin: 0px auto 10px
-  px auto;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: contain;
-  background-image: url("../img/logo-mataousi.png");
-  filter: drop-shadow(0 0 14px rgba(56,189,248,0.75));
+  opacity: 0.95;
 }
