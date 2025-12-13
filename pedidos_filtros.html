@@ -37,10 +37,9 @@
             align-items: center;
         }
 
-        /* BOTÕES AZUIS – TEXTO PRETO AGORA */
         .btn-menu {
             background: #0ea5e9;
-            color: #000;              /* ← TEXTO PRETO */
+            color: #000;
             padding: 12px 26px;
             border: none;
             border-radius: 12px;
@@ -55,15 +54,14 @@
             background: #38bdf8;
         }
 
-        /* BOTÃO VOLTAR – MAIS FORTE E LEGÍVEL */
         .btn-voltar-dark {
-            background: #111827;      /* fundo mais definido */
-            color: #fff;              /* texto branco pra destacar */
+            background: #111827;
+            color: #fff;
             padding: 12px 26px;
             border-radius: 12px;
             font-size: 16px;
             font-weight: bold;
-            border: 1px solid rgba(148,163,184,0.8); /* borda mais visível */
+            border: 1px solid rgba(148,163,184,0.8);
             cursor: pointer;
             transition: 0.2s;
             min-width: 260px;
@@ -110,6 +108,16 @@
     </div>
 
 </div>
+
+<!-- 🔐 BLINDAGEM DE LOGIN -->
+<script type="module">
+    import { verificarLogin } from "./js/auth.js";
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        const user = await verificarLogin();
+        if (!user) return;
+    });
+</script>
 
 </body>
 </html>
