@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Produtos</title>
+
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/produtos.css">
+</head>
+<body>
+
+<header class="topbar">
+    <a href="dashboard.html" class="btn-voltar-menu">⬅ Voltar ao Menu</a>
+    <h1 class="titulo-pagina">Lista de Produtos</h1>
+</header>
+
+<main class="page-container">
+
+    <section class="card-externo">
+        <section class="card-interno">
+
+            <h2 class="titulo-card">Produtos Cadastrados</h2>
+
+            <div class="linha-botoes">
+                <a href="produtos_novo.html">
+                    <button class="btn-primario">Novo Produto</button>
+                </a>
+
+                <!-- Vai para a tela de filtros -->
+                <a href="produtos_filtros.html">
+                    <button class="btn-primario">Filtros</button>
+                </a>
+            </div>
+
+            <table class="tabela">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Descrição</th>
+                        <th>Comp. (mm)</th>
+                        <th>Peso Líq.</th>
+                        <th>Peso Bruto</th>
+                        <th>Valor Unit.</th>
+                        <th>Acabamento</th>
+                        <!-- ESTA COLUNA SÓ FICA VISÍVEL PARA ADMIN -->
+                        <th class="col-acoes">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="listaProdutos"></tbody>
+            </table>
+
+        </section>
+    </section>
+
+</main>
+
+<script type="module" src="js/produtos.js"></script>
+
+</body>
+</html>

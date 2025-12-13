@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estoque - MataoUsi</title>
+
+  <!-- CSS futurista -->
+  <link rel="stylesheet" href="css/estoque.css">
+
+  <!-- Supabase -->
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+    import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
+
+    window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  </script>
+</head>
+
+<body>
+
+  <h2>Estoque</h2>
+
+  <!-- BOTÃO FUTURISTA VOLTAR AO MENU -->
+  <div style="text-align:right; margin: 10px 30px;">
+    <button onclick="location.href='dashboard.html'"
+      style="
+        background: #38bdf8;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 15px;
+        color: #000;
+        box-shadow: 0 0 12px rgba(56,189,248,0.8);
+        transition: 0.3s;
+      "
+      onmouseover="this.style.boxShadow='0 0 20px rgba(56,189,248,1)'"
+      onmouseout="this.style.boxShadow='0 0 12px rgba(56,189,248,0.8)'"
+    >
+      ⬅ Voltar ao Menu
+    </button>
+  </div>
+
+  <div class="container">
+
+    <!-- ABAS -->
+    <div class="tabs">
+      <button class="tab active" data-tab="cadastro">Cadastrar Entrada/Atualização</button>
+      <button class="tab" data-tab="lista">Consultar Estoque</button>
+    </div>
+
+    <!-- ======================= CADASTRAR ENTRADA ======================= -->
+    <div id="cadastro" class="tab-content active">
+
+      <form id="formEstoque">
+        <input type="hidden" id="estoqueId">
+
+        <!-- Selecionar Produto -->
+        <label>Produto</label>
+        <select id="produto_id" required></select>
+
+        <label>Quantidade</label>
+        <input type="number" id="quantidade" required>
+
+        <label>Local (ex: Prateleira A, Caixa 3...)</label>
+        <input type="text" id="local">
+
+        <div class="btns">
+          <button type="submit">Salvar</button>
+          <button type="button" id="btnCancelar">Cancelar</button>
+        </div>
+      </form>
+
+    </div>
+
+    <!-- ======================= CONSULTAR ESTOQUE ======================= -->
+    <div id="lista" class="tab-content">
+
+      <input type="text" id="busca" placeholder="Buscar por código, descrição ou local">
+
+      <table>
+        <thead>
+          <tr>
+            <th>Produto</th>
+            <th>Quantidade</th>
+            <th>Local</th>
+            <th>Última Atualização</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+
+        <tbody id="tabelaEstoque"></tbody>
+      </table>
+
+    </div>
+
+  </div>
+
+  <script type="module" src="js/estoque.js"></script>
+
+</body>
+</html>

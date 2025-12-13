@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Detalhes do Pedido</title>
+
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <link rel="stylesheet" href="css/produtos.css" />
+
+  <style>
+    th, td {
+      padding: 10px;
+      text-align: center;
+    }
+
+    .btn-acoes {
+      display: flex;
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .btn-edit {
+      background: #00bfff;
+      border: none;
+      padding: 10px 25px;
+      color: black;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .btn-edit:hover {
+      background: #33c9ff;
+    }
+
+    .btn-delete {
+      background: red;
+      border: none;
+      padding: 10px 25px;
+      color: white;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .btn-delete:hover {
+      background: darkred;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- TOPOBAR -->
+  <header class="topbar">
+    <a href="pedidos_lista.html" class="btn-voltar">⬅ Voltar</a>
+    <span class="topbar-module">Detalhes do Pedido</span>
+  </header>
+
+  <main class="page-container">
+
+    <section class="card">
+
+      <h1 class="titulo">Informações do Pedido</h1>
+
+      <div id="dadosPedido" style="margin-bottom: 25px;">
+        <!-- Dados carregados via JS -->
+      </div>
+
+      <h2 class="titulo" style="font-size:24px; margin-top:30px;">Itens do Pedido</h2>
+
+      <table class="tabela-futurista">
+        <thead>
+          <tr>
+            <th>Produto</th>
+            <th>Qtd</th>
+            <th>Valor Un.</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyItens"></tbody>
+      </table>
+
+      <div class="btn-acoes">
+        <button class="btn-edit" id="btnEditar">✏️ Editar</button>
+        <button class="btn-delete" id="btnExcluir">🗑 Excluir</button>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script type="module" src="js/pedidos_detalhes.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Pedidos</title>
+
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/pedidos_lista.css">
+</head>
+
+<body>
+
+<header class="topbar">
+    <a href="dashboard.html">
+        <button class="btn-voltar">⬅ Voltar ao Menu</button>
+    </a>
+    <h1 class="topbar-title">Lista de Pedidos</h1>
+</header>
+
+<div class="container">
+
+    <section class="card">
+
+        <h2 class="card-title">Pedidos Cadastrados</h2>
+
+        <!-- BOTÕES -->
+        <div class="acoes" id="areaBotoes">
+            <!-- NOVO PEDIDO (ADMIN SOMENTE) -->
+            <a href="pedidos_novo.html" id="btnNovoPedido">
+                <button class="btn-primario">Novo Pedido</button>
+            </a>
+
+            <!-- FILTRO SEMPRE LIBERADO -->
+            <a href="pedidos_filtros.html" id="btnFiltros">
+                <button class="btn-primario">Filtros</button>
+            </a>
+        </div>
+
+        <!-- TABELA -->
+        <table class="tabela-futurista">
+            <thead>
+                <tr>
+                    <th>Nº Pedido</th>
+                    <th>Cliente</th>
+                    <th>Data Pedido</th>
+                    <th>Total (R$)</th>
+                    <th id="colAcoes">Ações</th>
+                </tr>
+            </thead>
+
+            <tbody id="listaPedidos"></tbody>
+        </table>
+
+    </section>
+</div>
+
+<!-- ===================================================== -->
+<!-- 1) IMPORTAR AUTH.JS APENAS UMA VEZ                    -->
+<!-- ===================================================== -->
+<script type="module">
+    import { supabase, verificarLogin } from "./js/auth.js";
+
+    // Torna disponíveis para o próximo script
+    window.supabase = supabase;
+    window.verificarLogin = verificarLogin;
+</script>
+
+<!-- ===================================================== -->
+<!-- 2) AGORA CARREGAR O ARQUIVO pedidos_lista.js          -->
+<!-- ===================================================== -->
+<script type="module" src="./js/pedidos_lista.js"></script>
+
+</body>
+</html>

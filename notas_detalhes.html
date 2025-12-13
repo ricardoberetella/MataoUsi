@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes da Nota Fiscal</title>
+
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/pedidos_lista.css">
+</head>
+
+<body>
+
+<header class="topbar">
+    <a href="notas_lista.html">
+        <button class="btn-voltar">⬅ Voltar</button>
+    </a>
+    <h1 class="topbar-title">Detalhes da Nota Fiscal</h1>
+</header>
+
+<div class="container">
+
+    <section class="card">
+        <h2 class="card-title">Dados da Nota Fiscal</h2>
+
+        <p><b>Número:</b> <span id="nf_numero"></span></p>
+        <p><b>Cliente:</b> <span id="nf_cliente"></span></p>
+        <p><b>Data:</b> <span id="nf_data"></span></p>
+    </section>
+
+    <section class="card">
+        <h2 class="card-title">Itens da NF</h2>
+
+        <table class="tabela">
+            <thead>
+                <tr>
+                    <th>Produto</th>
+                    <th>Quantidade</th>
+                </tr>
+            </thead>
+            <tbody id="listaItensNF">
+                <tr>
+                    <td colspan="2" style="text-align:center;color:#94a3b8;">Carregando itens...</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="card">
+        <h2 class="card-title">Baixas dos Pedidos</h2>
+
+        <table class="tabela">
+            <thead>
+                <tr>
+                    <th>Pedido</th>
+                    <th>Produto</th>
+                    <th>Qtd Baixada</th>
+                    <th>Data</th>
+                </tr>
+            </thead>
+            <tbody id="listaBaixasNF">
+                <tr>
+                    <td colspan="4" style="text-align:center;color:#94a3b8;">Carregando baixas...</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+</div>
+
+<script type="module" src="js/notas.js"></script>
+
+</body>
+</html>

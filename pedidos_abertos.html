@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Pedidos com Saldo em Aberto</title>
+
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/pedidos_lista.css">
+
+    <style>
+        /* =========================
+           CONTROLE DE TÍTULOS
+           ========================= */
+        .titulo-relatorio {
+            color: inherit;
+        }
+
+        /* =========================
+           ELEMENTOS SOMENTE DO PRINT
+           ========================= */
+        .logo-print,
+        .info-print,
+        .cabecalho-print {
+            display: none;
+        }
+
+        /* =========================
+           MODO PRINT (CONTROLADO)
+           ========================= */
+        body.modo-print {
+            background: #fff;
+            color: #000;
+            font-family: Arial, sans-serif;
+        }
+
+        body.modo-print header,
+        body.modo-print .card:first-child,
+        body.modo-print button {
+            display: none !important;
+        }
+
+        body.modo-print .container {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        body.modo-print .card {
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+        }
+
+        /* Mostrar somente no print */
+        body.modo-print .cabecalho-print {
+            display: flex !important;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        body.modo-print .logo-print {
+            display: block !important;
+            height: 50px;
+        }
+
+        body.modo-print .info-print {
+            display: block !important;
+            font-size: 12px;
+            color: #000;
+        }
+
+        body.modo-print .titulo-relatorio {
+            color: #000 !important;
+            font-size: 16px;
+            margin: 10px 0 15px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        body.modo-print table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            font-size: 11px;
+        }
+
+        body.modo-print th,
+        body.modo-print td {
+            border: 1px solid #000;
+            padding: 4px;
+            text-align: center;
+            color: #000 !important;
+        }
+
+        body.modo-print th {
+            font-weight: bold;
+            background: #f2f2f2;
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="topbar">
+    <a href="dashboard.html">
+        <button class="btn-voltar">⬅ Voltar</button>
+    </a>
+
+    <h1 class="topbar-title titulo-relatorio">
+        Pedidos com Saldo em Aberto
+    </h1>
+</header>
+
+<div class="container">
+
+    <!-- FILTROS -->
+    <section class="card">
+        <h2 class="card-title">Filtros</h2>
+
+        <div class="form-grid">
+
+            <div class="form-group">
+                <label>Cliente:</label>
+                <select id="clienteFiltro">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Produto:</label>
+                <select id="produtoFiltro">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Entrega até:</label>
+                <input type="date" id="dataFiltro">
+            </div>
+
+            <div class="form-group" style="display:flex; gap:10px; align-items:flex-end;">
+                <button id="btnFiltrar" class="btn-primario">Filtrar</button>
+                <button id="btnImprimir" class="btn-primario" style="background:#22c55e;color:#000;">
+                    Imprimir
+                </button>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- RELATÓRIO -->
+    <section class="card">
+
+        <!-- CABEÇALHO DO PRINT (NÃO APARECE NA TELA) -->
+        <div class="cabecalho-print">
+            <img src="/img/logo-mataousi2.png" class="logo-print" alt="Matão Usinagem">
+
+            <div class="info-print">
+                <strong>Relatório:</strong> Pedidos com Saldo em Aberto<br>
+                <strong>Impresso em:</strong> <span id="dataHoraImpressao"></span><br>
+                <strong>Cliente:</strong> <span id="relCliente">...</span><br>
+                <strong>Produto:</strong> <span id="relProduto">...</span>
+            </div>
+        </div>
+
+        <h2 class="titulo-relatorio">
+            Pedidos com Saldo em Aberto
+        </h2>
+
+        <table class="tabela">
+            <thead>
+                <tr>
+                    <th>Pedido</th>
+                    <th>Produto</th>
+                    <th>Entrega</th>
+                    <th>Total</th>
+                    <th>Baixado</th>
+                    <th>Em Aberto</th>
+                </tr>
+            </thead>
+
+            <tbody id="listaPedidos">
+                <tr>
+                    <td colspan="6">Carregando...</td>
+                </tr>
+            </tbody>
+        </table>
+
+    </section>
+
+</div>
+
+<script type="module" src="js/pedidos_abertos.js"></script>
+
+<script>
+    const agora = new Date();
+    document.getElementById("dataHoraImpressao").innerText =
+        agora.toLocaleDateString("pt-BR") + " " +
+        agora.toLocaleTimeString("pt-BR", { hour: '2-digit', minute: '2-digit' });
+
+    document.getElementById("btnImprimir").addEventListener("click", () => {
+        document.body.classList.add("modo-print");
+
+        setTimeout(() => {
+            window.print();
+            document.body.classList.remove("modo-print");
+        }, 100);
+    });
+</script>
+
+</body>
+</html>

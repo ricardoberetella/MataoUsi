@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Nota Fiscal</title>
+
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/pedidos_lista.css">
+</head>
+
+<body>
+
+<header class="topbar">
+    <a href="notas_lista.html">
+        <button class="btn-voltar">⬅ Voltar</button>
+    </a>
+
+    <h1 class="topbar-title">Editar Nota Fiscal</h1>
+</header>
+
+<div class="container">
+
+    <!-- =======================
+         DADOS DA NOTA
+    ========================== -->
+    <section class="card">
+        <h2 class="card-title">Dados da Nota Fiscal</h2>
+
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="clienteSelect">Cliente</label>
+                <select id="clienteSelect">
+                    <option value="">Carregando...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="nfNumero">Número da NF</label>
+                <input type="text" id="nfNumero">
+            </div>
+
+            <div class="form-group">
+                <label for="nfData">Data da NF</label>
+                <input type="date" id="nfData">
+            </div>
+        </div>
+    </section>
+
+    <!-- =======================
+         ITENS SOMENTE LEITURA
+    ========================== -->
+    <section class="card">
+        <h2 class="card-title">Itens da Nota Fiscal</h2>
+
+        <table class="tabela">
+            <thead>
+                <tr>
+                    <th>Produto</th>
+                    <th>Quantidade NF</th>
+                </tr>
+            </thead>
+            <tbody id="listaItens">
+                <tr>
+                    <td colspan="2" style="text-align:center;">Carregando...</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p style="color:#bbb; margin-top:10px;">
+            * Os itens da NF não podem ser alterados para não afetar o controle de baixas.
+        </p>
+    </section>
+
+    <!-- =======================
+         BOTÃO SALVAR
+    ========================== -->
+    <section class="card" style="text-align:right;">
+        <button id="btnSalvar" class="btn-primario">Salvar Alterações</button>
+    </section>
+
+</div>
+
+<script type="module" src="js/notas_editar.js"></script>
+
+</body>
+</html>
