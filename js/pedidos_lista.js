@@ -18,20 +18,10 @@ async function carregarUsuario() {
 }
 
 // ===============================================
-// PERMISSÕES (OCULTA A COLUNA COMPLETA SE VIEWER)
+// PERMISSÕES (VIEWER: SEM NOVO PEDIDO)
 // ===============================================
 function aplicarPermissoesTabela() {
     if (role !== "admin") {
-
-        // Oculta coluna do cabeçalho
-        const col = document.querySelector("#colAcoes");
-        if (col) col.style.display = "none";
-
-        // Oculta todas as células da coluna "Ações"
-        document.querySelectorAll(".acoes").forEach(td => {
-            td.style.display = "none";
-        });
-
         // Oculta botão "Novo Pedido"
         const novoPedidoBtn = document.getElementById("btnNovoPedido");
         if (novoPedidoBtn) novoPedidoBtn.style.display = "none";
@@ -42,13 +32,13 @@ function aplicarPermissoesTabela() {
 // CARREGAR PEDIDOS (ORDENAR E AGRUPAR POR CLIENTE)
 // ===============================================
 async function carregarPedidos() {
-
     const user = await carregarUsuario();
     if (!user) return;
 
     const tbody = document.getElementById("listaPedidos");
     tbody.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
 
+    // Ordena pela data mais recente primeiro
     const { data, error } = await supabase
         .from("pedidos")
         .select("id, numero_pedido, data_pedido, total, clientes(razao_social)")
@@ -60,7 +50,7 @@ async function carregarPedidos() {
         return;
     }
 
-    // 🔥 Ordenar clientes alfabeticamente
+    // 🔥 Ordenar clientes alfabeticamente no front-end
     data.sort((a, b) => {
         const cliA = a.clientes?.razao_social || "";
         const cliB = b.clientes?.razao_social || "";
@@ -68,10 +58,10 @@ async function carregarPedidos() {
     });
 
     tbody.innerHTML = "";
+
     let ultimoCliente = "";
 
     data.forEach((p) => {
-
         const clienteNome = p.clientes?.razao_social || "Cliente Não Informado";
 
         // ============================================================
@@ -82,7 +72,7 @@ async function carregarPedidos() {
                 const separador = document.createElement("tr");
                 separador.innerHTML = `
                     <td colspan="5"
-                        style="border-bottom:2px solid rgba(56,189,248,0.25);padding:4px 0;">
+                        style="border-bottom: 2px solid rgba(56,189,248,0.25); padding: 4px 0;">
                     </td>
                 `;
                 tbody.appendChild(separador);
@@ -95,19 +85,18 @@ async function carregarPedidos() {
         // ============================================================
         const tr = document.createElement("tr");
 
-        // 🔹 NOVO: viewer pode clicar para visualizar
-        if (role !== "admin") {
-            tr.style.cursor = "pointer";
-            tr.title = "Clique para visualizar / duplo clique para imprimir";
-
-            tr.addEventListener("click", () => {
-                window.location.href = `pedidos_editar.html?id=${p.id}`;
-            });
-
-            tr.addEventListener("dblclick", () => {
-                window.location.href = `pedidos_editar.html?id=${p.id}&imprimir=1`;
-            });
-        }
+        // AÇÕES POR ROLE:
+        // - admin: Editar / Excluir
+        // - viewer: Visualizar / Imprimir
+        const acoesHtml = (role === "admin")
+            ? `
+                <button class="btn-azul" onclick="editarPedido(${p.id})">Editar</button>
+                <button class="btn-vermelho" onclick="excluirPedido(${p.id})">Excluir</button>
+              `
+            : `
+                <button class="btn-azul" onclick="visualizarPedido(${p.id})">Visualizar</button>
+                <button class="btn-verde" onclick="imprimirPedido(${p.id})">Imprimir</button>
+              `;
 
         tr.innerHTML = `
             <td>${p.numero_pedido}</td>
@@ -116,8 +105,7 @@ async function carregarPedidos() {
             <td>${Number(p.total).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
 
             <td class="acoes">
-                <button class="btn-azul" onclick="editarPedido(${p.id})">Editar</button>
-                <button class="btn-vermelho" onclick="excluirPedido(${p.id})">Excluir</button>
+                ${acoesHtml}
             </td>
         `;
 
@@ -126,6 +114,20 @@ async function carregarPedidos() {
 
     aplicarPermissoesTabela();
 }
+
+// ===============================================
+// VIEWER: VISUALIZAR PEDIDO
+// ===============================================
+window.visualizarPedido = (id) => {
+    window.location.href = `pedidos_editar.html?id=${id}`;
+};
+
+// ===============================================
+// VIEWER: IMPRIMIR PEDIDO
+// ===============================================
+window.imprimirPedido = (id) => {
+    window.location.href = `pedidos_editar.html?id=${id}&imprimir=1`;
+};
 
 // ===============================================
 // EDITAR PEDIDO (SÓ ADMIN)
