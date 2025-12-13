@@ -18,27 +18,42 @@ async function carregarUsuario() {
 }
 
 // ===============================================
-// PERMISSÕES (VIEWER: SEM NOVO PEDIDO)
+// PERMISSÕES DE TELA (VISUALIZADOR)
 // ===============================================
-function aplicarPermissoesTabela() {
+function aplicarPermissoesTela() {
+
     if (role !== "admin") {
-        // Oculta botão "Novo Pedido"
-        const novoPedidoBtn = document.getElementById("btnNovoPedido");
-        if (novoPedidoBtn) novoPedidoBtn.style.display = "none";
+
+        // ❌ Oculta botão "Novo Pedido"
+        const btnNovo = document.getElementById("btnNovoPedido");
+        if (btnNovo) btnNovo.style.display = "none";
+
+        // ❌ Oculta coluna Ações (cabeçalho)
+        const colAcoes = document.getElementById("colAcoes");
+        if (colAcoes) colAcoes.style.display = "none";
+
+        // ❌ Oculta todas as ações por linha
+        document.querySelectorAll(".acoes").forEach(td => {
+            td.style.display = "none";
+        });
+
+        // ✅ Botão Filtros continua visível
+        const btnFiltros = document.getElementById("btnFiltros");
+        if (btnFiltros) btnFiltros.style.display = "inline-block";
     }
 }
 
 // ===============================================
-// CARREGAR PEDIDOS (ORDENAR E AGRUPAR POR CLIENTE)
+// CARREGAR PEDIDOS
 // ===============================================
 async function carregarPedidos() {
+
     const user = await carregarUsuario();
     if (!user) return;
 
     const tbody = document.getElementById("listaPedidos");
     tbody.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
 
-    // Ordena pela data mais recente primeiro
     const { data, error } = await supabase
         .from("pedidos")
         .select("id, numero_pedido, data_pedido, total, clientes(razao_social)")
@@ -50,101 +65,61 @@ async function carregarPedidos() {
         return;
     }
 
-    // 🔥 Ordenar clientes alfabeticamente no front-end
+    // Ordenar clientes alfabeticamente
     data.sort((a, b) => {
-        const cliA = a.clientes?.razao_social || "";
-        const cliB = b.clientes?.razao_social || "";
-        return cliA.localeCompare(cliB);
+        const aCli = a.clientes?.razao_social || "";
+        const bCli = b.clientes?.razao_social || "";
+        return aCli.localeCompare(bCli);
     });
 
     tbody.innerHTML = "";
-
     let ultimoCliente = "";
 
-    data.forEach((p) => {
+    data.forEach(p => {
+
         const clienteNome = p.clientes?.razao_social || "Cliente Não Informado";
 
-        // ============================================================
-        // SEPARADOR QUANDO MUDA DE CLIENTE
-        // ============================================================
+        // Separador por cliente
         if (clienteNome !== ultimoCliente) {
             if (ultimoCliente !== "") {
-                const separador = document.createElement("tr");
-                separador.innerHTML = `
+                const sep = document.createElement("tr");
+                sep.innerHTML = `
                     <td colspan="5"
-                        style="border-bottom: 2px solid rgba(56,189,248,0.25); padding: 4px 0;">
-                    </td>
-                `;
-                tbody.appendChild(separador);
+                        style="border-bottom:2px solid rgba(56,189,248,0.25);padding:4px 0;">
+                    </td>`;
+                tbody.appendChild(sep);
             }
             ultimoCliente = clienteNome;
         }
 
-        // ============================================================
-        // LINHA DO PEDIDO
-        // ============================================================
         const tr = document.createElement("tr");
-
-        // AÇÕES POR ROLE:
-        // - admin: Editar / Excluir
-        // - viewer: Visualizar / Imprimir
-        const acoesHtml = (role === "admin")
-            ? `
-                <button class="btn-azul" onclick="editarPedido(${p.id})">Editar</button>
-                <button class="btn-vermelho" onclick="excluirPedido(${p.id})">Excluir</button>
-              `
-            : `
-                <button class="btn-azul" onclick="visualizarPedido(${p.id})">Visualizar</button>
-                <button class="btn-verde" onclick="imprimirPedido(${p.id})">Imprimir</button>
-              `;
-
         tr.innerHTML = `
             <td>${p.numero_pedido}</td>
             <td>${clienteNome}</td>
             <td>${new Date(p.data_pedido).toLocaleDateString("pt-BR")}</td>
             <td>${Number(p.total).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
-
             <td class="acoes">
-                ${acoesHtml}
+                <button class="btn-azul" onclick="editarPedido(${p.id})">Editar</button>
+                <button class="btn-vermelho" onclick="excluirPedido(${p.id})">Excluir</button>
             </td>
         `;
 
         tbody.appendChild(tr);
     });
 
-    aplicarPermissoesTabela();
+    aplicarPermissoesTela();
 }
 
 // ===============================================
-// VIEWER: VISUALIZAR PEDIDO
-// ===============================================
-window.visualizarPedido = (id) => {
-    window.location.href = `pedidos_editar.html?id=${id}`;
-};
-
-// ===============================================
-// VIEWER: IMPRIMIR PEDIDO
-// ===============================================
-window.imprimirPedido = (id) => {
-    window.location.href = `pedidos_editar.html?id=${id}&imprimir=1`;
-};
-
-// ===============================================
-// EDITAR PEDIDO (SÓ ADMIN)
+// EDITAR / EXCLUIR (PROTEGIDOS)
 // ===============================================
 window.editarPedido = (id) => {
     if (role !== "admin") return;
     window.location.href = `pedidos_editar.html?id=${id}`;
 };
 
-// ===============================================
-// EXCLUIR PEDIDO (SÓ ADMIN)
-// ===============================================
 window.excluirPedido = async (id) => {
-    if (role !== "admin") {
-        alert("Ação não permitida!");
-        return;
-    }
+    if (role !== "admin") return;
 
     if (!confirm("Confirmar exclusão?")) return;
 
