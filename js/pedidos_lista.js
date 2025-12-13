@@ -126,7 +126,7 @@ async function carregarPedidos() {
 // VISUALIZAR PEDIDO (ADMIN E VISUALIZADOR)
 // ===============================================
 window.visualizarPedido = (id) => {
-    window.location.href = `pedidos_visualizar.html?id=${id}`;
+    window.location.href = `pedidos_detalhes.html?id=${id}`;
 };
 
 // ===============================================
