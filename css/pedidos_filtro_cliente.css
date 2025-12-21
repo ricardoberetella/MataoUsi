@@ -1,0 +1,225 @@
+/* ============================== */
+/*           LAYOUT WEB           */
+/* ============================== */
+
+.container {
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+.card {
+    background: #0b132b;
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 0 12px rgba(0, 255, 255, 0.1);
+}
+
+.card h2 {
+    color: #38bdf8;
+    margin-bottom: 20px;
+}
+
+.campo-select {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    background: #08101f;
+    color: #fff;
+    border: 1px solid rgba(0, 255, 255, 0.25);
+    margin-bottom: 20px;
+}
+
+.botoes-acoes {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.btn-filtrar,
+.btn-primario {
+    background: #38bdf8;
+    padding: 12px 22px;
+    border-radius: 8px;
+    border: none;
+    color: #000;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-imprimir,
+.btn-sucesso {
+    background: #22c55e;
+    padding: 12px 22px;
+    border-radius: 8px;
+    border: none;
+    color: #000;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* TABELA WEB */
+#tabelaResultados {
+    width: 100%;
+    border-collapse: collapse;
+    background: #0d1b2a;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#tabelaResultados thead {
+    background: #1b263b;
+}
+
+#tabelaResultados th {
+    padding: 12px;
+    color: #38bdf8;
+}
+
+#tabelaResultados td {
+    padding: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.total-label {
+    text-align: right;
+    padding: 12px;
+    font-weight: bold;
+}
+
+.total-valor {
+    padding: 12px;
+    font-weight: bold;
+    color: #38bdf8;
+}
+
+/* ====== LINHA ATRASADA — NOVO ====== */
+.linha-atrasada {
+    background-color: #8b000033 !important;
+    color: #ff4d4d !important;
+    font-weight: bold !important;
+}
+
+/* Ocultos no modo web */
+.print-header,
+.print-info {
+    display: none;
+}
+
+/* ================================================= */
+/*                 LAYOUT DE IMPRESSÃO               */
+/* ================================================= */
+
+@media print {
+
+    * {
+        background: #fff !important;
+        color: #000 !important;
+        box-shadow: none !important;
+    }
+
+    body, html {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Esconder itens da tela */
+    .topbar,
+    .btn-voltar,
+    .botoes-acoes,
+    .campo-select,
+    .card h2 {
+        display: none !important;
+    }
+
+    .card {
+        background: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .container {
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+    }
+
+    /* ===== CABEÇALHO IGUAL AO FILTER PRODUTO ===== */
+    .print-header {
+        display: flex !important;
+        align-items: center;
+        gap: 12px;
+        margin: 10px;
+    }
+
+    .logo-print {
+        width: 60px !important;
+    }
+
+    .titulo-print {
+        font-size: 22px !important;
+        font-weight: bold;
+    }
+
+    .print-info {
+        display: block !important;
+        margin-left: 10px;
+        margin-bottom: 10px;
+        font-size: 14px !important;
+    }
+
+    /* ===== TABELA IMPRESSÃO ===== */
+
+    #tabelaResultados,
+    #tabelaResultados thead,
+    #tabelaResultados tbody,
+    #tabelaResultados tfoot,
+    #tabelaResultados tr,
+    #tabelaResultados th,
+    #tabelaResultados td {
+        border-radius: 0 !important;
+        background: #fff !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+    }
+
+    #tabelaResultados {
+        width: 95% !important;
+        margin-left: 10px !important;
+        border-collapse: collapse !important;
+        border: 1px solid #000 !important;
+    }
+
+    #tabelaResultados th {
+        background: #f5f5f5 !important;
+        border: 1px solid #000 !important;
+        padding: 6px !important;
+        font-size: 14px !important;
+        font-weight: bold !important;
+    }
+
+    #tabelaResultados td {
+        border: 1px solid #000 !important;
+        padding: 6px !important;
+        font-size: 14px !important;
+    }
+
+    tfoot td {
+        background: #fff !important;
+        border: 1px solid #000 !important;
+        padding: 6px !important;
+        font-weight: bold !important;
+    }
+}
+/* CABEÇALHO DA TABELA */
+body.modo-pdf thead th {
+    background: #f2f2f2 !important;
+    font-weight: bold !important;
+}
+
+/* LINHAS COM DATA VENCIDA (IGUAL PRODUTO) */
+body.modo-pdf tr.vencido td {
+    font-weight: bold !important;
+}
