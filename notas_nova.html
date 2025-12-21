@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lançar Nota Fiscal - MataoUsi</title>
+
+    <!-- CSS já existentes -->
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/global.css">
+</head>
+
+<body>
+
+<header class="topbar">
+    <a href="dashboard.html">
+        <button class="btn-voltar">⬅ Voltar ao Menu</button>
+    </a>
+
+    <h1 class="topbar-title">Lançar Nota Fiscal</h1>
+</header>
+
+<div class="container">
+
+    <!-- ============================ -->
+    <!--  DADOS GERAIS DA NF -->
+    <!-- ============================ -->
+    <section class="card">
+        <h2 class="card-title">Dados da Nota Fiscal</h2>
+
+        <div class="form-grid">
+
+            <div class="form-group">
+                <label for="clienteSelect">Cliente</label>
+                <select id="clienteSelect">
+                    <option value="">Selecione o cliente</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="nfNumero">Número da NF</label>
+                <input type="text" id="nfNumero" placeholder="Ex: 5521">
+            </div>
+
+            <div class="form-group">
+                <label for="nfData">Data da NF</label>
+                <input type="date" id="nfData">
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ============================ -->
+    <!--       ITENS DA NF           -->
+    <!-- ============================ -->
+    <section class="card">
+        <h2 class="card-title">Itens da Nota Fiscal</h2>
+
+        <!-- Linha para adicionar item -->
+        <div class="form-grid">
+
+            <div class="form-group">
+                <label for="produtoSelect">Produto</label>
+                <select id="produtoSelect">
+                    <option value="">Selecione o produto</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="quantidadeNF">Quantidade</label>
+                <input type="number" id="quantidadeNF" min="0" step="1" placeholder="Ex: 100">
+            </div>
+
+            <div class="form-group" style="display: flex; align-items: flex-end;">
+                <button id="btnAdicionarItem" class="btn-secundario" style="width: 100%;">Adicionar Item</button>
+            </div>
+
+        </div>
+
+        <!-- Tabela de itens adicionados -->
+        <div class="tabela-wrapper" style="margin-top: 16px; overflow-x: auto;">
+            <table class="tabela-padrao">
+                <thead>
+                    <tr>
+                        <th style="min-width: 220px;">Produto</th>
+                        <th style="min-width: 120px;">Quantidade</th>
+                        <th style="min-width: 80px;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyItensNF">
+                    <!-- Linhas via JS -->
+                </tbody>
+            </table>
+        </div>
+
+    </section>
+
+    <!-- ============================ -->
+    <!--       BOTÃO SALVAR NF       -->
+    <!-- ============================ -->
+    <section class="card" style="text-align: right;">
+        <button id="btnSalvarNF" class="btn-primario">
+            Salvar NF e Baixar Pedidos
+        </button>
+    </section>
+
+</div>
+
+<!-- IMPORTAÇÃO DO JS -->
+<script type="module" src="js/auth.js"></script>
+<script type="module" src="js/notas_nova.js"></script>
+
+</body>
+</html>

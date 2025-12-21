@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes da Nota Fiscal</title>
+
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/pedidos_lista.css">
+
+    <!-- ===============================
+         IMPRESSÃO LIMPA (NÃO AFETA A TELA)
+    =============================== -->
+    <style>
+        /* NÃO MOSTRA NA TELA */
+        .cabecalho-print {
+            display: none;
+        }
+
+        @media print {
+
+            /* ===== CONTROLE REAL DA MARGEM DO PAPEL ===== */
+            @page {
+                size: A4 portrait;
+                margin-top: 40mm;
+                margin-bottom: 10mm;
+                margin-left: 14mm;
+                margin-right: 14mm;
+            }
+
+            body {
+                background: #fff !important;
+                color: #000 !important;
+                font-family: Arial, sans-serif;
+            }
+
+            .topbar,
+            .btn-voltar,
+            button {
+                display: none !important;
+            }
+
+            .container {
+                background: #fff !important;
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* ===== CABEÇALHO COM LOGO CENTRALIZADO ===== */
+            .cabecalho-print {
+                display: flex !important;
+                justify-content: center;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 8px;
+                width: 100%;
+            }
+
+            .cabecalho-print img {
+                height: 55px;
+            }
+
+            .cabecalho-print span {
+                font-size: 20px;
+                font-weight: bold;
+                color: #000;
+                text-transform: uppercase;
+            }
+
+            .card {
+                background: #fff !important;
+                border: 1px solid #000 !important;
+                box-shadow: none !important;
+                margin-bottom: 6px !important;
+                padding: 6px !important;
+            }
+
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+
+            th, td {
+                border: 0.5px solid #000 !important;
+                background: #fff !important;
+                color: #000 !important;
+                padding: 6px !important;
+            }
+
+            th {
+                background: #eaeaea !important;
+                font-weight: bold !important;
+            }
+
+            * {
+                box-shadow: none !important;
+                background-image: none !important;
+            }
+
+            /* ===== AJUSTE DE ESCALA ===== */
+            body.modo-pdf {
+                background: #fff !important;
+                color: #000 !important;
+                font-family: Arial, sans-serif;
+                zoom: 1.25;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="topbar">
+    <a href="notas_lista.html">
+        <button class="btn-voltar">⬅ Voltar</button>
+    </a>
+    <h1 class="topbar-title">Detalhes da Nota Fiscal</h1>
+
+    <!-- botão seguro -->
+    <button class="btn-verde" onclick="window.print()">📄 Gerar PDF</button>
+</header>
+
+<div class="container">
+
+    <!-- CABEÇALHO DE IMPRESSÃO -->
+    <div class="cabecalho-print">
+        <img src="img/logo-mataousi2.png" alt="Matão Usinagem">
+        <span>Matão Usinagem</span>
+    </div>
+
+    <section class="card">
+        <h2 class="card-title">Informações da Nota Fiscal</h2>
+
+        <p><strong>Número da NF:</strong> <span id="nfNumero"></span></p>
+        <p><strong>Data:</strong> <span id="nfData"></span></p>
+        <p><strong>Cliente:</strong> <span id="nfCliente"></span></p>
+    </section>
+
+    <section class="card">
+        <h2 class="card-title">Itens da Nota Fiscal</h2>
+
+        <table class="tabela">
+            <thead>
+                <tr>
+                    <th>Produto</th>
+                    <th>Quantidade NF</th>
+                </tr>
+            </thead>
+            <tbody id="listaItens">
+                <tr>
+                    <td colspan="2" style="text-align:center;">Carregando itens...</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="card">
+        <h2 class="card-title">Baixas Realizadas nos Pedidos</h2>
+
+        <table class="tabela">
+            <thead>
+                <tr>
+                    <th>Pedido</th>
+                    <th>Produto</th>
+                    <th>Qtd Baixada</th>
+                    <th>Situação</th>
+                </tr>
+            </thead>
+            <tbody id="listaBaixas">
+                <tr>
+                    <td colspan="4" style="text-align:center;">Carregando baixas...</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+</div>
+
+<!-- JS ORIGINAL -->
+<script type="module" src="js/notas_ver.js"></script>
+
+</body>
+</html>
