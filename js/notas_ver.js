@@ -20,6 +20,14 @@ function formatarDataBR(dataISO) {
     return new Date(dataISO).toLocaleDateString("pt-BR");
 }
 
+function formatarMoedaBR(valor) {
+    if (valor === null || valor === undefined) return "—";
+    return Number(valor).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+    });
+}
+
 // ===============================================
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
@@ -103,15 +111,13 @@ async function carregarItensNF() {
         tbody.innerHTML += `
             <tr>
                 <td>${nomeProduto(i.produto_id)}</td>
-                <td>
-                    <div class="cell-center">${i.quantidade}</div>
-                </td>
+                <td><div class="cell-center">${i.quantidade}</div></td>
             </tr>`;
     });
 }
 
 // ===============================================
-// BAIXAS — CENTRALIZAÇÃO REAL
+// BAIXAS
 // ===============================================
 async function carregarBaixas() {
     const tbody = document.getElementById("listaBaixas");
@@ -152,22 +158,16 @@ async function carregarBaixas() {
     Object.values(mapa).forEach(reg => {
         tbody.innerHTML += `
             <tr>
-                <td>
-                    <div class="cell-center">${reg.nf}</div>
-                </td>
+                <td><div class="cell-center">${reg.nf}</div></td>
                 <td>${nomeProduto(reg.produto_id)}</td>
-                <td>
-                    <div class="cell-center">${reg.baixado}</div>
-                </td>
-                <td>
-                    <div class="cell-center">Concluído</div>
-                </td>
+                <td><div class="cell-center">${reg.baixado}</div></td>
+                <td><div class="cell-center">Concluído</div></td>
             </tr>`;
     });
 }
 
 // ===============================================
-// BOLETOS (INALTERADO)
+// BOLETOS (FORMATO BR)
 // ===============================================
 async function carregarBoletos() {
     const tbody = document.getElementById("listaBoletos");
@@ -189,7 +189,7 @@ async function carregarBoletos() {
             <tr>
                 <td><div class="cell-center">${b.tipo_nf === "NF" ? "Com NF" : "Sem NF"}</div></td>
                 <td>${b.origem || "—"}</td>
-                <td><div class="cell-center">R$ ${Number(b.valor).toFixed(2)}</div></td>
+                <td><div class="cell-center">${formatarMoedaBR(b.valor)}</div></td>
                 <td><div class="cell-center">${formatarDataBR(b.data_vencimento)}</div></td>
                 <td>
                     <div class="cell-center">
