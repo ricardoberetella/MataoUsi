@@ -6,6 +6,13 @@
 
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/pedidos_lista.css">
+
+    <style>
+        /* AJUSTE FINO APENAS DA TABELA DESTA TELA */
+        .tabela-deslocada {
+            padding-left: 24px; /* ajuste visual */
+        }
+    </style>
 </head>
 
 <body>
@@ -47,18 +54,21 @@
     <section class="card">
         <h2 class="card-title">Lançamentos</h2>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>NF</th>
-                    <th>Valor</th>
-                    <th>Vencimento</th>
-                    <th>Status</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody id="listaReceber"></tbody>
-        </table>
+        <!-- 👇 wrapper somente para deslocamento -->
+        <div class="tabela-deslocada">
+            <table>
+                <thead>
+                    <tr>
+                        <th>NF</th>
+                        <th>Valor</th>
+                        <th>Vencimento</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="listaReceber"></tbody>
+            </table>
+        </div>
 
         <div style="margin-top:10px; font-weight:bold">
             Total filtrado: <span id="totalReceber">R$ 0,00</span>
