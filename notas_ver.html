@@ -7,6 +7,49 @@
 
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/pedidos_lista.css">
+
+    <style>
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+        }
+
+        .modal {
+            background: #020617;
+            padding: 20px;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 420px;
+            border: 1px solid rgba(56,189,248,.4);
+        }
+
+        .modal h2 {
+            margin-top: 0;
+            color: #38bdf8;
+        }
+
+        .modal label {
+            display: block;
+            margin-top: 10px;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 8px;
+        }
+
+        .acoes-modal {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+        }
+    </style>
 </head>
 
 <body>
@@ -16,14 +59,11 @@
         <button class="btn-voltar">⬅ Voltar</button>
     </a>
     <h1 class="topbar-title">Detalhes da Nota Fiscal</h1>
-    <button class="btn-verde" onclick="window.print()">📄 Gerar PDF</button>
 </header>
 
 <div class="container">
 
-    <!-- ========================= -->
-    <!-- DADOS DA NOTA FISCAL -->
-    <!-- ========================= -->
+    <!-- DADOS NF -->
     <section class="card">
         <h2 class="card-title">Informações da Nota Fiscal</h2>
         <p><strong>Número da NF:</strong> <span id="nfNumero"></span></p>
@@ -31,9 +71,7 @@
         <p><strong>Cliente:</strong> <span id="nfCliente"></span></p>
     </section>
 
-    <!-- ========================= -->
-    <!-- ITENS DA NOTA -->
-    <!-- ========================= -->
+    <!-- ITENS NF -->
     <section class="card">
         <h2 class="card-title">Itens da Nota Fiscal</h2>
         <table class="tabela">
@@ -43,17 +81,11 @@
                     <th>Quantidade NF</th>
                 </tr>
             </thead>
-            <tbody id="listaItens">
-                <tr>
-                    <td colspan="2" style="text-align:center;">Carregando itens...</td>
-                </tr>
-            </tbody>
+            <tbody id="listaItens"></tbody>
         </table>
     </section>
 
-    <!-- ========================= -->
-    <!-- BAIXAS DOS PEDIDOS -->
-    <!-- ========================= -->
+    <!-- BAIXAS -->
     <section class="card">
         <h2 class="card-title">Baixas Realizadas nos Pedidos</h2>
         <table class="tabela">
@@ -65,21 +97,18 @@
                     <th>Situação</th>
                 </tr>
             </thead>
-            <tbody id="listaBaixas">
-                <tr>
-                    <td colspan="4" style="text-align:center;">Carregando baixas...</td>
-                </tr>
-            </tbody>
+            <tbody id="listaBaixas"></tbody>
         </table>
     </section>
 
-    <!-- ========================= -->
-    <!-- BOLETOS (NOVA SEÇÃO) -->
-    <!-- ========================= -->
+    <!-- BOLETOS -->
     <section class="card">
-        <h2 class="card-title">Boletos da Nota Fiscal</h2>
+        <h2 class="card-title">Boletos</h2>
 
-        <table class="tabela">
+        <!-- ✅ BOTÃO QUE TINHA SUMIDO -->
+        <button class="btn-verde" id="btnNovoBoleto">➕ Incluir Boleto</button>
+
+        <table class="tabela" style="margin-top:10px;">
             <thead>
                 <tr>
                     <th>Origem</th>
@@ -89,14 +118,30 @@
                     <th>Ações</th>
                 </tr>
             </thead>
-            <tbody id="listaBoletos">
-                <tr>
-                    <td colspan="5" style="text-align:center;">Carregando boletos...</td>
-                </tr>
-            </tbody>
+            <tbody id="listaBoletos"></tbody>
         </table>
     </section>
+</div>
 
+<!-- MODAL INCLUIR / EDITAR -->
+<div class="modal-overlay" id="modalBoleto">
+    <div class="modal">
+        <h2>Boleto</h2>
+
+        <label>Origem</label>
+        <input id="boletoOrigem">
+
+        <label>Valor</label>
+        <input id="boletoValor">
+
+        <label>Vencimento</label>
+        <input type="date" id="boletoVencimento">
+
+        <div class="acoes-modal">
+            <button class="btn-voltar" id="btnCancelarBoleto">Cancelar</button>
+            <button class="btn-verde" id="btnSalvarBoleto">Salvar</button>
+        </div>
+    </div>
 </div>
 
 <script type="module" src="js/notas_ver.js"></script>
