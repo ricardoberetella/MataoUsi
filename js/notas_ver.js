@@ -21,18 +21,15 @@ function formatarMoedaBR(valor) {
     });
 }
 
-// 15998,00 -> 15998.00
+// "15.998,00" | "15998,00" | "15998.00" -> 15998.00
 function parseValor(valorStr) {
     if (!valorStr) return null;
-    return Number(valorStr.replace(/\./g, "").replace(",", "."));
-}
-
-// 09/01/2026 -> 2026-01-09
-function parseDataISO(dataStr) {
-    if (!dataStr) return null;
-    if (dataStr.includes("-")) return dataStr; // já ISO
-    const [d, m, a] = dataStr.split("/");
-    return `${a}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+    const limpo = valorStr
+        .replace(/\s/g, "")
+        .replace(/\./g, "")
+        .replace(",", ".");
+    const num = Number(limpo);
+    return Number.isFinite(num) ? num : null;
 }
 
 // ===============================================
@@ -185,10 +182,10 @@ async function carregarBoletos() {
 // ===============================================
 async function salvarBoleto() {
     const valor = parseValor(document.getElementById("boletoValor").value);
-    const dataISO = parseDataISO(document.getElementById("boletoVencimento").value);
+    const dataISO = document.getElementById("boletoVencimento").value;
     const vinculo = document.querySelector('input[name="vinculoBoleto"]:checked').value;
 
-    if (!valor || isNaN(valor)) {
+    if (!valor) {
         alert("Valor inválido.");
         return;
     }
@@ -200,8 +197,8 @@ async function salvarBoleto() {
 
     const payload = {
         nota_fiscal_id: vinculo === "com" ? nfId : null,
-        origem: document.getElementById("boletoOrigem").value,
-        tipo_nf: vinculo === "com" ? "NF" : document.getElementById("boletoTipoNF").value,
+        origem: document.getElementById("boletoOrigem").value || null,
+        tipo_nf: vinculo === "com" ? "NF" : "SEM_NF",
         numero_nf_referencia:
             vinculo === "com"
                 ? null
@@ -215,7 +212,7 @@ async function salvarBoleto() {
         : await supabase.from("boletos").insert(payload);
 
     if (resp.error) {
-        console.error(resp.error);
+        console.error("ERRO SUPABASE:", resp.error);
         alert("Erro ao salvar boleto.");
         return;
     }
