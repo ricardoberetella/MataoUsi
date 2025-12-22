@@ -8,6 +8,12 @@ let nfId = null;
 let cacheProdutos = [];
 let boletoEditandoId = null;
 
+// ELEMENTOS DO MODAL
+let modalBoleto;
+let boletoOrigem;
+let boletoValor;
+let boletoVencimento;
+
 // ===============================================
 function formatarDataBR(dataISO) {
     if (!dataISO) return "—";
@@ -25,17 +31,28 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
     }
 
-    nfId = Number(idUrl); // 🔥 CORREÇÃO CRÍTICA
+    nfId = Number(idUrl); // 🔒 GARANTIA DE TIPO
+
+    // MAPEAR ELEMENTOS DO MODAL
+    modalBoleto = document.getElementById("modalBoleto");
+    boletoOrigem = document.getElementById("boletoOrigem");
+    boletoValor = document.getElementById("boletoValor");
+    boletoVencimento = document.getElementById("boletoVencimento");
+
+    // MAPEAR BOTÕES (COM PROTEÇÃO)
+    const btnNovo = document.getElementById("btnNovoBoleto");
+    const btnCancelar = document.getElementById("btnCancelarBoleto");
+    const btnSalvar = document.getElementById("btnSalvarBoleto");
+
+    if (btnNovo) btnNovo.onclick = abrirModalNovo;
+    if (btnCancelar) btnCancelar.onclick = fecharModal;
+    if (btnSalvar) btnSalvar.onclick = salvarBoleto;
 
     await carregarProdutosCache();
     await carregarDadosNF();
     await carregarItensNF();
     await carregarBaixas();
     await carregarBoletos();
-
-    document.getElementById("btnNovoBoleto").onclick = abrirModalNovo;
-    document.getElementById("btnCancelarBoleto").onclick = fecharModal;
-    document.getElementById("btnSalvarBoleto").onclick = salvarBoleto;
 });
 
 // ===============================================
@@ -101,7 +118,7 @@ async function carregarItensNF() {
 }
 
 // ===============================================
-// BAIXAS (AGRUPADAS + SITUAÇÃO CORRETA)
+// BAIXAS (AGRUPADAS)
 // ===============================================
 async function carregarBaixas() {
     const tbody = document.getElementById("listaBaixas");
