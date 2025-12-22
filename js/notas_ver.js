@@ -6,8 +6,6 @@ import { supabase, verificarLogin } from "./auth.js";
 
 let nfId = null;
 let cacheProdutos = [];
-
-// ================= BOLETOS ======================
 let boletoEditandoId = null;
 
 // ===============================================
@@ -23,7 +21,7 @@ function formatarMoedaBR(valor) {
     });
 }
 
-// 🔴 FUNÇÃO CRÍTICA — CORREÇÃO DEFINITIVA
+// CONVERSÃO CORRETA 15998,00 → 15998.00
 function parseValor(valorStr) {
     if (!valorStr) return null;
     return Number(valorStr.replace(/\./g, "").replace(",", "."));
@@ -60,6 +58,7 @@ async function carregarProdutosCache() {
     const { data } = await supabase
         .from("produtos")
         .select("id, codigo, descricao");
+
     cacheProdutos = data || [];
 }
 
@@ -121,19 +120,19 @@ async function carregarBaixas() {
     });
 }
 
-// ================= BOLETOS ======================
+// ===================== BOLETOS =====================
 function configurarEventosBoletos() {
     document.getElementById("btnNovoBoleto").onclick = abrirModalNovoBoleto;
     document.getElementById("btnCancelarBoleto").onclick = fecharModalBoleto;
     document.getElementById("btnSalvarBoleto").onclick = salvarBoleto;
     document.getElementById("filtroBoletos").onchange = carregarBoletos;
 
-    document.querySelectorAll('input[name="vinculoBoleto"]').forEach(r =>
+    document.querySelectorAll('input[name="vinculoBoleto"]').forEach(r => {
         r.onchange = () => {
             document.getElementById("areaSemNF").style.display =
                 r.value === "sem" && r.checked ? "block" : "none";
-        }
-    );
+        };
+    });
 }
 
 function abrirModalNovoBoleto() {
@@ -186,7 +185,6 @@ async function salvarBoleto() {
     }
 
     const payload = {
-        consumption: undefined,
         nota_fiscal_id:
             document.querySelector('input[name="vinculoBoleto"]:checked').value === "com"
                 ? nfId
@@ -221,6 +219,7 @@ async function editarBoleto(id) {
     document.getElementById("boletoValor").value = data.valor;
     document.getElementById("boletoVencimento").value = data.data_vencimento || "";
     document.getElementById("boletoNumeroNFRef").value = data.numero_nf_referencia || "";
+
     document.getElementById("modalBoleto").style.display = "flex";
 }
 
