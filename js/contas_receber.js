@@ -1,5 +1,5 @@
 // ===============================================
-// CONTAS_RECEBER.JS
+// CONTAS_RECEBER.JS — CORRIGIDO
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -65,8 +65,8 @@ function renderizarTabela() {
     const hoje = new Date().toISOString().split("T")[0];
 
     registros.forEach(r => {
-        let statusCalculado = r.status;
 
+        let statusCalculado = r.status;
         if (r.status === "ABERTO" && r.data_vencimento < hoje) {
             statusCalculado = "VENCIDO";
         }
@@ -76,6 +76,7 @@ function renderizarTabela() {
 
         total += Number(r.valor);
 
+        // 🔥 ORDEM CORRETA DAS COLUNAS
         tbody.innerHTML += `
             <tr>
                 <td>${r.descricao || "—"}</td>
@@ -93,7 +94,8 @@ function renderizarTabela() {
         `;
     });
 
-    document.getElementById("totalReceber").textContent = formatarMoeda(total);
+    document.getElementById("totalReceber").textContent =
+        formatarMoeda(total);
 }
 
 // ===============================================
