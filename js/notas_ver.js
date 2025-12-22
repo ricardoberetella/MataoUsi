@@ -19,11 +19,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
 
-    nfId = new URLSearchParams(window.location.search).get("id");
-    if (!nfId) {
+    const idUrl = new URLSearchParams(window.location.search).get("id");
+    if (!idUrl) {
         alert("NF não encontrada");
         return;
     }
+
+    nfId = Number(idUrl); // 🔥 CORREÇÃO CRÍTICA
 
     await carregarProdutosCache();
     await carregarDadosNF();
@@ -99,7 +101,7 @@ async function carregarItensNF() {
 }
 
 // ===============================================
-// BAIXAS (COM SITUAÇÃO)
+// BAIXAS (AGRUPADAS + SITUAÇÃO CORRETA)
 // ===============================================
 async function carregarBaixas() {
     const tbody = document.getElementById("listaBaixas");
@@ -115,7 +117,20 @@ async function carregarBaixas() {
         return;
     }
 
-    // buscar quantidade do pedido
+    const mapa = {};
+
+    baixas.forEach(b => {
+        const key = `${b.pedido_id}-${b.produto_id}`;
+        if (!mapa[key]) {
+            mapa[key] = {
+                pedido_id: b.pedido_id,
+                produto_id: b.produto_id,
+                baixado: 0
+            };
+        }
+        mapa[key].baixado += b.quantidade_baixada;
+    });
+
     const pedidoIds = [...new Set(baixas.map(b => b.pedido_id))];
     const produtoIds = [...new Set(baixas.map(b => b.produto_id))];
 
@@ -125,31 +140,21 @@ async function carregarBaixas() {
         .in("pedido_id", pedidoIds)
         .in("produto_id", produtoIds);
 
-    const mapaPedido = {};
-    itensPedidos?.forEach(i => {
-        mapaPedido[`${i.pedido_id}-${i.produto_id}`] = i.quantidade;
-    });
+    Object.values(mapa).forEach(reg => {
+        const item = itensPedidos?.find(
+            i => i.pedido_id === reg.pedido_id && i.produto_id === reg.produto_id
+        );
 
-    const mapaBaixas = {};
-    baixas.forEach(b => {
-        const key = `${b.pedido_id}-${b.produto_id}`;
-        mapaBaixas[key] = (mapaBaixas[key] || 0) + b.quantidade_baixada;
-    });
-
-    baixas.forEach(b => {
-        const key = `${b.pedido_id}-${b.produto_id}`;
-        const total = mapaPedido[key] || 0;
-        const baixado = mapaBaixas[key] || 0;
-
+        const total = item?.quantidade || 0;
         let situacao = "Pendente";
-        if (baixado >= total) situacao = "Concluído";
-        else if (baixado > 0) situacao = "Parcial";
+        if (reg.baixado >= total && total > 0) situacao = "Concluído";
+        else if (reg.baixado > 0) situacao = "Parcial";
 
         tbody.innerHTML += `
             <tr>
-                <td>${b.pedido_id}</td>
-                <td>${nomeProduto(b.produto_id)}</td>
-                <td style="text-align:right">${b.quantidade_baixada}</td>
+                <td>${reg.pedido_id}</td>
+                <td>${nomeProduto(reg.produto_id)}</td>
+                <td style="text-align:right">${reg.baixado}</td>
                 <td>${situacao}</td>
             </tr>`;
     });
@@ -206,12 +211,18 @@ function fecharModal() {
 
 async function salvarBoleto() {
     const tipo_nf = document.querySelector("input[name='tipo_nf']:checked").value;
+    const valor = Number(boletoValor.value);
+
+    if (!valor || !boletoVencimento.value) {
+        alert("Preencha valor e vencimento");
+        return;
+    }
 
     const payload = {
         nota_fiscal_id: nfId,
         tipo_nf,
         origem: boletoOrigem.value || null,
-        valor: Number(boletoValor.value),
+        valor,
         data_vencimento: boletoVencimento.value
     };
 
