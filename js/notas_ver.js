@@ -1,12 +1,14 @@
 import { supabase, verificarLogin } from "./auth.js";
 
 let nfId = null;
+let cacheProdutos = [];
 
 // ===============================
 // FORMATAR DATA
 // ===============================
-function formatarDataBR(data) {
-    return data ? new Date(data).toLocaleDateString("pt-BR") : "—";
+function formatarDataBR(dataISO) {
+    if (!dataISO) return "—";
+    return new Date(dataISO).toLocaleDateString("pt-BR");
 }
 
 // ===============================
@@ -17,12 +19,33 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!user) return;
 
     nfId = new URLSearchParams(window.location.search).get("id");
-    if (!nfId) return alert("NF não encontrada");
+    if (!nfId) {
+        alert("NF não encontrada");
+        return;
+    }
 
+    await carregarProdutosCache();
     await carregarDadosNF();
     await carregarItensNF();
-    await carregarBoletos();
+    await carregarBaixas();
+    await carregarBoletos(); // ✅ NOVO
 });
+
+// ===============================
+// CACHE PRODUTOS
+// ===============================
+async function carregarProdutosCache() {
+    const { data } = await supabase
+        .from("produtos")
+        .select("id, codigo, descricao");
+
+    cacheProdutos = data || [];
+}
+
+function nomeProduto(id) {
+    const p = cacheProdutos.find(x => x.id === id);
+    return p ? `${p.codigo} - ${p.descricao}` : `ID ${id}`;
+}
 
 // ===============================
 // DADOS NF
@@ -60,7 +83,7 @@ async function carregarItensNF() {
     data.forEach(i => {
         tbody.innerHTML += `
             <tr>
-                <td>${i.produto_id}</td>
+                <td>${nomeProduto(i.produto_id)}</td>
                 <td style="text-align:right">${i.quantidade}</td>
             </tr>
         `;
@@ -68,7 +91,37 @@ async function carregarItensNF() {
 }
 
 // ===============================
-// LISTAR BOLETOS
+// BAIXAS
+// ===============================
+async function carregarBaixas() {
+    const tbody = document.getElementById("listaBaixas");
+
+    const { data } = await supabase
+        .from("notas_pedidos_baixas")
+        .select("pedido_id, produto_id, quantidade_baixada")
+        .eq("nf_id", nfId);
+
+    tbody.innerHTML = "";
+
+    if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4">Nenhuma baixa</td></tr>`;
+        return;
+    }
+
+    data.forEach(b => {
+        tbody.innerHTML += `
+            <tr>
+                <td>${b.pedido_id}</td>
+                <td>${nomeProduto(b.produto_id)}</td>
+                <td style="text-align:right">${b.quantidade_baixada}</td>
+                <td>Baixado</td>
+            </tr>
+        `;
+    });
+}
+
+// ===============================
+// BOLETOS (NOVO)
 // ===============================
 async function carregarBoletos() {
     const tbody = document.getElementById("listaBoletos");
