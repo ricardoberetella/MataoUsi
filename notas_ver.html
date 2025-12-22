@@ -7,47 +7,6 @@
 
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/pedidos_lista.css">
-
-    <style>
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,.7);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 999;
-        }
-
-        .modal {
-            background: #020617;
-            padding: 20px;
-            border-radius: 10px;
-            width: 100%;
-            max-width: 420px;
-            border: 1px solid rgba(56,189,248,.4);
-        }
-
-        .grupo-radio {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 10px;
-        }
-
-        .grupo-radio label {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-        }
-
-        .acoes-modal {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 15px;
-        }
-    </style>
 </head>
 
 <body>
@@ -60,41 +19,79 @@
 </header>
 
 <div class="container">
-    <!-- (conteúdo da NF, itens, baixas e boletos permanece IGUAL) -->
-</div>
 
-<!-- MODAL BOLETO -->
-<div class="modal-overlay" id="modalBoleto">
-    <div class="modal">
-        <h2>Boleto</h2>
+    <!-- ========================= -->
+    <!-- DADOS DA NOTA -->
+    <!-- ========================= -->
+    <section class="card">
+        <h2 class="card-title">Informações da Nota Fiscal</h2>
+        <p><strong>Número da NF:</strong> <span id="nfNumero"></span></p>
+        <p><strong>Data:</strong> <span id="nfData"></span></p>
+        <p><strong>Cliente:</strong> <span id="nfCliente"></span></p>
+    </section>
 
-        <!-- ✅ NOVO CAMPO -->
-        <label>Vinculação</label>
-        <div class="grupo-radio">
-            <label>
-                <input type="radio" name="tipo_nf" value="NF" checked>
-                Com NF
-            </label>
-            <label>
-                <input type="radio" name="tipo_nf" value="SEM_NF">
-                Sem NF
-            </label>
-        </div>
+    <!-- ========================= -->
+    <!-- ITENS DA NF -->
+    <!-- ========================= -->
+    <section class="card">
+        <h2 class="card-title">Itens da Nota Fiscal</h2>
+        <table class="tabela">
+            <thead>
+                <tr>
+                    <th>Produto</th>
+                    <th>Quantidade NF</th>
+                </tr>
+            </thead>
+            <tbody id="listaItens">
+                <tr><td colspan="2">Carregando...</td></tr>
+            </tbody>
+        </table>
+    </section>
 
-        <label>Origem</label>
-        <input id="boletoOrigem">
+    <!-- ========================= -->
+    <!-- BAIXAS -->
+    <!-- ========================= -->
+    <section class="card">
+        <h2 class="card-title">Baixas Realizadas nos Pedidos</h2>
+        <table class="tabela">
+            <thead>
+                <tr>
+                    <th>Pedido</th>
+                    <th>Produto</th>
+                    <th>Qtd Baixada</th>
+                    <th>Situação</th>
+                </tr>
+            </thead>
+            <tbody id="listaBaixas">
+                <tr><td colspan="4">Carregando...</td></tr>
+            </tbody>
+        </table>
+    </section>
 
-        <label>Valor</label>
-        <input id="boletoValor" type="number" step="0.01">
+    <!-- ========================= -->
+    <!-- BOLETOS -->
+    <!-- ========================= -->
+    <section class="card">
+        <h2 class="card-title">Boletos</h2>
 
-        <label>Vencimento</label>
-        <input type="date" id="boletoVencimento">
+        <button class="btn-verde" id="btnNovoBoleto">➕ Incluir Boleto</button>
 
-        <div class="acoes-modal">
-            <button class="btn-voltar" id="btnCancelarBoleto">Cancelar</button>
-            <button class="btn-verde" id="btnSalvarBoleto">Salvar</button>
-        </div>
-    </div>
+        <table class="tabela" style="margin-top:10px;">
+            <thead>
+                <tr>
+                    <th>Vinculação</th>
+                    <th>Origem</th>
+                    <th>Valor</th>
+                    <th>Vencimento</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="listaBoletos">
+                <tr><td colspan="5">Carregando...</td></tr>
+            </tbody>
+        </table>
+    </section>
+
 </div>
 
 <script type="module" src="js/notas_ver.js"></script>
