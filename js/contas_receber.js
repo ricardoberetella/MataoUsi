@@ -78,8 +78,6 @@ function renderizarTabela() {
 
         tbody.innerHTML += `
             <tr>
-                <td>${r.origem_tipo}</td>
-                <td>${r.nota_fiscal_id || "—"}</td>
                 <td>${r.descricao || "—"}</td>
                 <td>${formatarMoeda(r.valor)}</td>
                 <td>${formatarDataBR(r.data_vencimento)}</td>
