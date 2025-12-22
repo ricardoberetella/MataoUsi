@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await carregarDadosNF();
     await carregarItensNF();
     await carregarBaixas();
-    await carregarBoletos(); // ✅ NOVO
+    await carregarBoletos();
 });
 
 // ===============================
@@ -121,7 +121,7 @@ async function carregarBaixas() {
 }
 
 // ===============================
-// BOLETOS (NOVO)
+// BOLETOS (EDITAR + EXCLUIR)
 // ===============================
 async function carregarBoletos() {
     const tbody = document.getElementById("listaBoletos");
@@ -152,10 +152,75 @@ async function carregarBoletos() {
                 <td style="text-align:right">R$ ${Number(b.valor).toFixed(2)}</td>
                 <td>${formatarDataBR(b.data_vencimento)}</td>
                 <td style="text-align:center">
-                    <button class="btn-azul" disabled>Editar</button>
-                    <button class="btn-vermelho" disabled>Excluir</button>
+                    <button class="btn-azul" onclick="editarBoleto(${b.id})">Editar</button>
+                    <button class="btn-vermelho" onclick="excluirBoleto(${b.id})">Excluir</button>
                 </td>
             </tr>
         `;
     });
 }
+
+// ===============================
+// EXCLUIR BOLETO
+// ===============================
+window.excluirBoleto = async function (id) {
+    if (!confirm("Deseja realmente excluir este boleto?")) return;
+
+    const { error } = await supabase
+        .from("boletos")
+        .delete()
+        .eq("id", id);
+
+    if (error) {
+        alert("Erro ao excluir boleto");
+        console.error(error);
+        return;
+    }
+
+    carregarBoletos();
+};
+
+// ===============================
+// EDITAR BOLETO (SIMPLES)
+// ===============================
+window.editarBoleto = async function (id) {
+    const { data, error } = await supabase
+        .from("boletos")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+    if (error || !data) {
+        alert("Erro ao carregar boleto");
+        return;
+    }
+
+    const novaOrigem = prompt("Origem:", data.origem || "");
+    if (novaOrigem === null) return;
+
+    const novoValor = prompt("Valor:", data.valor);
+    if (novoValor === null || isNaN(novoValor)) return;
+
+    const novaData = prompt(
+        "Data de vencimento (YYYY-MM-DD):",
+        data.data_vencimento
+    );
+    if (novaData === null) return;
+
+    const { error: erroUpdate } = await supabase
+        .from("boletos")
+        .update({
+            origem: novaOrigem,
+            valor: Number(novoValor),
+            data_vencimento: novaData
+        })
+        .eq("id", id);
+
+    if (erroUpdate) {
+        alert("Erro ao atualizar boleto");
+        console.error(erroUpdate);
+        return;
+    }
+
+    carregarBoletos();
+};
