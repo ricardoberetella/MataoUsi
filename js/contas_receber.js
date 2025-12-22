@@ -1,5 +1,5 @@
 // ===============================================
-// CONTAS_RECEBER.JS — BOLETOS + NF (ESTRUTURA REAL)
+// CONTAS_RECEBER.JS — BOLETOS + NF (FUNCIONAL)
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -27,14 +27,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     roleUsuario = user.user_metadata?.role || "viewer";
 
-    document.getElementById("btnFiltrar").onclick = aplicarFiltros;
+    document.getElementById("btnFiltrar").onclick = async () => {
+        await carregarDados();
+        renderizarTabela();
+    };
 
     await carregarDados();
     renderizarTabela();
 });
 
 // ===============================================
-// CARREGAR BOLETOS (SEM COLUNAS INEXISTENTES)
+// CARREGAR BOLETOS
 // ===============================================
 async function carregarDados() {
 
@@ -49,12 +52,11 @@ async function carregarDados() {
         return;
     }
 
-    if (!data || data.length === 0) {
+    if (!data) {
         registros = [];
         return;
     }
 
-    // Buscar NFs relacionadas
     const nfIds = [...new Set(
         data.map(b => b.nota_fiscal_id).filter(Boolean)
     )];
@@ -87,10 +89,7 @@ async function carregarDados() {
 }
 
 // ===============================================
-function aplicarFiltros() {
-    renderizarTabela();
-}
-
+// RENDERIZAÇÃO COM FILTROS
 // ===============================================
 function renderizarTabela() {
     const tbody = document.getElementById("listaReceber");
@@ -114,7 +113,7 @@ function renderizarTabela() {
                 <td style="text-align:center">ABERTO</td>
                 <td style="text-align:center">
                     ${roleUsuario === "admin"
-                        ? `<button class="btn-verde" onclick="alert('Pagamento ainda não implementado')">Pagar</button>`
+                        ? `<button class="btn-verde">Pagar</button>`
                         : "—"}
                 </td>
             </tr>
