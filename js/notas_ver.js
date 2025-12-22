@@ -103,13 +103,15 @@ async function carregarItensNF() {
         tbody.innerHTML += `
             <tr>
                 <td>${nomeProduto(i.produto_id)}</td>
-                <td style="text-align:right; vertical-align:middle;">${i.quantidade}</td>
+                <td>
+                    <div class="cell-center">${i.quantidade}</div>
+                </td>
             </tr>`;
     });
 }
 
 // ===============================================
-// BAIXAS — CENTRALIZAÇÃO PERFEITA
+// BAIXAS — CENTRALIZAÇÃO REAL
 // ===============================================
 async function carregarBaixas() {
     const tbody = document.getElementById("listaBaixas");
@@ -150,17 +152,15 @@ async function carregarBaixas() {
     Object.values(mapa).forEach(reg => {
         tbody.innerHTML += `
             <tr>
-                <td style="text-align:center; vertical-align:middle; font-weight:600;">
-                    ${reg.nf}
+                <td>
+                    <div class="cell-center">${reg.nf}</div>
                 </td>
-                <td style="vertical-align:middle;">
-                    ${nomeProduto(reg.produto_id)}
+                <td>${nomeProduto(reg.produto_id)}</td>
+                <td>
+                    <div class="cell-center">${reg.baixado}</div>
                 </td>
-                <td style="text-align:center; vertical-align:middle; font-weight:600;">
-                    ${reg.baixado}
-                </td>
-                <td style="text-align:center; vertical-align:middle;">
-                    Concluído
+                <td>
+                    <div class="cell-center">Concluído</div>
                 </td>
             </tr>`;
     });
@@ -187,19 +187,15 @@ async function carregarBoletos() {
     data.forEach(b => {
         tbody.innerHTML += `
             <tr>
-                <td style="text-align:center; vertical-align:middle;">
-                    ${b.tipo_nf === "NF" ? "Com NF" : "Sem NF"}
-                </td>
-                <td style="vertical-align:middle;">${b.origem || "—"}</td>
-                <td style="text-align:center; vertical-align:middle;">
-                    R$ ${Number(b.valor).toFixed(2)}
-                </td>
-                <td style="text-align:center; vertical-align:middle;">
-                    ${formatarDataBR(b.data_vencimento)}
-                </td>
-                <td style="text-align:center; vertical-align:middle;">
-                    <button class="btn-azul" onclick="editarBoleto(${b.id})">Editar</button>
-                    <button class="btn-vermelho" onclick="excluirBoleto(${b.id})">Excluir</button>
+                <td><div class="cell-center">${b.tipo_nf === "NF" ? "Com NF" : "Sem NF"}</div></td>
+                <td>${b.origem || "—"}</td>
+                <td><div class="cell-center">R$ ${Number(b.valor).toFixed(2)}</div></td>
+                <td><div class="cell-center">${formatarDataBR(b.data_vencimento)}</div></td>
+                <td>
+                    <div class="cell-center">
+                        <button class="btn-azul" onclick="editarBoleto(${b.id})">Editar</button>
+                        <button class="btn-vermelho" onclick="excluirBoleto(${b.id})">Excluir</button>
+                    </div>
                 </td>
             </tr>`;
     });
