@@ -1,6 +1,6 @@
 // ===============================================
 // CONTAS_RECEBER.JS — BOLETOS + NF (numero_nf)
-// COM PAGAR + REABRIR (ADMIN)
+// PAGAR + REABRIR (SEM ERRO 400)
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -32,15 +32,14 @@ function soDataISO(value) {
         : String(value);
 }
 
+// STATUS CALCULADO (SEM COLUNA NO BANCO)
 function calcularStatus(r) {
-    const statusBase = (r.status || "ABERTO").toUpperCase();
     const hoje = new Date().toISOString().split("T")[0];
     const venc = soDataISO(r.data_vencimento);
 
-    if (statusBase === "ABERTO" && venc && venc < hoje) {
-        return "VENCIDO";
-    }
-    return statusBase;
+    if (r.pago === true) return "PAGO";
+    if (venc && venc < hoje) return "VENCIDO";
+    return "ABERTO";
 }
 
 // ===============================================
@@ -50,8 +49,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     roleUsuario = user.user_metadata?.role || "viewer";
 
-    const btn = document.getElementById("btnFiltrar");
-    if (btn) btn.onclick = aplicarFiltros;
+    document.getElementById("btnFiltrar").onclick = aplicarFiltros;
 
     await carregarDados();
     renderizarTabela();
@@ -59,13 +57,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 // ===============================================
 async function carregarDados() {
+
+    // 🔥 QUERY SEM COLUNAS INEXISTENTES
     const { data: boletos, error } = await supabase
         .from("boletos")
-        .select("id, valor, data_vencimento, nota_fiscal_id, status")
-        .order("data_vencimento", { ascending: true });
+        .select("id, valor, data_vencimento, nota_fiscal_id")
+        .order("data_vencimento");
 
     if (error) {
-        console.error(error);
+        console.error("Erro boletos:", error);
         alert("Erro ao carregar contas a receber");
         registros = [];
         return;
@@ -117,25 +117,17 @@ function renderizarTabela() {
 
         tbody.innerHTML += `
             <tr>
-                <td style="text-align:center">
-                    ${mapaNF[r.nota_fiscal_id] || "—"}
-                </td>
-                <td style="text-align:center">
-                    ${formatarMoeda(r.valor)}
-                </td>
-                <td style="text-align:center">
-                    ${formatarDataBR(r.data_vencimento)}
-                </td>
-                <td style="text-align:center">
-                    ${statusCalc}
-                </td>
+                <td style="text-align:center">${mapaNF[r.nota_fiscal_id] || "—"}</td>
+                <td style="text-align:center">${formatarMoeda(r.valor)}</td>
+                <td style="text-align:center">${formatarDataBR(r.data_vencimento)}</td>
+                <td style="text-align:center">${statusCalc}</td>
                 <td style="text-align:center">
                     ${
-                        roleUsuario === "admin"
-                            ? statusCalc === "ABERTO"
+                        roleUsuario === "admin" && statusCalc === "ABERTO"
+                            ? `<button class="btn-verde" onclick="pagar(${r.id})">Pagar</button>`
+                            : roleUsuario === "admin" && statusCalc === "VENCIDO"
                                 ? `<button class="btn-verde" onclick="pagar(${r.id})">Pagar</button>`
-                                : `<button class="btn-vermelho" onclick="reabrir(${r.id})">Reabrir</button>`
-                            : "—"
+                                : "—"
                     }
                 </td>
             </tr>
@@ -147,7 +139,7 @@ function renderizarTabela() {
 }
 
 // ===============================================
-// AÇÕES ADMIN
+// AÇÃO PAGAR (ADMIN)
 // ===============================================
 window.pagar = async function (id) {
     if (roleUsuario !== "admin") return;
@@ -155,29 +147,11 @@ window.pagar = async function (id) {
 
     const { error } = await supabase
         .from("boletos")
-        .update({ status: "PAGO" })
+        .update({ pago: true })
         .eq("id", id);
 
     if (error) {
         alert("Erro ao marcar como pago");
-        return;
-    }
-
-    await carregarDados();
-    renderizarTabela();
-};
-
-window.reabrir = async function (id) {
-    if (roleUsuario !== "admin") return;
-    if (!confirm("Reabrir este boleto?")) return;
-
-    const { error } = await supabase
-        .from("boletos")
-        .update({ status: "ABERTO" })
-        .eq("id", id);
-
-    if (error) {
-        alert("Erro ao reabrir boleto");
         return;
     }
 
