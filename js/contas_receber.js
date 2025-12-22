@@ -33,20 +33,69 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     roleUsuario = user.user_metadata?.role || "viewer";
 
+    // ================================
+    // ELEMENTOS DO MODAL MANUAL
+    // ================================
+    const modalManual = document.getElementById("modalManual");
+    const manualNF = document.getElementById("manualNF");
+    const manualDescricao = document.getElementById("manualDescricao");
+    const manualValor = document.getElementById("manualValor");
+    const manualVencimento = document.getElementById("manualVencimento");
+    const btnCancelarManual = document.getElementById("btnCancelarManual");
+    const btnSalvarManual = document.getElementById("btnSalvarManual");
+
     document.getElementById("btnFiltrar").onclick = renderizarTabela;
 
     const btnNovo = document.getElementById("btnNovoManual");
     if (roleUsuario !== "admin") {
         btnNovo.style.display = "none";
     } else {
-        btnNovo.onclick = () => modalManual.style.display = "flex";
+        btnNovo.onclick = () => {
+            modalManual.style.display = "flex";
+        };
     }
 
-    btnCancelarManual.onclick = () => modalManual.style.display = "none";
+    btnCancelarManual.onclick = () => {
+        modalManual.style.display = "none";
+    };
+
     btnSalvarManual.onclick = salvarManual;
 
     await carregarDados();
     renderizarTabela();
+
+    // ===============================================
+    async function salvarManual() {
+        if (!manualValor.value || !manualVencimento.value) {
+            alert("Preencha valor e vencimento");
+            return;
+        }
+
+        const payload = {
+            nf_manual: manualNF.value || null,
+            descricao: manualDescricao.value || null,
+            valor: Number(manualValor.value),
+            data_vencimento: manualVencimento.value,
+            status: "ABERTO",
+            origem_tipo: "MANUAL"
+        };
+
+        const { error } = await supabase.from("boletos").insert(payload);
+
+        if (error) {
+            alert("Erro ao salvar lançamento manual");
+            return;
+        }
+
+        modalManual.style.display = "none";
+        manualNF.value = "";
+        manualDescricao.value = "";
+        manualValor.value = "";
+        manualVencimento.value = "";
+
+        await carregarDados();
+        renderizarTabela();
+    }
 });
 
 // ===============================================
@@ -104,7 +153,8 @@ function renderizarTabela() {
         `;
     });
 
-    totalReceber.textContent = formatarMoeda(total);
+    document.getElementById("totalReceber").textContent =
+        formatarMoeda(total);
 }
 
 // ===============================================
@@ -121,25 +171,3 @@ window.reabrir = async id => {
     await carregarDados();
     renderizarTabela();
 };
-
-async function salvarManual() {
-    const payload = {
-        nf_manual: manualNF.value || null,
-        descricao: manualDescricao.value || null,
-        valor: Number(manualValor.value),
-        data_vencimento: manualVencimento.value,
-        status: "ABERTO",
-        origem_tipo: "MANUAL"
-    };
-
-    await supabase.from("boletos").insert(payload);
-
-    modalManual.style.display = "none";
-    manualNF.value = "";
-    manualDescricao.value = "";
-    manualValor.value = "";
-    manualVencimento.value = "";
-
-    await carregarDados();
-    renderizarTabela();
-}
