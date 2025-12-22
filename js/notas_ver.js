@@ -1,5 +1,6 @@
 // ===============================================
 // NOTAS_VER.JS — NF + ITENS + BAIXAS + BOLETOS
+// CONTROLE DE PERMISSÃO (ADMIN / VIEWER)
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -7,6 +8,7 @@ import { supabase, verificarLogin } from "./auth.js";
 let nfId = null;
 let cacheProdutos = [];
 let boletoEditandoId = null;
+let roleUsuario = "viewer";
 
 // MODAL
 let modalBoleto;
@@ -33,6 +35,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
 
+    roleUsuario = user.user_metadata?.role || "viewer";
+
     const idUrl = new URLSearchParams(window.location.search).get("id");
     if (!idUrl) {
         alert("NF não encontrada");
@@ -46,9 +50,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     boletoValor = document.getElementById("boletoValor");
     boletoVencimento = document.getElementById("boletoVencimento");
 
-    document.getElementById("btnNovoBoleto")?.addEventListener("click", abrirModalNovo);
-    document.getElementById("btnCancelarBoleto")?.addEventListener("click", fecharModal);
-    document.getElementById("btnSalvarBoleto")?.addEventListener("click", salvarBoleto);
+    const btnNovo = document.getElementById("btnNovoBoleto");
+    const btnCancelar = document.getElementById("btnCancelarBoleto");
+    const btnSalvar = document.getElementById("btnSalvarBoleto");
+
+    // 🔒 PERMISSÃO
+    if (roleUsuario !== "admin") {
+        if (btnNovo) btnNovo.style.display = "none";
+    } else {
+        if (btnNovo) btnNovo.onclick = abrirModalNovo;
+        if (btnSalvar) btnSalvar.onclick = salvarBoleto;
+    }
+
+    if (btnCancelar) btnCancelar.onclick = fecharModal;
 
     await carregarProdutosCache();
     await carregarDadosNF();
@@ -58,7 +72,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // ===============================================
-// PRODUTOS (CACHE)
+// PRODUTOS
 // ===============================================
 async function carregarProdutosCache() {
     const { data } = await supabase
@@ -74,7 +88,7 @@ function nomeProduto(id) {
 }
 
 // ===============================================
-// DADOS DA NF
+// DADOS NF
 // ===============================================
 async function carregarDadosNF() {
     const { data } = await supabase
@@ -91,7 +105,7 @@ async function carregarDadosNF() {
 }
 
 // ===============================================
-// ITENS DA NF
+// ITENS NF
 // ===============================================
 async function carregarItensNF() {
     const tbody = document.getElementById("listaItens");
@@ -111,7 +125,7 @@ async function carregarItensNF() {
         tbody.innerHTML += `
             <tr>
                 <td>${nomeProduto(i.produto_id)}</td>
-                <td><div class="cell-center">${i.quantidade}</div></td>
+                <td>${i.quantidade}</td>
             </tr>`;
     });
 }
@@ -125,7 +139,7 @@ async function carregarBaixas() {
 
     const { data: baixas } = await supabase
         .from("notas_pedidos_baixas")
-        .select("nf_id, produto_id, quantidade_baixada")
+        .select("pedido_id, produto_id, quantidade_baixada")
         .eq("nf_id", nfId);
 
     if (!baixas || baixas.length === 0) {
@@ -133,41 +147,19 @@ async function carregarBaixas() {
         return;
     }
 
-    const { data: notas } = await supabase
-        .from("notas_fiscais")
-        .select("id, numero_nf")
-        .in("id", [...new Set(baixas.map(b => b.nf_id))]);
-
-    const mapaNF = {};
-    notas?.forEach(n => mapaNF[n.id] = n.numero_nf);
-
-    const mapa = {};
-
     baixas.forEach(b => {
-        const key = `${b.nf_id}-${b.produto_id}`;
-        if (!mapa[key]) {
-            mapa[key] = {
-                nf: mapaNF[b.nf_id] || "—",
-                produto_id: b.produto_id,
-                baixado: 0
-            };
-        }
-        mapa[key].baixado += b.quantidade_baixada;
-    });
-
-    Object.values(mapa).forEach(reg => {
         tbody.innerHTML += `
             <tr>
-                <td><div class="cell-center">${reg.nf}</div></td>
-                <td>${nomeProduto(reg.produto_id)}</td>
-                <td><div class="cell-center">${reg.baixado}</div></td>
-                <td><div class="cell-center">Concluído</div></td>
+                <td>${b.pedido_id}</td>
+                <td>${nomeProduto(b.produto_id)}</td>
+                <td>${b.quantidade_baixada}</td>
+                <td>Concluído</td>
             </tr>`;
     });
 }
 
 // ===============================================
-// BOLETOS (FORMATO BR)
+// BOLETOS
 // ===============================================
 async function carregarBoletos() {
     const tbody = document.getElementById("listaBoletos");
@@ -187,29 +179,29 @@ async function carregarBoletos() {
     data.forEach(b => {
         tbody.innerHTML += `
             <tr>
-                <td><div class="cell-center">${b.tipo_nf === "NF" ? "Com NF" : "Sem NF"}</div></td>
+                <td>${b.tipo_nf === "NF" ? "Com NF" : "Sem NF"}</td>
                 <td>${b.origem || "—"}</td>
-                <td><div class="cell-center">${formatarMoedaBR(b.valor)}</div></td>
-                <td><div class="cell-center">${formatarDataBR(b.data_vencimento)}</div></td>
+                <td>${formatarMoedaBR(b.valor)}</td>
+                <td>${formatarDataBR(b.data_vencimento)}</td>
                 <td>
-                    <div class="cell-center">
+                    ${roleUsuario === "admin" ? `
                         <button class="btn-azul" onclick="editarBoleto(${b.id})">Editar</button>
                         <button class="btn-vermelho" onclick="excluirBoleto(${b.id})">Excluir</button>
-                    </div>
+                    ` : "—"}
                 </td>
             </tr>`;
     });
 }
 
 // ===============================================
-// MODAL BOLETO
+// MODAL / AÇÕES (ADMIN)
 // ===============================================
 function abrirModalNovo() {
+    if (roleUsuario !== "admin") return;
     boletoEditandoId = null;
     boletoOrigem.value = "";
     boletoValor.value = "";
     boletoVencimento.value = "";
-    document.querySelector("input[name='tipo_nf'][value='NF']").checked = true;
     modalBoleto.style.display = "flex";
 }
 
@@ -218,6 +210,8 @@ function fecharModal() {
 }
 
 async function salvarBoleto() {
+    if (roleUsuario !== "admin") return;
+
     const tipo_nf = document.querySelector("input[name='tipo_nf']:checked").value;
     const valor = Number(boletoValor.value);
 
@@ -248,18 +242,19 @@ async function salvarBoleto() {
 }
 
 window.editarBoleto = async id => {
+    if (roleUsuario !== "admin") return;
     const { data } = await supabase.from("boletos").select("*").eq("id", id).single();
     boletoEditandoId = id;
 
     boletoOrigem.value = data.origem || "";
     boletoValor.value = data.valor;
     boletoVencimento.value = data.data_vencimento;
-    document.querySelector(`input[name='tipo_nf'][value='${data.tipo_nf}']`).checked = true;
 
     modalBoleto.style.display = "flex";
 };
 
 window.excluirBoleto = async id => {
+    if (roleUsuario !== "admin") return;
     if (!confirm("Excluir boleto?")) return;
     await supabase.from("boletos").delete().eq("id", id);
     carregarBoletos();
