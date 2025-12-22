@@ -1,5 +1,5 @@
 // ===============================================
-// CONTAS_RECEBER.JS — BOLETOS + NF REAL (SEM JOIN)
+// CONTAS_RECEBER.JS — BOLETOS + NF REAL (SEM STATUS)
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -34,14 +34,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // ===============================================
-// CARREGAR DADOS (SEM JOIN)
+// CARREGAR BOLETOS + NF (SEM JOIN)
 // ===============================================
 async function carregarDados() {
 
     // 1️⃣ BOLETOS
     const { data: boletos, error: errBoletos } = await supabase
         .from("boletos")
-        .select("id, valor, data_vencimento, status, nota_fiscal_id")
+        .select("id, valor, data_vencimento, data_pagamento, nota_fiscal_id")
         .order("data_vencimento");
 
     if (errBoletos) {
@@ -81,12 +81,12 @@ async function carregarDados() {
         });
     }
 
-    // 3️⃣ MONTA REGISTROS FINAIS
+    // 3️⃣ MONTA REGISTROS
     registros = boletos.map(b => ({
         id: b.id,
         valor: b.valor,
         data_vencimento: b.data_vencimento,
-        status: b.status,
+        data_pagamento: b.data_pagamento,
         numero_nf: mapaNF[b.nota_fiscal_id] || "—"
     }));
 }
@@ -109,10 +109,9 @@ function renderizarTabela() {
 
     registros.forEach(r => {
 
-        let statusCalculado = r.status;
-        if (r.status === "ABERTO" && r.data_vencimento < hoje) {
-            statusCalculado = "VENCIDO";
-        }
+        let statusCalculado = r.data_pagamento
+            ? "PAGO"
+            : (r.data_vencimento < hoje ? "VENCIDO" : "ABERTO");
 
         if (statusFiltro && statusFiltro !== statusCalculado) return;
         if (vencimentoFiltro && r.data_vencimento > vencimentoFiltro) return;
@@ -127,7 +126,7 @@ function renderizarTabela() {
                 <td style="text-align:center">${statusCalculado}</td>
                 <td style="text-align:center">
                     ${
-                        roleUsuario === "admin" && r.status === "ABERTO"
+                        roleUsuario === "admin" && !r.data_pagamento
                             ? `<button class="btn-verde" onclick="marcarPago(${r.id})">Pagar</button>`
                             : "—"
                     }
@@ -141,7 +140,7 @@ function renderizarTabela() {
 }
 
 // ===============================================
-// MARCAR COMO PAGO (AGORA NA TABELA CORRETA)
+// MARCAR COMO PAGO (USA data_pagamento)
 // ===============================================
 window.marcarPago = async function (id) {
     if (roleUsuario !== "admin") return;
@@ -151,7 +150,6 @@ window.marcarPago = async function (id) {
     const { error } = await supabase
         .from("boletos")
         .update({
-            status: "PAGO",
             data_pagamento: new Date().toISOString().split("T")[0]
         })
         .eq("id", id);
