@@ -8,7 +8,7 @@ let nfId = null;
 let cacheProdutos = [];
 let boletoEditandoId = null;
 
-// ELEMENTOS MODAL
+// MODAL
 let modalBoleto;
 let boletoOrigem;
 let boletoValor;
@@ -33,7 +33,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     nfId = Number(idUrl);
 
-    // MODAL
     modalBoleto = document.getElementById("modalBoleto");
     boletoOrigem = document.getElementById("boletoOrigem");
     boletoValor = document.getElementById("boletoValor");
@@ -104,13 +103,13 @@ async function carregarItensNF() {
         tbody.innerHTML += `
             <tr>
                 <td>${nomeProduto(i.produto_id)}</td>
-                <td style="text-align:right">${i.quantidade}</td>
+                <td style="text-align:right; vertical-align:middle;">${i.quantidade}</td>
             </tr>`;
     });
 }
 
 // ===============================================
-// BAIXAS — MOSTRAR NUMERO_NF CENTRALIZADO
+// BAIXAS — CENTRALIZAÇÃO PERFEITA
 // ===============================================
 async function carregarBaixas() {
     const tbody = document.getElementById("listaBaixas");
@@ -126,7 +125,6 @@ async function carregarBaixas() {
         return;
     }
 
-    // Buscar numero_nf
     const { data: notas } = await supabase
         .from("notas_fiscais")
         .select("id, numero_nf")
@@ -152,16 +150,24 @@ async function carregarBaixas() {
     Object.values(mapa).forEach(reg => {
         tbody.innerHTML += `
             <tr>
-                <td style="text-align:center;font-weight:600">${reg.nf}</td>
-                <td>${nomeProduto(reg.produto_id)}</td>
-                <td style="text-align:right">${reg.baixado}</td>
-                <td>Concluído</td>
+                <td style="text-align:center; vertical-align:middle; font-weight:600;">
+                    ${reg.nf}
+                </td>
+                <td style="vertical-align:middle;">
+                    ${nomeProduto(reg.produto_id)}
+                </td>
+                <td style="text-align:center; vertical-align:middle; font-weight:600;">
+                    ${reg.baixado}
+                </td>
+                <td style="text-align:center; vertical-align:middle;">
+                    Concluído
+                </td>
             </tr>`;
     });
 }
 
 // ===============================================
-// BOLETOS (SEM ALTERAÇÃO)
+// BOLETOS (INALTERADO)
 // ===============================================
 async function carregarBoletos() {
     const tbody = document.getElementById("listaBoletos");
@@ -181,11 +187,17 @@ async function carregarBoletos() {
     data.forEach(b => {
         tbody.innerHTML += `
             <tr>
-                <td>${b.tipo_nf === "NF" ? "Com NF" : "Sem NF"}</td>
-                <td>${b.origem || "—"}</td>
-                <td style="text-align:right">R$ ${Number(b.valor).toFixed(2)}</td>
-                <td>${formatarDataBR(b.data_vencimento)}</td>
-                <td>
+                <td style="text-align:center; vertical-align:middle;">
+                    ${b.tipo_nf === "NF" ? "Com NF" : "Sem NF"}
+                </td>
+                <td style="vertical-align:middle;">${b.origem || "—"}</td>
+                <td style="text-align:center; vertical-align:middle;">
+                    R$ ${Number(b.valor).toFixed(2)}
+                </td>
+                <td style="text-align:center; vertical-align:middle;">
+                    ${formatarDataBR(b.data_vencimento)}
+                </td>
+                <td style="text-align:center; vertical-align:middle;">
                     <button class="btn-azul" onclick="editarBoleto(${b.id})">Editar</button>
                     <button class="btn-vermelho" onclick="excluirBoleto(${b.id})">Excluir</button>
                 </td>
@@ -194,7 +206,7 @@ async function carregarBoletos() {
 }
 
 // ===============================================
-// MODAL BOLETO (SEM ALTERAÇÃO)
+// MODAL BOLETO
 // ===============================================
 function abrirModalNovo() {
     boletoEditandoId = null;
