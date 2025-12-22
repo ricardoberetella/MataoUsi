@@ -1,6 +1,5 @@
 // ===============================================
-// CONTAS_RECEBER.JS — BOLETOS + NF REAL / MANUAL
-// PAGAR + REABRIR + LANÇAMENTO MANUAL
+// CONTAS_RECEBER.JS — BOLETOS + NF + MANUAL
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -9,7 +8,6 @@ let roleUsuario = "viewer";
 let registros = [];
 let mapaNF = {};
 
-// ===============================================
 function formatarDataBR(data) {
     if (!data) return "—";
     return new Date(data).toLocaleDateString("pt-BR");
@@ -22,80 +20,73 @@ function formatarMoeda(valor) {
     });
 }
 
-function calcularStatus(r) {
-    return (r.status || "ABERTO").toUpperCase();
-}
-
-// ===============================================
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
 
     roleUsuario = user.user_metadata?.role || "viewer";
 
-    // ================================
-    // ELEMENTOS DO MODAL MANUAL
-    // ================================
-    const modalManual = document.getElementById("modalManual");
-    const manualNF = document.getElementById("manualNF");
-    const manualDescricao = document.getElementById("manualDescricao");
-    const manualValor = document.getElementById("manualValor");
-    const manualVencimento = document.getElementById("manualVencimento");
-    const btnCancelarManual = document.getElementById("btnCancelarManual");
-    const btnSalvarManual = document.getElementById("btnSalvarManual");
+    // ===============================
+    // ELEMENTOS
+    // ===============================
+    const btnFiltrar = document.getElementById("btnFiltrar");
+    const btnManual = document.getElementById("btnLancamentoManual");
 
-    document.getElementById("btnFiltrar").onclick = renderizarTabela;
+    const modal = document.getElementById("modalManual");
+    const nf = document.getElementById("manualNF");
+    const desc = document.getElementById("manualDescricao");
+    const valor = document.getElementById("manualValor");
+    const venc = document.getElementById("manualVencimento");
+    const btnSalvar = document.getElementById("btnSalvarManual");
+    const btnCancelar = document.getElementById("btnCancelarManual");
 
-    const btnNovo = document.getElementById("btnNovoManual");
+    btnFiltrar.onclick = renderizarTabela;
+
+    // 🔐 PERMISSÃO
     if (roleUsuario !== "admin") {
-        btnNovo.style.display = "none";
+        btnManual.style.display = "none";
     } else {
-        btnNovo.onclick = () => {
-            modalManual.style.display = "flex";
+        btnManual.onclick = () => {
+            modal.style.display = "flex";
         };
     }
 
-    btnCancelarManual.onclick = () => {
-        modalManual.style.display = "none";
+    btnCancelar.onclick = () => {
+        modal.style.display = "none";
     };
 
-    btnSalvarManual.onclick = salvarManual;
-
-    await carregarDados();
-    renderizarTabela();
-
-    // ===============================================
-    async function salvarManual() {
-        if (!manualValor.value || !manualVencimento.value) {
+    btnSalvar.onclick = async () => {
+        if (!valor.value || !venc.value) {
             alert("Preencha valor e vencimento");
             return;
         }
 
         const payload = {
-            nf_manual: manualNF.value || null,
-            descricao: manualDescricao.value || null,
-            valor: Number(manualValor.value),
-            data_vencimento: manualVencimento.value,
-            status: "ABERTO",
-            origem_tipo: "MANUAL"
+            nf_manual: nf.value || null,
+            descricao: desc.value || null,
+            valor: Number(valor.value),
+            data_vencimento: venc.value,
+            status: "ABERTO"
         };
 
         const { error } = await supabase.from("boletos").insert(payload);
-
         if (error) {
             alert("Erro ao salvar lançamento manual");
             return;
         }
 
-        modalManual.style.display = "none";
-        manualNF.value = "";
-        manualDescricao.value = "";
-        manualValor.value = "";
-        manualVencimento.value = "";
+        modal.style.display = "none";
+        nf.value = "";
+        desc.value = "";
+        valor.value = "";
+        venc.value = "";
 
         await carregarDados();
         renderizarTabela();
-    }
+    };
+
+    await carregarDados();
+    renderizarTabela();
 });
 
 // ===============================================
@@ -139,7 +130,7 @@ function renderizarTabela() {
                 <td style="text-align:center">${nfExibida}</td>
                 <td style="text-align:center">${formatarMoeda(r.valor)}</td>
                 <td style="text-align:center">${formatarDataBR(r.data_vencimento)}</td>
-                <td style="text-align:center">${calcularStatus(r)}</td>
+                <td style="text-align:center">${r.status}</td>
                 <td style="text-align:center">
                     ${
                         roleUsuario === "admin" && r.status === "ABERTO"
@@ -157,8 +148,6 @@ function renderizarTabela() {
         formatarMoeda(total);
 }
 
-// ===============================================
-// AÇÕES
 // ===============================================
 window.pagar = async id => {
     await supabase.from("boletos").update({ status: "PAGO" }).eq("id", id);
