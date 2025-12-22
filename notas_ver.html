@@ -21,6 +21,9 @@
 
 <div class="container">
 
+    <!-- ========================= -->
+    <!-- DADOS DA NOTA FISCAL -->
+    <!-- ========================= -->
     <section class="card">
         <h2 class="card-title">Informações da Nota Fiscal</h2>
         <p><strong>Número da NF:</strong> <span id="nfNumero"></span></p>
@@ -28,6 +31,9 @@
         <p><strong>Cliente:</strong> <span id="nfCliente"></span></p>
     </section>
 
+    <!-- ========================= -->
+    <!-- ITENS DA NOTA -->
+    <!-- ========================= -->
     <section class="card">
         <h2 class="card-title">Itens da Nota Fiscal</h2>
         <table class="tabela">
@@ -37,10 +43,39 @@
                     <th>Quantidade NF</th>
                 </tr>
             </thead>
-            <tbody id="listaItens"></tbody>
+            <tbody id="listaItens">
+                <tr>
+                    <td colspan="2" style="text-align:center;">Carregando itens...</td>
+                </tr>
+            </tbody>
         </table>
     </section>
 
+    <!-- ========================= -->
+    <!-- BAIXAS DOS PEDIDOS -->
+    <!-- ========================= -->
+    <section class="card">
+        <h2 class="card-title">Baixas Realizadas nos Pedidos</h2>
+        <table class="tabela">
+            <thead>
+                <tr>
+                    <th>Pedido</th>
+                    <th>Produto</th>
+                    <th>Qtd Baixada</th>
+                    <th>Situação</th>
+                </tr>
+            </thead>
+            <tbody id="listaBaixas">
+                <tr>
+                    <td colspan="4" style="text-align:center;">Carregando baixas...</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- ========================= -->
+    <!-- BOLETOS (NOVA SEÇÃO) -->
+    <!-- ========================= -->
     <section class="card">
         <h2 class="card-title">Boletos da Nota Fiscal</h2>
 
