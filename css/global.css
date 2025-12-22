@@ -280,3 +280,25 @@ body.modo-pdf .container {
         background: #fff !important;
     }
 }
+/* ================================
+   CONTAS A RECEBER - ALINHAMENTO
+================================ */
+
+.card table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.card table th,
+.card table td {
+    text-align: center !important;
+    vertical-align: middle;
+    padding: 12px 10px;
+    box-sizing: border-box;
+}
+
+/* Garante que botões não empurrem a célula */
+.card table td button {
+    margin: 0 auto;
+    display: inline-block;
+}
