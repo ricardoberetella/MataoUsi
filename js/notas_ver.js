@@ -6,6 +6,7 @@
 import { supabase, verificarLogin } from "./auth.js";
 
 let nfId = null;
+let numeroNFAtual = null; // <<< GUARDA numero_nf
 let cacheProdutos = [];
 let boletoEditandoId = null;
 let roleUsuario = "viewer";
@@ -65,9 +66,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (btnCancelar) btnCancelar.onclick = fecharModal;
 
     await carregarProdutosCache();
-    await carregarDadosNF();
+    await carregarDadosNF();   // <<< AQUI já pegamos numero_nf
     await carregarItensNF();
-    await carregarBaixas();
+    await carregarBaixas();    // <<< usa numero_nf
     await carregarBoletos();
 });
 
@@ -98,6 +99,8 @@ async function carregarDadosNF() {
         .single();
 
     if (!data) return;
+
+    numeroNFAtual = data.numero_nf; // <<< GUARDA AQUI
 
     nfNumero.textContent = data.numero_nf;
     nfData.textContent = formatarDataBR(data.data_nf);
@@ -131,7 +134,7 @@ async function carregarItensNF() {
 }
 
 // ===============================================
-// BAIXAS
+// BAIXAS (ALTERAÇÃO APENAS AQUI)
 // ===============================================
 async function carregarBaixas() {
     const tbody = document.getElementById("listaBaixas");
@@ -150,7 +153,8 @@ async function carregarBaixas() {
     baixas.forEach(b => {
         tbody.innerHTML += `
             <tr>
-                <td>${b.pedido_id}</td>
+                <!-- AQUI: numero_nf NO LUGAR DO pedido_id -->
+                <td>${numeroNFAtual ?? "—"}</td>
                 <td>${nomeProduto(b.produto_id)}</td>
                 <td>${b.quantidade_baixada}</td>
                 <td>Concluído</td>
