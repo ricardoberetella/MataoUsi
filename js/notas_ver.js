@@ -1,5 +1,6 @@
 // ===============================================
 // NOTAS_VER.JS — NF + ITENS + BAIXAS + BOLETOS
+// (VERSÃO BLINDADA – NÃO DEPENDE DE IDS FIXOS)
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -7,12 +8,6 @@ import { supabase, verificarLogin } from "./auth.js";
 let nfId = null;
 let cacheProdutos = [];
 let boletoEditandoId = null;
-
-// ELEMENTOS DO MODAL
-let modalBoleto;
-let boletoOrigem;
-let boletoValor;
-let boletoVencimento;
 
 // ===============================================
 function formatarDataBR(dataISO) {
@@ -31,29 +26,38 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
     }
 
-    nfId = Number(idUrl); // 🔒 GARANTIA DE TIPO
-
-    // MAPEAR ELEMENTOS DO MODAL
-    modalBoleto = document.getElementById("modalBoleto");
-    boletoOrigem = document.getElementById("boletoOrigem");
-    boletoValor = document.getElementById("boletoValor");
-    boletoVencimento = document.getElementById("boletoVencimento");
-
-    // MAPEAR BOTÕES (COM PROTEÇÃO)
-    const btnNovo = document.getElementById("btnNovoBoleto");
-    const btnCancelar = document.getElementById("btnCancelarBoleto");
-    const btnSalvar = document.getElementById("btnSalvarBoleto");
-
-    if (btnNovo) btnNovo.onclick = abrirModalNovo;
-    if (btnCancelar) btnCancelar.onclick = fecharModal;
-    if (btnSalvar) btnSalvar.onclick = salvarBoleto;
+    nfId = Number(idUrl);
 
     await carregarProdutosCache();
     await carregarDadosNF();
     await carregarItensNF();
     await carregarBaixas();
     await carregarBoletos();
+
+    // 🔒 DELEGAÇÃO GLOBAL (NÃO QUEBRA SE HTML MUDAR)
+    document.body.addEventListener("click", tratarCliquesGlobais);
 });
+
+// ===============================================
+// CLIQUES GLOBAIS (BOLETOS)
+// ===============================================
+function tratarCliquesGlobais(e) {
+
+    // ➕ INCLUIR BOLETO
+    if (e.target.closest("#btnNovoBoleto") || e.target.closest(".btn-novo-boleto")) {
+        abrirModalBoleto();
+    }
+
+    // ❌ CANCELAR
+    if (e.target.closest("#btnCancelarBoleto") || e.target.closest(".btn-cancelar-boleto")) {
+        fecharModalBoleto();
+    }
+
+    // 💾 SALVAR
+    if (e.target.closest("#btnSalvarBoleto") || e.target.closest(".btn-salvar-boleto")) {
+        salvarBoleto();
+    }
+}
 
 // ===============================================
 // PRODUTOS (CACHE)
@@ -86,9 +90,9 @@ async function carregarDadosNF() {
         return;
     }
 
-    nfNumero.textContent = data.numero_nf;
-    nfData.textContent = formatarDataBR(data.data_nf);
-    nfCliente.textContent = data.clientes?.razao_social || "—";
+    document.getElementById("nfNumero").textContent = data.numero_nf;
+    document.getElementById("nfData").textContent = formatarDataBR(data.data_nf);
+    document.getElementById("nfCliente").textContent = data.clientes?.razao_social || "—";
 }
 
 // ===============================================
@@ -118,7 +122,7 @@ async function carregarItensNF() {
 }
 
 // ===============================================
-// BAIXAS (AGRUPADAS)
+// BAIXAS
 // ===============================================
 async function carregarBaixas() {
     const tbody = document.getElementById("listaBaixas");
@@ -138,41 +142,17 @@ async function carregarBaixas() {
 
     baixas.forEach(b => {
         const key = `${b.pedido_id}-${b.produto_id}`;
-        if (!mapa[key]) {
-            mapa[key] = {
-                pedido_id: b.pedido_id,
-                produto_id: b.produto_id,
-                baixado: 0
-            };
-        }
-        mapa[key].baixado += b.quantidade_baixada;
+        mapa[key] = mapa[key] || { ...b, total: 0 };
+        mapa[key].total += b.quantidade_baixada;
     });
 
-    const pedidoIds = [...new Set(baixas.map(b => b.pedido_id))];
-    const produtoIds = [...new Set(baixas.map(b => b.produto_id))];
-
-    const { data: itensPedidos } = await supabase
-        .from("pedidos_itens")
-        .select("pedido_id, produto_id, quantidade")
-        .in("pedido_id", pedidoIds)
-        .in("produto_id", produtoIds);
-
-    Object.values(mapa).forEach(reg => {
-        const item = itensPedidos?.find(
-            i => i.pedido_id === reg.pedido_id && i.produto_id === reg.produto_id
-        );
-
-        const total = item?.quantidade || 0;
-        let situacao = "Pendente";
-        if (reg.baixado >= total && total > 0) situacao = "Concluído";
-        else if (reg.baixado > 0) situacao = "Parcial";
-
+    Object.values(mapa).forEach(b => {
         tbody.innerHTML += `
             <tr>
-                <td>${reg.pedido_id}</td>
-                <td>${nomeProduto(reg.produto_id)}</td>
-                <td style="text-align:right">${reg.baixado}</td>
-                <td>${situacao}</td>
+                <td>${b.pedido_id}</td>
+                <td>${nomeProduto(b.produto_id)}</td>
+                <td style="text-align:right">${b.total}</td>
+                <td>${b.total > 0 ? "Parcial" : "Pendente"}</td>
             </tr>`;
     });
 }
@@ -211,26 +191,33 @@ async function carregarBoletos() {
 }
 
 // ===============================================
-// MODAL BOLETO
+// MODAL BOLETO (BUSCA DINÂMICA)
 // ===============================================
-function abrirModalNovo() {
+function abrirModalBoleto() {
+    const modal = document.querySelector("[data-modal='boleto']");
+    if (!modal) {
+        alert("Modal de boleto não encontrado no HTML");
+        return;
+    }
     boletoEditandoId = null;
-    boletoOrigem.value = "";
-    boletoValor.value = "";
-    boletoVencimento.value = "";
-    document.querySelector("input[value='NF']").checked = true;
-    modalBoleto.style.display = "flex";
+    modal.style.display = "flex";
 }
 
-function fecharModal() {
-    modalBoleto.style.display = "none";
+function fecharModalBoleto() {
+    const modal = document.querySelector("[data-modal='boleto']");
+    if (modal) modal.style.display = "none";
 }
 
 async function salvarBoleto() {
-    const tipo_nf = document.querySelector("input[name='tipo_nf']:checked").value;
-    const valor = Number(boletoValor.value);
+    const modal = document.querySelector("[data-modal='boleto']");
+    if (!modal) return;
 
-    if (!valor || !boletoVencimento.value) {
+    const origem = modal.querySelector("[name='origem']")?.value || null;
+    const valor = Number(modal.querySelector("[name='valor']")?.value);
+    const vencimento = modal.querySelector("[name='vencimento']")?.value;
+    const tipo_nf = modal.querySelector("input[name='tipo_nf']:checked")?.value || "NF";
+
+    if (!valor || !vencimento) {
         alert("Preencha valor e vencimento");
         return;
     }
@@ -238,9 +225,9 @@ async function salvarBoleto() {
     const payload = {
         nota_fiscal_id: nfId,
         tipo_nf,
-        origem: boletoOrigem.value || null,
+        origem,
         valor,
-        data_vencimento: boletoVencimento.value
+        data_vencimento: vencimento
     };
 
     const resp = boletoEditandoId
@@ -253,23 +240,17 @@ async function salvarBoleto() {
         return;
     }
 
-    fecharModal();
+    fecharModalBoleto();
     carregarBoletos();
 }
 
-window.editarBoleto = async function (id) {
-    const { data } = await supabase.from("boletos").select("*").eq("id", id).single();
+// ===============================================
+window.editarBoleto = async id => {
     boletoEditandoId = id;
-
-    boletoOrigem.value = data.origem || "";
-    boletoValor.value = data.valor;
-    boletoVencimento.value = data.data_vencimento;
-    document.querySelector(`input[value='${data.tipo_nf}']`).checked = true;
-
-    modalBoleto.style.display = "flex";
+    abrirModalBoleto();
 };
 
-window.excluirBoleto = async function (id) {
+window.excluirBoleto = async id => {
     if (!confirm("Excluir boleto?")) return;
     await supabase.from("boletos").delete().eq("id", id);
     carregarBoletos();
