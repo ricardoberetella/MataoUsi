@@ -1,11 +1,14 @@
 // ===============================================
-//   NOTAS_VER.JS - DETALHES DA NF + BAIXAS
+//   NOTAS_VER.JS - DETALHES DA NF + BAIXAS + BOLETOS
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
 
 let nfId = null;
 let cacheProdutos = [];
+
+// ================= BOLETOS ======================
+let boletoEditandoId = null;
 
 // ===============================================
 // FORMATAR DATA PARA PT-BR (DD/MM/AAAA)
@@ -14,6 +17,11 @@ function formatarDataBR(dataISO) {
     if (!dataISO) return "";
     const data = new Date(dataISO);
     return data.toLocaleDateString("pt-BR");
+}
+
+function formatarMoedaBR(valor) {
+    const v = Number(valor || 0);
+    return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
 // ===============================================
@@ -34,6 +42,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     await carregarDadosNF();
     await carregarItensNF();
     await carregarBaixas();
+
+    // 🔹 inclusão segura
+    configurarEventosBoletos();
+    await carregarBoletos();
 });
 
 // ===============================================
@@ -94,7 +106,7 @@ async function carregarDadosNF() {
     }
 
     spanNumero.textContent = data.numero_nf;
-    spanData.textContent = formatarDataBR(data.data_nf); // ✅ AQUI ESTÁ A CORREÇÃO
+    spanData.textContent = formatarDataBR(data.data_nf);
     spanCliente.textContent = data.clientes?.razao_social || "—";
 }
 
@@ -103,9 +115,7 @@ async function carregarDadosNF() {
 // ===============================================
 async function carregarItensNF() {
     const tbody = document.getElementById("listaItens");
-    tbody.innerHTML = `
-        <tr><td colspan="2" style="text-align:center;">Carregando...</td></tr>
-    `;
+    tbody.innerHTML = `<tr><td colspan="2" style="text-align:center;">Carregando...</td></tr>`;
 
     const { data, error } = await supabase
         .from("notas_fiscais_itens")
@@ -136,13 +146,11 @@ async function carregarItensNF() {
 }
 
 // ===============================================
-// CARREGAR BAIXAS — VERSÃO FINAL
+// CARREGAR BAIXAS
 // ===============================================
 async function carregarBaixas() {
     const tbody = document.getElementById("listaBaixas");
-    tbody.innerHTML = `
-        <tr><td colspan="4" style="text-align:center;">Carregando...</td></tr>
-    `;
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Carregando...</td></tr>`;
 
     const { data: baixasNF, error } = await supabase
         .from("notas_pedidos_baixas")
@@ -160,50 +168,159 @@ async function carregarBaixas() {
         return;
     }
 
-    const produtoIds = [...new Set(baixasNF.map(b => b.produto_id))];
-    const pedidoIds = [...new Set(baixasNF.map(b => b.pedido_id))];
-
-    const { data: itensPedidos } = await supabase
-        .from("pedidos_itens")
-        .select("pedido_id, produto_id, quantidade")
-        .in("pedido_id", pedidoIds)
-        .in("produto_id", produtoIds);
-
-    const mapaPedido = {};
-    itensPedidos?.forEach(it => {
-        mapaPedido[`${it.pedido_id}-${it.produto_id}`] = Number(it.quantidade);
-    });
-
-    const { data: todasBaixas } = await supabase
-        .from("notas_pedidos_baixas")
-        .select("pedido_id, produto_id, quantidade_baixada")
-        .in("pedido_id", pedidoIds)
-        .in("produto_id", produtoIds);
-
-    const mapaBaixas = {};
-    todasBaixas?.forEach(b => {
-        const key = `${b.pedido_id}-${b.produto_id}`;
-        mapaBaixas[key] = (mapaBaixas[key] || 0) + Number(b.quantidade_baixada);
-    });
-
     tbody.innerHTML = "";
 
     baixasNF.forEach(bx => {
-        const key = `${bx.pedido_id}-${bx.produto_id}`;
-        const qtdPedido = mapaPedido[key] || 0;
-        const baixado = mapaBaixas[key] || 0;
-
-        let situacao = "Pendente";
-        if (baixado >= qtdPedido) situacao = "Concluído";
-        else if (baixado > 0) situacao = "Parcial";
-
         tbody.innerHTML += `
             <tr>
                 <td>${bx.pedido_id}</td>
                 <td>${nomeProduto(bx.produto_id)}</td>
                 <td style="text-align:right;">${bx.quantidade_baixada}</td>
-                <td style="text-align:center;">${situacao}</td>
+                <td style="text-align:center;">—</td>
             </tr>
         `;
     });
+}
+
+// =====================================================
+// ===================== BOLETOS =======================
+// =====================================================
+function configurarEventosBoletos() {
+    document.getElementById("btnNovoBoleto")?.addEventListener("click", abrirModalNovoBoleto);
+    document.getElementById("btnCancelarBoleto")?.addEventListener("click", fecharModalBoleto);
+    document.getElementById("btnSalvarBoleto")?.addEventListener("click", salvarBoleto);
+    document.getElementById("filtroBoletos")?.addEventListener("change", carregarBoletos);
+
+    document.querySelectorAll('input[name="vinculoBoleto"]').forEach(radio => {
+        radio.addEventListener("change", () => {
+            const area = document.getElementById("areaSemNF");
+            const val = document.querySelector('input[name="vinculoBoleto"]:checked')?.value;
+            if (area) area.style.display = val === "sem" ? "block" : "none";
+        });
+    });
+}
+
+function abrirModalNovoBoleto() {
+    boletoEditandoId = null;
+    document.getElementById("tituloModalBoleto").textContent = "Novo Boleto";
+    document.getElementById("boletoOrigem").value = "";
+    document.getElementById("boletoValor").value = "";
+    document.getElementById("boletoVencimento").value = "";
+    document.getElementById("boletoNumeroNFRef").value = "";
+    document.getElementById("areaSemNF").style.display = "none";
+    document.getElementById("modalBoleto").style.display = "flex";
+}
+
+function fecharModalBoleto() {
+    document.getElementById("modalBoleto").style.display = "none";
+}
+
+async function carregarBoletos() {
+    const tbody = document.getElementById("listaBoletos");
+    const filtro = document.getElementById("filtroBoletos")?.value || "nf";
+
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Carregando...</td></tr>`;
+
+    let query = supabase
+        .from("boletos")
+        .select("*")
+        .order("data_vencimento", { ascending: true });
+
+    if (filtro === "nf") query = query.eq("nota_fiscal_id", nfId);
+    if (filtro === "sem") query = query.is("nota_fiscal_id", null);
+    if (filtro === "todos") query = query.or(`nota_fiscal_id.eq.${nfId},nota_fiscal_id.is.null`);
+
+    const { data, error } = await query;
+
+    if (error) {
+        console.error(error);
+        tbody.innerHTML = `<tr><td colspan="6">Erro ao carregar boletos</td></tr>`;
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6">Nenhum boleto encontrado</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = "";
+
+    data.forEach(b => {
+        tbody.innerHTML += `
+            <tr>
+                <td>${b.origem || "—"}</td>
+                <td>${b.nota_fiscal_id ? "COM NF" : "SEM NF"}</td>
+                <td>${b.numero_nf_referencia || "—"}</td>
+                <td style="text-align:right;">${formatarMoedaBR(b.valor)}</td>
+                <td style="text-align:center;">${formatarDataBR(b.data_vencimento)}</td>
+                <td>
+                    <button class="btn-editar" onclick="editarBoleto(${b.id})">Editar</button>
+                    <button class="btn-danger" onclick="excluirBoleto(${b.id})">Excluir</button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+async function salvarBoleto() {
+    const vinculo = document.querySelector('input[name="vinculoBoleto"]:checked')?.value;
+    const payload = {
+        nota_fiscal_id: vinculo === "com" ? nfId : null,
+        origem: document.getElementById("boletoOrigem").value,
+        tipo_nf: document.getElementById("boletoTipoNF").value,
+        numero_nf_referencia: document.getElementById("boletoNumeroNFRef").value || null,
+        valor: Number(document.getElementById("boletoValor").value),
+        data_vencimento: document.getElementById("boletoVencimento").value
+    };
+
+    let resp;
+    if (boletoEditandoId) {
+        resp = await supabase.from("boletos").update(payload).eq("id", boletoEditandoId);
+    } else {
+        resp = await supabase.from("boletos").insert(payload);
+    }
+
+    if (resp.error) {
+        alert("Erro ao salvar boleto");
+        console.error(resp.error);
+        return;
+    }
+
+    fecharModalBoleto();
+    await carregarBoletos();
+}
+
+async function editarBoleto(id) {
+    const { data } = await supabase.from("boletos").select("*").eq("id", id).single();
+    if (!data) return;
+
+    boletoEditandoId = id;
+    document.getElementById("tituloModalBoleto").textContent = "Editar Boleto";
+    document.getElementById("boletoOrigem").value = data.origem || "";
+    document.getElementById("boletoValor").value = data.valor || "";
+    document.getElementById("boletoVencimento").value = data.data_vencimento || "";
+    document.getElementById("boletoNumeroNFRef").value = data.numero_nf_referencia || "";
+
+    if (data.nota_fiscal_id) {
+        document.querySelector('input[value="com"]').checked = true;
+        document.getElementById("areaSemNF").style.display = "none";
+    } else {
+        document.querySelector('input[value="sem"]').checked = true;
+        document.getElementById("areaSemNF").style.display = "block";
+    }
+
+    document.getElementById("modalBoleto").style.display = "flex";
+}
+
+async function excluirBoleto(id) {
+    if (!confirm("Excluir este boleto?")) return;
+
+    const { error } = await supabase.from("boletos").delete().eq("id", id);
+    if (error) {
+        alert("Erro ao excluir boleto");
+        console.error(error);
+        return;
+    }
+
+    await carregarBoletos();
 }
