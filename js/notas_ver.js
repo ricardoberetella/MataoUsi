@@ -33,20 +33,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     nfId = Number(idUrl);
 
-    // MAPEAR ELEMENTOS DO MODAL
+    // MODAL
     modalBoleto = document.getElementById("modalBoleto");
     boletoOrigem = document.getElementById("boletoOrigem");
     boletoValor = document.getElementById("boletoValor");
     boletoVencimento = document.getElementById("boletoVencimento");
 
-    // BOTÕES
-    const btnNovo = document.getElementById("btnNovoBoleto");
-    const btnCancelar = document.getElementById("btnCancelarBoleto");
-    const btnSalvar = document.getElementById("btnSalvarBoleto");
-
-    if (btnNovo) btnNovo.onclick = abrirModalNovo;
-    if (btnCancelar) btnCancelar.onclick = fecharModal;
-    if (btnSalvar) btnSalvar.onclick = salvarBoleto;
+    document.getElementById("btnNovoBoleto")?.addEventListener("click", abrirModalNovo);
+    document.getElementById("btnCancelarBoleto")?.addEventListener("click", fecharModal);
+    document.getElementById("btnSalvarBoleto")?.addEventListener("click", salvarBoleto);
 
     await carregarProdutosCache();
     await carregarDadosNF();
@@ -75,20 +70,17 @@ function nomeProduto(id) {
 // DADOS DA NF
 // ===============================================
 async function carregarDadosNF() {
-    const { data, error } = await supabase
+    const { data } = await supabase
         .from("notas_fiscais")
         .select("numero_nf, data_nf, clientes(razao_social)")
         .eq("id", nfId)
         .single();
 
-    if (error) {
-        console.error(error);
-        return;
-    }
+    if (!data) return;
 
-    document.getElementById("nfNumero").textContent = data.numero_nf;
-    document.getElementById("nfData").textContent = formatarDataBR(data.data_nf);
-    document.getElementById("nfCliente").textContent = data.clientes?.razao_social || "—";
+    nfNumero.textContent = data.numero_nf;
+    nfData.textContent = formatarDataBR(data.data_nf);
+    nfCliente.textContent = data.clientes?.razao_social || "—";
 }
 
 // ===============================================
@@ -118,7 +110,7 @@ async function carregarItensNF() {
 }
 
 // ===============================================
-// BAIXAS (AGRUPADAS)
+// BAIXAS — MOSTRAR NUMERO_NF CENTRALIZADO
 // ===============================================
 async function carregarBaixas() {
     const tbody = document.getElementById("listaBaixas");
@@ -126,7 +118,7 @@ async function carregarBaixas() {
 
     const { data: baixas } = await supabase
         .from("notas_pedidos_baixas")
-        .select("pedido_id, produto_id, quantidade_baixada")
+        .select("nf_id, produto_id, quantidade_baixada")
         .eq("nf_id", nfId);
 
     if (!baixas || baixas.length === 0) {
@@ -134,13 +126,22 @@ async function carregarBaixas() {
         return;
     }
 
+    // Buscar numero_nf
+    const { data: notas } = await supabase
+        .from("notas_fiscais")
+        .select("id, numero_nf")
+        .in("id", [...new Set(baixas.map(b => b.nf_id))]);
+
+    const mapaNF = {};
+    notas?.forEach(n => mapaNF[n.id] = n.numero_nf);
+
     const mapa = {};
 
     baixas.forEach(b => {
-        const key = `${b.pedido_id}-${b.produto_id}`;
+        const key = `${b.nf_id}-${b.produto_id}`;
         if (!mapa[key]) {
             mapa[key] = {
-                pedido_id: b.pedido_id,
+                nf: mapaNF[b.nf_id] || "—",
                 produto_id: b.produto_id,
                 baixado: 0
             };
@@ -148,37 +149,19 @@ async function carregarBaixas() {
         mapa[key].baixado += b.quantidade_baixada;
     });
 
-    const pedidoIds = [...new Set(baixas.map(b => b.pedido_id))];
-    const produtoIds = [...new Set(baixas.map(b => b.produto_id))];
-
-    const { data: itensPedidos } = await supabase
-        .from("pedidos_itens")
-        .select("pedido_id, produto_id, quantidade")
-        .in("pedido_id", pedidoIds)
-        .in("produto_id", produtoIds);
-
     Object.values(mapa).forEach(reg => {
-        const item = itensPedidos?.find(
-            i => i.pedido_id === reg.pedido_id && i.produto_id === reg.produto_id
-        );
-
-        const total = item?.quantidade || 0;
-        let situacao = "Pendente";
-        if (reg.baixado >= total && total > 0) situacao = "Concluído";
-        else if (reg.baixado > 0) situacao = "Parcial";
-
         tbody.innerHTML += `
             <tr>
-                <td>${reg.pedido_id}</td>
+                <td style="text-align:center;font-weight:600">${reg.nf}</td>
                 <td>${nomeProduto(reg.produto_id)}</td>
                 <td style="text-align:right">${reg.baixado}</td>
-                <td>${situacao}</td>
+                <td>Concluído</td>
             </tr>`;
     });
 }
 
 // ===============================================
-// BOLETOS
+// BOLETOS (SEM ALTERAÇÃO)
 // ===============================================
 async function carregarBoletos() {
     const tbody = document.getElementById("listaBoletos");
@@ -211,7 +194,7 @@ async function carregarBoletos() {
 }
 
 // ===============================================
-// MODAL BOLETO
+// MODAL BOLETO (SEM ALTERAÇÃO)
 // ===============================================
 function abrirModalNovo() {
     boletoEditandoId = null;
@@ -248,7 +231,6 @@ async function salvarBoleto() {
         : await supabase.from("boletos").insert(payload);
 
     if (resp.error) {
-        console.error(resp.error);
         alert("Erro ao salvar boleto");
         return;
     }
@@ -257,13 +239,8 @@ async function salvarBoleto() {
     carregarBoletos();
 }
 
-window.editarBoleto = async function (id) {
-    const { data } = await supabase
-        .from("boletos")
-        .select("*")
-        .eq("id", id)
-        .single();
-
+window.editarBoleto = async id => {
+    const { data } = await supabase.from("boletos").select("*").eq("id", id).single();
     boletoEditandoId = id;
 
     boletoOrigem.value = data.origem || "";
@@ -274,7 +251,7 @@ window.editarBoleto = async function (id) {
     modalBoleto.style.display = "flex";
 };
 
-window.excluirBoleto = async function (id) {
+window.excluirBoleto = async id => {
     if (!confirm("Excluir boleto?")) return;
     await supabase.from("boletos").delete().eq("id", id);
     carregarBoletos();
