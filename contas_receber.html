@@ -17,8 +17,27 @@
 .tabela-deslocada table {
     margin-left: 0px; /* ajuste fino */
 }
-
+/* desloca a tabela para alinhar com o card */
+.tabela-deslocada table {
+    margin-left: 24px;
 }
+
+/* força alinhamento REAL entre cabeçalho e dados */
+.tabela-deslocada table th,
+.tabela-deslocada table td {
+    text-align: center !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+}
+
+/* FIXA a largura da coluna NF (SOLUÇÃO DEFINITIVA) */
+.tabela-deslocada table th:first-child,
+.tabela-deslocada table td:first-child {
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+}
+
     </style>
 </head>
 
