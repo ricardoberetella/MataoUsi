@@ -1,6 +1,5 @@
 // ===============================================
-// CONTAS_RECEBER.JS — ALINHADO AO CABEÇALHO
-// NF | VALOR | VENCIMENTO | STATUS | AÇÕES
+// CONTAS_RECEBER.JS — NF REAL + ALINHAMENTO
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -38,10 +37,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function carregarDados() {
     const { data, error } = await supabase
         .from("contas_receber")
-        .select("id, nota_fiscal_id, valor, data_vencimento, status")
+        .select(`
+            id,
+            valor,
+            data_vencimento,
+            status,
+            notas_fiscais (
+                numero_nf
+            )
+        `)
         .order("data_vencimento");
 
     if (error) {
+        console.error(error);
         alert("Erro ao carregar contas a receber");
         return;
     }
@@ -81,11 +89,11 @@ function renderizarTabela() {
             <tr>
                 <!-- NF -->
                 <td style="text-align:center">
-                    ${r.nota_fiscal_id || "—"}
+                    ${r.notas_fiscais?.numero_nf || "—"}
                 </td>
 
                 <!-- VALOR -->
-                <td style="text-align:right">
+                <td style="text-align:center">
                     ${formatarMoeda(r.valor)}
                 </td>
 
