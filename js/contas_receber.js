@@ -1,6 +1,5 @@
 // ===============================================
-// CONTAS_RECEBER.JS — ORDEM CORRETA DAS COLUNAS
-// NF | VALOR | VENCIMENTO | STATUS | AÇÕES
+// CONTAS_RECEBER.JS — CORRIGIDO
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -38,7 +37,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function carregarDados() {
     const { data, error } = await supabase
         .from("contas_receber")
-        .select("id, nota_fiscal_id, valor, data_vencimento, status")
+        .select("*")
         .order("data_vencimento");
 
     if (error) {
@@ -62,6 +61,7 @@ function renderizarTabela() {
     const statusFiltro = document.getElementById("filtroStatus").value;
     const vencimentoFiltro = document.getElementById("filtroVencimento").value;
 
+    let total = 0;
     const hoje = new Date().toISOString().split("T")[0];
 
     registros.forEach(r => {
@@ -74,30 +74,16 @@ function renderizarTabela() {
         if (statusFiltro && statusFiltro !== statusCalculado) return;
         if (vencimentoFiltro && r.data_vencimento > vencimentoFiltro) return;
 
+        total += Number(r.valor);
+
+        // 🔥 ORDEM CORRETA DAS COLUNAS
         tbody.innerHTML += `
             <tr>
-                <!-- NF -->
-                <td style="text-align:center">
-                    ${r.nota_fiscal_id || "—"}
-                </td>
-
-                <!-- VALOR -->
-                <td style="text-align:right">
-                    ${formatarMoeda(r.valor)}
-                </td>
-
-                <!-- VENCIMENTO -->
-                <td style="text-align:center">
-                    ${formatarDataBR(r.data_vencimento)}
-                </td>
-
-                <!-- STATUS -->
-                <td style="text-align:center">
-                    ${statusCalculado}
-                </td>
-
-                <!-- AÇÕES -->
-                <td style="text-align:center">
+                <td>${r.descricao || "—"}</td>
+                <td>${formatarMoeda(r.valor)}</td>
+                <td>${formatarDataBR(r.data_vencimento)}</td>
+                <td>${statusCalculado}</td>
+                <td>
                     ${
                         roleUsuario === "admin" && r.status === "ABERTO"
                             ? `<button class="btn-verde" onclick="marcarPago(${r.id})">Pagar</button>`
@@ -107,6 +93,9 @@ function renderizarTabela() {
             </tr>
         `;
     });
+
+    document.getElementById("totalReceber").textContent =
+        formatarMoeda(total);
 }
 
 // ===============================================
