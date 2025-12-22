@@ -1,5 +1,5 @@
 // ===============================================
-// CONTAS_RECEBER.JS — NF REAL + ALINHAMENTO
+// CONTAS_RECEBER.JS — BOLETOS + NF REAL (SEM JOIN)
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -34,28 +34,61 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // ===============================================
-
+// CARREGAR DADOS (SEM JOIN)
+// ===============================================
 async function carregarDados() {
-    const { data, error } = await supabase
+
+    // 1️⃣ BOLETOS
+    const { data: boletos, error: errBoletos } = await supabase
         .from("boletos")
-        .select(`
-            id,
-            valor,
-            data_vencimento,
-            status,
-            notas_fiscais (
-                numero_nf
-            )
-        `)
+        .select("id, valor, data_vencimento, status, nota_fiscal_id")
         .order("data_vencimento");
 
-    if (error) {
-        console.error(error);
+    if (errBoletos) {
+        console.error(errBoletos);
         alert("Erro ao carregar contas a receber");
         return;
     }
 
-    registros = data || [];
+    if (!boletos || boletos.length === 0) {
+        registros = [];
+        return;
+    }
+
+    // 2️⃣ NFs RELACIONADAS
+    const nfIds = [...new Set(
+        boletos
+            .map(b => b.nota_fiscal_id)
+            .filter(id => id !== null)
+    )];
+
+    let mapaNF = {};
+
+    if (nfIds.length > 0) {
+        const { data: nfs, error: errNf } = await supabase
+            .from("notas_fiscais")
+            .select("id, numero_nf")
+            .in("id", nfIds);
+
+        if (errNf) {
+            console.error(errNf);
+            alert("Erro ao carregar notas fiscais");
+            return;
+        }
+
+        nfs.forEach(nf => {
+            mapaNF[nf.id] = nf.numero_nf;
+        });
+    }
+
+    // 3️⃣ MONTA REGISTROS FINAIS
+    registros = boletos.map(b => ({
+        id: b.id,
+        valor: b.valor,
+        data_vencimento: b.data_vencimento,
+        status: b.status,
+        numero_nf: mapaNF[b.nota_fiscal_id] || "—"
+    }));
 }
 
 // ===============================================
@@ -88,27 +121,10 @@ function renderizarTabela() {
 
         tbody.innerHTML += `
             <tr>
-                <!-- NF -->
-                <td style="text-align:center">
-                    ${r.notas_fiscais?.numero_nf || "—"}
-                </td>
-
-                <!-- VALOR -->
-                <td style="text-align:center">
-                    ${formatarMoeda(r.valor)}
-                </td>
-
-                <!-- VENCIMENTO -->
-                <td style="text-align:center">
-                    ${formatarDataBR(r.data_vencimento)}
-                </td>
-
-                <!-- STATUS -->
-                <td style="text-align:center">
-                    ${statusCalculado}
-                </td>
-
-                <!-- AÇÕES -->
+                <td style="text-align:center">${r.numero_nf}</td>
+                <td style="text-align:center">${formatarMoeda(r.valor)}</td>
+                <td style="text-align:center">${formatarDataBR(r.data_vencimento)}</td>
+                <td style="text-align:center">${statusCalculado}</td>
                 <td style="text-align:center">
                     ${
                         roleUsuario === "admin" && r.status === "ABERTO"
@@ -125,13 +141,15 @@ function renderizarTabela() {
 }
 
 // ===============================================
+// MARCAR COMO PAGO (AGORA NA TABELA CORRETA)
+// ===============================================
 window.marcarPago = async function (id) {
     if (roleUsuario !== "admin") return;
 
     if (!confirm("Marcar como pago?")) return;
 
     const { error } = await supabase
-        .from("contas_receber")
+        .from("boletos")
         .update({
             status: "PAGO",
             data_pagamento: new Date().toISOString().split("T")[0]
@@ -139,6 +157,7 @@ window.marcarPago = async function (id) {
         .eq("id", id);
 
     if (error) {
+        console.error(error);
         alert("Erro ao marcar como pago");
         return;
     }
