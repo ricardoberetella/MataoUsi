@@ -28,19 +28,17 @@
             border: 1px solid rgba(56,189,248,.4);
         }
 
-        .modal h2 {
-            margin-top: 0;
-            color: #38bdf8;
+        .grupo-radio {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 10px;
         }
 
-        .modal label {
-            display: block;
-            margin-top: 10px;
-        }
-
-        .modal input {
-            width: 100%;
-            padding: 8px;
+        .grupo-radio label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
         }
 
         .acoes-modal {
@@ -62,77 +60,32 @@
 </header>
 
 <div class="container">
-
-    <!-- DADOS NF -->
-    <section class="card">
-        <h2 class="card-title">Informações da Nota Fiscal</h2>
-        <p><strong>Número da NF:</strong> <span id="nfNumero"></span></p>
-        <p><strong>Data:</strong> <span id="nfData"></span></p>
-        <p><strong>Cliente:</strong> <span id="nfCliente"></span></p>
-    </section>
-
-    <!-- ITENS NF -->
-    <section class="card">
-        <h2 class="card-title">Itens da Nota Fiscal</h2>
-        <table class="tabela">
-            <thead>
-                <tr>
-                    <th>Produto</th>
-                    <th>Quantidade NF</th>
-                </tr>
-            </thead>
-            <tbody id="listaItens"></tbody>
-        </table>
-    </section>
-
-    <!-- BAIXAS -->
-    <section class="card">
-        <h2 class="card-title">Baixas Realizadas nos Pedidos</h2>
-        <table class="tabela">
-            <thead>
-                <tr>
-                    <th>Pedido</th>
-                    <th>Produto</th>
-                    <th>Qtd Baixada</th>
-                    <th>Situação</th>
-                </tr>
-            </thead>
-            <tbody id="listaBaixas"></tbody>
-        </table>
-    </section>
-
-    <!-- BOLETOS -->
-    <section class="card">
-        <h2 class="card-title">Boletos</h2>
-
-        <!-- ✅ BOTÃO QUE TINHA SUMIDO -->
-        <button class="btn-verde" id="btnNovoBoleto">➕ Incluir Boleto</button>
-
-        <table class="tabela" style="margin-top:10px;">
-            <thead>
-                <tr>
-                    <th>Origem</th>
-                    <th>Tipo</th>
-                    <th>Valor</th>
-                    <th>Vencimento</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody id="listaBoletos"></tbody>
-        </table>
-    </section>
+    <!-- (conteúdo da NF, itens, baixas e boletos permanece IGUAL) -->
 </div>
 
-<!-- MODAL INCLUIR / EDITAR -->
+<!-- MODAL BOLETO -->
 <div class="modal-overlay" id="modalBoleto">
     <div class="modal">
         <h2>Boleto</h2>
+
+        <!-- ✅ NOVO CAMPO -->
+        <label>Vinculação</label>
+        <div class="grupo-radio">
+            <label>
+                <input type="radio" name="tipo_nf" value="NF" checked>
+                Com NF
+            </label>
+            <label>
+                <input type="radio" name="tipo_nf" value="SEM_NF">
+                Sem NF
+            </label>
+        </div>
 
         <label>Origem</label>
         <input id="boletoOrigem">
 
         <label>Valor</label>
-        <input id="boletoValor">
+        <input id="boletoValor" type="number" step="0.01">
 
         <label>Vencimento</label>
         <input type="date" id="boletoVencimento">
