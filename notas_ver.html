@@ -42,6 +42,24 @@
             gap: 10px;
             justify-content: flex-end;
         }
+
+        /* LINHA COM NF / SEM NF */
+        .linha-tipo-nf {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .opcao-nf {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border: 1px solid #1e293b;
+            border-radius: 6px;
+            cursor: pointer;
+            background: #020617;
+            color: #e5e7eb;
+        }
     </style>
 </head>
 
@@ -118,6 +136,19 @@
     <div class="modal-box">
         <h3>Boleto</h3>
 
+        <!-- COM NF / SEM NF (LINHA ÚNICA) -->
+        <div class="linha-tipo-nf">
+            <label class="opcao-nf">
+                <input type="radio" name="tipo_nf" value="NF" checked>
+                <span>Com NF</span>
+            </label>
+
+            <label class="opcao-nf">
+                <input type="radio" name="tipo_nf" value="SEM_NF">
+                <span>Sem NF</span>
+            </label>
+        </div>
+
         <label>Origem</label>
         <input id="boletoOrigem" type="text">
 
@@ -126,11 +157,6 @@
 
         <label>Vencimento</label>
         <input id="boletoVencimento" type="date">
-
-        <div>
-            <label><input type="radio" name="tipo_nf" value="NF" checked> Com NF</label>
-            <label><input type="radio" name="tipo_nf" value="SEM_NF"> Sem NF</label>
-        </div>
 
         <div class="modal-actions">
             <button id="btnCancelarBoleto" class="btn-cinza">Cancelar</button>
