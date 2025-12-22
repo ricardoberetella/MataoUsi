@@ -6,39 +6,6 @@
 
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/pedidos_lista.css">
-
-    <style>
-        /* AJUSTE FINO APENAS DA TABELA DESTA TELA */
-        .tabela-deslocada {
-            padding-left: 0px; /* ajuste visual */
-            
-        }
-        /* desloca a tabela inteira mantendo alinhamento */
-.tabela-deslocada table {
-    margin-left: 0px; /* ajuste fino */
-}
-/* desloca a tabela para alinhar com o card */
-.tabela-deslocada table {
-    margin-left: 24px;
-}
-
-/* força alinhamento REAL entre cabeçalho e dados */
-.tabela-deslocada table th,
-.tabela-deslocada table td {
-    text-align: center !important;
-    padding-left: 12px !important;
-    padding-right: 12px !important;
-}
-
-/* FIXA a largura da coluna NF (SOLUÇÃO DEFINITIVA) */
-.tabela-deslocada table th:first-child,
-.tabela-deslocada table td:first-child {
-    width: 80px;
-    min-width: 80px;
-    max-width: 80px;
-}
-
-    </style>
 </head>
 
 <body>
@@ -74,33 +41,58 @@
         </div>
 
         <button id="btnFiltrar" class="btn-azul">Filtrar</button>
+
+        <!-- BOTÃO MANUAL (ADMIN) -->
+        <button id="btnNovoManual" class="btn-verde" style="margin-left:10px">
+            + Lançamento Manual
+        </button>
     </section>
 
     <!-- TABELA -->
     <section class="card">
         <h2 class="card-title">Lançamentos</h2>
 
-        <!-- 👇 wrapper somente para deslocamento -->
-        <div class="tabela-deslocada">
-            <table>
-                <thead>
-                    <tr>
-                        <th>NF</th>
-                        <th>Valor</th>
-                        <th>Vencimento</th>
-                        <th>Status</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody id="listaReceber"></tbody>
-            </table>
-        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>NF</th>
+                    <th>Valor</th>
+                    <th>Vencimento</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="listaReceber"></tbody>
+        </table>
 
         <div style="margin-top:10px; font-weight:bold">
             Total filtrado: <span id="totalReceber">R$ 0,00</span>
         </div>
     </section>
+</div>
 
+<!-- MODAL LANÇAMENTO MANUAL -->
+<div id="modalManual" class="modal" style="display:none">
+    <div class="modal-content">
+        <h3>Lançamento Manual</h3>
+
+        <label>NF (antiga)</label>
+        <input type="text" id="manualNF" placeholder="Ex: 8890">
+
+        <label>Descrição</label>
+        <input type="text" id="manualDescricao" placeholder="Opcional">
+
+        <label>Valor</label>
+        <input type="number" id="manualValor" step="0.01">
+
+        <label>Vencimento</label>
+        <input type="date" id="manualVencimento">
+
+        <div style="margin-top:15px; text-align:right">
+            <button id="btnCancelarManual" class="btn-vermelho">Cancelar</button>
+            <button id="btnSalvarManual" class="btn-verde">Salvar</button>
+        </div>
+    </div>
 </div>
 
 <script type="module" src="js/contas_receber.js"></script>
