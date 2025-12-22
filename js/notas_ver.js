@@ -21,10 +21,18 @@ function formatarMoedaBR(valor) {
     });
 }
 
-// CONVERSÃO CORRETA 15998,00 → 15998.00
+// 15998,00 -> 15998.00
 function parseValor(valorStr) {
     if (!valorStr) return null;
     return Number(valorStr.replace(/\./g, "").replace(",", "."));
+}
+
+// 09/01/2026 -> 2026-01-09
+function parseDataISO(dataStr) {
+    if (!dataStr) return null;
+    if (dataStr.includes("-")) return dataStr; // já ISO
+    const [d, m, a] = dataStr.split("/");
+    return `${a}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
 }
 
 // ===============================================
@@ -176,24 +184,30 @@ async function carregarBoletos() {
 
 // ===============================================
 async function salvarBoleto() {
-    const valorRaw = document.getElementById("boletoValor").value;
-    const valor = parseValor(valorRaw);
+    const valor = parseValor(document.getElementById("boletoValor").value);
+    const dataISO = parseDataISO(document.getElementById("boletoVencimento").value);
+    const vinculo = document.querySelector('input[name="vinculoBoleto"]:checked').value;
 
     if (!valor || isNaN(valor)) {
         alert("Valor inválido.");
         return;
     }
 
+    if (!dataISO) {
+        alert("Data de vencimento inválida.");
+        return;
+    }
+
     const payload = {
-        nota_fiscal_id:
-            document.querySelector('input[name="vinculoBoleto"]:checked').value === "com"
-                ? nfId
-                : null,
+        nota_fiscal_id: vinculo === "com" ? nfId : null,
         origem: document.getElementById("boletoOrigem").value,
-        tipo_nf: document.getElementById("boletoTipoNF").value,
-        numero_nf_referencia: document.getElementById("boletoNumeroNFRef").value || null,
+        tipo_nf: vinculo === "com" ? "NF" : document.getElementById("boletoTipoNF").value,
+        numero_nf_referencia:
+            vinculo === "com"
+                ? null
+                : document.getElementById("boletoNumeroNFRef").value || null,
         valor: valor,
-        data_vencimento: document.getElementById("boletoVencimento").value
+        data_vencimento: dataISO
     };
 
     const resp = boletoEditandoId
