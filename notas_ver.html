@@ -1,48 +1,82 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Detalhes da Nota Fiscal</title>
+<meta charset="UTF-8">
+<title>Detalhes da Nota Fiscal</title>
 
-    <link rel="stylesheet" href="css/global.css">
-    <link rel="stylesheet" href="css/pedidos_lista.css">
+<link rel="stylesheet" href="css/global.css">
+<link rel="stylesheet" href="css/pedidos_lista.css">
 
-    <style>
-        /* MODAL BOLETO */
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.75);
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
-        .modal-box {
-            background: #0b1220;
-            padding: 20px;
-            border-radius: 10px;
-            width: 360px;
-            border: 1px solid #38bdf8;
-        }
-        .modal-box h3 {
-            margin-top: 0;
-            color: #38bdf8;
-        }
-        .modal-box input {
-            width: 100%;
-            margin-bottom: 10px;
-            padding: 8px;
-            background: #020617;
-            border: 1px solid #1e293b;
-            color: #e5e7eb;
-        }
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
-    </style>
+<style>
+/* ================= MODAL BOLETO ================= */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.75);
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.modal-box {
+    background: #0b1220;
+    border: 1px solid #38bdf8;
+    border-radius: 10px;
+    padding: 20px;
+    width: 380px;
+}
+
+/* TOGGLE VISUAL */
+.toggle-nf {
+    display: flex;
+    border: 1px solid #1e293b;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.toggle-nf div {
+    flex: 1;
+    text-align: center;
+    padding: 8px;
+    cursor: pointer;
+    background: #020617;
+    color: #9ca3af;
+    font-weight: 600;
+}
+
+.toggle-nf div.ativo {
+    background: #38bdf8;
+    color: #020617;
+}
+
+/* ESCONDER RADIOS ORIGINAIS */
+.radio-hidden {
+    display: none;
+}
+
+.modal-box label {
+    font-size: 13px;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.modal-box input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    background: #020617;
+    border: 1px solid #1e293b;
+    color: #e5e7eb;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+</style>
 </head>
 
 <body>
@@ -54,69 +88,45 @@
 
 <div class="container">
 
-    <!-- DADOS DA NF -->
-    <section class="card">
-        <h2>Informações da Nota Fiscal</h2>
-        <p><strong>Número:</strong> <span id="nfNumero"></span></p>
-        <p><strong>Data:</strong> <span id="nfData"></span></p>
-        <p><strong>Cliente:</strong> <span id="nfCliente"></span></p>
-    </section>
+<section class="card">
+    <h2>Boletos</h2>
 
-    <!-- ITENS -->
-    <section class="card">
-        <h2>Itens da Nota Fiscal</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Produto</th>
-                    <th>Quantidade NF</th>
-                </tr>
-            </thead>
-            <tbody id="listaItens"></tbody>
-        </table>
-    </section>
+    <button id="btnNovoBoleto" class="btn-verde">➕ Incluir Boleto</button>
 
-    <!-- BAIXAS -->
-    <section class="card">
-        <h2>Baixas Realizadas nos Pedidos</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Pedido</th>
-                    <th>Produto</th>
-                    <th>Qtd Baixada</th>
-                    <th>Situação</th>
-                </tr>
-            </thead>
-            <tbody id="listaBaixas"></tbody>
-        </table>
-    </section>
-
-    <!-- BOLETOS -->
-    <section class="card">
-        <h2>Boletos</h2>
-
-        <button id="btnNovoBoleto" class="btn-verde">➕ Incluir Boleto</button>
-
-        <table>
-            <thead>
-                <tr>
-                    <th>Vinculação</th>
-                    <th>Origem</th>
-                    <th>Valor</th>
-                    <th>Vencimento</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody id="listaBoletos"></tbody>
-        </table>
-    </section>
+    <table>
+        <thead>
+            <tr>
+                <th>Vinculação</th>
+                <th>Origem</th>
+                <th>Valor</th>
+                <th>Vencimento</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="listaBoletos"></tbody>
+    </table>
+</section>
 </div>
 
 <!-- MODAL BOLETO -->
 <div class="modal" id="modalBoleto">
     <div class="modal-box">
-        <h3>Boleto</h3>
+
+        <!-- TOGGLE VISUAL -->
+        <div class="toggle-nf">
+            <div id="toggleComNF" class="ativo">Com NF</div>
+            <div id="toggleSemNF">Sem NF</div>
+        </div>
+
+        <!-- RADIOS ORIGINAIS (MANTIDOS PARA O JS) -->
+        <div class="radio-hidden">
+            <label>
+                <input type="radio" name="tipo_nf" value="NF" checked>
+            </label>
+            <label>
+                <input type="radio" name="tipo_nf" value="SEM_NF">
+            </label>
+        </div>
 
         <label>Origem</label>
         <input id="boletoOrigem" type="text">
@@ -127,17 +137,39 @@
         <label>Vencimento</label>
         <input id="boletoVencimento" type="date">
 
-        <div>
-            <label><input type="radio" name="tipo_nf" value="NF" checked> Com NF</label>
-            <label><input type="radio" name="tipo_nf" value="SEM_NF"> Sem NF</label>
-        </div>
-
         <div class="modal-actions">
             <button id="btnCancelarBoleto" class="btn-cinza">Cancelar</button>
             <button id="btnSalvarBoleto" class="btn-azul">Salvar</button>
         </div>
     </div>
 </div>
+
+<script type="module">
+/* ===============================
+   TOGGLE VISUAL → RADIO REAL
+   (NÃO MEXE NO JS PRINCIPAL)
+================================ */
+const toggleComNF = document.getElementById("toggleComNF");
+const toggleSemNF = document.getElementById("toggleSemNF");
+
+const radioNF = document.querySelector("input[name='tipo_nf'][value='NF']");
+const radioSemNF = document.querySelector("input[name='tipo_nf'][value='SEM_NF']");
+
+function selecionar(tipo) {
+    if (tipo === "NF") {
+        radioNF.checked = true;
+        toggleComNF.classList.add("ativo");
+        toggleSemNF.classList.remove("ativo");
+    } else {
+        radioSemNF.checked = true;
+        toggleSemNF.classList.add("ativo");
+        toggleComNF.classList.remove("ativo");
+    }
+}
+
+toggleComNF.onclick = () => selecionar("NF");
+toggleSemNF.onclick = () => selecionar("SEM_NF");
+</script>
 
 <script type="module" src="js/notas_ver.js"></script>
 </body>
