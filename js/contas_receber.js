@@ -34,9 +34,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // ===============================================
+
 async function carregarDados() {
     const { data, error } = await supabase
-        .from("contas_receber")
+        .from("boletos")
         .select(`
             id,
             valor,
