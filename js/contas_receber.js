@@ -1,5 +1,6 @@
 // ===============================================
-// CONTAS_RECEBER.JS — CORRIGIDO
+// CONTAS_RECEBER.JS — ALINHADO AO CABEÇALHO
+// NF | VALOR | VENCIMENTO | STATUS | AÇÕES
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -37,7 +38,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function carregarDados() {
     const { data, error } = await supabase
         .from("contas_receber")
-        .select("*")
+        .select("id, nota_fiscal_id, valor, data_vencimento, status")
         .order("data_vencimento");
 
     if (error) {
@@ -76,14 +77,30 @@ function renderizarTabela() {
 
         total += Number(r.valor);
 
-        // 🔥 ORDEM CORRETA DAS COLUNAS
         tbody.innerHTML += `
             <tr>
-                <td>${r.descricao || "—"}</td>
-                <td>${formatarMoeda(r.valor)}</td>
-                <td>${formatarDataBR(r.data_vencimento)}</td>
-                <td>${statusCalculado}</td>
-                <td>
+                <!-- NF -->
+                <td style="text-align:center">
+                    ${r.nota_fiscal_id || "—"}
+                </td>
+
+                <!-- VALOR -->
+                <td style="text-align:right">
+                    ${formatarMoeda(r.valor)}
+                </td>
+
+                <!-- VENCIMENTO -->
+                <td style="text-align:center">
+                    ${formatarDataBR(r.data_vencimento)}
+                </td>
+
+                <!-- STATUS -->
+                <td style="text-align:center">
+                    ${statusCalculado}
+                </td>
+
+                <!-- AÇÕES -->
+                <td style="text-align:center">
                     ${
                         roleUsuario === "admin" && r.status === "ABERTO"
                             ? `<button class="btn-verde" onclick="marcarPago(${r.id})">Pagar</button>`
