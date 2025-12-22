@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Contas a Receber</title>
+
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/pedidos_lista.css">
+</head>
+
+<body>
+
+<header class="topbar">
+    <a href="dashboard.html">
+        <button class="btn-voltar">⬅ Voltar</button>
+    </a>
+    <h1 class="topbar-title">Contas a Receber</h1>
+</header>
+
+<div class="container">
+
+    <!-- FILTROS -->
+    <section class="card">
+        <h2 class="card-title">Filtros</h2>
+
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Status</label>
+                <select id="filtroStatus">
+                    <option value="">Todos</option>
+                    <option value="ABERTO">Em aberto</option>
+                    <option value="VENCIDO">Vencido</option>
+                    <option value="PAGO">Pago</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Vencimento até</label>
+                <input type="date" id="filtroVencimento">
+            </div>
+        </div>
+
+        <button id="btnFiltrar" class="btn-azul">Filtrar</button>
+    </section>
+
+    <!-- TABELA -->
+    <section class="card">
+        <h2 class="card-title">Lançamentos</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Origem</th>
+                    <th>NF</th>
+                    <th>Descrição</th>
+                    <th>Valor</th>
+                    <th>Vencimento</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="listaReceber"></tbody>
+        </table>
+
+        <div style="margin-top:10px; font-weight:bold">
+            Total filtrado: <span id="totalReceber">R$ 0,00</span>
+        </div>
+    </section>
+
+</div>
+
+<script type="module" src="js/contas_receber.js"></script>
+</body>
+</html>
