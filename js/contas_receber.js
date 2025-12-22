@@ -1,6 +1,6 @@
 // ===============================================
 // CONTAS_RECEBER.JS — BOLETOS + NF (numero_nf)
-// PAGAR FUNCIONANDO (STATUS NO BANCO)
+// PAGAR + REABRIR (ADMIN)
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -128,8 +128,10 @@ function renderizarTabela() {
                 </td>
                 <td style="text-align:center">
                     ${
-                        roleUsuario === "admin" && statusCalc === "ABERTO"
-                            ? `<button class="btn-verde" onclick="pagar(${r.id})">Pagar</button>`
+                        roleUsuario === "admin"
+                            ? statusCalc === "ABERTO"
+                                ? `<button class="btn-verde" onclick="pagar(${r.id})">Pagar</button>`
+                                : `<button class="btn-vermelho" onclick="reabrir(${r.id})">Reabrir</button>`
                             : "—"
                     }
                 </td>
@@ -142,7 +144,7 @@ function renderizarTabela() {
 }
 
 // ===============================================
-// AÇÃO PAGAR (ADMIN)
+// AÇÕES ADMIN
 // ===============================================
 window.pagar = async function (id) {
     if (roleUsuario !== "admin") return;
@@ -156,6 +158,25 @@ window.pagar = async function (id) {
     if (error) {
         console.error(error);
         alert("Erro ao marcar como pago");
+        return;
+    }
+
+    await carregarDados();
+    renderizarTabela();
+};
+
+window.reabrir = async function (id) {
+    if (roleUsuario !== "admin") return;
+    if (!confirm("Reabrir este boleto?")) return;
+
+    const { error } = await supabase
+        .from("boletos")
+        .update({ status: "ABERTO" })
+        .eq("id", id);
+
+    if (error) {
+        console.error(error);
+        alert("Erro ao reabrir boleto");
         return;
     }
 
