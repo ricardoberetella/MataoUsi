@@ -9,10 +9,15 @@ let roleUsuario = "viewer";
 let registros = [];
 
 // ===============================================
+
 function formatarDataBR(data) {
     if (!data) return "—";
-    const d = new Date(data);
-    return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("pt-BR");
+
+    // data vem como YYYY-MM-DD
+    const [ano, mes, dia] = data.split("-");
+    if (!ano || !mes || !dia) return "—";
+
+    return `${dia}/${mes}/${ano}`;
 }
 
 function formatarMoeda(valor) {
