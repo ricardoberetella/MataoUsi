@@ -383,3 +383,5 @@ body.viewer table th:last-child,
 body.viewer table td:last-child {
     display: none !important;
 }
+
+<table id="boletos">
