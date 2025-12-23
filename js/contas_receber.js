@@ -1,5 +1,5 @@
 // ===============================================
-// CONTAS_RECEBER.JS — ESTÁVEL (SEM ERRO 400)
+// CONTAS_RECEBER.JS — ESTÁVEL (SEM JOIN / SEM 400)
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -42,9 +42,7 @@ async function carregarDados() {
             valor,
             data_vencimento,
             status,
-            notas_fiscais (
-                numero_nf
-            )
+            nota_fiscal_id
         `)
         .order("data_vencimento", { ascending: true });
 
@@ -80,18 +78,14 @@ function renderizarTabela() {
             statusCalc = "VENCIDO";
         }
 
-        // 🔒 FILTROS SEGUROS
         if (statusFiltro && statusFiltro !== statusCalc) return;
-
-        if (vencimentoFiltro) {
-            if (r.data_vencimento > vencimentoFiltro) return;
-        }
+        if (vencimentoFiltro && r.data_vencimento > vencimentoFiltro) return;
 
         total += Number(r.valor);
 
         tbody.innerHTML += `
             <tr>
-                <td style="text-align:center">${r.notas_fiscais?.numero_nf || "—"}</td>
+                <td style="text-align:center">${r.nota_fiscal_id || "—"}</td>
                 <td style="text-align:center">${formatarMoeda(r.valor)}</td>
                 <td style="text-align:center">${formatarDataBR(r.data_vencimento)}</td>
                 <td style="text-align:center">${statusCalc}</td>
@@ -113,7 +107,6 @@ function renderizarTabela() {
 // ===============================================
 window.marcarPago = async function (id) {
     if (roleUsuario !== "admin") return;
-
     if (!confirm("Marcar como pago?")) return;
 
     const { error } = await supabase
