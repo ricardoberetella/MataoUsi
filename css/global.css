@@ -366,7 +366,7 @@ tr.vencido td {
 =============================== */
 
 #listaReceber td {
-    font-size: 15px; /* antes geralmente é 13–14 */
+    font-size: 17px; /* antes geralmente é 13–14 */
 }
 
 #listaReceber td:first-child {
