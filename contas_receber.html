@@ -12,63 +12,59 @@
 
     <style>
 /* =========================
-   PDF – AJUSTES DEFINITIVOS
+   PDF – PRETO E BRANCO
 ========================= */
 
-/* esconde o que não deve ir pro PDF */
+/* esconder elementos fora do PDF */
 body.modo-pdf header,
 body.modo-pdf .card:first-child,
 body.modo-pdf button {
     display: none !important;
 }
 
-/* fundo e texto corretos */
+/* fundo branco */
 body.modo-pdf {
     background: #fff !important;
     color: #000 !important;
 }
 
-/* container ocupa a página */
+/* container */
 body.modo-pdf .container {
     width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
 }
 
-/* título e tabela não “grudam” no topo */
-body.modo-pdf .card {
-    margin-top: 10px !important;
-    padding-top: 0 !important;
-}
-
-/* tabela com contraste bom */
+/* tabela limpa */
 body.modo-pdf table {
     width: 100%;
     border-collapse: collapse;
     color: #000 !important;
 }
 
-/* cabeçalho da tabela */
+/* cabeçalho */
 body.modo-pdf thead th {
-    background: #1f2937 !important;
-    color: #fff !important;
-    font-size: 12px;
+    background: #fff !important;
+    color: #000 !important;
+    border-bottom: 1px solid #000;
+    font-size: 11px;
     padding: 6px;
 }
 
 /* células */
 body.modo-pdf td {
-    font-size: 11px;
-    padding: 6px;
-    color: #000 !important;
     background: #fff !important;
+    color: #000 !important;
+    font-size: 10.5px;
+    padding: 6px;
+    border-bottom: 1px solid #ccc;
 }
 
-/* vencidos em vermelho (legível no PDF) */
+/* remover qualquer destaque de vencido */
 body.modo-pdf tr.vencido td {
-    background: #f4b4b4 !important;
+    background: #fff !important;
     color: #000 !important;
-    font-weight: bold;
+    font-weight: normal;
 }
 </style>
 
