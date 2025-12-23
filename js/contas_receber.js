@@ -1,5 +1,5 @@
 // ===============================================
-// CONTAS_RECEBER.JS — ESTÁVEL / SEM MODAL / FUNCIONAL
+// CONTAS_RECEBER.JS — ESTÁVEL / DEFINITIVO
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -33,6 +33,11 @@ function hojeISO() {
     return new Date().toISOString().split("T")[0];
 }
 
+function brParaISO(dataBR) {
+    const [d, m, y] = dataBR.split("/");
+    return `${y}-${m}-${d}`;
+}
+
 // ===============================================
 // INIT
 // ===============================================
@@ -64,7 +69,7 @@ async function carregarBoletos() {
         .order("data_vencimento");
 
     if (error) {
-        console.error(error);
+        console.error("Erro ao carregar boletos:", error);
         registros = [];
         return;
     }
@@ -124,6 +129,9 @@ function renderizarAcoes(r) {
     return "—";
 }
 
+// ===============================================
+// PAGAR
+// ===============================================
 window.marcarPago = async (id) => {
     if (!confirm("Marcar como pago?")) return;
 
@@ -136,7 +144,7 @@ window.marcarPago = async (id) => {
         .eq("id", id);
 
     if (error) {
-        alert("Erro ao marcar como pago");
+        alert("❌ Erro ao marcar como pago (policy)");
         console.error(error);
         return;
     }
@@ -145,8 +153,11 @@ window.marcarPago = async (id) => {
     renderizarTabela();
 };
 
+// ===============================================
+// REABRIR (VOLTA PAGAMENTO)
+// ===============================================
 window.reabrir = async (id) => {
-    if (!confirm("Reabrir este lançamento?")) return;
+    if (!confirm("Deseja reabrir este lançamento?")) return;
 
     const { error } = await supabase
         .from("boletos")
@@ -157,7 +168,7 @@ window.reabrir = async (id) => {
         .eq("id", id);
 
     if (error) {
-        alert("Erro ao reabrir");
+        alert("❌ Erro ao reabrir (policy)");
         console.error(error);
         return;
     }
@@ -167,38 +178,40 @@ window.reabrir = async (id) => {
 };
 
 // ===============================================
-// LANÇAMENTO MANUAL (PROMPT — À PROVA DE ERRO)
+// LANÇAMENTO MANUAL (dd/mm/aaaa)
 // ===============================================
 async function abrirLancamentoManual() {
-    const origem = prompt("Origem (ex: 6231A, NF-ANTIGA-2022):");
+    const origem = prompt("Origem (ex: 6231A, NF-2025):");
     if (origem === null) return;
 
-    const valorTxt = prompt("Valor (ex: 15880.50):");
+    const valorTxt = prompt("Valor (ex: 15880,50):");
     if (!valorTxt) return;
 
-    const valor = Number(valorTxt.replace(",", "."));
+    const valor = Number(valorTxt.replace(".", "").replace(",", "."));
     if (isNaN(valor)) {
         alert("Valor inválido");
         return;
     }
 
-    const venc = prompt("Vencimento (AAAA-MM-DD):");
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(venc)) {
-        alert("Data inválida. Use AAAA-MM-DD");
+    const vencBR = prompt("Vencimento (dd/mm/aaaa):");
+    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(vencBR)) {
+        alert("Data inválida. Use dd/mm/aaaa");
         return;
     }
+
+    const vencISO = brParaISO(vencBR);
 
     const { error } = await supabase
         .from("boletos")
         .insert({
             origem,
             valor,
-            data_vencimento: `${venc}T12:00:00`,
+            data_vencimento: `${vencISO}T12:00:00`,
             status: "ABERTO"
         });
 
     if (error) {
-        alert("Erro ao lançar manualmente");
+        alert("❌ Erro ao lançar manualmente");
         console.error(error);
         return;
     }
