@@ -9,14 +9,9 @@ let roleUsuario = "viewer";
 let registros = [];
 
 // ===============================================
-
 function formatarDataBR(data) {
     if (!data) return "—";
-
-    // data vem como YYYY-MM-DD
     const [ano, mes, dia] = data.split("-");
-    if (!ano || !mes || !dia) return "—";
-
     return `${dia}/${mes}/${ano}`;
 }
 
@@ -36,8 +31,20 @@ function soDataISO(value) {
         : String(value);
 }
 
+// ===============================================
+// STATUS REAL (ABERTO / VENCIDO / PAGO)
+// ===============================================
 function calcularStatus(r) {
-    return (r.status || "ABERTO").toUpperCase();
+    if (r.status === "PAGO") return "PAGO";
+
+    if (r.status === "ABERTO" && r.data_vencimento) {
+        const hojeISO = new Date().toISOString().split("T")[0];
+        if (r.data_vencimento < hojeISO) {
+            return "VENCIDO";
+        }
+    }
+
+    return "ABERTO";
 }
 
 // ===============================================
@@ -62,23 +69,16 @@ async function carregarDados() {
 
     const { data: boletos, error } = await supabase
         .from("boletos")
-        .select(`
-            id,
-            origem,
-            valor,
-            data_vencimento,
-            status,
-            nf_manual
-        `)
+        .select("id, origem, valor, data_vencimento, status")
         .order("data_vencimento");
 
     if (error) {
-        console.error(error);
         alert("Erro ao carregar contas a receber");
+        console.error(error);
         return;
     }
 
-    registros = (boletos || []).filter(b => b.id);
+    registros = boletos || [];
 }
 
 // ===============================================
@@ -110,22 +110,14 @@ function renderizarTabela() {
 
         tbody.innerHTML += `
             <tr>
-                <td style="text-align:center">
-                    ${r.origem || "—"}
-                </td>
-                <td style="text-align:center">
-                    ${formatarMoeda(r.valor)}
-                </td>
-                <td style="text-align:center">
-                    ${formatarDataBR(r.data_vencimento)}
-                </td>
-                <td style="text-align:center">
-                    ${statusCalc}
-                </td>
+                <td style="text-align:center">${r.origem || "—"}</td>
+                <td style="text-align:center">${formatarMoeda(r.valor)}</td>
+                <td style="text-align:center">${formatarDataBR(r.data_vencimento)}</td>
+                <td style="text-align:center">${statusCalc}</td>
                 <td style="text-align:center">
                     ${
                         roleUsuario === "admin"
-                            ? statusCalc === "ABERTO"
+                            ? statusCalc === "ABERTO" || statusCalc === "VENCIDO"
                                 ? `<button class="btn-verde" onclick="pagar(${r.id})">Pagar</button>`
                                 : `<button class="btn-vermelho" onclick="reabrir(${r.id})">Reabrir</button>`
                             : "—"
@@ -140,7 +132,7 @@ function renderizarTabela() {
 }
 
 // ===============================================
-// MODAL LANÇAMENTO MANUAL
+// MODAL LANÇAMENTO MANUAL (mantido)
 // ===============================================
 function abrirModalManual() {
     document.getElementById("modalManual").style.display = "flex";
@@ -150,7 +142,6 @@ function fecharModalManual() {
     document.getElementById("modalManual").style.display = "none";
 }
 
-// ===============================================
 async function salvarLancamentoManual() {
     if (roleUsuario !== "admin") return;
 
@@ -175,7 +166,6 @@ async function salvarLancamentoManual() {
         }]);
 
     if (error) {
-        console.error("ERRO SUPABASE:", error.message);
         alert(error.message);
         return;
     }
@@ -186,16 +176,13 @@ async function salvarLancamentoManual() {
 }
 
 // ===============================================
-// AÇÕES ADMIN — NÃO ALTERADAS
+// AÇÕES ADMIN
 // ===============================================
 window.pagar = async function (id) {
     if (roleUsuario !== "admin") return;
     if (!confirm("Confirmar pagamento?")) return;
 
-    await supabase.from("boletos")
-        .update({ status: "PAGO" })
-        .eq("id", id);
-
+    await supabase.from("boletos").update({ status: "PAGO" }).eq("id", id);
     await carregarDados();
     renderizarTabela();
 };
@@ -204,10 +191,7 @@ window.reabrir = async function (id) {
     if (roleUsuario !== "admin") return;
     if (!confirm("Reabrir este boleto?")) return;
 
-    await supabase.from("boletos")
-        .update({ status: "ABERTO" })
-        .eq("id", id);
-
+    await supabase.from("boletos").update({ status: "ABERTO" }).eq("id", id);
     await carregarDados();
     renderizarTabela();
 };
