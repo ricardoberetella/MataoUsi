@@ -1,5 +1,5 @@
 // ===============================================
-// CONTAS_RECEBER.JS — ESTÁVEL (PROMPT)
+// CONTAS_RECEBER.JS — ESTÁVEL E FUNCIONAL
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -28,11 +28,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     roleUsuario = user.user_metadata?.role || "viewer";
 
+    // FILTRAR
     document.getElementById("btnFiltrar")?.addEventListener("click", renderizarTabela);
 
+    // LANÇAMENTO MANUAL — SEM TRAVA
     const btnManual = document.getElementById("btnNovoManual");
-    if (btnManual && roleUsuario === "admin") {
-        btnManual.onclick = lancamentoManual;
+    if (btnManual) {
+        btnManual.addEventListener("click", () => {
+            if (roleUsuario !== "admin") {
+                alert("Sem permissão");
+                return;
+            }
+            lancamentoManual();
+        });
     }
 
     await carregarBoletos();
@@ -88,7 +96,9 @@ function renderizarTabela() {
                 <td style="text-align:center">${formatarMoeda(r.valor)}</td>
                 <td style="text-align:center">${formatarDataBR(r.data_vencimento)}</td>
                 <td style="text-align:center">${statusCalc}</td>
-                <td style="text-align:center">${renderizarAcoes(r)}</td>
+                <td style="text-align:center">
+                    ${renderizarAcoes(r)}
+                </td>
             </tr>
         `;
     });
@@ -113,36 +123,52 @@ function renderizarAcoes(r) {
 }
 
 // ===============================================
-window.marcarPago = async id => {
+// FUNÇÕES GLOBAIS (OBRIGATÓRIO)
+// ===============================================
+window.marcarPago = async function (id) {
+    if (roleUsuario !== "admin") return;
+
     if (!confirm("Marcar como pago?")) return;
 
-    await supabase.from("boletos")
+    const { error } = await supabase
+        .from("boletos")
         .update({ status: "PAGO" })
         .eq("id", id);
 
+    if (error) {
+        alert("Erro ao marcar como pago");
+        return;
+    }
+
     await carregarBoletos();
     renderizarTabela();
 };
 
-window.reabrir = async id => {
+window.reabrir = async function (id) {
+    if (roleUsuario !== "admin") return;
+
     if (!confirm("Reabrir este lançamento?")) return;
 
-    await supabase.from("boletos")
+    const { error } = await supabase
+        .from("boletos")
         .update({ status: "ABERTO" })
         .eq("id", id);
 
+    if (error) {
+        alert("Erro ao reabrir");
+        return;
+    }
+
     await carregarBoletos();
     renderizarTabela();
 };
 
 // ===============================================
-// LANÇAMENTO MANUAL (PROMPT — ESTÁVEL)
+// LANÇAMENTO MANUAL — PROMPT ESTÁVEL
 // ===============================================
 async function lancamentoManual() {
-    if (roleUsuario !== "admin") return;
-
     const origem = prompt("Origem (ex: 6231A, NF-ANTIGA-2022):");
-    const valorStr = prompt("Valor (ex: 15890.50):");
+    const valorStr = prompt("Valor:");
     const dataBR = prompt("Vencimento (DD/MM/AAAA):");
 
     if (!valorStr || !dataBR) {
@@ -150,7 +176,6 @@ async function lancamentoManual() {
         return;
     }
 
-    // ===== CONVERTE DATA BR → ISO (SEM -1 DIA)
     const partes = dataBR.split("/");
     if (partes.length !== 3) {
         alert("Data inválida. Use DD/MM/AAAA");
