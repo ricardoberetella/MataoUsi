@@ -1,5 +1,5 @@
 // ===============================================
-// CONTAS_RECEBER.JS — DEFINITIVO / ESTÁVEL
+// CONTAS_RECEBER.JS — ESTÁVEL / SEM MODAL / FUNCIONAL
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -8,18 +8,22 @@ let roleUsuario = "viewer";
 let registros = [];
 
 // ===============================================
+// UTIL
+// ===============================================
 function soData(iso) {
     return iso ? String(iso).split("T")[0] : "";
 }
 
-function formatarDataBR(iso) {
-    if (!iso) return "—";
-    const [y, m, d] = soData(iso).split("-");
-    return `${d}/${m}/${y}`;
+function formatarDataBR(dataISO) {
+    const d = soData(dataISO);
+    if (!d) return "—";
+    const [y, m, d2] = d.split("-");
+    return `${d2}/${m}/${y}`;
 }
 
-function formatarMoeda(v) {
-    return Number(v || 0).toLocaleString("pt-BR", {
+function formatarMoeda(valor) {
+    if (valor === null || valor === undefined) return "—";
+    return Number(valor).toLocaleString("pt-BR", {
         style: "currency",
         currency: "BRL"
     });
@@ -30,6 +34,8 @@ function hojeISO() {
 }
 
 // ===============================================
+// INIT
+// ===============================================
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
@@ -39,21 +45,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("btnFiltrar")
         ?.addEventListener("click", renderizarTabela);
 
-    if (roleUsuario === "admin") {
-        document.getElementById("btnNovoManual")
-            ?.addEventListener("click", abrirModalManual);
-
-        document.getElementById("btnSalvarManual")
-            ?.addEventListener("click", salvarManual);
-
-        document.getElementById("btnCancelarManual")
-            ?.addEventListener("click", fecharModalManual);
+    const btnManual = document.getElementById("btnNovoManual");
+    if (btnManual && roleUsuario === "admin") {
+        btnManual.addEventListener("click", abrirLancamentoManual);
     }
 
     await carregarBoletos();
     renderizarTabela();
 });
 
+// ===============================================
+// DADOS
 // ===============================================
 async function carregarBoletos() {
     const { data, error } = await supabase
@@ -71,6 +73,8 @@ async function carregarBoletos() {
 }
 
 // ===============================================
+// TABELA
+// ===============================================
 function renderizarTabela() {
     const tbody = document.getElementById("listaReceber");
     if (!tbody) return;
@@ -80,9 +84,10 @@ function renderizarTabela() {
     const hoje = hojeISO();
 
     registros.forEach(r => {
-        let status = r.status || "ABERTO";
-        if (status === "ABERTO" && soData(r.data_vencimento) < hoje) {
-            status = "VENCIDO";
+        let statusCalc = r.status || "ABERTO";
+
+        if (statusCalc === "ABERTO" && soData(r.data_vencimento) < hoje) {
+            statusCalc = "VENCIDO";
         }
 
         total += Number(r.valor || 0);
@@ -92,34 +97,33 @@ function renderizarTabela() {
                 <td style="text-align:center">${r.origem || "—"}</td>
                 <td style="text-align:center">${formatarMoeda(r.valor)}</td>
                 <td style="text-align:center">${formatarDataBR(r.data_vencimento)}</td>
-                <td style="text-align:center">${status}</td>
-                <td style="text-align:center">
-                    ${renderizarAcoes(r)}
-                </td>
+                <td style="text-align:center">${statusCalc}</td>
+                <td style="text-align:center">${renderizarAcoes(r)}</td>
             </tr>
         `;
     });
 
-    document.getElementById("totalReceber").textContent =
-        formatarMoeda(total);
+    const totalSpan = document.getElementById("totalReceber");
+    if (totalSpan) totalSpan.textContent = formatarMoeda(total);
 }
 
+// ===============================================
+// AÇÕES
 // ===============================================
 function renderizarAcoes(r) {
     if (roleUsuario !== "admin") return "—";
 
     if (r.status === "ABERTO") {
-        return `<button class="btn-verde" onclick="window.marcarPago(${r.id})">Pagar</button>`;
+        return `<button class="btn-verde" onclick="marcarPago(${r.id})">Pagar</button>`;
     }
 
     if (r.status === "PAGO") {
-        return `<button class="btn-azul" onclick="window.reabrir(${r.id})">Reabrir</button>`;
+        return `<button class="btn-azul" onclick="reabrir(${r.id})">Reabrir</button>`;
     }
 
     return "—";
 }
 
-// ===============================================
 window.marcarPago = async (id) => {
     if (!confirm("Marcar como pago?")) return;
 
@@ -142,7 +146,7 @@ window.marcarPago = async (id) => {
 };
 
 window.reabrir = async (id) => {
-    if (!confirm("Reabrir lançamento?")) return;
+    if (!confirm("Reabrir este lançamento?")) return;
 
     const { error } = await supabase
         .from("boletos")
@@ -163,31 +167,24 @@ window.reabrir = async (id) => {
 };
 
 // ===============================================
-// MODAL — LANÇAMENTO MANUAL
+// LANÇAMENTO MANUAL (PROMPT — À PROVA DE ERRO)
 // ===============================================
-function abrirModalManual() {
-    const modal = document.getElementById("modalManual");
-    if (!modal) return;
+async function abrirLancamentoManual() {
+    const origem = prompt("Origem (ex: 6231A, NF-ANTIGA-2022):");
+    if (origem === null) return;
 
-    document.getElementById("manOrigem").value = "";
-    document.getElementById("manValor").value = "";
-    document.getElementById("manVencimentoDate").value = "";
+    const valorTxt = prompt("Valor (ex: 15880.50):");
+    if (!valorTxt) return;
 
-    modal.style.display = "flex";
-}
+    const valor = Number(valorTxt.replace(",", "."));
+    if (isNaN(valor)) {
+        alert("Valor inválido");
+        return;
+    }
 
-function fecharModalManual() {
-    const modal = document.getElementById("modalManual");
-    if (modal) modal.style.display = "none";
-}
-
-async function salvarManual() {
-    const origem = document.getElementById("manOrigem").value || null;
-    const valor = Number(document.getElementById("manValor").value);
-    const venc = document.getElementById("manVencimentoDate").value;
-
-    if (!valor || !venc) {
-        alert("Preencha valor e vencimento");
+    const venc = prompt("Vencimento (AAAA-MM-DD):");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(venc)) {
+        alert("Data inválida. Use AAAA-MM-DD");
         return;
     }
 
@@ -206,7 +203,6 @@ async function salvarManual() {
         return;
     }
 
-    fecharModalManual();
     await carregarBoletos();
     renderizarTabela();
 }
