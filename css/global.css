@@ -372,3 +372,14 @@ tr.vencido td {
 #listaReceber td:first-child {
     font-weight: 600;
 }
+
+/* ===============================
+   CONTAS A RECEBER – VISUALIZADOR
+   OCULTAR AÇÕES
+=============================== */
+
+/* Oculta coluna Ações (th + td) */
+body.viewer table th:last-child,
+body.viewer table td:last-child {
+    display: none !important;
+}
