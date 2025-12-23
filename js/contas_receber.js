@@ -1,5 +1,5 @@
 // ===============================================
-// CONTAS_RECEBER.JS — DEFINITIVO
+// CONTAS_RECEBER.JS — LANCAMENTO MANUAL FIX FINAL
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -27,13 +27,22 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     roleUsuario = user.user_metadata?.role || "viewer";
 
-    document.getElementById("btnFiltrar").onclick = renderizarTabela;
+    // BOTÃO FILTRAR
+    const btnFiltrar = document.getElementById("btnFiltrar");
+    if (btnFiltrar) btnFiltrar.onclick = renderizarTabela;
 
-    if (roleUsuario === "admin") {
-        document.getElementById("btnNovoManual").onclick = abrirModalManual;
-        document.getElementById("btnSalvarManual").onclick = salvarManual;
-        document.getElementById("btnCancelarManual").onclick = fecharModalManual;
+    // BOTÃO LANÇAMENTO MANUAL
+    const btnManual = document.getElementById("btnNovoManual");
+    if (btnManual && roleUsuario === "admin") {
+        btnManual.onclick = abrirModalManual;
     }
+
+    // BOTÕES MODAL
+    const btnSalvar = document.getElementById("btnSalvarManual");
+    const btnCancelar = document.getElementById("btnCancelarManual");
+
+    if (btnSalvar) btnSalvar.onclick = salvarManual;
+    if (btnCancelar) btnCancelar.onclick = fecharModalManual;
 
     await carregarBoletos();
     renderizarTabela();
@@ -58,10 +67,12 @@ async function carregarBoletos() {
 // ===============================================
 function renderizarTabela() {
     const tbody = document.getElementById("listaReceber");
+    if (!tbody) return;
+
     tbody.innerHTML = "";
 
-    const statusFiltro = document.getElementById("filtroStatus").value;
-    const vencFiltro = document.getElementById("filtroVencimento").value;
+    const statusFiltro = document.getElementById("filtroStatus")?.value || "";
+    const vencFiltro = document.getElementById("filtroVencimento")?.value || "";
 
     let total = 0;
     const hoje = new Date().toISOString().split("T")[0];
@@ -123,20 +134,22 @@ window.reabrir = async id => {
 };
 
 // ===============================================
-// MODAL MANUAL
+// MODAL LANÇAMENTO MANUAL
 // ===============================================
 function abrirModalManual() {
-    document.getElementById("modalManual").style.display = "flex";
+    const modal = document.getElementById("modalManual");
+    if (modal) modal.style.display = "flex";
 }
 
 function fecharModalManual() {
-    document.getElementById("modalManual").style.display = "none";
+    const modal = document.getElementById("modalManual");
+    if (modal) modal.style.display = "none";
 }
 
 async function salvarManual() {
-    const origem = document.getElementById("origemManual").value || null;
-    const valor = Number(document.getElementById("valorManual").value);
-    const venc = document.getElementById("vencimentoManual").value;
+    const origem = document.getElementById("origemManual")?.value || null;
+    const valor = Number(document.getElementById("valorManual")?.value);
+    const venc = document.getElementById("vencimentoManual")?.value;
 
     if (!valor || !venc) {
         alert("Preencha valor e vencimento");
@@ -146,7 +159,7 @@ async function salvarManual() {
     const payload = {
         origem,
         valor,
-        data_vencimento: venc + "T12:00:00", // 🔥 FIX DEFINITIVO DO DIA -1
+        data_vencimento: venc + "T12:00:00", // FIX DO DIA -1
         status: "ABERTO"
     };
 
