@@ -262,6 +262,9 @@ function gerarPDF() {
         html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
     };
+    
+document.getElementById("dataHoraPdf").textContent =
+    new Date().toLocaleString("pt-BR");
 
     html2pdf()
         .set(opt)
