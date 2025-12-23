@@ -1,142 +1,140 @@
-// ===============================================
-// CONTAS_RECEBER.JS — BOLETOS (ORIGEM)
-// PAGAR + REABRIR (ADMIN) + PDF
-// ===============================================
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Contas a Receber</title>
 
-import { supabase, verificarLogin } from "./auth.js";
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/pedidos_lista.css">
 
-let roleUsuario = "viewer";
-let registros = [];
+    <!-- LIB PDF (igual outras telas) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-// ===============================================
-function formatarDataBR(data) {
-    if (!data) return "—";
-    const [ano, mes, dia] = data.split("-");
-    return `${dia}/${mes}/${ano}`;
-}
+    <style>
+        /* fonte um pouco maior na tabela */
+        table th, table td {
+            font-size: 15px;
+        }
 
-function formatarMoeda(valor) {
-    const n = Number(valor);
-    if (Number.isNaN(n)) return "—";
-    return n.toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL"
-    });
-}
+        /* linha vencida */
+        tr.vencido td {
+            background: rgba(180, 0, 0, 0.22) !important;
+            color: #fff !important;
+        }
 
-function soDataISO(value) {
-    if (!value) return "";
-    return value;
-}
+        /* modal centralizado e sempre dentro da tela (sem precisar zoom) */
+        #modalManual.modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: rgba(0,0,0,0.55);
+            z-index: 9999;
+        }
+        #modalManual .modal-conteudo {
+            width: min(520px, 96vw);
+            max-height: 90vh;
+            overflow: auto;
+        }
 
-// ===============================================
-function calcularStatus(r) {
-    if (r.status === "PAGO") return "PAGO";
+        /* quando gerar PDF, escondemos botões e filtros */
+        body.modo-pdf header,
+        body.modo-pdf .card:first-child,
+        body.modo-pdf button {
+            display: none !important;
+        }
+        body.modo-pdf .container {
+            width: 100% !important;
+        }
+    </style>
+</head>
 
-    const hojeISO = new Date().toISOString().split("T")[0];
-    if (r.status === "ABERTO" && r.data_vencimento < hojeISO) {
-        return "VENCIDO";
-    }
+<body>
 
-    return "ABERTO";
-}
+<header class="topbar">
+    <a href="dashboard.html">
+        <button class="btn-voltar">⬅ Voltar</button>
+    </a>
+    <h1 class="topbar-title">Contas a Receber</h1>
+</header>
 
-// ===============================================
-document.addEventListener("DOMContentLoaded", async () => {
-    const user = await verificarLogin();
-    if (!user) return;
+<div class="container" id="areaPdf">
 
-    roleUsuario = user.user_metadata?.role || "viewer";
+    <!-- FILTROS -->
+    <section class="card">
+        <h2 class="card-title">Filtros</h2>
 
-    document.getElementById("btnFiltrar").onclick = aplicarFiltros;
-    document.getElementById("btnGerarPdf").onclick = gerarPdf;
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Status</label>
+                <select id="filtroStatus">
+                    <option value="">Todos</option>
+                    <option value="ABERTO">Em aberto</option>
+                    <option value="VENCIDO">Vencido</option>
+                    <option value="PAGO">Pago</option>
+                </select>
+            </div>
 
-    await carregarDados();
-    renderizarTabela();
-});
+            <div class="form-group">
+                <label>Vencimento até</label>
+                <input type="date" id="filtroVencimento">
+            </div>
+        </div>
 
-// ===============================================
-async function carregarDados() {
-    const { data, error } = await supabase
-        .from("boletos")
-        .select("id, origem, valor, data_vencimento, status")
-        .order("data_vencimento");
+        <div style="display:flex; gap:10px; flex-wrap:wrap">
+            <button id="btnFiltrar" class="btn-azul">Filtrar</button>
+            <button id="btnNovoManual" class="btn-verde">+ Lançamento Manual</button>
+            <button id="btnGerarPDF" class="btn-azul">Gerar PDF</button>
+        </div>
+    </section>
 
-    if (error) {
-        alert("Erro ao carregar dados");
-        console.error(error);
-        return;
-    }
+    <!-- TABELA -->
+    <section class="card">
+        <h2 class="card-title">Lançamentos</h2>
 
-    registros = data || [];
-}
+        <table>
+            <thead>
+                <tr>
+                    <th>NF / Origem</th>
+                    <th>Valor</th>
+                    <th>Vencimento</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="listaReceber"></tbody>
+        </table>
 
-// ===============================================
-async function aplicarFiltros() {
-    await carregarDados();
-    renderizarTabela();
-}
+        <div style="margin-top:10px; font-weight:bold">
+            Total filtrado: <span id="totalReceber">R$ 0,00</span>
+        </div>
+    </section>
 
-// ===============================================
-function renderizarTabela() {
-    const tbody = document.getElementById("listaReceber");
-    tbody.innerHTML = "";
+</div>
 
-    const statusFiltro = document.getElementById("filtroStatus").value;
-    const vencimentoFiltro = soDataISO(
-        document.getElementById("filtroVencimento").value
-    );
+<!-- MODAL LANÇAMENTO MANUAL -->
+<div id="modalManual" class="modal">
+    <div class="modal-conteudo">
+        <h3>Novo Lançamento Manual</h3>
 
-    let total = 0;
+        <label>Origem (NF antiga, código, etc)</label>
+        <input type="text" id="origemManual">
 
-    registros.forEach(r => {
-        const statusCalc = calcularStatus(r);
+        <label>Valor</label>
+        <input type="number" id="valorManual" step="0.01">
 
-        if (statusFiltro && statusFiltro !== statusCalc) return;
-        if (vencimentoFiltro && r.data_vencimento > vencimentoFiltro) return;
+        <label>Vencimento</label>
+        <input type="date" id="vencimentoManual">
 
-        total += Number(r.valor) || 0;
+        <div class="modal-acoes">
+            <button id="btnSalvarManual" class="btn-verde">Salvar</button>
+            <button id="btnCancelarManual" class="btn-vermelho">Cancelar</button>
+        </div>
+    </div>
+</div>
 
-        tbody.innerHTML += `
-            <tr class="${statusCalc === "VENCIDO" ? "vencido" : ""}">
-                <td>${r.origem || "—"}</td>
-                <td>${formatarMoeda(r.valor)}</td>
-                <td>${formatarDataBR(r.data_vencimento)}</td>
-                <td>${statusCalc}</td>
-                <td>
-                    ${
-                        roleUsuario === "admin"
-                            ? statusCalc === "ABERTO" || statusCalc === "VENCIDO"
-                                ? `<button class="btn-verde">Pagar</button>`
-                                : `<button class="btn-vermelho">Reabrir</button>`
-                            : "—"
-                    }
-                </td>
-            </tr>
-        `;
-    });
-
-    document.getElementById("totalReceber").textContent =
-        formatarMoeda(total);
-}
-
-// ===============================================
-// GERAR PDF (PADRÃO SISTEMA)
-// ===============================================
-function gerarPdf() {
-    document.body.classList.add("modo-pdf");
-
-    document.getElementById("dataHoraPdf").textContent =
-        new Date().toLocaleString("pt-BR");
-
-    const area = document.getElementById("areaPdf");
-
-    html2pdf().set({
-        margin: 8,
-        filename: "contas_a_receber.pdf",
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
-    }).from(area).save().then(() => {
-        document.body.classList.remove("modo-pdf");
-    });
-}
+<script type="module" src="js/contas_receber.js"></script>
+</body>
+</html>
