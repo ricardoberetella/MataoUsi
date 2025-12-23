@@ -383,16 +383,3 @@ body.viewer table th:last-child,
 body.viewer table td:last-child {
     display: none !important;
 }
-
-<table id="boletos">
-
-/* ===============================
-   RELATÓRIO – LINHAS MAIORES
-=============================== */
-
-table th,
-table td {
-    padding: 10px 12px;   /* ↑ altura da linha */
-    font-size: 13px;      /* ↑ tamanho da fonte */
-    line-height: 1.4;     /* ↑ espaçamento vertical */
-}
