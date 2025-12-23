@@ -132,6 +132,61 @@ body.modo-pdf th:last-child,
 body.modo-pdf td:last-child {
     display: none !important;
 }
+
+    /* =========================
+   PDF – AJUSTES FINAIS
+========================= */
+
+/* 🔒 garante fechamento das bordas */
+body.modo-pdf table,
+body.modo-pdf th,
+body.modo-pdf td {
+    box-sizing: border-box;
+}
+
+/* força largura total real */
+body.modo-pdf table {
+    width: 100% !important;
+    margin-left: 0 !important;
+}
+
+/* evita “respiro” lateral invisível */
+body.modo-pdf .card {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+/* =========================
+   LOGO MAIOR
+========================= */
+body.modo-pdf .logo-pdf img {
+    height: 90px; /* era ~70 */
+}
+
+/* =========================
+   CABEÇALHO MAIS CENTRAL
+========================= */
+body.modo-pdf .cabecalho-linha {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    column-gap: 20px;
+}
+
+/* bloco do título centralizado visualmente */
+body.modo-pdf .titulo-pdf {
+    text-align: center;
+    margin-right: 90px; /* compensa o peso visual do logo */
+}
+
+body.modo-pdf .titulo-pdf h2 {
+    font-size: 16px;
+}
+
+body.modo-pdf .titulo-pdf p {
+    font-size: 11px;
+}
+
 </style>   
 
 </head>
