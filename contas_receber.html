@@ -210,6 +210,30 @@ body.modo-pdf td {
     box-sizing: border-box;
 }
 
+    /* =========================
+   PDF – QUEBRA FINAL CORRETA
+========================= */
+
+/* nunca quebrar linha da tabela */
+body.modo-pdf tr {
+    page-break-inside: avoid !important;
+}
+
+/* força quebra ANTES do total, se não couber */
+body.modo-pdf #totalReceber {
+    page-break-before: always;
+}
+
+/* garante que o card da tabela não seja cortado */
+body.modo-pdf .card {
+    page-break-inside: avoid;
+}
+
+/* evita qualquer resíduo de texto fora da tabela */
+body.modo-pdf .card:last-of-type {
+    padding-bottom: 20px;
+}
+
 </style>   
 
 </head>
