@@ -40,8 +40,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // ===============================================
-// CARREGAR BOLETOS
-// ===============================================
 async function carregarBoletos() {
     const { data, error } = await supabase
         .from("boletos")
@@ -99,8 +97,7 @@ function renderizarTabela() {
         `;
     });
 
-    const totalSpan = document.getElementById("totalReceber");
-    if (totalSpan) totalSpan.textContent = formatarMoeda(total);
+    document.getElementById("totalReceber").textContent = formatarMoeda(total);
 }
 
 // ===============================================
@@ -119,7 +116,7 @@ function renderizarAcoes(r) {
 }
 
 // ===============================================
-window.marcarPago = async function (id) {
+window.marcarPago = async id => {
     if (!confirm("Marcar como pago?")) return;
 
     const { error } = await supabase
@@ -136,7 +133,7 @@ window.marcarPago = async function (id) {
     renderizarTabela();
 };
 
-window.reabrir = async function (id) {
+window.reabrir = async id => {
     if (!confirm("Reabrir este lançamento?")) return;
 
     const { error } = await supabase
@@ -154,7 +151,7 @@ window.reabrir = async function (id) {
 };
 
 // ===============================================
-// LANÇAMENTO MANUAL — CORRIGIDO
+// LANÇAMENTO MANUAL — VALIDADO (NÃO SOME)
 // ===============================================
 async function lancamentoManual() {
 
@@ -167,8 +164,14 @@ async function lancamentoManual() {
     const venc = prompt("Data de vencimento (AAAA-MM-DD):");
     if (venc === null) return;
 
+    // valida data
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(venc)) {
+        alert("Data inválida. Use o formato AAAA-MM-DD");
+        return;
+    }
+
     const valor = Number(valorStr.replace(",", "."));
-    if (!valor || isNaN(valor)) {
+    if (isNaN(valor) || valor <= 0) {
         alert("Valor inválido");
         return;
     }
@@ -176,13 +179,13 @@ async function lancamentoManual() {
     const { error } = await supabase.from("boletos").insert({
         origem: origem || null,
         valor,
-        data_vencimento: venc + "T12:00:00", // 🔒 evita -1 dia
+        data_vencimento: venc + "T12:00:00", // evita -1 dia
         status: "ABERTO"
     });
 
     if (error) {
         console.error(error);
-        alert("Erro ao lançar manualmente");
+        alert("Erro ao lançar manualmente (verifique permissões)");
         return;
     }
 
