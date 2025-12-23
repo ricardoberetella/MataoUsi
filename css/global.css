@@ -361,3 +361,14 @@ tr.vencido td {
     color: #fff;
     font-weight: bold;
 }
+/* ===============================
+   CONTAS A RECEBER – FONTE MAIOR
+=============================== */
+
+#listaReceber td {
+    font-size: 15px; /* antes geralmente é 13–14 */
+}
+
+#listaReceber td:first-child {
+    font-weight: 600;
+}
