@@ -8,9 +8,10 @@ let roleUsuario = "viewer";
 let registros = [];
 
 // ===============================================
-function formatarDataBR(data) {
-    if (!data) return "—";
-    return new Date(data).toLocaleDateString("pt-BR");
+
+function formatarDataBR(dataISO) {
+    if (!dataISO) return "—";
+    return dataISO.split("T")[0].split("-").reverse().join("/");
 }
 
 function formatarMoeda(valor) {
