@@ -6,6 +6,41 @@
 
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/pedidos_lista.css">
+
+    <!-- LIB PDF (PADRÃO DO SISTEMA) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        /* ===== ITENS SOMENTE PARA PDF ===== */
+        .logo-print,
+        .cabecalho-print {
+            display: none;
+        }
+
+        body.modo-pdf .logo-print,
+        body.modo-pdf .cabecalho-print {
+            display: block;
+        }
+
+        body.modo-pdf header,
+        body.modo-pdf .card:first-child,
+        body.modo-pdf button {
+            display: none !important;
+        }
+
+        body.modo-pdf {
+            background: #fff !important;
+            color: #000 !important;
+        }
+
+        body.modo-pdf table {
+            color: #000 !important;
+        }
+
+        body.modo-pdf tr.vencido {
+            background: #f8d7da !important;
+        }
+    </style>
 </head>
 
 <body>
@@ -17,7 +52,15 @@
     <h1 class="topbar-title">Contas a Receber</h1>
 </header>
 
-<div class="container">
+<div class="container" id="areaPdf">
+
+    <!-- CABEÇALHO PDF -->
+    <div class="cabecalho-print">
+        <h2>MATÃO USINAGEM</h2>
+        <p>Relatório de Contas a Receber</p>
+        <p>Gerado em: <span id="dataHoraPdf"></span></p>
+        <hr>
+    </div>
 
     <!-- FILTROS -->
     <section class="card">
@@ -42,6 +85,7 @@
 
         <button id="btnFiltrar" class="btn-azul">Filtrar</button>
         <button id="btnNovoManual" class="btn-verde">+ Lançamento Manual</button>
+        <button id="btnGerarPdf" class="btn-azul">Gerar PDF</button>
     </section>
 
     <!-- TABELA -->
@@ -55,7 +99,7 @@
                     <th>Valor</th>
                     <th>Vencimento</th>
                     <th>Status</th>
-                    <th>Ações</th>
+                    <th class="acao-coluna">Ações</th>
                 </tr>
             </thead>
             <tbody id="listaReceber"></tbody>
@@ -66,27 +110,6 @@
         </div>
     </section>
 
-</div>
-
-<!-- MODAL LANÇAMENTO MANUAL -->
-<div id="modalManual" class="modal" style="display:none">
-    <div class="modal-conteudo">
-        <h3>Novo Lançamento Manual</h3>
-
-        <label>Origem (NF antiga, código, etc)</label>
-        <input type="text" id="origemManual">
-
-        <label>Valor</label>
-        <input type="number" id="valorManual" step="0.01">
-
-        <label>Vencimento</label>
-        <input type="date" id="vencimentoManual">
-
-        <div class="modal-acoes">
-            <button id="btnSalvarManual" class="btn-verde">Salvar</button>
-            <button id="btnCancelarManual" class="btn-vermelho">Cancelar</button>
-        </div>
-    </div>
 </div>
 
 <script type="module" src="js/contas_receber.js"></script>
