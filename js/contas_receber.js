@@ -1,13 +1,13 @@
 // ===============================================
-// CONTAS_RECEBER.JS — BOLETOS + NF + MANUAL
+// CONTAS_RECEBER.JS — ESTÁVEL + LANÇAMENTO MANUAL
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
 
 let roleUsuario = "viewer";
 let registros = [];
-let mapaNF = {};
 
+// ===============================================
 function formatarDataBR(data) {
     if (!data) return "—";
     return new Date(data).toLocaleDateString("pt-BR");
@@ -20,70 +20,18 @@ function formatarMoeda(valor) {
     });
 }
 
+// ===============================================
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
 
     roleUsuario = user.user_metadata?.role || "viewer";
 
-    // ===============================
-    // ELEMENTOS
-    // ===============================
     const btnFiltrar = document.getElementById("btnFiltrar");
+    if (btnFiltrar) btnFiltrar.onclick = aplicarFiltros;
+
     const btnManual = document.getElementById("btnLancamentoManual");
-
-    const modal = document.getElementById("modalManual");
-    const nf = document.getElementById("manualNF");
-    const desc = document.getElementById("manualDescricao");
-    const valor = document.getElementById("manualValor");
-    const venc = document.getElementById("manualVencimento");
-    const btnSalvar = document.getElementById("btnSalvarManual");
-    const btnCancelar = document.getElementById("btnCancelarManual");
-
-    btnFiltrar.onclick = renderizarTabela;
-
-    // 🔐 PERMISSÃO
-    if (roleUsuario !== "admin") {
-        btnManual.style.display = "none";
-    } else {
-        btnManual.onclick = () => {
-            modal.style.display = "flex";
-        };
-    }
-
-    btnCancelar.onclick = () => {
-        modal.style.display = "none";
-    };
-
-    btnSalvar.onclick = async () => {
-        if (!valor.value || !venc.value) {
-            alert("Preencha valor e vencimento");
-            return;
-        }
-
-        const payload = {
-            nf_manual: nf.value || null,
-            descricao: desc.value || null,
-            valor: Number(valor.value),
-            data_vencimento: venc.value,
-            status: "ABERTO"
-        };
-
-        const { error } = await supabase.from("boletos").insert(payload);
-        if (error) {
-            alert("Erro ao salvar lançamento manual");
-            return;
-        }
-
-        modal.style.display = "none";
-        nf.value = "";
-        desc.value = "";
-        valor.value = "";
-        venc.value = "";
-
-        await carregarDados();
-        renderizarTabela();
-    };
+    if (btnManual) btnManual.onclick = abrirLancamentoManual;
 
     await carregarDados();
     renderizarTabela();
@@ -91,24 +39,31 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 // ===============================================
 async function carregarDados() {
-    const { data } = await supabase
+    const { data, error } = await supabase
         .from("boletos")
-        .select("id, valor, data_vencimento, nota_fiscal_id, nf_manual, status")
+        .select(`
+            id,
+            valor,
+            data_vencimento,
+            status,
+            notas_fiscais (
+                numero_nf
+            )
+        `)
         .order("data_vencimento");
 
-    registros = data || [];
-
-    const idsNF = [...new Set(registros.map(r => r.nota_fiscal_id).filter(Boolean))];
-    mapaNF = {};
-
-    if (idsNF.length) {
-        const { data: notas } = await supabase
-            .from("notas_fiscais")
-            .select("id, numero_nf")
-            .in("id", idsNF);
-
-        notas?.forEach(n => mapaNF[n.id] = n.numero_nf);
+    if (error) {
+        console.error(error);
+        alert("Erro ao carregar contas a receber");
+        return;
     }
+
+    registros = data || [];
+}
+
+// ===============================================
+function aplicarFiltros() {
+    renderizarTabela();
 }
 
 // ===============================================
@@ -116,47 +71,94 @@ function renderizarTabela() {
     const tbody = document.getElementById("listaReceber");
     tbody.innerHTML = "";
 
+    const statusFiltro = document.getElementById("filtroStatus").value;
+    const vencimentoFiltro = document.getElementById("filtroVencimento").value;
+
     let total = 0;
+    const hoje = new Date().toISOString().split("T")[0];
 
     registros.forEach(r => {
-        const nfExibida =
-            r.nota_fiscal_id ? mapaNF[r.nota_fiscal_id] :
-            r.nf_manual || "—";
+        let statusCalc = r.status;
+        if (r.status === "ABERTO" && r.data_vencimento < hoje) {
+            statusCalc = "VENCIDO";
+        }
+
+        if (statusFiltro && statusFiltro !== statusCalc) return;
+        if (vencimentoFiltro && r.data_vencimento > vencimentoFiltro) return;
 
         total += Number(r.valor);
 
         tbody.innerHTML += `
             <tr>
-                <td style="text-align:center">${nfExibida}</td>
+                <td style="text-align:center">${r.notas_fiscais?.numero_nf || "—"}</td>
                 <td style="text-align:center">${formatarMoeda(r.valor)}</td>
                 <td style="text-align:center">${formatarDataBR(r.data_vencimento)}</td>
-                <td style="text-align:center">${r.status}</td>
+                <td style="text-align:center">${statusCalc}</td>
                 <td style="text-align:center">
                     ${
                         roleUsuario === "admin" && r.status === "ABERTO"
-                            ? `<button class="btn-verde" onclick="pagar(${r.id})">Pagar</button>`
-                            : roleUsuario === "admin"
-                                ? `<button class="btn-vermelho" onclick="reabrir(${r.id})">Reabrir</button>`
-                                : "—"
+                            ? `<button class="btn-verde" onclick="marcarPago(${r.id})">Pagar</button>`
+                            : "—"
                     }
                 </td>
             </tr>
         `;
     });
 
-    document.getElementById("totalReceber").textContent =
-        formatarMoeda(total);
+    document.getElementById("totalReceber").textContent = formatarMoeda(total);
 }
 
 // ===============================================
-window.pagar = async id => {
-    await supabase.from("boletos").update({ status: "PAGO" }).eq("id", id);
+window.marcarPago = async function (id) {
+    if (roleUsuario !== "admin") return;
+    if (!confirm("Marcar como pago?")) return;
+
+    const { error } = await supabase
+        .from("boletos")
+        .update({ status: "PAGO" })
+        .eq("id", id);
+
+    if (error) {
+        alert("Erro ao marcar como pago");
+        return;
+    }
+
     await carregarDados();
     renderizarTabela();
 };
 
-window.reabrir = async id => {
-    await supabase.from("boletos").update({ status: "ABERTO" }).eq("id", id);
+// ===============================================
+// LANÇAMENTO MANUAL (TEMPORÁRIO VIA PROMPT)
+// ===============================================
+async function abrirLancamentoManual() {
+    if (roleUsuario !== "admin") {
+        alert("Apenas administrador pode lançar manualmente");
+        return;
+    }
+
+    const nf = prompt("Número da NF:");
+    if (!nf) return;
+
+    const valor = prompt("Valor do boleto:");
+    if (!valor) return;
+
+    const vencimento = prompt("Data de vencimento (YYYY-MM-DD):");
+    if (!vencimento) return;
+
+    const { error } = await supabase.from("boletos").insert({
+        valor: Number(valor),
+        data_vencimento: vencimento,
+        status: "ABERTO",
+        nota_fiscal_id: null,
+        numero_nf_manual: nf
+    });
+
+    if (error) {
+        alert("Erro ao lançar boleto manual");
+        console.error(error);
+        return;
+    }
+
     await carregarDados();
     renderizarTabela();
-};
+}
