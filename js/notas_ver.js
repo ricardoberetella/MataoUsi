@@ -31,6 +31,13 @@ function formatarMoedaBR(valor) {
     });
 }
 
+// ✅ FUNÇÃO ADICIONADA (APENAS ISSO)
+function ajustarDataSemFuso(data) {
+    if (!data) return null;
+    const [ano, mes, dia] = data.split("-");
+    return `${ano}-${mes}-${dia}`;
+}
+
 // ===============================================
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
@@ -66,9 +73,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (btnCancelar) btnCancelar.onclick = fecharModal;
 
     await carregarProdutosCache();
-    await carregarDadosNF();   // <<< AQUI já pegamos numero_nf
+    await carregarDadosNF();
     await carregarItensNF();
-    await carregarBaixas();    // <<< usa numero_nf
+    await carregarBaixas();
     await carregarBoletos();
 });
 
@@ -100,7 +107,7 @@ async function carregarDadosNF() {
 
     if (!data) return;
 
-    numeroNFAtual = data.numero_nf; // <<< GUARDA AQUI
+    numeroNFAtual = data.numero_nf;
 
     nfNumero.textContent = data.numero_nf;
     nfData.textContent = formatarDataBR(data.data_nf);
@@ -134,7 +141,7 @@ async function carregarItensNF() {
 }
 
 // ===============================================
-// BAIXAS (ALTERAÇÃO APENAS AQUI)
+// BAIXAS
 // ===============================================
 async function carregarBaixas() {
     const tbody = document.getElementById("listaBaixas");
@@ -153,7 +160,6 @@ async function carregarBaixas() {
     baixas.forEach(b => {
         tbody.innerHTML += `
             <tr>
-                <!-- AQUI: numero_nf NO LUGAR DO pedido_id -->
                 <td>${numeroNFAtual ?? "—"}</td>
                 <td>${nomeProduto(b.produto_id)}</td>
                 <td>${b.quantidade_baixada}</td>
@@ -229,7 +235,8 @@ async function salvarBoleto() {
         tipo_nf,
         origem: boletoOrigem.value || null,
         valor,
-        data_vencimento: boletoVencimento.value
+        // ✅ AQUI ESTÁ A CORREÇÃO
+        data_vencimento: ajustarDataSemFuso(boletoVencimento.value)
     };
 
     const resp = boletoEditandoId
