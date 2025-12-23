@@ -1,5 +1,5 @@
 // ===============================================
-// CONTAS_RECEBER.JS — BOLETOS + NF / ORIGEM
+// CONTAS_RECEBER.JS — BOLETOS (ORIGEM)
 // PAGAR + REABRIR (ADMIN)
 // ===============================================
 
@@ -7,7 +7,6 @@ import { supabase, verificarLogin } from "./auth.js";
 
 let roleUsuario = "viewer";
 let registros = [];
-let mapaNF = {};
 
 // ===============================================
 function formatarDataBR(data) {
@@ -55,17 +54,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 // ===============================================
 async function carregarDados() {
     registros = [];
-    mapaNF = {};
 
     const { data: boletos, error } = await supabase
         .from("boletos")
         .select(`
             id,
+            origem,
             valor,
             data_vencimento,
-            nota_fiscal_id,
-            origem,
-            tipo_nf,
             status,
             nf_manual
         `)
@@ -78,19 +74,6 @@ async function carregarDados() {
     }
 
     registros = (boletos || []).filter(b => b.id);
-
-    const idsNF = [...new Set(registros.map(r => r.nota_fiscal_id).filter(Boolean))];
-
-    if (idsNF.length > 0) {
-        const { data: notas } = await supabase
-            .from("notas_fiscais")
-            .select("id, numero_nf")
-            .in("id", idsNF);
-
-        notas?.forEach(n => {
-            mapaNF[n.id] = n.numero_nf;
-        });
-    }
 }
 
 // ===============================================
@@ -123,7 +106,7 @@ function renderizarTabela() {
         tbody.innerHTML += `
             <tr>
                 <td style="text-align:center">
-                    ${mapaNF[r.nota_fiscal_id] || r.origem || "—"}
+                    ${r.origem || "—"}
                 </td>
                 <td style="text-align:center">
                     ${formatarMoeda(r.valor)}
@@ -170,23 +153,19 @@ async function salvarLancamentoManual() {
     const valor = Number(document.getElementById("valorManual").value);
     const vencimento = document.getElementById("vencimentoManual").value;
 
-    if (!valor || !vencimento) {
-        alert("Informe valor e vencimento.");
+    if (!origem || !valor || !vencimento) {
+        alert("Informe origem, valor e vencimento.");
         return;
     }
 
     const { error } = await supabase
         .from("boletos")
         .insert([{
-            origem: origem || null,
-            valor: valor,
+            origem,
+            valor,
             data_vencimento: vencimento,
             status: "ABERTO",
-
-            // 🔒 CAMPOS OBRIGATÓRIOS PARA MANUAL
             tipo_nf: "SEM_NF",
-            nota_fiscal_id: null,
-            numero_nf_referencia: null,
             nf_manual: "SIM"
         }]);
 
@@ -208,16 +187,9 @@ window.pagar = async function (id) {
     if (roleUsuario !== "admin") return;
     if (!confirm("Confirmar pagamento?")) return;
 
-    const { error } = await supabase
-        .from("boletos")
+    await supabase.from("boletos")
         .update({ status: "PAGO" })
         .eq("id", id);
-
-    if (error) {
-        console.error(error);
-        alert("Erro ao marcar como pago");
-        return;
-    }
 
     await carregarDados();
     renderizarTabela();
@@ -227,16 +199,9 @@ window.reabrir = async function (id) {
     if (roleUsuario !== "admin") return;
     if (!confirm("Reabrir este boleto?")) return;
 
-    const { error } = await supabase
-        .from("boletos")
+    await supabase.from("boletos")
         .update({ status: "ABERTO" })
         .eq("id", id);
-
-    if (error) {
-        console.error(error);
-        alert("Erro ao reabrir boleto");
-        return;
-    }
 
     await carregarDados();
     renderizarTabela();
