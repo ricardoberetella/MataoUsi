@@ -11,44 +11,67 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
-        /* fonte um pouco maior na tabela */
-        table th, table td {
-            font-size: 15px;
-        }
+/* =========================
+   PDF – AJUSTES DEFINITIVOS
+========================= */
 
-        /* linha vencida */
-        tr.vencido td {
-            background: rgba(180, 0, 0, 0.22) !important;
-            color: #fff !important;
-        }
+/* esconde o que não deve ir pro PDF */
+body.modo-pdf header,
+body.modo-pdf .card:first-child,
+body.modo-pdf button {
+    display: none !important;
+}
 
-        /* modal centralizado e sempre dentro da tela (sem precisar zoom) */
-        #modalManual.modal {
-            position: fixed;
-            inset: 0;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 16px;
-            background: rgba(0,0,0,0.55);
-            z-index: 9999;
-        }
-        #modalManual .modal-conteudo {
-            width: min(520px, 96vw);
-            max-height: 90vh;
-            overflow: auto;
-        }
+/* fundo e texto corretos */
+body.modo-pdf {
+    background: #fff !important;
+    color: #000 !important;
+}
 
-        /* quando gerar PDF, escondemos botões e filtros */
-        body.modo-pdf header,
-        body.modo-pdf .card:first-child,
-        body.modo-pdf button {
-            display: none !important;
-        }
-        body.modo-pdf .container {
-            width: 100% !important;
-        }
-    </style>
+/* container ocupa a página */
+body.modo-pdf .container {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* título e tabela não “grudam” no topo */
+body.modo-pdf .card {
+    margin-top: 10px !important;
+    padding-top: 0 !important;
+}
+
+/* tabela com contraste bom */
+body.modo-pdf table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #000 !important;
+}
+
+/* cabeçalho da tabela */
+body.modo-pdf thead th {
+    background: #1f2937 !important;
+    color: #fff !important;
+    font-size: 12px;
+    padding: 6px;
+}
+
+/* células */
+body.modo-pdf td {
+    font-size: 11px;
+    padding: 6px;
+    color: #000 !important;
+    background: #fff !important;
+}
+
+/* vencidos em vermelho (legível no PDF) */
+body.modo-pdf tr.vencido td {
+    background: #f4b4b4 !important;
+    color: #000 !important;
+    font-weight: bold;
+}
+</style>
+
 </head>
 
 <body>
