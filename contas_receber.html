@@ -1,117 +1,142 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Contas a Receber</title>
+// ===============================================
+// CONTAS_RECEBER.JS — BOLETOS (ORIGEM)
+// PAGAR + REABRIR (ADMIN) + PDF
+// ===============================================
 
-    <link rel="stylesheet" href="css/global.css">
-    <link rel="stylesheet" href="css/pedidos_lista.css">
+import { supabase, verificarLogin } from "./auth.js";
 
-    <!-- LIB PDF (PADRÃO DO SISTEMA) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+let roleUsuario = "viewer";
+let registros = [];
 
-    <style>
-        /* ===== ITENS SOMENTE PARA PDF ===== */
-        .logo-print,
-        .cabecalho-print {
-            display: none;
-        }
+// ===============================================
+function formatarDataBR(data) {
+    if (!data) return "—";
+    const [ano, mes, dia] = data.split("-");
+    return `${dia}/${mes}/${ano}`;
+}
 
-        body.modo-pdf .logo-print,
-        body.modo-pdf .cabecalho-print {
-            display: block;
-        }
+function formatarMoeda(valor) {
+    const n = Number(valor);
+    if (Number.isNaN(n)) return "—";
+    return n.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+    });
+}
 
-        body.modo-pdf header,
-        body.modo-pdf .card:first-child,
-        body.modo-pdf button {
-            display: none !important;
-        }
+function soDataISO(value) {
+    if (!value) return "";
+    return value;
+}
 
-        body.modo-pdf {
-            background: #fff !important;
-            color: #000 !important;
-        }
+// ===============================================
+function calcularStatus(r) {
+    if (r.status === "PAGO") return "PAGO";
 
-        body.modo-pdf table {
-            color: #000 !important;
-        }
+    const hojeISO = new Date().toISOString().split("T")[0];
+    if (r.status === "ABERTO" && r.data_vencimento < hojeISO) {
+        return "VENCIDO";
+    }
 
-        body.modo-pdf tr.vencido {
-            background: #f8d7da !important;
-        }
-    </style>
-</head>
+    return "ABERTO";
+}
 
-<body>
+// ===============================================
+document.addEventListener("DOMContentLoaded", async () => {
+    const user = await verificarLogin();
+    if (!user) return;
 
-<header class="topbar">
-    <a href="dashboard.html">
-        <button class="btn-voltar">⬅ Voltar</button>
-    </a>
-    <h1 class="topbar-title">Contas a Receber</h1>
-</header>
+    roleUsuario = user.user_metadata?.role || "viewer";
 
-<div class="container" id="areaPdf">
+    document.getElementById("btnFiltrar").onclick = aplicarFiltros;
+    document.getElementById("btnGerarPdf").onclick = gerarPdf;
 
-    <!-- CABEÇALHO PDF -->
-    <div class="cabecalho-print">
-        <h2>MATÃO USINAGEM</h2>
-        <p>Relatório de Contas a Receber</p>
-        <p>Gerado em: <span id="dataHoraPdf"></span></p>
-        <hr>
-    </div>
+    await carregarDados();
+    renderizarTabela();
+});
 
-    <!-- FILTROS -->
-    <section class="card">
-        <h2 class="card-title">Filtros</h2>
+// ===============================================
+async function carregarDados() {
+    const { data, error } = await supabase
+        .from("boletos")
+        .select("id, origem, valor, data_vencimento, status")
+        .order("data_vencimento");
 
-        <div class="form-grid">
-            <div class="form-group">
-                <label>Status</label>
-                <select id="filtroStatus">
-                    <option value="">Todos</option>
-                    <option value="ABERTO">Em aberto</option>
-                    <option value="VENCIDO">Vencido</option>
-                    <option value="PAGO">Pago</option>
-                </select>
-            </div>
+    if (error) {
+        alert("Erro ao carregar dados");
+        console.error(error);
+        return;
+    }
 
-            <div class="form-group">
-                <label>Vencimento até</label>
-                <input type="date" id="filtroVencimento">
-            </div>
-        </div>
+    registros = data || [];
+}
 
-        <button id="btnFiltrar" class="btn-azul">Filtrar</button>
-        <button id="btnNovoManual" class="btn-verde">+ Lançamento Manual</button>
-        <button id="btnGerarPdf" class="btn-azul">Gerar PDF</button>
-    </section>
+// ===============================================
+async function aplicarFiltros() {
+    await carregarDados();
+    renderizarTabela();
+}
 
-    <!-- TABELA -->
-    <section class="card">
-        <h2 class="card-title">Lançamentos</h2>
+// ===============================================
+function renderizarTabela() {
+    const tbody = document.getElementById("listaReceber");
+    tbody.innerHTML = "";
 
-        <table>
-            <thead>
-                <tr>
-                    <th>NF / Origem</th>
-                    <th>Valor</th>
-                    <th>Vencimento</th>
-                    <th>Status</th>
-                    <th class="acao-coluna">Ações</th>
-                </tr>
-            </thead>
-            <tbody id="listaReceber"></tbody>
-        </table>
+    const statusFiltro = document.getElementById("filtroStatus").value;
+    const vencimentoFiltro = soDataISO(
+        document.getElementById("filtroVencimento").value
+    );
 
-        <div style="margin-top:10px; font-weight:bold">
-            Total filtrado: <span id="totalReceber">R$ 0,00</span>
-        </div>
-    </section>
+    let total = 0;
 
-</div>
+    registros.forEach(r => {
+        const statusCalc = calcularStatus(r);
 
-<script type="module" src="js/contas_receber.js"></script>
-</body>
-</html>
+        if (statusFiltro && statusFiltro !== statusCalc) return;
+        if (vencimentoFiltro && r.data_vencimento > vencimentoFiltro) return;
+
+        total += Number(r.valor) || 0;
+
+        tbody.innerHTML += `
+            <tr class="${statusCalc === "VENCIDO" ? "vencido" : ""}">
+                <td>${r.origem || "—"}</td>
+                <td>${formatarMoeda(r.valor)}</td>
+                <td>${formatarDataBR(r.data_vencimento)}</td>
+                <td>${statusCalc}</td>
+                <td>
+                    ${
+                        roleUsuario === "admin"
+                            ? statusCalc === "ABERTO" || statusCalc === "VENCIDO"
+                                ? `<button class="btn-verde">Pagar</button>`
+                                : `<button class="btn-vermelho">Reabrir</button>`
+                            : "—"
+                    }
+                </td>
+            </tr>
+        `;
+    });
+
+    document.getElementById("totalReceber").textContent =
+        formatarMoeda(total);
+}
+
+// ===============================================
+// GERAR PDF (PADRÃO SISTEMA)
+// ===============================================
+function gerarPdf() {
+    document.body.classList.add("modo-pdf");
+
+    document.getElementById("dataHoraPdf").textContent =
+        new Date().toLocaleString("pt-BR");
+
+    const area = document.getElementById("areaPdf");
+
+    html2pdf().set({
+        margin: 8,
+        filename: "contas_a_receber.pdf",
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+    }).from(area).save().then(() => {
+        document.body.classList.remove("modo-pdf");
+    });
+}
