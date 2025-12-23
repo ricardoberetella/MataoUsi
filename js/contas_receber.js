@@ -1,5 +1,5 @@
 // ===============================================
-// CONTAS_RECEBER.JS — ESTÁVEL (SEM JOIN / SEM 400)
+// CONTAS_RECEBER.JS — ESTÁVEL + REABRIR + MANUAL
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -29,6 +29,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     document.getElementById("btnFiltrar").onclick = aplicarFiltros;
 
+    const btnManual = document.getElementById("btnLancamentoManual");
+    if (btnManual && roleUsuario === "admin") {
+        btnManual.onclick = lancamentoManual;
+    }
+
     await carregarDados();
     renderizarTabela();
 });
@@ -37,13 +42,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function carregarDados() {
     const { data, error } = await supabase
         .from("boletos")
-        .select(`
-            id,
-            valor,
-            data_vencimento,
-            status,
-            nota_fiscal_id
-        `)
+        .select("id, valor, data_vencimento, status, nota_fiscal_id")
         .order("data_vencimento", { ascending: true });
 
     if (error) {
@@ -90,11 +89,7 @@ function renderizarTabela() {
                 <td style="text-align:center">${formatarDataBR(r.data_vencimento)}</td>
                 <td style="text-align:center">${statusCalc}</td>
                 <td style="text-align:center">
-                    ${
-                        roleUsuario === "admin" && r.status === "ABERTO"
-                            ? `<button class="btn-verde" onclick="marcarPago(${r.id})">Pagar</button>`
-                            : "—"
-                    }
+                    ${renderizarAcoes(r)}
                 </td>
             </tr>
         `;
@@ -105,8 +100,22 @@ function renderizarTabela() {
 }
 
 // ===============================================
+function renderizarAcoes(r) {
+    if (roleUsuario !== "admin") return "—";
+
+    if (r.status === "ABERTO") {
+        return `<button class="btn-verde" onclick="marcarPago(${r.id})">Pagar</button>`;
+    }
+
+    if (r.status === "PAGO") {
+        return `<button class="btn-azul" onclick="reabrirBoleto(${r.id})">Reabrir</button>`;
+    }
+
+    return "—";
+}
+
+// ===============================================
 window.marcarPago = async function (id) {
-    if (roleUsuario !== "admin") return;
     if (!confirm("Marcar como pago?")) return;
 
     const { error } = await supabase
@@ -122,3 +131,48 @@ window.marcarPago = async function (id) {
     await carregarDados();
     renderizarTabela();
 };
+
+// ===============================================
+window.reabrirBoleto = async function (id) {
+    if (!confirm("Reabrir este lançamento?")) return;
+
+    const { error } = await supabase
+        .from("boletos")
+        .update({ status: "ABERTO" })
+        .eq("id", id);
+
+    if (error) {
+        alert("Erro ao reabrir lançamento");
+        return;
+    }
+
+    await carregarDados();
+    renderizarTabela();
+};
+
+// ===============================================
+async function lancamentoManual() {
+    const nf = prompt("Número da NF (opcional):");
+    const valor = prompt("Valor do boleto:");
+    const venc = prompt("Data de vencimento (AAAA-MM-DD):");
+
+    if (!valor || !venc) {
+        alert("Valor e vencimento são obrigatórios");
+        return;
+    }
+
+    const { error } = await supabase.from("boletos").insert({
+        nota_fiscal_id: nf || null,
+        valor: Number(valor),
+        data_vencimento: venc,
+        status: "ABERTO"
+    });
+
+    if (error) {
+        alert("Erro ao lançar manualmente");
+        return;
+    }
+
+    await carregarDados();
+    renderizarTabela();
+}
