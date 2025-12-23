@@ -8,7 +8,6 @@ let roleUsuario = "viewer";
 let registros = [];
 
 // ===============================================
-
 function formatarDataBR(dataISO) {
     if (!dataISO) return "—";
     return dataISO.split("T")[0].split("-").reverse().join("/");
@@ -46,13 +45,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function carregarBoletos() {
     const { data, error } = await supabase
         .from("boletos")
-        .select(`
-            id,
-            origem,
-            valor,
-            data_vencimento,
-            status
-        `)
+        .select("id, origem, valor, data_vencimento, status")
         .order("data_vencimento", { ascending: true });
 
     if (error) {
@@ -97,30 +90,11 @@ function renderizarTabela() {
 
         tbody.innerHTML += `
             <tr>
-                <!-- ORIGEM -->
-                <td style="text-align:center">
-                    ${r.origem || "—"}
-                </td>
-
-                <!-- VALOR -->
-                <td style="text-align:center">
-                    ${formatarMoeda(r.valor)}
-                </td>
-
-                <!-- VENCIMENTO -->
-                <td style="text-align:center">
-                    ${formatarDataBR(r.data_vencimento)}
-                </td>
-
-                <!-- STATUS -->
-                <td style="text-align:center">
-                    ${statusCalc}
-                </td>
-
-                <!-- AÇÕES -->
-                <td style="text-align:center">
-                    ${renderizarAcoes(r)}
-                </td>
+                <td style="text-align:center">${r.origem || "—"}</td>
+                <td style="text-align:center">${formatarMoeda(r.valor)}</td>
+                <td style="text-align:center">${formatarDataBR(r.data_vencimento)}</td>
+                <td style="text-align:center">${statusCalc}</td>
+                <td style="text-align:center">${renderizarAcoes(r)}</td>
             </tr>
         `;
     });
@@ -180,24 +154,34 @@ window.reabrir = async function (id) {
 };
 
 // ===============================================
+// LANÇAMENTO MANUAL — CORRIGIDO
+// ===============================================
 async function lancamentoManual() {
-    const origem = prompt("Origem do lançamento (ex: 6231A, NF-ANTIGA-2022):");
-    const valor = prompt("Valor:");
-    const venc = prompt("Data de vencimento (AAAA-MM-DD):");
 
-    if (!valor || !venc) {
-        alert("Valor e vencimento são obrigatórios");
+    const origem = prompt("Origem do lançamento (ex: 6231A, NF-ANTIGA-2022):");
+    if (origem === null) return;
+
+    const valorStr = prompt("Valor (ex: 6580,76):");
+    if (valorStr === null) return;
+
+    const venc = prompt("Data de vencimento (AAAA-MM-DD):");
+    if (venc === null) return;
+
+    const valor = Number(valorStr.replace(",", "."));
+    if (!valor || isNaN(valor)) {
+        alert("Valor inválido");
         return;
     }
 
     const { error } = await supabase.from("boletos").insert({
         origem: origem || null,
-        valor: Number(valor),
-        data_vencimento: venc,
+        valor,
+        data_vencimento: venc + "T12:00:00", // 🔒 evita -1 dia
         status: "ABERTO"
     });
 
     if (error) {
+        console.error(error);
         alert("Erro ao lançar manualmente");
         return;
     }
