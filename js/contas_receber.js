@@ -59,7 +59,16 @@ async function carregarDados() {
 
     const { data: boletos, error } = await supabase
         .from("boletos")
-        .select("id, valor, data_vencimento, nota_fiscal_id, origem, status")
+        .select(`
+            id,
+            valor,
+            data_vencimento,
+            nota_fiscal_id,
+            origem,
+            tipo_nf,
+            status,
+            nf_manual
+        `)
         .order("data_vencimento");
 
     if (error) {
@@ -116,9 +125,15 @@ function renderizarTabela() {
                 <td style="text-align:center">
                     ${mapaNF[r.nota_fiscal_id] || r.origem || "—"}
                 </td>
-                <td style="text-align:center">${formatarMoeda(r.valor)}</td>
-                <td style="text-align:center">${formatarDataBR(r.data_vencimento)}</td>
-                <td style="text-align:center">${statusCalc}</td>
+                <td style="text-align:center">
+                    ${formatarMoeda(r.valor)}
+                </td>
+                <td style="text-align:center">
+                    ${formatarDataBR(r.data_vencimento)}
+                </td>
+                <td style="text-align:center">
+                    ${statusCalc}
+                </td>
                 <td style="text-align:center">
                     ${
                         roleUsuario === "admin"
@@ -164,15 +179,20 @@ async function salvarLancamentoManual() {
         .from("boletos")
         .insert([{
             origem: origem || null,
-            valor,
+            valor: valor,
             data_vencimento: vencimento,
             status: "ABERTO",
-            nota_fiscal_id: null
+
+            // 🔒 CAMPOS OBRIGATÓRIOS PARA MANUAL
+            tipo_nf: "SEM_NF",
+            nota_fiscal_id: null,
+            numero_nf_referencia: null,
+            nf_manual: "SIM"
         }]);
 
     if (error) {
-        console.error(error);
-        alert("Erro ao salvar lançamento manual.");
+        console.error("ERRO SUPABASE:", error.message);
+        alert(error.message);
         return;
     }
 
@@ -188,7 +208,17 @@ window.pagar = async function (id) {
     if (roleUsuario !== "admin") return;
     if (!confirm("Confirmar pagamento?")) return;
 
-    await supabase.from("boletos").update({ status: "PAGO" }).eq("id", id);
+    const { error } = await supabase
+        .from("boletos")
+        .update({ status: "PAGO" })
+        .eq("id", id);
+
+    if (error) {
+        console.error(error);
+        alert("Erro ao marcar como pago");
+        return;
+    }
+
     await carregarDados();
     renderizarTabela();
 };
@@ -197,7 +227,17 @@ window.reabrir = async function (id) {
     if (roleUsuario !== "admin") return;
     if (!confirm("Reabrir este boleto?")) return;
 
-    await supabase.from("boletos").update({ status: "ABERTO" }).eq("id", id);
+    const { error } = await supabase
+        .from("boletos")
+        .update({ status: "ABERTO" })
+        .eq("id", id);
+
+    if (error) {
+        console.error(error);
+        alert("Erro ao reabrir boleto");
+        return;
+    }
+
     await carregarDados();
     renderizarTabela();
 };
