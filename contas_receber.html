@@ -219,11 +219,6 @@ body.modo-pdf tr {
     page-break-inside: avoid !important;
 }
 
-/* força quebra ANTES do total, se não couber */
-body.modo-pdf #totalReceber {
-    page-break-before: always;
-}
-
 /* garante que o card da tabela não seja cortado */
 body.modo-pdf .card {
     page-break-inside: avoid;
@@ -232,6 +227,20 @@ body.modo-pdf .card {
 /* evita qualquer resíduo de texto fora da tabela */
 body.modo-pdf .card:last-of-type {
     padding-bottom: 20px;
+}
+
+    /* =========================
+   PDF – TOTAL JUNTO DA TABELA
+========================= */
+
+/* mantém tabela + total como um bloco */
+body.modo-pdf .card:last-of-type {
+    page-break-inside: avoid;
+}
+
+/* garante espaçamento correto do total */
+body.modo-pdf .card:last-of-type > div {
+    margin-top: 10px;
 }
 
 </style>   
