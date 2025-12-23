@@ -90,9 +90,7 @@ async function aplicarFiltros() {
 // ===============================================
 function renderizarTabela() {
     const tbody = document.getElementById("listaReceber");
-    tbody.innerHTML += `
-    <tr class="${statusCalc === "VENCIDO" ? "vencido" : ""}">
-
+    tbody.innerHTML = "";
 
     const statusFiltro = document.getElementById("filtroStatus").value;
     const vencimentoFiltro = soDataISO(
@@ -111,7 +109,7 @@ function renderizarTabela() {
         total += Number(r.valor) || 0;
 
         tbody.innerHTML += `
-            <tr>
+            <tr class="${statusCalc === "VENCIDO" ? "vencido" : ""}">
                 <td style="text-align:center">${r.origem || "—"}</td>
                 <td style="text-align:center">${formatarMoeda(r.valor)}</td>
                 <td style="text-align:center">${formatarDataBR(r.data_vencimento)}</td>
@@ -134,7 +132,7 @@ function renderizarTabela() {
 }
 
 // ===============================================
-// MODAL LANÇAMENTO MANUAL (mantido)
+// MODAL LANÇAMENTO MANUAL
 // ===============================================
 function abrirModalManual() {
     document.getElementById("modalManual").style.display = "flex";
