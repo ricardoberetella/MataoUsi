@@ -90,7 +90,9 @@ async function aplicarFiltros() {
 // ===============================================
 function renderizarTabela() {
     const tbody = document.getElementById("listaReceber");
-    tbody.innerHTML = "";
+    tbody.innerHTML += `
+    <tr class="${statusCalc === "VENCIDO" ? "vencido" : ""}">
+
 
     const statusFiltro = document.getElementById("filtroStatus").value;
     const vencimentoFiltro = soDataISO(
