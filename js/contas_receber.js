@@ -1,11 +1,12 @@
 // ===============================================
-// CONTAS_RECEBER.JS — ESTÁVEL + MANUAL + REABRIR
+// CONTAS_RECEBER.JS — NF REAL (numero_nf)
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
 
 let roleUsuario = "viewer";
 let registros = [];
+let mapaNotas = {}; // { id_nota: numero_nf }
 
 // ===============================================
 function formatarDataBR(data) {
@@ -28,21 +29,42 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     roleUsuario = user.user_metadata?.role || "viewer";
 
-    // 🔹 FILTRAR
     document.getElementById("btnFiltrar")?.addEventListener("click", aplicarFiltros);
 
-    // 🔹 BOTÃO LANÇAMENTO MANUAL (ID CORRETO)
     const btnManual = document.getElementById("btnNovoManual");
     if (btnManual && roleUsuario === "admin") {
         btnManual.addEventListener("click", lancamentoManual);
     }
 
-    await carregarDados();
+    await carregarNotas();
+    await carregarBoletos();
     renderizarTabela();
 });
 
 // ===============================================
-async function carregarDados() {
+// CARREGAR MAPA DE NOTAS (id → numero_nf)
+// ===============================================
+async function carregarNotas() {
+    const { data, error } = await supabase
+        .from("notas_fiscais")
+        .select("id, numero_nf");
+
+    if (error) {
+        console.error(error);
+        alert("Erro ao carregar notas fiscais");
+        return;
+    }
+
+    mapaNotas = {};
+    (data || []).forEach(n => {
+        mapaNotas[n.id] = n.numero_nf;
+    });
+}
+
+// ===============================================
+// CARREGAR BOLETOS
+// ===============================================
+async function carregarBoletos() {
     const { data, error } = await supabase
         .from("boletos")
         .select("id, valor, data_vencimento, status, nota_fiscal_id")
@@ -88,9 +110,13 @@ function renderizarTabela() {
 
         total += Number(r.valor || 0);
 
+        const numeroNF = r.nota_fiscal_id
+            ? (mapaNotas[r.nota_fiscal_id] ?? r.nota_fiscal_id)
+            : "—";
+
         tbody.innerHTML += `
             <tr>
-                <td style="text-align:center">${r.nota_fiscal_id || "—"}</td>
+                <td style="text-align:center">${numeroNF}</td>
                 <td style="text-align:center">${formatarMoeda(r.valor)}</td>
                 <td style="text-align:center">${formatarDataBR(r.data_vencimento)}</td>
                 <td style="text-align:center">${statusCalc}</td>
@@ -134,11 +160,10 @@ window.marcarPago = async function (id) {
         return;
     }
 
-    await carregarDados();
+    await carregarBoletos();
     renderizarTabela();
 };
 
-// ===============================================
 window.reabrir = async function (id) {
     if (!confirm("Reabrir este lançamento?")) return;
 
@@ -152,13 +177,13 @@ window.reabrir = async function (id) {
         return;
     }
 
-    await carregarDados();
+    await carregarBoletos();
     renderizarTabela();
 };
 
 // ===============================================
 async function lancamentoManual() {
-    const nf = prompt("Número da NF (opcional):");
+    const nf = prompt("Número da NF (antiga ou manual):");
     const valor = prompt("Valor do lançamento:");
     const venc = prompt("Data de vencimento (AAAA-MM-DD):");
 
@@ -179,6 +204,6 @@ async function lancamentoManual() {
         return;
     }
 
-    await carregarDados();
+    await carregarBoletos();
     renderizarTabela();
 }
