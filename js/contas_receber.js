@@ -1,5 +1,5 @@
 // ===============================================
-// CONTAS_RECEBER.JS — ESTÁVEL + LANÇAMENTO MANUAL
+// CONTAS_RECEBER.JS — ESTÁVEL (SEM ERRO 400)
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -27,11 +27,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     roleUsuario = user.user_metadata?.role || "viewer";
 
-    const btnFiltrar = document.getElementById("btnFiltrar");
-    if (btnFiltrar) btnFiltrar.onclick = aplicarFiltros;
-
-    const btnManual = document.getElementById("btnLancamentoManual");
-    if (btnManual) btnManual.onclick = abrirLancamentoManual;
+    document.getElementById("btnFiltrar").onclick = aplicarFiltros;
 
     await carregarDados();
     renderizarTabela();
@@ -50,7 +46,7 @@ async function carregarDados() {
                 numero_nf
             )
         `)
-        .order("data_vencimento");
+        .order("data_vencimento", { ascending: true });
 
     if (error) {
         console.error(error);
@@ -79,12 +75,17 @@ function renderizarTabela() {
 
     registros.forEach(r => {
         let statusCalc = r.status;
+
         if (r.status === "ABERTO" && r.data_vencimento < hoje) {
             statusCalc = "VENCIDO";
         }
 
+        // 🔒 FILTROS SEGUROS
         if (statusFiltro && statusFiltro !== statusCalc) return;
-        if (vencimentoFiltro && r.data_vencimento > vencimentoFiltro) return;
+
+        if (vencimentoFiltro) {
+            if (r.data_vencimento > vencimentoFiltro) return;
+        }
 
         total += Number(r.valor);
 
@@ -105,12 +106,14 @@ function renderizarTabela() {
         `;
     });
 
-    document.getElementById("totalReceber").textContent = formatarMoeda(total);
+    document.getElementById("totalReceber").textContent =
+        formatarMoeda(total);
 }
 
 // ===============================================
 window.marcarPago = async function (id) {
     if (roleUsuario !== "admin") return;
+
     if (!confirm("Marcar como pago?")) return;
 
     const { error } = await supabase
@@ -126,39 +129,3 @@ window.marcarPago = async function (id) {
     await carregarDados();
     renderizarTabela();
 };
-
-// ===============================================
-// LANÇAMENTO MANUAL (TEMPORÁRIO VIA PROMPT)
-// ===============================================
-async function abrirLancamentoManual() {
-    if (roleUsuario !== "admin") {
-        alert("Apenas administrador pode lançar manualmente");
-        return;
-    }
-
-    const nf = prompt("Número da NF:");
-    if (!nf) return;
-
-    const valor = prompt("Valor do boleto:");
-    if (!valor) return;
-
-    const vencimento = prompt("Data de vencimento (YYYY-MM-DD):");
-    if (!vencimento) return;
-
-    const { error } = await supabase.from("boletos").insert({
-        valor: Number(valor),
-        data_vencimento: vencimento,
-        status: "ABERTO",
-        nota_fiscal_id: null,
-        numero_nf_manual: nf
-    });
-
-    if (error) {
-        alert("Erro ao lançar boleto manual");
-        console.error(error);
-        return;
-    }
-
-    await carregarDados();
-    renderizarTabela();
-}
