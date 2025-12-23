@@ -10,9 +10,9 @@
     <!-- LIB PDF (igual outras telas) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-   <style>
+<style>
 /* =========================
-   PDF – PADRÃO RELATÓRIO
+   PDF – RELATÓRIO FINAL
 ========================= */
 
 /* esconder elementos fora do PDF */
@@ -22,7 +22,7 @@ body.modo-pdf button {
     display: none !important;
 }
 
-/* fundo geral */
+/* fundo e fonte */
 body.modo-pdf {
     background: #fff !important;
     color: #000 !important;
@@ -37,7 +37,7 @@ body.modo-pdf .container {
 }
 
 /* =========================
-   CABEÇALHO PDF
+   CABEÇALHO DO RELATÓRIO
 ========================= */
 .cabecalho-pdf {
     display: none;
@@ -55,12 +55,12 @@ body.modo-pdf .cabecalho-pdf {
 }
 
 .logo-pdf img {
-    height: 45px;
+    height: 42px;
 }
 
 .titulo-pdf h2 {
     margin: 0;
-    font-size: 16px;
+    font-size: 15px;
 }
 
 .titulo-pdf p {
@@ -73,17 +73,27 @@ body.modo-pdf .cabecalho-pdf {
 }
 
 /* =========================
-   TABELA ESTILO PLANILHA
+   TABELA – QUEBRA CORRETA
 ========================= */
 body.modo-pdf table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 10.5px;
+    font-size: 10px;
+}
+
+/* 🔑 FAZ O CABEÇALHO REPETIR */
+body.modo-pdf thead {
+    display: table-header-group;
+}
+
+/* evita quebrar linhas */
+body.modo-pdf tr {
+    page-break-inside: avoid;
 }
 
 /* cabeçalho da tabela */
 body.modo-pdf thead th {
-    background: #e5e7eb; /* CINZA */
+    background: #e5e7eb;
     color: #000;
     border: 1px solid #000;
     padding: 6px;
@@ -97,19 +107,21 @@ body.modo-pdf td {
     text-align: center;
 }
 
-/* remove qualquer cor antiga */
+/* remove qualquer destaque antigo */
 body.modo-pdf tr.vencido td {
     background: #fff !important;
     color: #000 !important;
     font-weight: normal;
 }
 
-/* total */
-body.modo-pdf #totalReceber {
-    font-weight: bold;
+/* =========================
+   CONTROLE DE PÁGINA
+========================= */
+/* força quebra limpa quando necessário */
+body.modo-pdf .card {
+    page-break-inside: auto;
 }
-</style>
-
+</style>   
 
 </head>
 
