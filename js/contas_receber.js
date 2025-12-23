@@ -19,14 +19,14 @@ function formatarMoeda(valor) {
 function soDataISO(value) {
     if (!value) return "";
     const s = String(value);
-    return s.includes("T") ? s.split("T")[0] : s; // garante YYYY-MM-DD
+    return s.includes("T") ? s.split("T")[0] : s;
 }
 
 function formatarDataBR(iso) {
     const d = soDataISO(iso);
     if (!d || !d.includes("-")) return "—";
     const [ano, mes, dia] = d.split("-");
-    return `${dia}/${mes}/${ano}`; // sem timezone (não dá -1 dia)
+    return `${dia}/${mes}/${ano}`;
 }
 
 function hojeISOlocal() {
@@ -57,8 +57,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
 
+    // 🔑 LINHA CORRETA (role)
     roleUsuario = user.user_metadata?.role || "viewer";
 
+    // ===============================================
+    // 🔒 CONTROLE VISUAL – VIEWER
+    // ===============================================
+    if (roleUsuario !== "admin") {
+
+        // ❌ esconder botão Lançamento Manual
+        const btnNovoManual = document.getElementById("btnNovoManual");
+        if (btnNovoManual) btnNovoManual.style.display = "none";
+
+        // ❌ esconder coluna Ações (via CSS)
+        document.body.classList.add("viewer");
+    }
+
+    // ===============================================
+    // EVENTOS
+    // ===============================================
     const btnFiltrar = document.getElementById("btnFiltrar");
     if (btnFiltrar) btnFiltrar.onclick = aplicarFiltros;
 
@@ -97,7 +114,6 @@ async function carregarDados() {
 
 // ===============================================
 async function aplicarFiltros() {
-    // recarrega para garantir que exclusões no Supabase reflitam na tela
     await carregarDados();
     renderizarTabela();
 }
@@ -195,7 +211,6 @@ async function salvarLancamentoManual() {
         return;
     }
 
-    // limpa campos
     document.getElementById("origemManual").value = "";
     document.getElementById("valorManual").value = "";
     document.getElementById("vencimentoManual").value = "";
@@ -206,7 +221,7 @@ async function salvarLancamentoManual() {
 }
 
 // ===============================================
-// AÇÕES ADMIN (mantidas)
+// AÇÕES ADMIN
 // ===============================================
 window.pagar = async function (id) {
     if (roleUsuario !== "admin") return;
@@ -247,7 +262,7 @@ window.reabrir = async function (id) {
 };
 
 // ===============================================
-// GERAR PDF (igual padrão)
+// GERAR PDF
 // ===============================================
 function gerarPDF() {
     const area = document.getElementById("areaPdf");
@@ -262,9 +277,9 @@ function gerarPDF() {
         html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
     };
-    
-document.getElementById("dataHoraPdf").textContent =
-    new Date().toLocaleString("pt-BR");
+
+    document.getElementById("dataHoraPdf").textContent =
+        new Date().toLocaleString("pt-BR");
 
     html2pdf()
         .set(opt)
