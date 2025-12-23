@@ -187,6 +187,29 @@ body.modo-pdf .titulo-pdf p {
     font-size: 11px;
 }
 
+    /* =========================
+   PDF – AJUSTE DE ESCALA
+========================= */
+
+/* cria margem real do PDF */
+body.modo-pdf .container {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+}
+
+/* reduz levemente a tabela inteira */
+body.modo-pdf table {
+    transform: scale(0.96);
+    transform-origin: top left;
+}
+
+/* garante que a borda não “vaze” */
+body.modo-pdf table,
+body.modo-pdf th,
+body.modo-pdf td {
+    box-sizing: border-box;
+}
+
 </style>   
 
 </head>
