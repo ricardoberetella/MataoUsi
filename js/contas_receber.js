@@ -1,12 +1,11 @@
 // ===============================================
-// CONTAS_RECEBER.JS — NF REAL (numero_nf)
+// CONTAS_RECEBER.JS — ORIGEM CORRETA
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
 
 let roleUsuario = "viewer";
 let registros = [];
-let mapaNotas = {}; // { id_nota: numero_nf }
 
 // ===============================================
 function formatarDataBR(data) {
@@ -36,30 +35,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         btnManual.addEventListener("click", lancamentoManual);
     }
 
-    await carregarNotas();
     await carregarBoletos();
     renderizarTabela();
 });
-
-// ===============================================
-// CARREGAR MAPA DE NOTAS (id → numero_nf)
-// ===============================================
-async function carregarNotas() {
-    const { data, error } = await supabase
-        .from("notas_fiscais")
-        .select("id, numero_nf");
-
-    if (error) {
-        console.error(error);
-        alert("Erro ao carregar notas fiscais");
-        return;
-    }
-
-    mapaNotas = {};
-    (data || []).forEach(n => {
-        mapaNotas[n.id] = n.numero_nf;
-    });
-}
 
 // ===============================================
 // CARREGAR BOLETOS
@@ -67,7 +45,13 @@ async function carregarNotas() {
 async function carregarBoletos() {
     const { data, error } = await supabase
         .from("boletos")
-        .select("id, valor, data_vencimento, status, nota_fiscal_id")
+        .select(`
+            id,
+            origem,
+            valor,
+            data_vencimento,
+            status
+        `)
         .order("data_vencimento", { ascending: true });
 
     if (error) {
@@ -110,16 +94,29 @@ function renderizarTabela() {
 
         total += Number(r.valor || 0);
 
-        const numeroNF = r.nota_fiscal_id
-            ? (mapaNotas[r.nota_fiscal_id] ?? r.nota_fiscal_id)
-            : "—";
-
         tbody.innerHTML += `
             <tr>
-                <td style="text-align:center">${numeroNF}</td>
-                <td style="text-align:center">${formatarMoeda(r.valor)}</td>
-                <td style="text-align:center">${formatarDataBR(r.data_vencimento)}</td>
-                <td style="text-align:center">${statusCalc}</td>
+                <!-- ORIGEM -->
+                <td style="text-align:center">
+                    ${r.origem || "—"}
+                </td>
+
+                <!-- VALOR -->
+                <td style="text-align:center">
+                    ${formatarMoeda(r.valor)}
+                </td>
+
+                <!-- VENCIMENTO -->
+                <td style="text-align:center">
+                    ${formatarDataBR(r.data_vencimento)}
+                </td>
+
+                <!-- STATUS -->
+                <td style="text-align:center">
+                    ${statusCalc}
+                </td>
+
+                <!-- AÇÕES -->
                 <td style="text-align:center">
                     ${renderizarAcoes(r)}
                 </td>
@@ -183,8 +180,8 @@ window.reabrir = async function (id) {
 
 // ===============================================
 async function lancamentoManual() {
-    const nf = prompt("Número da NF (antiga ou manual):");
-    const valor = prompt("Valor do lançamento:");
+    const origem = prompt("Origem do lançamento (ex: 6231A, NF-ANTIGA-2022):");
+    const valor = prompt("Valor:");
     const venc = prompt("Data de vencimento (AAAA-MM-DD):");
 
     if (!valor || !venc) {
@@ -193,7 +190,7 @@ async function lancamentoManual() {
     }
 
     const { error } = await supabase.from("boletos").insert({
-        nota_fiscal_id: nf || null,
+        origem: origem || null,
         valor: Number(valor),
         data_vencimento: venc,
         status: "ABERTO"
