@@ -1,5 +1,5 @@
 // ===============================================
-// CONTAS_RECEBER.JS — ESTÁVEL / À PROVA DE ERRO
+// CONTAS_RECEBER.JS — DEFINITIVO / ESTÁVEL
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -12,16 +12,14 @@ function soData(iso) {
     return iso ? String(iso).split("T")[0] : "";
 }
 
-function formatarDataBR(dataISO) {
-    const d = soData(dataISO);
-    if (!d) return "—";
-    const [y, m, d2] = d.split("-");
-    return `${d2}/${m}/${y}`;
+function formatarDataBR(iso) {
+    if (!iso) return "—";
+    const [y, m, d] = soData(iso).split("-");
+    return `${d}/${m}/${y}`;
 }
 
-function formatarMoeda(valor) {
-    if (valor === null || valor === undefined) return "—";
-    return Number(valor).toLocaleString("pt-BR", {
+function formatarMoeda(v) {
+    return Number(v || 0).toLocaleString("pt-BR", {
         style: "currency",
         currency: "BRL"
     });
@@ -41,23 +39,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("btnFiltrar")
         ?.addEventListener("click", renderizarTabela);
 
-    const btnManual = document.getElementById("btnNovoManual");
-    if (btnManual && roleUsuario === "admin") {
-        btnManual.addEventListener("click", abrirModalManual);
+    if (roleUsuario === "admin") {
+        document.getElementById("btnNovoManual")
+            ?.addEventListener("click", abrirModalManual);
+
+        document.getElementById("btnSalvarManual")
+            ?.addEventListener("click", salvarManual);
+
+        document.getElementById("btnCancelarManual")
+            ?.addEventListener("click", fecharModalManual);
     }
-
-    document.getElementById("btnCancelarManual")
-        ?.addEventListener("click", fecharModalManual);
-
-    document.getElementById("btnSalvarManual")
-        ?.addEventListener("click", salvarManual);
 
     await carregarBoletos();
     renderizarTabela();
 });
 
-// ===============================================
-// CARREGAR BOLETOS
 // ===============================================
 async function carregarBoletos() {
     const { data, error } = await supabase
@@ -84,10 +80,9 @@ function renderizarTabela() {
     const hoje = hojeISO();
 
     registros.forEach(r => {
-        let statusCalc = r.status || "ABERTO";
-
-        if (statusCalc === "ABERTO" && soData(r.data_vencimento) < hoje) {
-            statusCalc = "VENCIDO";
+        let status = r.status || "ABERTO";
+        if (status === "ABERTO" && soData(r.data_vencimento) < hoje) {
+            status = "VENCIDO";
         }
 
         total += Number(r.valor || 0);
@@ -97,8 +92,10 @@ function renderizarTabela() {
                 <td style="text-align:center">${r.origem || "—"}</td>
                 <td style="text-align:center">${formatarMoeda(r.valor)}</td>
                 <td style="text-align:center">${formatarDataBR(r.data_vencimento)}</td>
-                <td style="text-align:center">${statusCalc}</td>
-                <td style="text-align:center">${renderizarAcoes(r)}</td>
+                <td style="text-align:center">${status}</td>
+                <td style="text-align:center">
+                    ${renderizarAcoes(r)}
+                </td>
             </tr>
         `;
     });
@@ -112,11 +109,11 @@ function renderizarAcoes(r) {
     if (roleUsuario !== "admin") return "—";
 
     if (r.status === "ABERTO") {
-        return `<button class="btn-verde" onclick="marcarPago(${r.id})">Pagar</button>`;
+        return `<button class="btn-verde" onclick="window.marcarPago(${r.id})">Pagar</button>`;
     }
 
     if (r.status === "PAGO") {
-        return `<button class="btn-azul" onclick="reabrir(${r.id})">Reabrir</button>`;
+        return `<button class="btn-azul" onclick="window.reabrir(${r.id})">Reabrir</button>`;
     }
 
     return "—";
@@ -136,6 +133,7 @@ window.marcarPago = async (id) => {
 
     if (error) {
         alert("Erro ao marcar como pago");
+        console.error(error);
         return;
     }
 
@@ -156,6 +154,7 @@ window.reabrir = async (id) => {
 
     if (error) {
         alert("Erro ao reabrir");
+        console.error(error);
         return;
     }
 
@@ -168,14 +167,10 @@ window.reabrir = async (id) => {
 // ===============================================
 function abrirModalManual() {
     const modal = document.getElementById("modalManual");
-    if (!modal) {
-        alert("Modal não encontrado no HTML");
-        return;
-    }
+    if (!modal) return;
 
     document.getElementById("manOrigem").value = "";
     document.getElementById("manValor").value = "";
-    document.getElementById("manVencimentoTexto").value = "";
     document.getElementById("manVencimentoDate").value = "";
 
     modal.style.display = "flex";
@@ -186,26 +181,13 @@ function fecharModalManual() {
     if (modal) modal.style.display = "none";
 }
 
-// ===============================================
 async function salvarManual() {
     const origem = document.getElementById("manOrigem").value || null;
     const valor = Number(document.getElementById("manValor").value);
-    const vencTxt = document.getElementById("manVencimentoTexto").value;
-    const vencDate = document.getElementById("manVencimentoDate").value;
+    const venc = document.getElementById("manVencimentoDate").value;
 
-    if (!valor || isNaN(valor)) {
-        alert("Valor inválido");
-        return;
-    }
-
-    let vencISO = "";
-    if (vencDate) {
-        vencISO = vencDate;
-    } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(vencTxt)) {
-        const [d, m, y] = vencTxt.split("/");
-        vencISO = `${y}-${m}-${d}`;
-    } else {
-        alert("Data inválida (dd/mm/aaaa)");
+    if (!valor || !venc) {
+        alert("Preencha valor e vencimento");
         return;
     }
 
@@ -214,12 +196,13 @@ async function salvarManual() {
         .insert({
             origem,
             valor,
-            data_vencimento: `${vencISO}T12:00:00`,
+            data_vencimento: `${venc}T12:00:00`,
             status: "ABERTO"
         });
 
     if (error) {
         alert("Erro ao lançar manualmente");
+        console.error(error);
         return;
     }
 
