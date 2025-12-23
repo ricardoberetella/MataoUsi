@@ -43,8 +43,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     roleUsuario = user.user_metadata?.role || "viewer";
 
-    document.getElementById("btnFiltrar")?.addEventListener("click", aplicarFiltros);
-    document.getElementById("btnLancamentoManual")?.addEventListener("click", lancamentoManual);
+    // botão filtrar
+    const btnFiltrar = document.getElementById("btnFiltrar");
+    if (btnFiltrar) btnFiltrar.onclick = aplicarFiltros;
+
+    // botão lançamento manual (ID OBRIGATÓRIO NO HTML)
+    const btnManual = document.getElementById("btnLancamentoManual");
+    if (btnManual) btnManual.onclick = lancamentoManual;
 
     await carregarDados();
     renderizarTabela();
@@ -53,7 +58,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 // ===============================================
 async function carregarDados() {
 
-    registros = []; // 🔒 LIMPEZA TOTAL
+    // 🔒 limpa tudo antes de carregar
+    registros = [];
+    mapaNF = {};
 
     const { data: boletos, error } = await supabase
         .from("boletos")
@@ -66,44 +73,49 @@ async function carregarDados() {
         return;
     }
 
-    // 🔒 ignora qualquer registro inválido
+    // 🔒 garante apenas registros válidos
     registros = (boletos || []).filter(b => b.id);
 
-    // Buscar numero_nf
+    // buscar numero_nf
     const idsNF = [...new Set(registros.map(r => r.nota_fiscal_id).filter(Boolean))];
-    mapaNF = {};
 
     if (idsNF.length > 0) {
-        const { data: notas } = await supabase
+        const { data: notas, error: errNF } = await supabase
             .from("notas_fiscais")
             .select("id, numero_nf")
             .in("id", idsNF);
 
-        notas?.forEach(n => {
-            mapaNF[n.id] = n.numero_nf;
-        });
+        if (!errNF && notas) {
+            notas.forEach(n => {
+                mapaNF[n.id] = n.numero_nf;
+            });
+        }
     }
 }
 
 // ===============================================
-function aplicarFiltros() {
+async function aplicarFiltros() {
+    // 🔒 sempre recarrega do banco
+    await carregarDados();
     renderizarTabela();
 }
 
 // ===============================================
 function renderizarTabela() {
     const tbody = document.getElementById("listaReceber");
+    if (!tbody) return;
+
     tbody.innerHTML = "";
 
-    const statusFiltro = document.getElementById("filtroStatus").value;
+    const statusFiltro = document.getElementById("filtroStatus")?.value || "";
     const vencimentoFiltro = soDataISO(
-        document.getElementById("filtroVencimento").value
+        document.getElementById("filtroVencimento")?.value
     );
 
     let total = 0;
 
     registros.forEach(r => {
-        if (!r.id) return; // 🔒 segurança final
+        if (!r.id) return;
 
         const statusCalc = calcularStatus(r);
         const vencISO = soDataISO(r.data_vencimento);
@@ -140,34 +152,49 @@ function renderizarTabela() {
         `;
     });
 
-    document.getElementById("totalReceber").textContent =
-        formatarMoeda(total);
+    const totalEl = document.getElementById("totalReceber");
+    if (totalEl) totalEl.textContent = formatarMoeda(total);
 }
 
 // ===============================================
-// LANÇAMENTO MANUAL (NOVO — CIRÚRGICO)
+// LANÇAMENTO MANUAL — CIRÚRGICO
 // ===============================================
 async function lancamentoManual() {
-    if (roleUsuario !== "admin") return;
+    if (roleUsuario !== "admin") {
+        alert("Apenas ADMIN pode lançar manualmente.");
+        return;
+    }
 
-    const valor = prompt("Valor do lançamento:");
-    if (!valor) return;
+    const valorStr = prompt("Valor (ex: 2079.00):");
+    if (!valorStr) return;
 
-    const vencimento = prompt("Data de vencimento (YYYY-MM-DD):");
-    if (!vencimento) return;
+    const vencStr = prompt("Vencimento (YYYY-MM-DD) ex: 2025-02-03:");
+    if (!vencStr) return;
+
+    const valor = Number(String(valorStr).replace(",", "."));
+    if (Number.isNaN(valor) || valor <= 0) {
+        alert("Valor inválido.");
+        return;
+    }
+
+    const iso = String(vencStr).trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+        alert("Data inválida. Use YYYY-MM-DD.");
+        return;
+    }
 
     const { error } = await supabase
         .from("boletos")
-        .insert({
-            valor: Number(valor),
-            data_vencimento: vencimento,
-            status: "ABERTO",
-            nota_fiscal_id: null
-        });
+        .insert([{
+            valor,
+            data_vencimento: iso,
+            nota_fiscal_id: null,
+            status: "ABERTO"
+        }]);
 
     if (error) {
         console.error(error);
-        alert("Erro ao lançar manualmente");
+        alert("Erro ao lançar manualmente.");
         return;
     }
 
@@ -176,7 +203,7 @@ async function lancamentoManual() {
 }
 
 // ===============================================
-// AÇÕES ADMIN (INTOCADAS)
+// AÇÕES ADMIN — NÃO MEXIDAS
 // ===============================================
 window.pagar = async function (id) {
     if (roleUsuario !== "admin") return;
