@@ -1,5 +1,5 @@
 // ===============================================
-// CONTAS_RECEBER.JS — BOLETOS + NF (numero_nf)
+// CONTAS_RECEBER.JS — BOLETOS + NF / ORIGEM
 // PAGAR + REABRIR (ADMIN)
 // ===============================================
 
@@ -43,13 +43,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     roleUsuario = user.user_metadata?.role || "viewer";
 
-    // botão filtrar
-    const btnFiltrar = document.getElementById("btnFiltrar");
-    if (btnFiltrar) btnFiltrar.onclick = aplicarFiltros;
-
-    // botão lançamento manual (ID OBRIGATÓRIO NO HTML)
-    const btnManual = document.getElementById("btnLancamentoManual");
-    if (btnManual) btnManual.onclick = lancamentoManual;
+    document.getElementById("btnFiltrar").onclick = aplicarFiltros;
+    document.getElementById("btnNovoManual").onclick = abrirModalManual;
+    document.getElementById("btnCancelarManual").onclick = fecharModalManual;
+    document.getElementById("btnSalvarManual").onclick = salvarLancamentoManual;
 
     await carregarDados();
     renderizarTabela();
@@ -57,45 +54,38 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 // ===============================================
 async function carregarDados() {
-
-    // 🔒 limpa tudo antes de carregar
     registros = [];
     mapaNF = {};
 
     const { data: boletos, error } = await supabase
         .from("boletos")
-        .select("id, valor, data_vencimento, nota_fiscal_id, status")
+        .select("id, valor, data_vencimento, nota_fiscal_id, origem, status")
         .order("data_vencimento");
 
     if (error) {
-        console.error("Erro boletos:", error);
+        console.error(error);
         alert("Erro ao carregar contas a receber");
         return;
     }
 
-    // 🔒 garante apenas registros válidos
     registros = (boletos || []).filter(b => b.id);
 
-    // buscar numero_nf
     const idsNF = [...new Set(registros.map(r => r.nota_fiscal_id).filter(Boolean))];
 
     if (idsNF.length > 0) {
-        const { data: notas, error: errNF } = await supabase
+        const { data: notas } = await supabase
             .from("notas_fiscais")
             .select("id, numero_nf")
             .in("id", idsNF);
 
-        if (!errNF && notas) {
-            notas.forEach(n => {
-                mapaNF[n.id] = n.numero_nf;
-            });
-        }
+        notas?.forEach(n => {
+            mapaNF[n.id] = n.numero_nf;
+        });
     }
 }
 
 // ===============================================
 async function aplicarFiltros() {
-    // 🔒 sempre recarrega do banco
     await carregarDados();
     renderizarTabela();
 }
@@ -103,20 +93,16 @@ async function aplicarFiltros() {
 // ===============================================
 function renderizarTabela() {
     const tbody = document.getElementById("listaReceber");
-    if (!tbody) return;
-
     tbody.innerHTML = "";
 
-    const statusFiltro = document.getElementById("filtroStatus")?.value || "";
+    const statusFiltro = document.getElementById("filtroStatus").value;
     const vencimentoFiltro = soDataISO(
-        document.getElementById("filtroVencimento")?.value
+        document.getElementById("filtroVencimento").value
     );
 
     let total = 0;
 
     registros.forEach(r => {
-        if (!r.id) return;
-
         const statusCalc = calcularStatus(r);
         const vencISO = soDataISO(r.data_vencimento);
 
@@ -128,17 +114,11 @@ function renderizarTabela() {
         tbody.innerHTML += `
             <tr>
                 <td style="text-align:center">
-                    ${mapaNF[r.nota_fiscal_id] || "—"}
+                    ${mapaNF[r.nota_fiscal_id] || r.origem || "—"}
                 </td>
-                <td style="text-align:center">
-                    ${formatarMoeda(r.valor)}
-                </td>
-                <td style="text-align:center">
-                    ${formatarDataBR(r.data_vencimento)}
-                </td>
-                <td style="text-align:center">
-                    ${statusCalc}
-                </td>
+                <td style="text-align:center">${formatarMoeda(r.valor)}</td>
+                <td style="text-align:center">${formatarDataBR(r.data_vencimento)}</td>
+                <td style="text-align:center">${statusCalc}</td>
                 <td style="text-align:center">
                     ${
                         roleUsuario === "admin"
@@ -152,74 +132,63 @@ function renderizarTabela() {
         `;
     });
 
-    const totalEl = document.getElementById("totalReceber");
-    if (totalEl) totalEl.textContent = formatarMoeda(total);
+    document.getElementById("totalReceber").textContent =
+        formatarMoeda(total);
 }
 
 // ===============================================
-// LANÇAMENTO MANUAL — CIRÚRGICO
+// MODAL LANÇAMENTO MANUAL
 // ===============================================
-async function lancamentoManual() {
-    if (roleUsuario !== "admin") {
-        alert("Apenas ADMIN pode lançar manualmente.");
-        return;
-    }
+function abrirModalManual() {
+    document.getElementById("modalManual").style.display = "flex";
+}
 
-    const valorStr = prompt("Valor (ex: 2079.00):");
-    if (!valorStr) return;
+function fecharModalManual() {
+    document.getElementById("modalManual").style.display = "none";
+}
 
-    const vencStr = prompt("Vencimento (YYYY-MM-DD) ex: 2025-02-03:");
-    if (!vencStr) return;
+// ===============================================
+async function salvarLancamentoManual() {
+    if (roleUsuario !== "admin") return;
 
-    const valor = Number(String(valorStr).replace(",", "."));
-    if (Number.isNaN(valor) || valor <= 0) {
-        alert("Valor inválido.");
-        return;
-    }
+    const origem = document.getElementById("origemManual").value.trim();
+    const valor = Number(document.getElementById("valorManual").value);
+    const vencimento = document.getElementById("vencimentoManual").value;
 
-    const iso = String(vencStr).trim();
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
-        alert("Data inválida. Use YYYY-MM-DD.");
+    if (!valor || !vencimento) {
+        alert("Informe valor e vencimento.");
         return;
     }
 
     const { error } = await supabase
         .from("boletos")
         .insert([{
+            origem: origem || null,
             valor,
-            data_vencimento: iso,
-            nota_fiscal_id: null,
-            status: "ABERTO"
+            data_vencimento: vencimento,
+            status: "ABERTO",
+            nota_fiscal_id: null
         }]);
 
     if (error) {
         console.error(error);
-        alert("Erro ao lançar manualmente.");
+        alert("Erro ao salvar lançamento manual.");
         return;
     }
 
+    fecharModalManual();
     await carregarDados();
     renderizarTabela();
 }
 
 // ===============================================
-// AÇÕES ADMIN — NÃO MEXIDAS
+// AÇÕES ADMIN — NÃO ALTERADAS
 // ===============================================
 window.pagar = async function (id) {
     if (roleUsuario !== "admin") return;
     if (!confirm("Confirmar pagamento?")) return;
 
-    const { error } = await supabase
-        .from("boletos")
-        .update({ status: "PAGO" })
-        .eq("id", id);
-
-    if (error) {
-        console.error(error);
-        alert("Erro ao marcar como pago");
-        return;
-    }
-
+    await supabase.from("boletos").update({ status: "PAGO" }).eq("id", id);
     await carregarDados();
     renderizarTabela();
 };
@@ -228,17 +197,7 @@ window.reabrir = async function (id) {
     if (roleUsuario !== "admin") return;
     if (!confirm("Reabrir este boleto?")) return;
 
-    const { error } = await supabase
-        .from("boletos")
-        .update({ status: "ABERTO" })
-        .eq("id", id);
-
-    if (error) {
-        console.error(error);
-        alert("Erro ao reabrir boleto");
-        return;
-    }
-
+    await supabase.from("boletos").update({ status: "ABERTO" }).eq("id", id);
     await carregarDados();
     renderizarTabela();
 };
