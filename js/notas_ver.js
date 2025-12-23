@@ -6,7 +6,7 @@
 import { supabase, verificarLogin } from "./auth.js";
 
 let nfId = null;
-let numeroNFAtual = null; // <<< GUARDA numero_nf
+let numeroNFAtual = null;
 let cacheProdutos = [];
 let boletoEditandoId = null;
 let roleUsuario = "viewer";
@@ -29,13 +29,6 @@ function formatarMoedaBR(valor) {
         style: "currency",
         currency: "BRL"
     });
-}
-
-// ✅ FUNÇÃO ADICIONADA (APENAS ISSO)
-function ajustarDataSemFuso(data) {
-    if (!data) return null;
-    const [ano, mes, dia] = data.split("-");
-    return `${ano}-${mes}-${dia}`;
 }
 
 // ===============================================
@@ -235,8 +228,8 @@ async function salvarBoleto() {
         tipo_nf,
         origem: boletoOrigem.value || null,
         valor,
-        // ✅ AQUI ESTÁ A CORREÇÃO
-        data_vencimento: ajustarDataSemFuso(boletoVencimento.value)
+        // ✅ CORREÇÃO DEFINITIVA DO FUSO
+        data_vencimento: boletoVencimento.value + "T12:00:00"
     };
 
     const resp = boletoEditandoId
@@ -259,7 +252,7 @@ window.editarBoleto = async id => {
 
     boletoOrigem.value = data.origem || "";
     boletoValor.value = data.valor;
-    boletoVencimento.value = data.data_vencimento;
+    boletoVencimento.value = data.data_vencimento?.split("T")[0] || "";
 
     modalBoleto.style.display = "flex";
 };
