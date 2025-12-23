@@ -18,9 +18,10 @@ let boletoValor;
 let boletoVencimento;
 
 // ===============================================
+
 function formatarDataBR(dataISO) {
     if (!dataISO) return "—";
-    return new Date(dataISO).toLocaleDateString("pt-BR");
+    return dataISO.split("T")[0].split("-").reverse().join("/");
 }
 
 function formatarMoedaBR(valor) {
