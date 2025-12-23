@@ -228,7 +228,8 @@ async function salvarBoleto() {
         tipo_nf,
         origem: boletoOrigem.value || null,
         valor,
-        data_vencimento: boletoVencimento.value
+        data_vencimento: boletoVencimento.value + "T12:00:00"
+
     };
 
     const resp = boletoEditandoId
