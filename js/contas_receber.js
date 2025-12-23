@@ -38,15 +38,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     roleUsuario = user.user_metadata?.role || "viewer";
 
-    document.getElementById("btnFiltrar")?.addEventListener("click", renderizarTabela);
+    document.getElementById("btnFiltrar")
+        ?.addEventListener("click", renderizarTabela);
 
     const btnManual = document.getElementById("btnNovoManual");
     if (btnManual && roleUsuario === "admin") {
         btnManual.addEventListener("click", abrirModalManual);
     }
 
-    document.getElementById("btnCancelarManual")?.addEventListener("click", fecharModalManual);
-    document.getElementById("btnSalvarManual")?.addEventListener("click", salvarManual);
+    document.getElementById("btnCancelarManual")
+        ?.addEventListener("click", fecharModalManual);
+
+    document.getElementById("btnSalvarManual")
+        ?.addEventListener("click", salvarManual);
 
     await carregarBoletos();
     renderizarTabela();
@@ -81,6 +85,7 @@ function renderizarTabela() {
 
     registros.forEach(r => {
         let statusCalc = r.status || "ABERTO";
+
         if (statusCalc === "ABERTO" && soData(r.data_vencimento) < hoje) {
             statusCalc = "VENCIDO";
         }
@@ -98,7 +103,8 @@ function renderizarTabela() {
         `;
     });
 
-    document.getElementById("totalReceber").textContent = formatarMoeda(total);
+    document.getElementById("totalReceber").textContent =
+        formatarMoeda(total);
 }
 
 // ===============================================
@@ -158,7 +164,7 @@ window.reabrir = async (id) => {
 };
 
 // ===============================================
-// MODAL — LANÇAMENTO MANUAL (BLINDADO)
+// MODAL — LANÇAMENTO MANUAL
 // ===============================================
 function abrirModalManual() {
     const modal = document.getElementById("modalManual");
@@ -167,15 +173,10 @@ function abrirModalManual() {
         return;
     }
 
-    const origem = document.getElementById("manOrigem");
-    const valor = document.getElementById("manValor");
-    const vencTxt = document.getElementById("manVencimentoTexto");
-    const vencDate = document.getElementById("manVencimentoDate");
-
-    if (origem) origem.value = "";
-    if (valor) valor.value = "";
-    if (vencTxt) vencTxt.value = "";
-    if (vencDate) vencDate.value = "";
+    document.getElementById("manOrigem").value = "";
+    document.getElementById("manValor").value = "";
+    document.getElementById("manVencimentoTexto").value = "";
+    document.getElementById("manVencimentoDate").value = "";
 
     modal.style.display = "flex";
 }
@@ -187,12 +188,12 @@ function fecharModalManual() {
 
 // ===============================================
 async function salvarManual() {
-    const origem = document.getElementById("manOrigem")?.value || null;
-    const valor = Number(document.getElementById("manValor")?.value);
-    const vencTxt = document.getElementById("manVencimentoTexto")?.value || "";
-    const vencDate = document.getElementById("manVencimentoDate")?.value || "";
+    const origem = document.getElementById("manOrigem").value || null;
+    const valor = Number(document.getElementById("manValor").value);
+    const vencTxt = document.getElementById("manVencimentoTexto").value;
+    const vencDate = document.getElementById("manVencimentoDate").value;
 
-    if (!valor || Number.isNaN(valor)) {
+    if (!valor || isNaN(valor)) {
         alert("Valor inválido");
         return;
     }
@@ -204,7 +205,7 @@ async function salvarManual() {
         const [d, m, y] = vencTxt.split("/");
         vencISO = `${y}-${m}-${d}`;
     } else {
-        alert("Data inválida (use dd/mm/aaaa ou seletor)");
+        alert("Data inválida (dd/mm/aaaa)");
         return;
     }
 
