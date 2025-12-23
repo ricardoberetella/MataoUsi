@@ -10,9 +10,9 @@
     <!-- LIB PDF (igual outras telas) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-    <style>
+   <style>
 /* =========================
-   PDF – PRETO E BRANCO
+   PDF – PADRÃO RELATÓRIO
 ========================= */
 
 /* esconder elementos fora do PDF */
@@ -22,51 +22,94 @@ body.modo-pdf button {
     display: none !important;
 }
 
-/* fundo branco */
+/* fundo geral */
 body.modo-pdf {
     background: #fff !important;
     color: #000 !important;
+    font-family: Arial, sans-serif;
 }
 
-/* container */
+/* container ocupa página */
 body.modo-pdf .container {
     width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
 }
 
-/* tabela limpa */
+/* =========================
+   CABEÇALHO PDF
+========================= */
+.cabecalho-pdf {
+    display: none;
+}
+
+body.modo-pdf .cabecalho-pdf {
+    display: block;
+    margin-bottom: 10px;
+}
+
+.cabecalho-linha {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo-pdf img {
+    height: 45px;
+}
+
+.titulo-pdf h2 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.titulo-pdf p {
+    margin: 0;
+    font-size: 11px;
+}
+
+.data-pdf {
+    font-size: 10px;
+}
+
+/* =========================
+   TABELA ESTILO PLANILHA
+========================= */
 body.modo-pdf table {
     width: 100%;
     border-collapse: collapse;
-    color: #000 !important;
+    font-size: 10.5px;
 }
 
-/* cabeçalho */
+/* cabeçalho da tabela */
 body.modo-pdf thead th {
-    background: #fff !important;
-    color: #000 !important;
-    border-bottom: 1px solid #000;
-    font-size: 11px;
+    background: #e5e7eb; /* CINZA */
+    color: #000;
+    border: 1px solid #000;
     padding: 6px;
+    text-align: center;
 }
 
 /* células */
 body.modo-pdf td {
-    background: #fff !important;
-    color: #000 !important;
-    font-size: 10.5px;
-    padding: 6px;
-    border-bottom: 1px solid #ccc;
+    border: 1px solid #000;
+    padding: 5px;
+    text-align: center;
 }
 
-/* remover qualquer destaque de vencido */
+/* remove qualquer cor antiga */
 body.modo-pdf tr.vencido td {
     background: #fff !important;
     color: #000 !important;
     font-weight: normal;
 }
+
+/* total */
+body.modo-pdf #totalReceber {
+    font-weight: bold;
+}
 </style>
+
 
 </head>
 
@@ -80,6 +123,24 @@ body.modo-pdf tr.vencido td {
 </header>
 
 <div class="container" id="areaPdf">
+    
+    <!-- CABEÇALHO DO PDF -->
+<div class="cabecalho-pdf">
+    <div class="cabecalho-linha">
+        <div class="logo-pdf">
+            <img src="img/logo-mataousi.png" alt="Matão Usinagem">
+        </div>
+        <div class="titulo-pdf">
+            <h2>MATÃO USINAGEM</h2>
+            <p>Relatório de Contas a Receber</p>
+        </div>
+        <div class="data-pdf">
+            <span id="dataHoraPdf"></span>
+        </div>
+    </div>
+    <hr>
+</div>
+
 
     <!-- FILTROS -->
     <section class="card">
