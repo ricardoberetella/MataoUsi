@@ -54,8 +54,16 @@ body.modo-pdf .cabecalho-pdf {
     justify-content: space-between;
 }
 
+/* LOGO MAIOR */
 .logo-pdf img {
-    height: 42px;
+    height: 70px;
+}
+
+/* data/hora abaixo do logo */
+.data-pdf {
+    font-size: 10px;
+    text-align: center;
+    margin-top: 4px;
 }
 
 .titulo-pdf h2 {
@@ -66,10 +74,6 @@ body.modo-pdf .cabecalho-pdf {
 .titulo-pdf p {
     margin: 0;
     font-size: 11px;
-}
-
-.data-pdf {
-    font-size: 10px;
 }
 
 /* =========================
@@ -115,21 +119,19 @@ body.modo-pdf tr.vencido td {
 }
 
 /* =========================
-   CONTROLE DE PÁGINA
+   REMOVER FILTROS NO PDF
 ========================= */
-/* força quebra limpa quando necessário */
-body.modo-pdf .card {
-    page-break-inside: auto;
-}
-    /* =========================
-   PDF – REMOVER FILTROS
-========================= */
-
-/* esconde a seção de filtros inteira */
 body.modo-pdf .card:first-of-type {
     display: none !important;
 }
 
+/* =========================
+   REMOVER COLUNA AÇÕES NO PDF
+========================= */
+body.modo-pdf th:last-child,
+body.modo-pdf td:last-child {
+    display: none !important;
+}
 </style>   
 
 </head>
@@ -146,22 +148,22 @@ body.modo-pdf .card:first-of-type {
 <div class="container" id="areaPdf">
     
     <!-- CABEÇALHO DO PDF -->
-<div class="cabecalho-pdf">
-    <div class="cabecalho-linha">
-        <div class="logo-pdf">
-            <img src="img/logo-mataousi.png" alt="Matão Usinagem">
-        </div>
-        <div class="titulo-pdf">
-            <h2>MATÃO USINAGEM</h2>
-            <p>Relatório de Contas a Receber</p>
-        </div>
-        <div class="data-pdf">
-            <span id="dataHoraPdf"></span>
-        </div>
-    </div>
-    <hr>
-</div>
+    <div class="cabecalho-pdf">
+        <div class="cabecalho-linha">
+            <div class="logo-pdf">
+                <img src="img/logo-mataousi2.png" alt="Matão Usinagem">
+                <div class="data-pdf">
+                    <span id="dataHoraPdf"></span>
+                </div>
+            </div>
 
+            <div class="titulo-pdf">
+                <h2>MATÃO USINAGEM</h2>
+                <p>Relatório de Contas a Receber</p>
+            </div>
+        </div>
+        <hr>
+    </div>
 
     <!-- FILTROS -->
     <section class="card">
