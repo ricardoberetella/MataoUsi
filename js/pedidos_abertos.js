@@ -1,6 +1,6 @@
 // ====================================================
-// PEDIDOS_ABERTOS.JS — FINAL DEFINITIVO
-// COM QUANTIDADE BAIXADA REAL (JOIN CORRETO)
+// PEDIDOS_ABERTOS.JS — FINAL ABSOLUTO
+// QUANTIDADE BAIXADA REAL (SEM JOIN PROBLEMÁTICO)
 // ====================================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -12,13 +12,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   await carregarFiltros();
   await carregarPedidosAbertos();
 
-  document
-    .getElementById("btnFiltrar")
+  document.getElementById("btnFiltrar")
     ?.addEventListener("click", carregarPedidosAbertos);
 });
 
-// ====================================================
-// FORMATAR DATA DD/MM/AAAA
 // ====================================================
 function formatarData(valor) {
   if (!valor) return "-";
@@ -26,8 +23,6 @@ function formatarData(valor) {
   return `${d}/${m}/${a}`;
 }
 
-// ====================================================
-// CARREGAR FILTROS
 // ====================================================
 async function carregarFiltros() {
   const selCliente = document.getElementById("clienteFiltro");
@@ -40,9 +35,9 @@ async function carregarFiltros() {
     .order("razao_social");
 
   selCliente.innerHTML = `<option value="">Todos</option>`;
-  clientes?.forEach(c => {
-    selCliente.innerHTML += `<option value="${c.id}">${c.razao_social}</option>`;
-  });
+  clientes?.forEach(c =>
+    selCliente.innerHTML += `<option value="${c.id}">${c.razao_social}</option>`
+  );
 
   const { data: produtos } = await supabase
     .from("produtos")
@@ -50,13 +45,11 @@ async function carregarFiltros() {
     .order("codigo");
 
   selProduto.innerHTML = `<option value="">Todos</option>`;
-  produtos?.forEach(p => {
-    selProduto.innerHTML += `<option value="${p.id}">${p.codigo} - ${p.descricao}</option>`;
-  });
+  produtos?.forEach(p =>
+    selProduto.innerHTML += `<option value="${p.id}">${p.codigo} - ${p.descricao}</option>`
+  );
 }
 
-// ====================================================
-// CARREGAR PEDIDOS EM ABERTO
 // ====================================================
 async function carregarPedidosAbertos() {
   const tbody = document.getElementById("listaPedidos");
@@ -67,6 +60,7 @@ async function carregarPedidosAbertos() {
   const produtoId = document.getElementById("produtoFiltro")?.value || "";
   const entregaAte = document.getElementById("dataFiltro")?.value || "";
 
+  // 1️⃣ Buscar pedidos_itens
   let query = supabase
     .from("pedidos_itens")
     .select(`
@@ -74,31 +68,49 @@ async function carregarPedidosAbertos() {
       quantidade,
       data_entrega,
       pedidos:pedido_id ( numero_pedido ),
-      produtos:produto_id ( codigo, descricao ),
-      notas_pedidos_baixas ( quantidade )
+      produtos:produto_id ( codigo, descricao )
     `);
 
   if (produtoId) query = query.eq("produto_id", produtoId);
   if (entregaAte) query = query.lte("data_entrega", entregaAte);
 
-  const { data, error } = await query;
+  const { data: itens, error } = await query;
 
   if (error) {
-    console.error("ERRO SUPABASE:", error);
+    console.error("ERRO ITENS:", error);
     tbody.innerHTML = `<tr><td colspan="6">Erro ao carregar pedidos</td></tr>`;
     return;
   }
 
-  if (!data || data.length === 0) {
+  if (!itens || itens.length === 0) {
     tbody.innerHTML = `<tr><td colspan="6">Nenhum pedido em aberto</td></tr>`;
     return;
   }
 
-  // Calcula baixado + saldo
-  const calculados = data.map(i => {
-    const baixado = (i.notas_pedidos_baixas || [])
-      .reduce((s, b) => s + Number(b.quantidade || 0), 0);
+  // 2️⃣ Buscar baixas separadamente
+  const ids = itens.map(i => i.id);
 
+  const { data: baixas, error: erroBaixas } = await supabase
+    .from("notas_pedidos_baixas")
+    .select("pedido_item_id, quantidade")
+    .in("pedido_item_id", ids);
+
+  if (erroBaixas) {
+    console.error("ERRO BAIXAS:", erroBaixas);
+    tbody.innerHTML = `<tr><td colspan="6">Erro ao calcular baixas</td></tr>`;
+    return;
+  }
+
+  // 3️⃣ Somar baixas por item
+  const mapaBaixas = {};
+  baixas?.forEach(b => {
+    mapaBaixas[b.pedido_item_id] =
+      (mapaBaixas[b.pedido_item_id] || 0) + Number(b.quantidade || 0);
+  });
+
+  // 4️⃣ Calcular saldo
+  const abertos = itens.map(i => {
+    const baixado = mapaBaixas[i.id] || 0;
     return {
       ...i,
       baixado,
@@ -106,13 +118,13 @@ async function carregarPedidosAbertos() {
     };
   }).filter(i => i.aberto > 0);
 
-  if (calculados.length === 0) {
+  if (abertos.length === 0) {
     tbody.innerHTML = `<tr><td colspan="6">Nenhum pedido em aberto</td></tr>`;
     return;
   }
 
   // FIFO REAL
-  calculados.sort((a, b) => {
+  abertos.sort((a, b) => {
     if (a.data_entrega < b.data_entrega) return -1;
     if (a.data_entrega > b.data_entrega) return 1;
     return Number(a.pedidos.numero_pedido) - Number(b.pedidos.numero_pedido);
@@ -121,7 +133,7 @@ async function carregarPedidosAbertos() {
   // Render
   tbody.innerHTML = "";
 
-  calculados.forEach(i => {
+  abertos.forEach(i => {
     tbody.innerHTML += `
       <tr>
         <td>${i.pedidos.numero_pedido}</td>
