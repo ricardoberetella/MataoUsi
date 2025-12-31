@@ -1,5 +1,5 @@
 // ====================================================
-// PEDIDOS_ABERTOS.JS — FIFO CORRETO + CONTROLE DE ESTADO
+// PEDIDOS_ABERTOS.JS — FIFO CORRETO + ROBUSTO
 // ====================================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -16,19 +16,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     ?.addEventListener("click", carregarPedidosAbertos);
 });
 
-// ====================================================
-// FORMATAR DATA DD/MM/AAAA
-// ====================================================
 function formatarData(valor) {
   if (!valor) return "-";
-  const limpa = String(valor).substring(0, 10);
-  const [ano, mes, dia] = limpa.split("-");
-  return `${dia}/${mes}/${ano}`;
+  const [a, m, d] = String(valor).substring(0, 10).split("-");
+  return `${d}/${m}/${a}`;
 }
 
-// ====================================================
-// CARREGAR FILTROS
-// ====================================================
 async function carregarFiltros() {
   const selCliente = document.getElementById("filtroCliente");
   const selProduto = document.getElementById("filtroProduto");
@@ -55,21 +48,11 @@ async function carregarFiltros() {
   });
 }
 
-// ====================================================
-// CARREGAR PEDIDOS EM ABERTO
-// ====================================================
 async function carregarPedidosAbertos() {
   const tbody = document.getElementById("tbodyPedidosAbertos");
   if (!tbody) return;
 
-  // 🔄 estado carregando
-  tbody.innerHTML = `
-    <tr>
-      <td colspan="6" style="text-align:center;padding:20px;">
-        Carregando...
-      </td>
-    </tr>
-  `;
+  tbody.innerHTML = `<tr><td colspan="6">Carregando...</td></tr>`;
 
   const produtoId = document.getElementById("filtroProduto")?.value || "";
   const entregaAte = document.getElementById("filtroEntrega")?.value || "";
@@ -79,12 +62,11 @@ async function carregarPedidosAbertos() {
     .select(`
       id,
       pedido_id,
-      produto_id,
       quantidade,
       quantidade_baixada,
       data_entrega,
-      pedidos ( numero_pedido ),
-      produtos ( codigo, descricao )
+      pedidos:pedido_id ( numero_pedido ),
+      produtos:produto_id ( codigo, descricao )
     `);
 
   if (produtoId) query = query.eq("produto_id", produtoId);
@@ -94,73 +76,42 @@ async function carregarPedidosAbertos() {
 
   if (error) {
     console.error(error);
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="6" style="text-align:center;color:red;">
-          Erro ao carregar pedidos
-        </td>
-      </tr>
-    `;
+    tbody.innerHTML = `<tr><td colspan="6">Erro ao carregar</td></tr>`;
     return;
   }
 
-  // ====================================================
-  // FILTRAR APENAS COM SALDO EM ABERTO
-  // ====================================================
-  const abertos = data.filter(item => {
-    const total = item.quantidade;
-    const baixado = item.quantidade_baixada || 0;
-    return total - baixado > 0;
-  });
+  // 🔴 FILTRA FKs QUEBRADAS
+  const validos = data.filter(i =>
+    i.pedidos && i.produtos &&
+    (i.quantidade - (i.quantidade_baixada || 0)) > 0
+  );
 
-  // ====================================================
-  // SEM RESULTADOS
-  // ====================================================
-  if (abertos.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="6" style="text-align:center;padding:20px;">
-          Nenhum pedido em aberto
-        </td>
-      </tr>
-    `;
+  if (validos.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6">Nenhum pedido em aberto</td></tr>`;
     return;
   }
 
-  // ====================================================
-  // ORDENAÇÃO FIFO CORRETA
-  // ====================================================
-  abertos.sort((a, b) => {
-    const da = String(a.data_entrega).substring(0, 10);
-    const db = String(b.data_entrega).substring(0, 10);
+  validos.sort((a, b) => {
+    const da = a.data_entrega;
+    const db = b.data_entrega;
     if (da < db) return -1;
     if (da > db) return 1;
-
-    return (
-      Number(a.pedidos?.numero_pedido || a.pedido_id) -
-      Number(b.pedidos?.numero_pedido || b.pedido_id)
-    );
+    return Number(a.pedidos.numero_pedido) - Number(b.pedidos.numero_pedido);
   });
 
-  // ====================================================
-  // RENDERIZAÇÃO FINAL
-  // ====================================================
   tbody.innerHTML = "";
 
-  abertos.forEach(item => {
-    const total = item.quantidade;
-    const baixado = item.quantidade_baixada || 0;
-    const aberto = total - baixado;
-
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${item.pedidos?.numero_pedido || item.pedido_id}</td>
-      <td>${item.produtos.codigo} - ${item.produtos.descricao}</td>
-      <td>${formatarData(item.data_entrega)}</td>
-      <td>${total}</td>
-      <td>${baixado}</td>
-      <td>${aberto}</td>
+  validos.forEach(i => {
+    const aberto = i.quantidade - (i.quantidade_baixada || 0);
+    tbody.innerHTML += `
+      <tr>
+        <td>${i.pedidos.numero_pedido}</td>
+        <td>${i.produtos.codigo} - ${i.produtos.descricao}</td>
+        <td>${formatarData(i.data_entrega)}</td>
+        <td>${i.quantidade}</td>
+        <td>${i.quantidade_baixada || 0}</td>
+        <td>${aberto}</td>
+      </tr>
     `;
-    tbody.appendChild(tr);
   });
 }
