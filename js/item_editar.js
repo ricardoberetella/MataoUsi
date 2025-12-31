@@ -1,28 +1,36 @@
 // ======================================================
-// ITEM_EDITAR.JS — VERSÃO ESTÁVEL
+// ITEM_EDITAR.JS — VERSÃO DEFINITIVA / ESTÁVEL
 // ======================================================
 
 import { supabase, verificarLogin } from "./auth.js";
 
-let idItem = null;
+// ------------------------------------------------------
+const params = new URLSearchParams(window.location.search);
+const idItem = params.get("idItem");
+const idPedido = params.get("idPedido");
 
-// ======================================================
+const inputProduto = document.getElementById("busca_produto");
+const inputQtd = document.getElementById("quantidade");
+const inputValor = document.getElementById("valor_unitario");
+const inputData = document.getElementById("data_entrega");
+const btnSalvar = document.getElementById("btnSalvarItem");
+const voltarLink = document.getElementById("voltarLink");
+
+// ------------------------------------------------------
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
 
-    const params = new URLSearchParams(window.location.search);
-    idItem = params.get("idItem");
-
-    if (!idItem) {
-        alert("Item não encontrado");
+    if (!idItem || !idPedido) {
+        alert("Parâmetros inválidos");
         return;
     }
 
+    voltarLink.href = `pedidos_editar.html?id=${idPedido}`;
+
     await carregarItem();
 
-    document.getElementById("btnSalvar")
-        ?.addEventListener("click", salvarAlteracoes);
+    btnSalvar.addEventListener("click", salvarItem);
 });
 
 // ======================================================
@@ -31,7 +39,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function carregarItem() {
     const { data, error } = await supabase
         .from("pedidos_itens")
-        .select("quantidade, valor_unitario, data_entrega")
+        .select("quantidade, valor_unitario, data_entrega, produtos(codigo, descricao)")
         .eq("id", idItem)
         .single();
 
@@ -41,35 +49,39 @@ async function carregarItem() {
         return;
     }
 
-    document.getElementById("quantidade").value = data.quantidade;
-    document.getElementById("valor_unitario").value =
-        Number(data.valor_unitario).toFixed(2).replace(".", ",");
+    inputProduto.value = `${data.produtos.codigo} — ${data.produtos.descricao}`;
+    inputQtd.value = data.quantidade;
+    inputValor.value = Number(data.valor_unitario).toFixed(2).replace(".", ",");
 
-    document.getElementById("data_entrega").value =
-        data.data_entrega ? data.data_entrega.split("T")[0] : "";
+    if (data.data_entrega) {
+        const d = new Date(data.data_entrega + "T12:00:00");
+        inputData.value = d.toLocaleDateString("pt-BR");
+    }
 }
 
 // ======================================================
-// SALVAR
+// SALVAR ITEM
 // ======================================================
-async function salvarAlteracoes() {
-    const quantidade = Number(document.getElementById("quantidade").value);
-    const valorUnitario = Number(
-        document.getElementById("valor_unitario").value.replace(",", ".")
-    );
-    const dataEntrega = document.getElementById("data_entrega").value;
+async function salvarItem() {
+    const quantidade = Number(inputQtd.value);
+    const valor = Number(inputValor.value.replace(",", "."));
+    const dataBR = inputData.value;
 
-    if (!quantidade || !valorUnitario || !dataEntrega) {
-        alert("Preencha todos os campos");
+    if (!quantidade || !valor || !dataBR) {
+        alert("Preencha todos os campos corretamente");
         return;
     }
+
+    // DD/MM/AAAA → YYYY-MM-DD (SEM FUSO)
+    const [dia, mes, ano] = dataBR.split("/");
+    const dataISO = `${ano}-${mes}-${dia}`;
 
     const { error } = await supabase
         .from("pedidos_itens")
         .update({
             quantidade,
-            valor_unitario: valorUnitario,
-            data_entrega: dataEntrega
+            valor_unitario: valor,
+            data_entrega: dataISO
         })
         .eq("id", idItem);
 
@@ -80,5 +92,5 @@ async function salvarAlteracoes() {
     }
 
     alert("Item atualizado com sucesso");
-    history.back();
+    window.location.href = `pedidos_editar.html?id=${idPedido}`;
 }
