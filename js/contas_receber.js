@@ -1,8 +1,11 @@
 // ======================================================
-// CONTAS_RECEBER.JS — ESTÁVEL + EDITAR FUNCIONAL
+// CONTAS_RECEBER.JS — ESTÁVEL FINAL
+// EDITAR + LANÇAMENTO MANUAL
 // ======================================================
 
 import { supabase, verificarLogin } from "./auth.js";
+
+let editandoId = null;
 
 // ======================================================
 document.addEventListener("DOMContentLoaded", async () => {
@@ -15,7 +18,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("btnGerarPDF")
         ?.addEventListener("click", gerarPDF);
 
-    criarModalEdicao();
+    document.getElementById("btnLancamentoManual")
+        ?.addEventListener("click", abrirModalNovo);
+
+    criarModal();
     atualizarDataHoraPDF();
     carregarLancamentos();
 });
@@ -52,27 +58,16 @@ async function carregarLancamentos() {
     tbody.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
     totalEl.innerText = "R$ 0,00";
 
-    const statusFiltro = document.getElementById("filtroStatus")?.value || "";
-    const vencimentoAte = document.getElementById("filtroVencimento")?.value || "";
-
     let query = supabase
         .from("contas_receber")
         .select("id, descricao, valor, data_vencimento, status")
         .order("data_vencimento", { ascending: true });
-
-    if (statusFiltro) query = query.eq("status", statusFiltro);
-    if (vencimentoAte) query = query.lte("data_vencimento", vencimentoAte);
 
     const { data, error } = await query;
 
     if (error) {
         console.error(error);
         tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar dados</td></tr>";
-        return;
-    }
-
-    if (!data || data.length === 0) {
-        tbody.innerHTML = "<tr><td colspan='5'>Nenhum lançamento</td></tr>";
         return;
     }
 
@@ -83,165 +78,163 @@ async function carregarLancamentos() {
         total += Number(l.valor || 0);
 
         const tr = document.createElement("tr");
-        if (l.status === "VENCIDO") tr.classList.add("vencido");
-
         tr.innerHTML = `
-            <td>${l.descricao || "-"}</td>
+            <td>${l.descricao}</td>
             <td>${formatarValor(l.valor)}</td>
             <td>${isoParaBR(l.data_vencimento)}</td>
             <td>${l.status}</td>
             <td style="display:flex; gap:6px; justify-content:center">
                 <button class="btn-azul btn-editar"
                     data-id="${l.id}"
-                    data-descricao="${l.descricao || ""}"
-                    data-valor="${l.valor || 0}"
-                    data-vencimento="${l.data_vencimento || ""}"
+                    data-descricao="${l.descricao}"
+                    data-valor="${l.valor}"
+                    data-vencimento="${l.data_vencimento}"
                     data-status="${l.status}">
                     Editar
                 </button>
-                <button class="btn-vermelho btn-pagar" data-id="${l.id}">
-                    Pagar
-                </button>
+                <button class="btn-vermelho">Pagar</button>
             </td>
         `;
         tbody.appendChild(tr);
     });
 
     totalEl.innerText = formatarValor(total);
-    bindAcoes();
+    bindEditar();
 }
 
 // ======================================================
-// AÇÕES
+// EDITAR
 // ======================================================
-function bindAcoes() {
+function bindEditar() {
     document.querySelectorAll(".btn-editar").forEach(btn => {
         btn.onclick = () => {
-
             if (btn.dataset.status === "PAGO") {
                 alert("Lançamento PAGO não pode ser editado.");
                 return;
             }
 
-            abrirModalEdicao({
-                id: btn.dataset.id,
-                descricao: btn.dataset.descricao,
-                valor: btn.dataset.valor,
-                vencimento: isoParaBR(btn.dataset.vencimento)
-            });
+            editandoId = btn.dataset.id;
+            abrirModal(
+                "Editar Lançamento",
+                btn.dataset.descricao,
+                btn.dataset.valor,
+                isoParaBR(btn.dataset.vencimento),
+                salvarEdicao
+            );
         };
     });
 }
 
 // ======================================================
-// MODAL (CSS + HTML + JS)
+// MODAL ÚNICO (EDITAR / NOVO)
 // ======================================================
-let editandoId = null;
-
-function criarModalEdicao() {
+function criarModal() {
     const style = document.createElement("style");
     style.innerHTML = `
-        #modalEditar {
+        #modal {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,.65);
+            background: rgba(0,0,0,.7);
             display: none;
             align-items: center;
             justify-content: center;
             z-index: 9999;
         }
-        #modalEditar .box {
+        #modal .box {
             background: #0f172a;
             padding: 20px;
             border-radius: 12px;
             width: 320px;
             color: #fff;
-            box-shadow: 0 0 20px rgba(56,189,248,.6);
         }
-        #modalEditar input {
+        #modal input {
             width: 100%;
-            padding: 8px;
             margin-bottom: 10px;
+            padding: 8px;
             border-radius: 6px;
             border: none;
-        }
-        #modalEditar .acoes {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
         }
     `;
     document.head.appendChild(style);
 
     const modal = document.createElement("div");
-    modal.id = "modalEditar";
+    modal.id = "modal";
     modal.innerHTML = `
         <div class="box">
-            <h3>Editar Lançamento</h3>
-
-            <input id="editDescricao" placeholder="NF / Origem">
-            <input id="editValor" type="number" step="0.01">
-            <input id="editVencimento" placeholder="dd/mm/aaaa">
-
-            <div class="acoes">
-                <button id="cancelarEdicao" class="btn-vermelho">Cancelar</button>
-                <button id="salvarEdicao" class="btn-verde">Salvar</button>
+            <h3 id="modalTitulo"></h3>
+            <input id="mDescricao" placeholder="NF / Origem">
+            <input id="mValor" type="number" step="0.01">
+            <input id="mVencimento" placeholder="dd/mm/aaaa">
+            <div style="display:flex; justify-content:flex-end; gap:10px">
+                <button id="mCancelar" class="btn-vermelho">Cancelar</button>
+                <button id="mSalvar" class="btn-verde">Salvar</button>
             </div>
         </div>
     `;
     document.body.appendChild(modal);
 
-    document.getElementById("cancelarEdicao").onclick = () => {
+    document.getElementById("mCancelar").onclick = () => {
         modal.style.display = "none";
     };
-
-    document.getElementById("salvarEdicao").onclick = salvarEdicao;
 }
 
-function abrirModalEdicao(dados) {
-    editandoId = dados.id;
+function abrirModal(titulo, desc, valor, venc, acaoSalvar) {
+    document.getElementById("modalTitulo").innerText = titulo;
+    document.getElementById("mDescricao").value = desc || "";
+    document.getElementById("mValor").value = valor || "";
+    document.getElementById("mVencimento").value = venc || "";
 
-    document.getElementById("editDescricao").value = dados.descricao;
-    document.getElementById("editValor").value = dados.valor;
-    document.getElementById("editVencimento").value = dados.vencimento;
-
-    document.getElementById("modalEditar").style.display = "flex";
+    document.getElementById("mSalvar").onclick = acaoSalvar;
+    document.getElementById("modal").style.display = "flex";
 }
 
+// ======================================================
+// SALVAR EDIÇÃO
+// ======================================================
 async function salvarEdicao() {
-    const descricao = document.getElementById("editDescricao").value;
-    const valor = document.getElementById("editValor").value;
-    const vencimento = brParaISO(
-        document.getElementById("editVencimento").value
-    );
+    const descricao = mDescricao.value;
+    const valor = mValor.value;
+    const vencimento = brParaISO(mVencimento.value);
 
-    const { error } = await supabase
+    await supabase
         .from("contas_receber")
-        .update({
-            descricao,
-            valor: Number(valor),
-            data_vencimento: vencimento
-        })
+        .update({ descricao, valor, data_vencimento: vencimento })
         .eq("id", editandoId);
 
-    if (error) {
-        alert("Erro ao salvar");
-        console.error(error);
-        return;
-    }
-
-    document.getElementById("modalEditar").style.display = "none";
+    modal.style.display = "none";
     carregarLancamentos();
 }
 
 // ======================================================
-// PDF
+// LANÇAMENTO MANUAL
 // ======================================================
-function gerarPDF() {
-    document.body.classList.add("modo-pdf");
-    html2pdf().from(document.getElementById("areaPdf")).save()
-        .then(() => document.body.classList.remove("modo-pdf"));
+function abrirModalNovo() {
+    editandoId = null;
+    abrirModal(
+        "Novo Lançamento",
+        "",
+        "",
+        "",
+        salvarNovo
+    );
+}
+
+async function salvarNovo() {
+    const descricao = mDescricao.value;
+    const valor = mValor.value;
+    const vencimento = brParaISO(mVencimento.value);
+
+    await supabase.from("contas_receber").insert({
+        descricao,
+        valor,
+        data_vencimento: vencimento,
+        status: "ABERTO"
+    });
+
+    modal.style.display = "none";
+    carregarLancamentos();
 }
 
 // ======================================================
+function gerarPDF() {}
 function atualizarDataHoraPDF() {}
