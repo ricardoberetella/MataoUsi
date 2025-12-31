@@ -1,6 +1,5 @@
 // ======================================================
-// CONTAS_RECEBER.JS — VERSÃO CORRETA / ESTÁVEL
-// EDITAR FUNCIONAL (SEM QUEBRAR NADA)
+// CONTAS_RECEBER.JS — ESTÁVEL + EDITAR PROFISSIONAL
 // ======================================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -16,12 +15,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("btnGerarPDF")
         ?.addEventListener("click", gerarPDF);
 
+    criarModalEdicao();
     atualizarDataHoraPDF();
     carregarLancamentos();
 });
 
 // ======================================================
-// FORMATADORES
+// FORMATADORES (SEM BUG DE DATA)
 // ======================================================
 function formatarValor(v) {
     return Number(v || 0).toLocaleString("pt-BR", {
@@ -30,9 +30,16 @@ function formatarValor(v) {
     });
 }
 
-function formatarData(d) {
-    if (!d) return "-";
-    return new Date(d).toLocaleDateString("pt-BR");
+function isoParaBR(dataISO) {
+    if (!dataISO) return "";
+    const [y, m, d] = dataISO.split("-");
+    return `${d}/${m}/${y}`;
+}
+
+function brParaISO(dataBR) {
+    if (!dataBR) return null;
+    const [d, m, y] = dataBR.split("/");
+    return `${y}-${m}-${d}`;
 }
 
 // ======================================================
@@ -41,8 +48,6 @@ function formatarData(d) {
 async function carregarLancamentos() {
     const tbody = document.getElementById("listaReceber");
     const totalEl = document.getElementById("totalReceber");
-
-    if (!tbody) return;
 
     tbody.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
     totalEl.innerText = "R$ 0,00";
@@ -61,7 +66,7 @@ async function carregarLancamentos() {
     const { data, error } = await query;
 
     if (error) {
-        console.error("ERRO CONTAS_RECEBER:", error);
+        console.error(error);
         tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar dados</td></tr>";
         return;
     }
@@ -83,14 +88,15 @@ async function carregarLancamentos() {
         tr.innerHTML = `
             <td>${l.descricao || "-"}</td>
             <td>${formatarValor(l.valor)}</td>
-            <td>${formatarData(l.data_vencimento)}</td>
+            <td>${isoParaBR(l.data_vencimento)}</td>
             <td>${l.status}</td>
             <td style="display:flex; gap:6px; justify-content:center">
                 <button class="btn-azul btn-editar"
                     data-id="${l.id}"
                     data-descricao="${l.descricao || ""}"
                     data-valor="${l.valor || 0}"
-                    data-vencimento="${l.data_vencimento || ""}">
+                    data-vencimento="${l.data_vencimento || ""}"
+                    data-status="${l.status}">
                     Editar
                 </button>
                 <button class="btn-vermelho btn-pagar" data-id="${l.id}">
@@ -98,7 +104,6 @@ async function carregarLancamentos() {
                 </button>
             </td>
         `;
-
         tbody.appendChild(tr);
     });
 
@@ -111,55 +116,102 @@ async function carregarLancamentos() {
 // ======================================================
 function bindAcoes() {
 
-    // ===== EDITAR (FUNCIONAL E ISOLADO) =====
     document.querySelectorAll(".btn-editar").forEach(btn => {
-        btn.addEventListener("click", async () => {
+        btn.addEventListener("click", () => {
 
-            const id = btn.dataset.id;
-
-            const novaDescricao = prompt(
-                "NF / Origem:",
-                btn.dataset.descricao
-            );
-            if (novaDescricao === null) return;
-
-            const novoValor = prompt(
-                "Valor:",
-                btn.dataset.valor
-            );
-            if (novoValor === null) return;
-
-            const novoVencimento = prompt(
-                "Vencimento (YYYY-MM-DD):",
-                btn.dataset.vencimento
-            );
-            if (novoVencimento === null) return;
-
-            const { error } = await supabase
-                .from("contas_receber")
-                .update({
-                    descricao: novaDescricao,
-                    valor: Number(novoValor),
-                    data_vencimento: novoVencimento
-                })
-                .eq("id", id);
-
-            if (error) {
-                alert("Erro ao editar lançamento");
-                console.error(error);
+            if (btn.dataset.status === "PAGO") {
+                alert("Lançamento PAGO não pode ser editado.");
                 return;
             }
 
-            carregarLancamentos();
+            abrirModalEdicao({
+                id: btn.dataset.id,
+                descricao: btn.dataset.descricao,
+                valor: btn.dataset.valor,
+                vencimento: isoParaBR(btn.dataset.vencimento)
+            });
         });
     });
 
-    // ===== PAGAR (NÃO MEXIDO) =====
     document.querySelectorAll(".btn-pagar").forEach(btn => {
         btn.addEventListener("click", () => {
             alert("Pagar ID: " + btn.dataset.id);
         });
     });
+}
+
+// ======================================================
+// MODAL DE EDIÇÃO (BONITO E SEGURO)
+// ======================================================
+function criarModalEdicao() {
+    const modal = document.createElement("div");
+    modal.id = "modalEditar";
+    modal.style.display = "none";
+    modal.innerHTML = `
+        <div class="modal-conteudo">
+            <h3>Editar Lançamento</h3>
+
+            <label>NF / Origem</label>
+            <input id="editDescricao">
+
+            <label>Valor</label>
+            <input id="editValor" type="number" step="0.01">
+
+            <label>Vencimento</label>
+            <input id="editVencimento" placeholder="dd/mm/aaaa">
+
+            <div class="modal-acoes">
+                <button id="salvarEdicao" class="btn-verde">Salvar</button>
+                <button id="cancelarEdicao" class="btn-vermelho">Cancelar</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+let editandoId = null;
+
+function abrirModalEdicao(dados) {
+    editandoId = dados.id;
+
+    document.getElementById("editDescricao").value = dados.descricao;
+    document.getElementById("editValor").value = dados.valor;
+    document.getElementById("editVencimento").value = dados.vencimento;
+
+    const modal = document.getElementById("modalEditar");
+    modal.style.display = "flex";
+
+    document.getElementById("cancelarEdicao").onclick = () => {
+        modal.style.display = "none";
+    };
+
+    document.getElementById("salvarEdicao").onclick = salvarEdicao;
+}
+
+async function salvarEdicao() {
+    const descricao = document.getElementById("editDescricao").value;
+    const valor = document.getElementById("editValor").value;
+    const vencimentoBR = document.getElementById("editVencimento").value;
+
+    const vencimentoISO = brParaISO(vencimentoBR);
+
+    const { error } = await supabase
+        .from("contas_receber")
+        .update({
+            descricao,
+            valor: Number(valor),
+            data_vencimento: vencimentoISO
+        })
+        .eq("id", editandoId);
+
+    if (error) {
+        alert("Erro ao salvar edição");
+        console.error(error);
+        return;
+    }
+
+    document.getElementById("modalEditar").style.display = "none";
+    carregarLancamentos();
 }
 
 // ======================================================
