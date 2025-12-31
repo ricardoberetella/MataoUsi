@@ -1,5 +1,5 @@
 // ======================================================
-// ITEM_EDITAR.JS — VERSÃO DEFINITIVA / ESTÁVEL
+// ITEM_EDITAR.JS — VERSÃO DEFINITIVA (SEM INVALID DATE)
 // ======================================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -29,17 +29,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     voltarLink.href = `pedidos_editar.html?id=${idPedido}`;
 
     await carregarItem();
-
     btnSalvar.addEventListener("click", salvarItem);
 });
 
 // ======================================================
-// CARREGAR ITEM
+// CARREGAR ITEM (SEM new Date())
 // ======================================================
 async function carregarItem() {
     const { data, error } = await supabase
         .from("pedidos_itens")
-        .select("quantidade, valor_unitario, data_entrega, produtos(codigo, descricao)")
+        .select(`
+            quantidade,
+            valor_unitario,
+            data_entrega,
+            produtos(codigo, descricao)
+        `)
         .eq("id", idItem)
         .single();
 
@@ -53,26 +57,38 @@ async function carregarItem() {
     inputQtd.value = data.quantidade;
     inputValor.value = Number(data.valor_unitario).toFixed(2).replace(".", ",");
 
-    if (data.data_entrega) {
-        const d = new Date(data.data_entrega + "T12:00:00");
-        inputData.value = d.toLocaleDateString("pt-BR");
+    // data_entrega vem YYYY-MM-DD → DD/MM/YYYY
+    if (data.data_entrega && data.data_entrega.includes("-")) {
+        const [ano, mes, dia] = data.data_entrega.split("-");
+        inputData.value = `${dia}/${mes}/${ano}`;
+    } else {
+        inputData.value = "";
     }
 }
 
 // ======================================================
-// SALVAR ITEM
+// SALVAR ITEM (VALIDAÇÃO FORTE)
 // ======================================================
 async function salvarItem() {
     const quantidade = Number(inputQtd.value);
     const valor = Number(inputValor.value.replace(",", "."));
-    const dataBR = inputData.value;
+    const dataBR = inputData.value.trim();
 
-    if (!quantidade || !valor || !dataBR) {
-        alert("Preencha todos os campos corretamente");
+    if (!quantidade || quantidade <= 0) {
+        alert("Quantidade inválida");
         return;
     }
 
-    // DD/MM/AAAA → YYYY-MM-DD (SEM FUSO)
+    if (!valor || valor <= 0) {
+        alert("Valor inválido");
+        return;
+    }
+
+    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(dataBR)) {
+        alert("Data inválida. Use DD/MM/AAAA");
+        return;
+    }
+
     const [dia, mes, ano] = dataBR.split("/");
     const dataISO = `${ano}-${mes}-${dia}`;
 
