@@ -1,0 +1,80 @@
+// ===============================================
+// LISTA DE PEDIDOS – CERTA 100% SEM FUSO HORÁRIO
+// ===============================================
+
+import { supabase, verificarLogin } from "./auth.js";
+
+// ---- FORMATADOR CORRETO (SEM usar Date) ----
+function formatarDataBR(iso) {
+    if (!iso) return "";
+    const [ano, mes, dia] = iso.split("-");
+    return `${dia}/${mes}/${ano}`;
+}
+
+function valorOrdenacao(iso) {
+    if (!iso) return 0;
+    return Number(iso.replaceAll("-", ""));
+}
+
+// ===============================================
+async function carregarPedidos() {
+    await verificarLogin();
+
+    const tbody = document.getElementById("listaPedidos");
+    tbody.innerHTML = "";
+
+    const { data, error } = await supabase
+        .from("pedidos")
+        .select("id, numero_pedido, data_pedido, total, clientes(razao_social)");
+
+    if (error) {
+        tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar.</td></tr>";
+        return;
+    }
+
+    // ORDENAR PELA DATA REAL (SEM FUSO)
+    data.sort((a, b) => valorOrdenacao(b.data_pedido) - valorOrdenacao(a.data_pedido));
+
+    data.forEach(p => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td>${p.numero_pedido}</td>
+            <td>${p.clientes?.razao_social || "-"}</td>
+            <td>${formatarDataBR(p.data_pedido)}</td>
+            <td>${Number(p.total).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+            <td class="acoes">
+                <button class="btn-azul" onclick="editarPedido(${p.id})">Editar</button>
+                <button class="btn-vermelho" onclick="excluirPedido(${p.id})">Excluir</button>
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+}
+
+// ===============================================
+window.editarPedido = id => {
+    location.href = `pedidos_editar.html?id=${id}`;
+};
+
+window.excluirPedido = async id => {
+    if (!confirm("Excluir?")) return;
+    await supabase.from("pedidos").delete().eq("id", id);
+    carregarPedidos();
+};
+
+// ===============================================
+document.addEventListener("DOMContentLoaded", carregarPedidos);
+/* =========================
+   BOTÃO GERAR PDF – VERDE
+========================= */
+.btn-pdf {
+    background: #22c55e !important; /* verde */
+    color: #000 !important;
+}
+
+.btn-pdf:hover {
+    background: #16a34a !important;
+}
+

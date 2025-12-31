@@ -1,0 +1,119 @@
+/* ============================================
+   LAYOUT BASE
+============================================ */
+.container {
+    max-width: 1150px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+.card {
+    background: #0b132b;
+    border: 1px solid rgba(0,255,255,0.15);
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 30px;
+    box-shadow: 0 0 15px rgba(0,255,255,0.07);
+}
+
+.card h2 {
+    color: #38bdf8;
+    margin-bottom: 18px;
+    font-size: 22px;
+}
+
+label {
+    display: block;
+    margin: 10px 0 4px;
+    color: #cbd5e1;
+}
+
+input, select {
+    width: 100%;
+    padding: 10px;
+    background: #0d1b2a;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    color: #fff;
+}
+
+/* ============================================
+   TABELA DE ITENS
+============================================ */
+.tabela {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.tabela th {
+    background: #1b263b;
+    padding: 10px;
+    color: #38bdf8;
+    text-align: left;
+}
+
+.tabela td {
+    padding: 10px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+/* ============================================
+   BOTÕES
+============================================ */
+
+.btn-primario {
+    background: #38bdf8;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* Editar: azul */
+.btn-editar-item {
+    background: #38bdf8;
+    padding: 6px 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* Excluir: vermelho */
+.btn-excluir-item {
+    background: #dc2626;
+    padding: 6px 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #fff;
+    font-weight: bold;
+    margin-left: 10px;
+    transition: 0.2s;
+}
+
+.btn-excluir-item:hover {
+    background: #b91c1c;
+}
+
+.btn-salvar {
+    width: 100%;
+    background: #22c55e;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 20px;
+}
+
+.total-footer {
+    background: #0f172a;
+    padding: 15px;
+    font-size: 16px;
+    text-align: right;
+    color: #fff;
+}

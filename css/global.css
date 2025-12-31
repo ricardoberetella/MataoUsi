@@ -1,0 +1,385 @@
+/* ============================= */
+/*  ESTILO GERAL DO SISTEMA      */
+/* ============================= */
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #0f172a; /* azul escuro futurista */
+  font-family: Arial, sans-serif;
+  color: #e2e8f0;
+}
+
+/* Containers padrão */
+.container {
+  max-width: 1000px;
+  margin: 25px auto;
+  padding: 20px;
+  background: #0b1220;
+  border-radius: 12px;
+  border: 1px solid rgba(0,255,255,0.15);
+  box-shadow: 0 0 10px rgba(0,255,255,0.2);
+}
+
+/* Topbar */
+.topbar {
+  background: #07101f;
+  padding: 18px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(0,255,255,0.2);
+}
+
+.topbar h1 {
+  margin: 0;
+  color: #38bdf8;
+  font-size: 22px;
+  font-weight: bold;
+}
+
+/* Botões padrão */
+button {
+  background: #38bdf8;
+  color: #000;
+  padding: 10px 18px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+button:hover {
+  opacity: 0.8;
+}
+
+/* Botão voltar */
+.btn-voltar {
+  background: transparent;
+  border: 1px solid #38bdf8;
+  color: #38bdf8;
+}
+
+.btn-voltar:hover {
+  background: #38bdf8;
+  color: #000;
+}
+
+/* Inputs */
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: #0f1a2e;
+  color: #fff;
+}
+
+/* Tabelas futuristas */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+table th {
+  background: #112040;
+  padding: 10px;
+  text-align: left;
+  border-bottom: 2px solid #38bdf8;
+  color: #38bdf8;
+}
+
+table td {
+  padding: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+table tr:hover {
+  background: rgba(56,189,248,0.1);
+}
+
+/* Botão excluir vermelho */
+.btn-excluir {
+  background: #ff4b4b;
+  color: white;
+}
+
+.btn-excluir:hover {
+  opacity: 0.8;
+}
+
+.btn-vermelho {
+    background: #d93434;
+    color: white;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+}
+.btn-vermelho:hover {
+    background: #b82020;
+}
+
+/* =======================================================================
+   PADRÃO OFICIAL DE BOTÕES DE AÇÕES – MATAOUSI
+   ======================================================================= */
+
+/* BOTÃO EDITAR */
+.btn-editar {
+    background-color: #38bdf8;   /* azul claro */
+    color: #000;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.2s;
+}
+.btn-editar:hover {
+    background-color: #0ea5e9;   /* azul forte */
+}
+
+/* BOTÃO EXCLUIR */
+.btn-danger {
+    background-color: #d11a2a;   /* vermelho */
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.2s;
+}
+.btn-danger:hover {
+    background-color: #a10f20;   /* vermelho escuro */
+}
+
+/* ========================================================= */
+/*   🔵 BOTÃO VERDE — PADRÃO USADO NOS OUTROS MÓDULOS        */
+/* ========================================================= */
+.btn-verde {
+    background-color: #22c55e;   /* verde */
+    color: #000;
+    padding: 10px 18px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.2s;
+}
+.btn-verde:hover {
+    background-color: #16a34a;   /* verde escuro */
+}
+/* =====================================================
+   CORREÇÃO DEFINITIVA DE LOGO NA IMPRESSÃO
+   (SOBRESCREVE BLOQUEIOS GLOBAIS)
+   ===================================================== */
+@media print {
+
+  img {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    max-width: 100% !important;
+  }
+
+  svg {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+}
+/* ===============================
+   AJUSTES ESPECÍFICOS PARA CELULAR
+   =============================== */
+@media (max-width: 768px) {
+
+    /* CONTAINER DO LOGIN */
+    .login-container,
+    .login-box,
+    .card-login {
+        width: 94%;
+        margin: 0 auto;
+        padding: 24px 20px;
+        border-radius: 16px;
+    }
+
+    /* TÍTULO */
+    .login-container h1,
+    .login-box h1 {
+        font-size: 22px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    /* LABELS */
+    label {
+        font-size: 15px;
+        margin-bottom: 6px;
+    }
+
+    /* INPUTS */
+    input[type="email"],
+    input[type="password"] {
+        height: 58px;               /* 🔥 TOUCH FRIENDLY */
+        font-size: 18px;
+        padding: 14px 16px;
+        border-radius: 14px;
+    }
+
+    /* BOTÃO ENTRAR */
+    button,
+    .btn-login {
+        height: 58px;
+        font-size: 18px;
+        border-radius: 14px;
+        margin-top: 10px;
+    }
+
+    /* LOGO */
+    .logo-login img,
+    .logo img {
+        max-width: 160px;
+        margin-bottom: 20px;
+    }
+  /* CONTAINER DO LOGO NO LOGIN */
+.logo-login {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+}
+
+}
+/* ===============================
+   CORREÇÃO PDF NO CELULAR
+   =============================== */
+body.modo-pdf {
+    min-width: 1300px !important;
+}
+/* =========================================================
+   REMOVE BORDA / GLOW CIANO DO CONTAINER NO PDF
+   (desktop + celular)
+========================================================= */
+body.modo-pdf .container {
+    border: none !important;
+    box-shadow: none !important;
+    background: #fff !important;
+}
+
+/* PRINT (CELULAR) */
+@media print {
+    .container {
+        border: none !important;
+        box-shadow: none !important;
+        background: #fff !important;
+    }
+}
+/* ================================
+   CONTAS A RECEBER - ALINHAMENTO
+================================ */
+
+.card table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.card table th,
+.card table td {
+    text-align: center !important;
+    vertical-align: middle;
+    padding: 12px 10px;
+    box-sizing: border-box;
+}
+
+/* Garante que botões não empurrem a célula */
+.card table td button {
+    margin: 0 auto;
+    display: inline-block;
+}
+/* ===============================
+   MODAL – LANÇAMENTO MANUAL
+=============================== */
+
+.modal {
+    position: fixed;
+    inset: 0; /* top:0 right:0 bottom:0 left:0 */
+    background: rgba(0, 0, 0, 0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.modal-conteudo {
+    background: #0d1224;
+    padding: 20px;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.25);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+}
+
+.modal-conteudo h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #38bdf8;
+}
+
+.modal-conteudo label {
+    display: block;
+    margin-top: 10px;
+    margin-bottom: 4px;
+}
+
+.modal-conteudo input {
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+}
+
+.modal-acoes {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 15px;
+}
+/* ===============================
+   CONTAS A RECEBER – VENCIDOS
+=============================== */
+tr.vencido {
+    background: rgba(220, 38, 38, 0.25); /* vermelho suave */
+}
+
+tr.vencido td {
+    color: #fff;
+    font-weight: bold;
+}
+/* ===============================
+   CONTAS A RECEBER – FONTE MAIOR
+=============================== */
+
+#listaReceber td {
+    font-size: 17px; /* antes geralmente é 13–14 */
+}
+
+#listaReceber td:first-child {
+    font-weight: 600;
+}
+
+/* ===============================
+   CONTAS A RECEBER – VISUALIZADOR
+   OCULTAR AÇÕES
+=============================== */
+
+/* Oculta coluna Ações (th + td) */
+body.viewer table th:last-child,
+body.viewer table td:last-child {
+    display: none !important;
+}

@@ -1,0 +1,220 @@
+/* ============================== */
+/*           LAYOUT WEB           */
+/* ============================== */
+
+.container {
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+.card {
+    background: #0b132b;
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 0 12px rgba(0, 255, 255, 0.1);
+}
+
+.card h2 {
+    color: #38bdf8;
+    margin-bottom: 20px;
+}
+
+.campo-select {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    background: #08101f;
+    color: #fff;
+    border: 1px solid rgba(0, 255, 255, 0.25);
+    margin-bottom: 20px;
+}
+
+.botoes-acoes {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.btn-filtrar {
+    background: #38bdf8;
+    padding: 12px 22px;
+    border-radius: 8px;
+    border: none;
+    color: #000;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-imprimir {
+    background: #22c55e;
+    padding: 12px 22px;
+    border-radius: 8px;
+    border: none;
+    color: #000;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* TABELA WEB */
+#tabelaResultados {
+    width: 100%;
+    border-collapse: collapse;
+    background: #0d1b2a;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#tabelaResultados thead {
+    background: #1b263b;
+}
+
+#tabelaResultados th {
+    padding: 12px;
+    color: #38bdf8;
+}
+
+#tabelaResultados td {
+    padding: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.total-label {
+    text-align: right;
+    padding: 12px;
+    font-weight: bold;
+}
+
+.total-valor {
+    padding: 12px;
+    font-weight: bold;
+    color: #38bdf8;
+}
+
+/* Ocultos no modo normal */
+.print-header,
+.print-info {
+    display: none;
+}
+
+/* ============================== */
+/*           IMPRESSÃO            */
+/* ============================== */
+
+@media print {
+
+    * {
+        background: #fff !important;
+        color: #000 !important;
+        box-shadow: none !important;
+    }
+
+    body, html {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .topbar,
+    .btn-voltar,
+    .botoes-acoes,
+    .campo-select,
+    .card h2 {
+        display: none !important;
+    }
+
+    .card {
+        background: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .container {
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+    }
+
+    /* ===== CABEÇALHO ===== */
+    .print-header {
+        display: flex !important;
+        align-items: center;
+        margin-left: 10px;
+        margin-bottom: 10px;
+        gap: 15px;
+    }
+
+    .logo-print {
+        width: 60px !important;
+    }
+
+    .titulo-print {
+        font-size: 22px !important;
+        font-weight: bold;
+    }
+
+    .print-info {
+        display: block !important;
+        margin-left: 10px;
+        margin-bottom: 10px;
+        font-size: 14px !important;
+    }
+
+    /* ============================= */
+    /*     TABELA IMPRESSA FINA      */
+    /* ============================= */
+
+    #tabelaResultados,
+    #tabelaResultados thead,
+    #tabelaResultados tbody,
+    #tabelaResultados tfoot,
+    #tabelaResultados tr,
+    #tabelaResultados th,
+    #tabelaResultados td {
+        border-radius: 0 !important;
+        background: #fff !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+    }
+
+    #tabelaResultados {
+        width: 95% !important;
+        margin-left: 10px !important;
+        border-collapse: collapse !important;
+
+        /* BORDA EXTERNA FINA */
+        border: 1px solid #000 !important;
+    }
+
+    /* CABEÇALHO EM NEGRITO */
+    #tabelaResultados th {
+        background: #f5f5f5 !important;
+        color: #000 !important;
+        border: 1px solid #000 !important;
+        padding: 6px !important;
+        font-size: 14px !important;
+        font-weight: bold !important;
+    }
+
+    /* CÉLULAS NORMAIS */
+    #tabelaResultados td {
+        border: 1px solid #000 !important;
+        padding: 6px !important;
+        font-size: 14px !important;
+        color: #000 !important;
+    }
+
+    /* TOTAL EM NEGRITO */
+    tfoot td {
+        border: 1px solid #000 !important;
+        padding: 6px !important;
+        background: #fff !important;
+        font-weight: bold !important;
+    }
+}
+.linha-atrasada {
+    background-color: #8b000033 !important;
+    color: #ff4d4d !important;
+    font-weight: bold;
+}

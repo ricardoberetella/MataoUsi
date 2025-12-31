@@ -1,0 +1,190 @@
+/* ===== TOPO ===== */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+}
+
+.btn-voltar-menu {
+    background: transparent;
+    border: 2px solid #38bdf8;
+    padding: 8px 20px;
+    border-radius: 12px;
+    color: #38bdf8;
+    font-size: 15px;
+    text-decoration: none;
+}
+
+.btn-voltar-menu:hover {
+    background: rgba(56,189,248,0.1);
+}
+
+.titulo-pagina {
+    color: #38bdf8;
+    font-size: 26px;
+}
+
+/* ===== CARDS ===== */
+
+.card-externo {
+    margin-top: 30px;
+    padding: 20px;
+    border-radius: 18px;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(0,255,255,0.15);
+}
+
+.card-interno {
+    padding: 20px;
+    background: #07101f;
+    border-radius: 12px;
+    border: 1px solid rgba(0,255,255,0.15);
+}
+
+.card-form {
+    margin-top: 40px;
+    padding: 20px;
+    background: #07101f;
+    border-radius: 12px;
+    border: 1px solid rgba(0,255,255,0.15);
+}
+
+.titulo-card {
+    color: #38bdf8;
+    font-size: 22px;
+    margin-bottom: 20px;
+}
+
+/* ===== BOTÕES ===== */
+
+.btn-primario {
+    background: #38bdf8;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    color: #000;
+    font-size: 16px;
+}
+
+.linha-botoes {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 15px;
+}
+
+.btn-salvar {
+    width: 100%;
+    background: #38bdf8;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    color: #000;
+    font-size: 17px;
+}
+
+/* ===== BOTÕES EDITAR / EXCLUIR — CORRIGIDOS ===== */
+
+.btn-editar {
+    background: #38bdf8;
+    padding: 8px 12px;       /* DIMINUÍDO */
+    border-radius: 12px;
+    color: #000;
+    border: none;
+    cursor: pointer;
+    font-size: 15px;         /* DIMINUÍDO */
+}
+
+.btn-excluir {
+    background: #dc2626;
+    padding: 8px 12px;       /* DIMINUÍDO */
+    border-radius: 12px;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: 15px;         /* DIMINUÍDO */
+}
+
+/* ===== TABELA ===== */
+
+.tabela {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.tabela th {
+    background: #0f172a;
+    color: #38bdf8;
+    text-align: left;
+    padding: 12px;
+}
+
+.tabela td {
+    padding: 10px;
+    background: rgba(0,0,0,0.15);
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.tabela tr:nth-child(even) td {
+    background: rgba(0,0,0,0.25);
+}
+
+/* ===== FORM ===== */
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2,1fr);
+    gap: 20px;
+}
+
+.form-group label {
+    color: #38bdf8;
+    margin-bottom: 6px;
+}
+
+input, select {
+    padding: 10px;
+    background: #0f172a;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    color: white;
+}
+
+.full {
+    grid-column: span 2;
+}
+
+/* ===== DESCRIÇÃO — CAMPO ALARGADO ===== */
+
+#descricao {
+    width: 100%;
+    padding: 12px;          /* maior */
+    font-size: 16px;        /* mais legível */
+}
+/* Ajustar largura da coluna Descrição para não quebrar */
+.tabela td:nth-child(2),
+.tabela th:nth-child(2) {
+    width: 220px;
+    white-space: nowrap;
+}
+/* Célula de ações da tabela */
+.tabela td:last-child {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px; /* espaço entre Editar e Excluir */
+}
+/* Centralizar o título "Ações" exatamente entre os botões */
+.tabela th:last-child {
+    text-align: center;
+}
+
+/* Célula de ações */
+.tabela td:last-child {
+    display: flex;
+    justify-content: center; /* Centraliza o bloco */
+    gap: 20px;               /* Espaço REAL entre Editar e Excluir */
+}

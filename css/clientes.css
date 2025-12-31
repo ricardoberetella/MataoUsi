@@ -1,0 +1,210 @@
+/* ============================================
+   LAYOUT GERAL
+=============================================== */
+body {
+    margin: 0;
+    padding: 0;
+    background: #0f172a;
+    color: #e2e8f0;
+    font-family: Arial, sans-serif;
+}
+
+/* Container principal */
+.container {
+    max-width: 900px;
+    margin: 30px auto;
+    padding: 20px;
+}
+
+/* ============================================
+   TOPO / HEADER
+=============================================== */
+.topbar {
+    background: #07101f;
+    padding: 18px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(0,255,255,0.2);
+}
+
+.topbar-title {
+    font-size: 22px;
+    color: #38bdf8;
+    font-weight: bold;
+}
+
+/* Botão Voltar */
+.btn-voltar-menu {
+    background: transparent;
+    border: 1px solid #38bdf8;
+    padding: 8px 18px;
+    border-radius: 6px;
+    color: #38bdf8;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-voltar-menu:hover {
+    background: #38bdf8;
+    color: #000;
+}
+
+/* ============================================
+   BOTÕES PRINCIPAIS
+=============================================== */
+.btn-primario {
+    background: #38bdf8;
+    border: none;
+    padding: 12px 22px;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #000;
+    margin-bottom: 15px;
+    transition: 0.2s;
+}
+
+.btn-primario:hover {
+    background: #0ea5e9;
+}
+
+/* Botão azul pequeno */
+.btn-azul {
+    background: #38bdf8;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 5px;
+    color: #000;
+    cursor: pointer;
+    font-size: 14px;
+    margin-right: 6px;
+}
+
+.btn-azul:hover {
+    background: #0ea5e9;
+}
+
+/* Botão vermelho */
+.btn-vermelho {
+    background: #ef4444;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 5px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-vermelho:hover {
+    background: #dc2626;
+}
+
+/* ============================================
+   CARDS
+=============================================== */
+.card {
+    background: #1e293b;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid rgba(56,189,248,0.2);
+    margin-bottom: 20px;
+}
+
+.card-title {
+    font-size: 20px;
+    color: #38bdf8;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+/* ============================================
+   TABELA FUTURISTA
+=============================================== */
+.tabela-futurista {
+    width: 100%;
+    border-collapse: collapse;
+    background: #0f172a;
+    border: 1px solid rgba(56,189,248,0.25);
+}
+
+.tabela-futurista thead {
+    background: #1e293b;
+}
+
+.tabela-futurista th {
+    text-align: left;
+    padding: 12px;
+    font-weight: bold;
+    color: #38bdf8;
+    border-bottom: 1px solid rgba(56,189,248,0.25);
+}
+
+.tabela-futurista td {
+    padding: 10px;
+    border-bottom: 1px solid rgba(56,189,248,0.15);
+}
+
+.tabela-futurista tr:hover {
+    background: rgba(56,189,248,0.08);
+}
+
+/* ============================================
+   FORMULÁRIOS (CADASTRAR / EDITAR)
+=============================================== */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+.form-grupo {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-grupo label {
+    margin-bottom: 5px;
+    color: #38bdf8;
+    font-weight: bold;
+}
+
+.form-grupo input {
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(56,189,248,0.3);
+    background: #0f172a;
+    color: #e2e8f0;
+}
+
+.form-grupo input:focus {
+    border-color: #38bdf8;
+    outline: none;
+}
+
+/* ============================================
+   MOBILE (CELULAR)
+=============================================== */
+@media (max-width: 700px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .tabela-futurista th,
+    .tabela-futurista td {
+        padding: 8px;
+        font-size: 14px;
+    }
+
+    .btn-primario {
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .btn-azul,
+    .btn-vermelho {
+        padding: 6px 8px;
+        font-size: 12px;
+    }
+}
