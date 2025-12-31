@@ -1,0 +1,25 @@
+.btn-editar,
+.btn-pagar {
+  padding: 6px 14px;
+  font-size: 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  min-width: 80px; /* garante mesmo tamanho */
+}
+
+/* EDITAR (azul – como já está) */
+.btn-editar {
+  background: #38bdf8;
+  color: #000;
+}
+
+/* PAGAR (vermelho) */
+.btn-pagar {
+  background: #ef4444;
+  color: #fff;
+}
+
+.btn-pagar:hover {
+  background: #dc2626;
+}
