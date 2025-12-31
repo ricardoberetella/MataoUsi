@@ -1,30 +1,27 @@
-// ====================================================
-// CONTAS_RECEBER.JS — ESTÁVEL / CORRIGIDO
-// ====================================================
+// ======================================================
+// CONTAS_RECEBER.JS — VERSÃO CORRETA / ESTÁVEL
+// ======================================================
 
 import { supabase, verificarLogin } from "./auth.js";
 
-// ====================================================
-// INIT
-// ====================================================
+// ======================================================
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
 
-    carregarLancamentos();
-
     document.getElementById("btnFiltrar")
-        .addEventListener("click", carregarLancamentos);
+        ?.addEventListener("click", carregarLancamentos);
 
     document.getElementById("btnGerarPDF")
-        .addEventListener("click", gerarPDF);
+        ?.addEventListener("click", gerarPDF);
 
     atualizarDataHoraPDF();
+    carregarLancamentos();
 });
 
-// ====================================================
+// ======================================================
 // FORMATADORES
-// ====================================================
+// ======================================================
 function formatarValor(v) {
     return Number(v || 0).toLocaleString("pt-BR", {
         style: "currency",
@@ -37,16 +34,16 @@ function formatarData(d) {
     return new Date(d).toLocaleDateString("pt-BR");
 }
 
-// ====================================================
+// ======================================================
 // CARREGAR LANÇAMENTOS
-// ====================================================
+// ======================================================
 async function carregarLancamentos() {
     const tbody = document.getElementById("listaReceber");
     const totalEl = document.getElementById("totalReceber");
 
     if (!tbody) return;
 
-    tbody.innerHTML = `<tr><td colspan="5">Carregando...</td></tr>`;
+    tbody.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
     totalEl.innerText = "R$ 0,00";
 
     const statusFiltro = document.getElementById("filtroStatus")?.value || "";
@@ -54,50 +51,46 @@ async function carregarLancamentos() {
 
     let query = supabase
         .from("contas_receber")
-        .select("id, descricao, valor, vencimento, status")
-        .order("vencimento", { ascending: true });
+        .select("id, descricao, valor, data_vencimento, status")
+        .order("data_vencimento", { ascending: true });
 
-    if (statusFiltro) {
-        query = query.eq("status", statusFiltro);
-    }
-
-    if (vencimentoAte) {
-        query = query.lte("vencimento", vencimentoAte);
-    }
+    if (statusFiltro) query = query.eq("status", statusFiltro);
+    if (vencimentoAte) query = query.lte("data_vencimento", vencimentoAte);
 
     const { data, error } = await query;
 
     if (error) {
         console.error("ERRO CONTAS_RECEBER:", error);
-        tbody.innerHTML = `<tr><td colspan="5">Erro ao carregar dados</td></tr>`;
+        tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar dados</td></tr>";
         return;
     }
 
     if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5">Nenhum lançamento</td></tr>`;
+        tbody.innerHTML = "<tr><td colspan='5'>Nenhum lançamento</td></tr>";
         return;
     }
 
-    let total = 0;
     tbody.innerHTML = "";
+    let total = 0;
 
     data.forEach(l => {
         total += Number(l.valor || 0);
 
         const tr = document.createElement("tr");
-
-        if (l.status === "VENCIDO") {
-            tr.classList.add("vencido");
-        }
+        if (l.status === "VENCIDO") tr.classList.add("vencido");
 
         tr.innerHTML = `
             <td>${l.descricao || "-"}</td>
             <td>${formatarValor(l.valor)}</td>
-            <td>${formatarData(l.vencimento)}</td>
+            <td>${formatarData(l.data_vencimento)}</td>
             <td>${l.status}</td>
-            <td>
-                <button class="btn-azul btn-editar" data-id="${l.id}">Editar</button>
-                <button class="btn-vermelho btn-pagar" data-id="${l.id}">Pagar</button>
+            <td style="display:flex; gap:6px; justify-content:center">
+                <button class="btn-azul btn-editar" data-id="${l.id}">
+                    Editar
+                </button>
+                <button class="btn-vermelho btn-pagar" data-id="${l.id}">
+                    Pagar
+                </button>
             </td>
         `;
 
@@ -108,28 +101,26 @@ async function carregarLancamentos() {
     bindAcoes();
 }
 
-// ====================================================
+// ======================================================
 // AÇÕES
-// ====================================================
+// ======================================================
 function bindAcoes() {
     document.querySelectorAll(".btn-editar").forEach(btn => {
         btn.addEventListener("click", () => {
             alert("Editar ID: " + btn.dataset.id);
-            // aqui entra o modal de edição depois (sem quebrar nada)
         });
     });
 
     document.querySelectorAll(".btn-pagar").forEach(btn => {
         btn.addEventListener("click", () => {
             alert("Pagar ID: " + btn.dataset.id);
-            // aqui entra o fluxo de pagamento depois
         });
     });
 }
 
-// ====================================================
+// ======================================================
 // PDF
-// ====================================================
+// ======================================================
 function gerarPDF() {
     document.body.classList.add("modo-pdf");
 
@@ -143,14 +134,12 @@ function gerarPDF() {
             jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
         })
         .save()
-        .then(() => {
-            document.body.classList.remove("modo-pdf");
-        });
+        .then(() => document.body.classList.remove("modo-pdf"));
 }
 
-// ====================================================
+// ======================================================
 // DATA / HORA PDF
-// ====================================================
+// ======================================================
 function atualizarDataHoraPDF() {
     const el = document.getElementById("dataHoraPdf");
     if (!el) return;
