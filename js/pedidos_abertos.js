@@ -1,14 +1,9 @@
 // ====================================================
 // PEDIDOS_ABERTOS.JS — FINAL FUNCIONAL
-// Compatível com:
-// - HTML atual (IDs corretos)
-// - Vercel (/public/js)
-// - FIFO correto (data_entrega → numero_pedido)
 // ====================================================
 
 import { supabase, verificarLogin } from "./auth.js";
 
-// ====================================================
 document.addEventListener("DOMContentLoaded", async () => {
   const user = await verificarLogin();
   if (!user) return;
@@ -22,7 +17,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // ====================================================
-// FORMATAR DATA DD/MM/AAAA
+// FORMATAR DATA
 // ====================================================
 function formatarData(valor) {
   if (!valor) return "-";
@@ -31,64 +26,57 @@ function formatarData(valor) {
 }
 
 // ====================================================
-// CARREGAR FILTROS (IDs DO HTML)
+// FILTROS
 // ====================================================
 async function carregarFiltros() {
   const selCliente = document.getElementById("clienteFiltro");
   const selProduto = document.getElementById("produtoFiltro");
-  if (!selCliente || !selProduto) return;
 
-  // CLIENTES
-  const { data: clientes, error: errC } = await supabase
+  const { data: clientes } = await supabase
     .from("clientes")
     .select("id, razao_social")
     .order("razao_social");
 
-  if (!errC) {
-    selCliente.innerHTML = `<option value="">Todos</option>`;
-    clientes?.forEach(c => {
-      selCliente.innerHTML += `<option value="${c.id}">${c.razao_social}</option>`;
-    });
-  }
+  selCliente.innerHTML = `<option value="">Todos</option>`;
+  clientes?.forEach(c => {
+    selCliente.innerHTML += `<option value="${c.id}">${c.razao_social}</option>`;
+  });
 
-  // PRODUTOS
-  const { data: produtos, error: errP } = await supabase
+  const { data: produtos } = await supabase
     .from("produtos")
     .select("id, codigo, descricao")
     .order("codigo");
 
-  if (!errP) {
-    selProduto.innerHTML = `<option value="">Todos</option>`;
-    produtos?.forEach(p => {
-      selProduto.innerHTML += `<option value="${p.id}">${p.codigo} - ${p.descricao}</option>`;
-    });
-  }
+  selProduto.innerHTML = `<option value="">Todos</option>`;
+  produtos?.forEach(p => {
+    selProduto.innerHTML += `<option value="${p.id}">${p.codigo} - ${p.descricao}</option>`;
+  });
 }
 
 // ====================================================
-// CARREGAR PEDIDOS EM ABERTO
+// PEDIDOS EM ABERTO
 // ====================================================
 async function carregarPedidosAbertos() {
   const tbody = document.getElementById("listaPedidos");
-  if (!tbody) return;
-
-  // Estado carregando
   tbody.innerHTML = `<tr><td colspan="6">Carregando...</td></tr>`;
 
-  const produtoId  = document.getElementById("produtoFiltro")?.value || "";
-  const entregaAte = document.getElementById("dataFiltro")?.value || "";
+  const produtoId  = document.getElementById("produtoFiltro").value;
+  const entregaAte = document.getElementById("dataFiltro").value;
 
   let query = supabase
     .from("pedidos_itens")
     .select(`
       id,
-      pedido_id,
-      produto_id,
       quantidade,
       quantidade_baixada,
       data_entrega,
-      pedidos:pedido_id ( numero_pedido ),
-      produtos:produto_id ( codigo, descricao )
+      pedidos (
+        numero_pedido
+      ),
+      produtos (
+        codigo,
+        descricao
+      )
     `);
 
   if (produtoId)  query = query.eq("produto_id", produtoId);
@@ -97,12 +85,11 @@ async function carregarPedidosAbertos() {
   const { data, error } = await query;
 
   if (error) {
-    console.error(error);
+    console.error("ERRO SUPABASE:", error);
     tbody.innerHTML = `<tr><td colspan="6">Erro ao carregar pedidos</td></tr>`;
     return;
   }
 
-  // Filtrar somente pedidos realmente em aberto e com joins válidos
   const abertos = data.filter(i => {
     const aberto = i.quantidade - (i.quantidade_baixada || 0);
     return aberto > 0 && i.pedidos && i.produtos;
@@ -113,20 +100,13 @@ async function carregarPedidosAbertos() {
     return;
   }
 
-  // ====================================================
-  // FIFO CORRETO
-  // 1) data_entrega (ASC)
-  // 2) numero_pedido (ASC)
-  // ====================================================
+  // FIFO REAL
   abertos.sort((a, b) => {
-    const da = a.data_entrega;
-    const db = b.data_entrega;
-    if (da < db) return -1;
-    if (da > db) return 1;
+    if (a.data_entrega < b.data_entrega) return -1;
+    if (a.data_entrega > b.data_entrega) return 1;
     return Number(a.pedidos.numero_pedido) - Number(b.pedidos.numero_pedido);
   });
 
-  // Renderizar
   tbody.innerHTML = "";
 
   abertos.forEach(i => {
