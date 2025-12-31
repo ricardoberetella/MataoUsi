@@ -1,8 +1,6 @@
 // ====================================================
-// PEDIDOS_ABERTOS.JS — ESTÁVEL E FUNCIONAL
-// FIFO REAL:
-// 1) Data de entrega mais antiga
-// 2) Número do pedido menor
+// PEDIDOS_ABERTOS.JS — FINAL DEFINITIVO
+// COM QUANTIDADE BAIXADA REAL (JOIN CORRETO)
 // ====================================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -73,13 +71,11 @@ async function carregarPedidosAbertos() {
     .from("pedidos_itens")
     .select(`
       id,
-      pedido_id,
-      produto_id,
       quantidade,
-      quantidade_baixada,
       data_entrega,
-      pedidos ( numero_pedido ),
-      produtos ( codigo, descricao )
+      pedidos:pedido_id ( numero_pedido ),
+      produtos:produto_id ( codigo, descricao ),
+      notas_pedidos_baixas ( quantidade )
     `);
 
   if (produtoId) query = query.eq("produto_id", produtoId);
@@ -93,40 +89,47 @@ async function carregarPedidosAbertos() {
     return;
   }
 
-  // Apenas saldo em aberto
-  const abertos = data.filter(i => {
-    const aberto = i.quantidade - (i.quantidade_baixada || 0);
-    return aberto > 0 && i.pedidos && i.produtos;
-  });
+  if (!data || data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6">Nenhum pedido em aberto</td></tr>`;
+    return;
+  }
 
-  if (abertos.length === 0) {
+  // Calcula baixado + saldo
+  const calculados = data.map(i => {
+    const baixado = (i.notas_pedidos_baixas || [])
+      .reduce((s, b) => s + Number(b.quantidade || 0), 0);
+
+    return {
+      ...i,
+      baixado,
+      aberto: i.quantidade - baixado
+    };
+  }).filter(i => i.aberto > 0);
+
+  if (calculados.length === 0) {
     tbody.innerHTML = `<tr><td colspan="6">Nenhum pedido em aberto</td></tr>`;
     return;
   }
 
   // FIFO REAL
-  abertos.sort((a, b) => {
-    const da = a.data_entrega;
-    const db = b.data_entrega;
-    if (da < db) return -1;
-    if (da > db) return 1;
+  calculados.sort((a, b) => {
+    if (a.data_entrega < b.data_entrega) return -1;
+    if (a.data_entrega > b.data_entrega) return 1;
     return Number(a.pedidos.numero_pedido) - Number(b.pedidos.numero_pedido);
   });
 
+  // Render
   tbody.innerHTML = "";
 
-  abertos.forEach(i => {
-    const baixado = i.quantidade_baixada || 0;
-    const aberto = i.quantidade - baixado;
-
+  calculados.forEach(i => {
     tbody.innerHTML += `
       <tr>
         <td>${i.pedidos.numero_pedido}</td>
         <td>${i.produtos.codigo} - ${i.produtos.descricao}</td>
         <td>${formatarData(i.data_entrega)}</td>
         <td>${i.quantidade}</td>
-        <td>${baixado}</td>
-        <td>${aberto}</td>
+        <td>${i.baixado}</td>
+        <td>${i.aberto}</td>
       </tr>
     `;
   });
