@@ -1,5 +1,5 @@
 // ====================================================
-// CONTAS_RECEBER.JS — ESTÁVEL
+// CONTAS_RECEBER.JS — CORREÇÃO DEFINITIVA (400 FIX)
 // ====================================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -13,11 +13,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     carregarLancamentos();
 
-    document.getElementById("btnFiltrar")
-        ?.addEventListener("click", carregarLancamentos);
-
-    document.getElementById("btnGerarPDF")
-        ?.addEventListener("click", gerarPDF);
+    document.getElementById("btnFiltrar")?.addEventListener("click", carregarLancamentos);
+    document.getElementById("btnGerarPDF")?.addEventListener("click", gerarPDF);
 
     atualizarDataHoraPDF();
 });
@@ -44,18 +41,17 @@ async function carregarLancamentos() {
     const tbody = document.getElementById("listaReceber");
     const totalEl = document.getElementById("totalReceber");
 
-    if (!tbody) return;
-
     tbody.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
     totalEl.innerText = "R$ 0,00";
 
     const status = document.getElementById("filtroStatus")?.value || "";
     const vencimentoAte = document.getElementById("filtroVencimento")?.value || "";
 
+    // 🔴 CORREÇÃO PRINCIPAL: select("*")
     let query = supabase
         .from("contas_receber")
-        .select("id, origem, valor, vencimento, status")
-        .order("vencimento");
+        .select("*")
+        .order("vencimento", { ascending: true });
 
     if (status) query = query.eq("status", status);
     if (vencimentoAte) query = query.lte("vencimento", vencimentoAte);
@@ -64,7 +60,7 @@ async function carregarLancamentos() {
 
     if (error) {
         console.error("ERRO CONTAS_RECEBER:", error);
-        tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar dados</td></tr>";
         return;
     }
 
@@ -73,8 +69,8 @@ async function carregarLancamentos() {
         return;
     }
 
-    let total = 0;
     tbody.innerHTML = "";
+    let total = 0;
 
     data.forEach(l => {
         total += Number(l.valor || 0);
@@ -86,7 +82,7 @@ async function carregarLancamentos() {
             <td>${l.origem || "-"}</td>
             <td>${formatarValor(l.valor)}</td>
             <td>${formatarData(l.vencimento)}</td>
-            <td>${l.status}</td>
+            <td>${l.status || "-"}</td>
             <td>
                 <button class="btn-azul btn-editar" data-id="${l.id}">Editar</button>
                 <button class="btn-vermelho btn-pagar" data-id="${l.id}">Pagar</button>
@@ -105,15 +101,11 @@ async function carregarLancamentos() {
 // ====================================================
 function bindAcoes() {
     document.querySelectorAll(".btn-editar").forEach(btn => {
-        btn.onclick = () => {
-            alert("Editar ID: " + btn.dataset.id);
-        };
+        btn.onclick = () => alert("Editar ID: " + btn.dataset.id);
     });
 
     document.querySelectorAll(".btn-pagar").forEach(btn => {
-        btn.onclick = () => {
-            alert("Pagar ID: " + btn.dataset.id);
-        };
+        btn.onclick = () => alert("Pagar ID: " + btn.dataset.id);
     });
 }
 
@@ -135,7 +127,7 @@ function gerarPDF() {
 }
 
 // ====================================================
-// DATA / HORA PDF
+// DATA/HORA PDF
 // ====================================================
 function atualizarDataHoraPDF() {
     const el = document.getElementById("dataHoraPdf");
@@ -145,8 +137,5 @@ function atualizarDataHoraPDF() {
     el.innerText =
         agora.toLocaleDateString("pt-BR") +
         " " +
-        agora.toLocaleTimeString("pt-BR", {
-            hour: "2-digit",
-            minute: "2-digit"
-        });
+        agora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 }
