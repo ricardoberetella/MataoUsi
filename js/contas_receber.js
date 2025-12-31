@@ -1,10 +1,12 @@
-// ====================================================
-// CONTAS_RECEBER.JS — FINAL DEFINITIVO
-// ====================================================
+// ===============================================
+// CONTAS_RECEBER.JS — VERSÃO DEFINITIVA CORRIGIDA
+// ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
 
-// ====================================================
+// ===============================================
+// INIT
+// ===============================================
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
@@ -20,9 +22,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     atualizarDataHoraPDF();
 });
 
-// ====================================================
+// ===============================================
 // FORMATADORES
-// ====================================================
+// ===============================================
 function formatarValor(v) {
     return Number(v || 0).toLocaleString("pt-BR", {
         style: "currency",
@@ -35,16 +37,16 @@ function formatarData(d) {
     return new Date(d).toLocaleDateString("pt-BR");
 }
 
-// ====================================================
+// ===============================================
 // CARREGAR LANÇAMENTOS
-// ====================================================
+// ===============================================
 async function carregarLancamentos() {
     const tbody = document.getElementById("listaReceber");
     const totalEl = document.getElementById("totalReceber");
 
     if (!tbody) return;
 
-    tbody.innerHTML = `<tr><td colspan="5">Carregando...</td></tr>`;
+    tbody.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
     totalEl.innerText = "R$ 0,00";
 
     const statusFiltro = document.getElementById("filtroStatus")?.value || "";
@@ -52,14 +54,8 @@ async function carregarLancamentos() {
 
     let query = supabase
         .from("contas_receber")
-        .select(`
-            id,
-            origem_nf,
-            valor,
-            vencimento,
-            status
-        `)
-        .order("vencimento");
+        .select("id, origem_nf, valor, vencimento, status")
+        .order("vencimento", { ascending: true });
 
     if (statusFiltro) {
         query = query.eq("status", statusFiltro);
@@ -73,12 +69,12 @@ async function carregarLancamentos() {
 
     if (error) {
         console.error("ERRO CONTAS_RECEBER:", error);
-        tbody.innerHTML = `<tr><td colspan="5">Erro ao carregar dados</td></tr>`;
+        tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar dados</td></tr>";
         return;
     }
 
     if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5">Nenhum lançamento encontrado</td></tr>`;
+        tbody.innerHTML = "<tr><td colspan='5'>Nenhum lançamento</td></tr>";
         return;
     }
 
@@ -89,7 +85,10 @@ async function carregarLancamentos() {
         total += Number(l.valor || 0);
 
         const tr = document.createElement("tr");
-        if (l.status === "VENCIDO") tr.classList.add("vencido");
+
+        if (l.status === "VENCIDO") {
+            tr.classList.add("vencido");
+        }
 
         tr.innerHTML = `
             <td>${l.origem_nf || "-"}</td>
@@ -106,12 +105,13 @@ async function carregarLancamentos() {
     });
 
     totalEl.innerText = formatarValor(total);
+
     bindAcoes();
 }
 
-// ====================================================
+// ===============================================
 // AÇÕES
-// ====================================================
+// ===============================================
 function bindAcoes() {
     document.querySelectorAll(".btn-editar").forEach(btn => {
         btn.addEventListener("click", () => {
@@ -126,32 +126,40 @@ function bindAcoes() {
     });
 }
 
-// ====================================================
+// ===============================================
 // PDF
-// ====================================================
+// ===============================================
 function gerarPDF() {
     document.body.classList.add("modo-pdf");
 
-    html2pdf().from(document.getElementById("areaPdf")).set({
-        margin: 10,
-        filename: "contas_a_receber.pdf",
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 1 },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
-    }).save().then(() => {
-        document.body.classList.remove("modo-pdf");
-    });
+    html2pdf()
+        .from(document.getElementById("areaPdf"))
+        .set({
+            margin: 10,
+            filename: "contas_a_receber.pdf",
+            image: { type: "jpeg", quality: 0.98 },
+            html2canvas: { scale: 1 },
+            jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+        })
+        .save()
+        .then(() => {
+            document.body.classList.remove("modo-pdf");
+        });
 }
 
-// ====================================================
+// ===============================================
 // DATA / HORA PDF
-// ====================================================
+// ===============================================
 function atualizarDataHoraPDF() {
     const el = document.getElementById("dataHoraPdf");
     if (!el) return;
 
     const agora = new Date();
     el.innerText =
-        agora.toLocaleDateString("pt-BR") + " " +
-        agora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+        agora.toLocaleDateString("pt-BR") +
+        " " +
+        agora.toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit"
+        });
 }
