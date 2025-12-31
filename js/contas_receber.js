@@ -1,5 +1,6 @@
 // ====================================================
-// CONTAS_RECEBER.JS — FINAL ESTÁVEL
+// CONTAS_RECEBER.JS — ESTÁVEL E DEFINITIVO
+// NF ORIGEM + EDITAR + PAGAR
 // ====================================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -7,103 +8,130 @@ import { supabase, verificarLogin } from "./auth.js";
 let registros = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const user = await verificarLogin();
-  if (!user) return;
+    const user = await verificarLogin();
+    if (!user) return;
 
-  await carregarLancamentos();
+    await carregarLancamentos();
+
+    document.getElementById("btnFiltrar")
+        ?.addEventListener("click", carregarLancamentos);
 });
 
 // ====================================================
+// FORMATADORES
+// ====================================================
 function formatarData(valor) {
-  if (!valor) return "-";
-  const [a, m, d] = valor.split("-");
-  return `${d}/${m}/${a}`;
+    if (!valor) return "-";
+    const [a, m, d] = valor.substring(0, 10).split("-");
+    return `${d}/${m}/${a}`;
 }
 
-function formatarValor(v) {
-  return Number(v || 0).toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
+function formatarValor(valor) {
+    return Number(valor || 0).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+    });
 }
 
+// ====================================================
+// CARREGAR LANÇAMENTOS
 // ====================================================
 async function carregarLancamentos() {
-  // 🔴 ID CORRETO DO TBODY (HTML ATUAL)
-  const tbody = document.querySelector("table tbody");
-  if (!tbody) return;
+    const tbody = document.getElementById("listaLancamentos");
+    if (!tbody) return;
 
-  tbody.innerHTML = `<tr><td colspan="5">Carregando...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5">Carregando...</td></tr>`;
 
-  const { data, error } = await supabase
-    .from("contas_receber")
-    .select("*")
-    .order("data_vencimento");
+    const statusFiltro = document.getElementById("statusFiltro")?.value || "";
+    const vencimentoAte = document.getElementById("vencimentoFiltro")?.value || "";
 
-  if (error) {
-    console.error(error);
-    tbody.innerHTML = `<tr><td colspan="5">Erro ao carregar</td></tr>`;
-    return;
-  }
+    let query = supabase
+        .from("contas_receber")
+        .select(`
+            id,
+            valor,
+            vencimento,
+            status,
+            nota_fiscal_id,
+            notas_fiscais:nota_fiscal_id (
+                numero
+            )
+        `)
+        .order("vencimento", { ascending: true });
 
-  registros = data || [];
+    if (statusFiltro) query = query.eq("status", statusFiltro);
+    if (vencimentoAte) query = query.lte("vencimento", vencimentoAte);
 
-  tbody.innerHTML = "";
+    const { data, error } = await query;
 
-  if (registros.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5">Nenhum lançamento</td></tr>`;
-    return;
-  }
+    if (error) {
+        console.error("ERRO CONTAS_RECEBER:", error);
+        tbody.innerHTML = `<tr><td colspan="5">Erro ao carregar lançamentos</td></tr>`;
+        return;
+    }
 
-  registros.forEach(r => {
-    const classe =
-      r.status === "VENCIDO"
-        ? "linha-vencido"
-        : r.status === "PAGO"
-        ? "linha-pago"
-        : "";
+    registros = data || [];
 
-    tbody.innerHTML += `
-      <tr class="${classe}">
-        <td>${r.origem || "-"}</td>
-        <td>${formatarValor(r.valor)}</td>
-        <td>${formatarData(r.data_vencimento)}</td>
-        <td>${r.status}</td>
-        <td class="acoes">
-          <button class="btn-editar" onclick="editarLancamento(${r.id})">
-            Editar
-          </button>
-          <button class="btn-pagar" onclick="pagarLancamento(${r.id})">
-            Pagar
-          </button>
-        </td>
-      </tr>
-    `;
-  });
+    if (registros.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5">Nenhum lançamento encontrado</td></tr>`;
+        return;
+    }
+
+    renderizarTabela();
 }
 
 // ====================================================
-window.editarLancamento = function (id) {
-  window.location.href = `contas_receber_editar.html?id=${id}`;
-};
+// RENDERIZAÇÃO
+// ====================================================
+function renderizarTabela() {
+    const tbody = document.getElementById("listaLancamentos");
+    tbody.innerHTML = "";
+
+    registros.forEach(r => {
+        const nfOrigem = r.notas_fiscais?.numero || "-";
+
+        tbody.innerHTML += `
+            <tr>
+                <td>${nfOrigem}</td>
+                <td>${formatarValor(r.valor)}</td>
+                <td>${formatarData(r.vencimento)}</td>
+                <td>${r.status}</td>
+                <td style="display:flex;gap:8px;justify-content:center;">
+                    <button class="btn-primario btn-editar"
+                        onclick="editarLancamento(${r.id})">
+                        Editar
+                    </button>
+
+                    <button class="btn-primario btn-pagar"
+                        onclick="pagarLancamento(${r.id})">
+                        Pagar
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+}
 
 // ====================================================
+// AÇÕES
+// ====================================================
+window.editarLancamento = function (id) {
+    window.location.href = `contas_receber_editar.html?id=${id}`;
+};
+
 window.pagarLancamento = async function (id) {
-  if (!confirm("Confirmar pagamento?")) return;
+    if (!confirm("Confirmar pagamento deste lançamento?")) return;
 
-  const { error } = await supabase
-    .from("contas_receber")
-    .update({
-      status: "PAGO",
-      data_pagamento: new Date(),
-    })
-    .eq("id", id);
+    const { error } = await supabase
+        .from("contas_receber")
+        .update({ status: "PAGO" })
+        .eq("id", id);
 
-  if (error) {
-    alert("Erro ao pagar");
-    console.error(error);
-    return;
-  }
+    if (error) {
+        alert("Erro ao pagar");
+        console.error(error);
+        return;
+    }
 
-  carregarLancamentos();
+    await carregarLancamentos();
 };
