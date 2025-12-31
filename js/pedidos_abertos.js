@@ -1,6 +1,6 @@
 // ====================================================
-// PEDIDOS_ABERTOS.JS — FINAL ABSOLUTO
-// QUANTIDADE BAIXADA REAL (SEM JOIN PROBLEMÁTICO)
+// PEDIDOS_ABERTOS.JS — FINAL DEFINITIVO
+// QUANTIDADE BAIXADA REAL (TABELA PODE ESTAR VAZIA)
 // ====================================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -12,7 +12,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   await carregarFiltros();
   await carregarPedidosAbertos();
 
-  document.getElementById("btnFiltrar")
+  document
+    .getElementById("btnFiltrar")
     ?.addEventListener("click", carregarPedidosAbertos);
 });
 
@@ -60,7 +61,7 @@ async function carregarPedidosAbertos() {
   const produtoId = document.getElementById("produtoFiltro")?.value || "";
   const entregaAte = document.getElementById("dataFiltro")?.value || "";
 
-  // 1️⃣ Buscar pedidos_itens
+  // 1️⃣ Buscar itens de pedido
   let query = supabase
     .from("pedidos_itens")
     .select(`
@@ -87,12 +88,12 @@ async function carregarPedidosAbertos() {
     return;
   }
 
-  // 2️⃣ Buscar baixas separadamente
+  // 2️⃣ Buscar baixas (tabela pode estar vazia, OK)
   const ids = itens.map(i => i.id);
 
   const { data: baixas, error: erroBaixas } = await supabase
     .from("notas_pedidos_baixas")
-    .select("pedido_item_id, quantidade")
+    .select("pedido_item_id, quantidade_baixada")
     .in("pedido_item_id", ids);
 
   if (erroBaixas) {
@@ -103,20 +104,22 @@ async function carregarPedidosAbertos() {
 
   // 3️⃣ Somar baixas por item
   const mapaBaixas = {};
-  baixas?.forEach(b => {
+  (baixas || []).forEach(b => {
     mapaBaixas[b.pedido_item_id] =
-      (mapaBaixas[b.pedido_item_id] || 0) + Number(b.quantidade || 0);
+      (mapaBaixas[b.pedido_item_id] || 0) + Number(b.quantidade_baixada || 0);
   });
 
   // 4️⃣ Calcular saldo
-  const abertos = itens.map(i => {
-    const baixado = mapaBaixas[i.id] || 0;
-    return {
-      ...i,
-      baixado,
-      aberto: i.quantidade - baixado
-    };
-  }).filter(i => i.aberto > 0);
+  const abertos = itens
+    .map(i => {
+      const baixado = mapaBaixas[i.id] || 0;
+      return {
+        ...i,
+        baixado,
+        aberto: i.quantidade - baixado
+      };
+    })
+    .filter(i => i.aberto > 0);
 
   if (abertos.length === 0) {
     tbody.innerHTML = `<tr><td colspan="6">Nenhum pedido em aberto</td></tr>`;
@@ -132,7 +135,6 @@ async function carregarPedidosAbertos() {
 
   // Render
   tbody.innerHTML = "";
-
   abertos.forEach(i => {
     tbody.innerHTML += `
       <tr>
