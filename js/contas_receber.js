@@ -1,6 +1,5 @@
 // ======================================================
 // CONTAS_RECEBER.JS — ESTÁVEL FINAL
-// EDITAR + LANÇAMENTO MANUAL
 // ======================================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -12,22 +11,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
 
-    document.getElementById("btnFiltrar")
-        ?.addEventListener("click", carregarLancamentos);
+    document.getElementById("btnFiltrar")?.addEventListener("click", carregarLancamentos);
+    document.getElementById("btnGerarPDF")?.addEventListener("click", gerarPDF);
 
-    document.getElementById("btnGerarPDF")
-        ?.addEventListener("click", gerarPDF);
-
-    document.getElementById("btnLancamentoManual")
-        ?.addEventListener("click", abrirModalNovo);
+    // 🔥 BOTÃO LANÇAMENTO MANUAL (CORRIGIDO)
+    document.querySelector(".btn-verde")?.addEventListener("click", abrirNovo);
 
     criarModal();
-    atualizarDataHoraPDF();
     carregarLancamentos();
 });
 
-// ======================================================
-// FORMATADORES
 // ======================================================
 function formatarValor(v) {
     return Number(v || 0).toLocaleString("pt-BR", {
@@ -36,20 +29,18 @@ function formatarValor(v) {
     });
 }
 
-function isoParaBR(dataISO) {
-    if (!dataISO) return "";
-    const [y, m, d] = dataISO.split("-");
-    return `${d}/${m}/${y}`;
+function isoParaBR(d) {
+    if (!d) return "";
+    const [y,m,dd] = d.split("-");
+    return `${dd}/${m}/${y}`;
 }
 
-function brParaISO(dataBR) {
-    if (!dataBR) return null;
-    const [d, m, y] = dataBR.split("/");
-    return `${y}-${m}-${d}`;
+function brParaISO(d) {
+    if (!d) return null;
+    const [dd,m,y] = d.split("/");
+    return `${y}-${m}-${dd}`;
 }
 
-// ======================================================
-// CARREGAR LANÇAMENTOS
 // ======================================================
 async function carregarLancamentos() {
     const tbody = document.getElementById("listaReceber");
@@ -58,16 +49,14 @@ async function carregarLancamentos() {
     tbody.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
     totalEl.innerText = "R$ 0,00";
 
-    let query = supabase
+    const { data, error } = await supabase
         .from("contas_receber")
         .select("id, descricao, valor, data_vencimento, status")
-        .order("data_vencimento", { ascending: true });
-
-    const { data, error } = await query;
+        .order("data_vencimento");
 
     if (error) {
         console.error(error);
-        tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar dados</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar</td></tr>";
         return;
     }
 
@@ -84,7 +73,7 @@ async function carregarLancamentos() {
             <td>${isoParaBR(l.data_vencimento)}</td>
             <td>${l.status}</td>
             <td style="display:flex; gap:6px; justify-content:center">
-                <button class="btn-azul btn-editar"
+                <button class="btn-azul editar"
                     data-id="${l.id}"
                     data-descricao="${l.descricao}"
                     data-valor="${l.valor}"
@@ -103,13 +92,11 @@ async function carregarLancamentos() {
 }
 
 // ======================================================
-// EDITAR
-// ======================================================
 function bindEditar() {
-    document.querySelectorAll(".btn-editar").forEach(btn => {
+    document.querySelectorAll(".editar").forEach(btn => {
         btn.onclick = () => {
             if (btn.dataset.status === "PAGO") {
-                alert("Lançamento PAGO não pode ser editado.");
+                alert("Lançamento pago não pode ser editado");
                 return;
             }
 
@@ -126,108 +113,56 @@ function bindEditar() {
 }
 
 // ======================================================
-// MODAL ÚNICO (EDITAR / NOVO)
+// MODAL
 // ======================================================
 function criarModal() {
-    const style = document.createElement("style");
-    style.innerHTML = `
-        #modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,.7);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-        }
-        #modal .box {
-            background: #0f172a;
-            padding: 20px;
-            border-radius: 12px;
-            width: 320px;
-            color: #fff;
-        }
-        #modal input {
-            width: 100%;
-            margin-bottom: 10px;
-            padding: 8px;
-            border-radius: 6px;
-            border: none;
-        }
-    `;
-    document.head.appendChild(style);
-
     const modal = document.createElement("div");
     modal.id = "modal";
+    modal.style = `
+        position:fixed; inset:0; background:rgba(0,0,0,.7);
+        display:none; align-items:center; justify-content:center; z-index:9999
+    `;
+
     modal.innerHTML = `
-        <div class="box">
-            <h3 id="modalTitulo"></h3>
-            <input id="mDescricao" placeholder="NF / Origem">
-            <input id="mValor" type="number" step="0.01">
-            <input id="mVencimento" placeholder="dd/mm/aaaa">
-            <div style="display:flex; justify-content:flex-end; gap:10px">
-                <button id="mCancelar" class="btn-vermelho">Cancelar</button>
-                <button id="mSalvar" class="btn-verde">Salvar</button>
+        <div style="background:#0f172a;padding:20px;border-radius:12px;width:320px;color:#fff">
+            <h3 id="tituloModal"></h3>
+            <input id="campoDesc" placeholder="NF / Origem" style="width:100%;margin-bottom:8px">
+            <input id="campoValor" type="number" step="0.01" style="width:100%;margin-bottom:8px">
+            <input id="campoVenc" placeholder="dd/mm/aaaa" style="width:100%;margin-bottom:12px">
+            <div style="display:flex;justify-content:flex-end;gap:8px">
+                <button id="cancelar" class="btn-vermelho">Cancelar</button>
+                <button id="salvar" class="btn-verde">Salvar</button>
             </div>
         </div>
     `;
     document.body.appendChild(modal);
 
-    document.getElementById("mCancelar").onclick = () => {
-        modal.style.display = "none";
-    };
+    document.getElementById("cancelar").onclick = () => modal.style.display = "none";
 }
 
-function abrirModal(titulo, desc, valor, venc, acaoSalvar) {
-    document.getElementById("modalTitulo").innerText = titulo;
-    document.getElementById("mDescricao").value = desc || "";
-    document.getElementById("mValor").value = valor || "";
-    document.getElementById("mVencimento").value = venc || "";
+// ======================================================
+function abrirModal(titulo, desc, valor, venc, acao) {
+    document.getElementById("tituloModal").innerText = titulo;
+    document.getElementById("campoDesc").value = desc || "";
+    document.getElementById("campoValor").value = valor || "";
+    document.getElementById("campoVenc").value = venc || "";
 
-    document.getElementById("mSalvar").onclick = acaoSalvar;
+    document.getElementById("salvar").onclick = acao;
     document.getElementById("modal").style.display = "flex";
 }
 
 // ======================================================
-// SALVAR EDIÇÃO
-// ======================================================
-async function salvarEdicao() {
-    const descricao = mDescricao.value;
-    const valor = mValor.value;
-    const vencimento = brParaISO(mVencimento.value);
-
-    await supabase
-        .from("contas_receber")
-        .update({ descricao, valor, data_vencimento: vencimento })
-        .eq("id", editandoId);
-
-    modal.style.display = "none";
-    carregarLancamentos();
-}
-
-// ======================================================
-// LANÇAMENTO MANUAL
-// ======================================================
-function abrirModalNovo() {
+function abrirNovo() {
     editandoId = null;
-    abrirModal(
-        "Novo Lançamento",
-        "",
-        "",
-        "",
-        salvarNovo
-    );
+    abrirModal("Novo Lançamento", "", "", "", salvarNovo);
 }
 
+// ======================================================
 async function salvarNovo() {
-    const descricao = mDescricao.value;
-    const valor = mValor.value;
-    const vencimento = brParaISO(mVencimento.value);
-
     await supabase.from("contas_receber").insert({
-        descricao,
-        valor,
-        data_vencimento: vencimento,
+        descricao: campoDesc.value,
+        valor: campoValor.value,
+        data_vencimento: brParaISO(campoVenc.value),
         status: "ABERTO"
     });
 
@@ -236,5 +171,19 @@ async function salvarNovo() {
 }
 
 // ======================================================
+async function salvarEdicao() {
+    await supabase
+        .from("contas_receber")
+        .update({
+            descricao: campoDesc.value,
+            valor: campoValor.value,
+            data_vencimento: brParaISO(campoVenc.value)
+        })
+        .eq("id", editandoId);
+
+    modal.style.display = "none";
+    carregarLancamentos();
+}
+
+// ======================================================
 function gerarPDF() {}
-function atualizarDataHoraPDF() {}
