@@ -1,27 +1,28 @@
-// ====================================================
-// CONTAS_RECEBER.JS — CORREÇÃO DEFINITIVA (400 FIX)
-// ====================================================
+// ===================================================
+// CONTAS_RECEBER.JS — ESTÁVEL E FUNCIONAL
+// ===================================================
 
 import { supabase, verificarLogin } from "./auth.js";
 
-// ====================================================
-// INIT
-// ====================================================
+// ===================================================
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
 
     carregarLancamentos();
 
-    document.getElementById("btnFiltrar")?.addEventListener("click", carregarLancamentos);
-    document.getElementById("btnGerarPDF")?.addEventListener("click", gerarPDF);
+    document.getElementById("btnFiltrar")
+        ?.addEventListener("click", carregarLancamentos);
+
+    document.getElementById("btnGerarPDF")
+        ?.addEventListener("click", gerarPDF);
 
     atualizarDataHoraPDF();
 });
 
-// ====================================================
+// ===================================================
 // FORMATADORES
-// ====================================================
+// ===================================================
 function formatarValor(v) {
     return Number(v || 0).toLocaleString("pt-BR", {
         style: "currency",
@@ -34,27 +35,32 @@ function formatarData(d) {
     return new Date(d).toLocaleDateString("pt-BR");
 }
 
-// ====================================================
+// ===================================================
 // CARREGAR LANÇAMENTOS
-// ====================================================
+// ===================================================
 async function carregarLancamentos() {
+
     const tbody = document.getElementById("listaReceber");
     const totalEl = document.getElementById("totalReceber");
 
     tbody.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
     totalEl.innerText = "R$ 0,00";
 
-    const status = document.getElementById("filtroStatus")?.value || "";
+    const statusFiltro = document.getElementById("filtroStatus")?.value || "";
     const vencimentoAte = document.getElementById("filtroVencimento")?.value || "";
 
-    // 🔴 CORREÇÃO PRINCIPAL: select("*")
     let query = supabase
         .from("contas_receber")
-        .select("*")
+        .select("id, origem, valor, vencimento, status")
         .order("vencimento", { ascending: true });
 
-    if (status) query = query.eq("status", status);
-    if (vencimentoAte) query = query.lte("vencimento", vencimentoAte);
+    if (statusFiltro) {
+        query = query.eq("status", statusFiltro);
+    }
+
+    if (vencimentoAte) {
+        query = query.lte("vencimento", vencimentoAte);
+    }
 
     const { data, error } = await query;
 
@@ -65,12 +71,12 @@ async function carregarLancamentos() {
     }
 
     if (!data || data.length === 0) {
-        tbody.innerHTML = "<tr><td colspan='5'>Nenhum lançamento</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='5'>Nenhum lançamento encontrado</td></tr>";
         return;
     }
 
-    tbody.innerHTML = "";
     let total = 0;
+    tbody.innerHTML = "";
 
     data.forEach(l => {
         total += Number(l.valor || 0);
@@ -82,10 +88,10 @@ async function carregarLancamentos() {
             <td>${l.origem || "-"}</td>
             <td>${formatarValor(l.valor)}</td>
             <td>${formatarData(l.vencimento)}</td>
-            <td>${l.status || "-"}</td>
+            <td>${l.status}</td>
             <td>
-                <button class="btn-azul btn-editar" data-id="${l.id}">Editar</button>
-                <button class="btn-vermelho btn-pagar" data-id="${l.id}">Pagar</button>
+                <button class="btn-editar" data-id="${l.id}">Editar</button>
+                <button class="btn-pagar" data-id="${l.id}">Pagar</button>
             </td>
         `;
 
@@ -96,22 +102,27 @@ async function carregarLancamentos() {
     bindAcoes();
 }
 
-// ====================================================
+// ===================================================
 // AÇÕES
-// ====================================================
+// ===================================================
 function bindAcoes() {
+
     document.querySelectorAll(".btn-editar").forEach(btn => {
-        btn.onclick = () => alert("Editar ID: " + btn.dataset.id);
+        btn.addEventListener("click", () => {
+            alert("Editar ID: " + btn.dataset.id);
+        });
     });
 
     document.querySelectorAll(".btn-pagar").forEach(btn => {
-        btn.onclick = () => alert("Pagar ID: " + btn.dataset.id);
+        btn.addEventListener("click", () => {
+            alert("Pagar ID: " + btn.dataset.id);
+        });
     });
 }
 
-// ====================================================
+// ===================================================
 // PDF
-// ====================================================
+// ===================================================
 function gerarPDF() {
     document.body.classList.add("modo-pdf");
 
@@ -126,9 +137,9 @@ function gerarPDF() {
     });
 }
 
-// ====================================================
-// DATA/HORA PDF
-// ====================================================
+// ===================================================
+// DATA / HORA PDF
+// ===================================================
 function atualizarDataHoraPDF() {
     const el = document.getElementById("dataHoraPdf");
     if (!el) return;
