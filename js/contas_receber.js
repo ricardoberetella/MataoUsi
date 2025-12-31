@@ -1,5 +1,5 @@
 // ======================================================
-// CONTAS_RECEBER.JS — ESTÁVEL + EDITAR PROFISSIONAL
+// CONTAS_RECEBER.JS — ESTÁVEL + EDITAR FUNCIONAL
 // ======================================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // ======================================================
-// FORMATADORES (SEM BUG DE DATA)
+// FORMATADORES
 // ======================================================
 function formatarValor(v) {
     return Number(v || 0).toLocaleString("pt-BR", {
@@ -115,9 +115,8 @@ async function carregarLancamentos() {
 // AÇÕES
 // ======================================================
 function bindAcoes() {
-
     document.querySelectorAll(".btn-editar").forEach(btn => {
-        btn.addEventListener("click", () => {
+        btn.onclick = () => {
 
             if (btn.dataset.status === "PAGO") {
                 alert("Lançamento PAGO não pode ser editado.");
@@ -130,56 +129,67 @@ function bindAcoes() {
                 valor: btn.dataset.valor,
                 vencimento: isoParaBR(btn.dataset.vencimento)
             });
-        });
-    });
-
-    document.querySelectorAll(".btn-pagar").forEach(btn => {
-        btn.addEventListener("click", () => {
-            alert("Pagar ID: " + btn.dataset.id);
-        });
+        };
     });
 }
 
 // ======================================================
-// MODAL DE EDIÇÃO (BONITO E SEGURO)
+// MODAL (CSS + HTML + JS)
 // ======================================================
+let editandoId = null;
+
 function criarModalEdicao() {
+    const style = document.createElement("style");
+    style.innerHTML = `
+        #modalEditar {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.65);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        #modalEditar .box {
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 12px;
+            width: 320px;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(56,189,248,.6);
+        }
+        #modalEditar input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border: none;
+        }
+        #modalEditar .acoes {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+    `;
+    document.head.appendChild(style);
+
     const modal = document.createElement("div");
     modal.id = "modalEditar";
-    modal.style.display = "none";
     modal.innerHTML = `
-        <div class="modal-conteudo">
+        <div class="box">
             <h3>Editar Lançamento</h3>
 
-            <label>NF / Origem</label>
-            <input id="editDescricao">
-
-            <label>Valor</label>
+            <input id="editDescricao" placeholder="NF / Origem">
             <input id="editValor" type="number" step="0.01">
-
-            <label>Vencimento</label>
             <input id="editVencimento" placeholder="dd/mm/aaaa">
 
-            <div class="modal-acoes">
-                <button id="salvarEdicao" class="btn-verde">Salvar</button>
+            <div class="acoes">
                 <button id="cancelarEdicao" class="btn-vermelho">Cancelar</button>
+                <button id="salvarEdicao" class="btn-verde">Salvar</button>
             </div>
         </div>
     `;
     document.body.appendChild(modal);
-}
-
-let editandoId = null;
-
-function abrirModalEdicao(dados) {
-    editandoId = dados.id;
-
-    document.getElementById("editDescricao").value = dados.descricao;
-    document.getElementById("editValor").value = dados.valor;
-    document.getElementById("editVencimento").value = dados.vencimento;
-
-    const modal = document.getElementById("modalEditar");
-    modal.style.display = "flex";
 
     document.getElementById("cancelarEdicao").onclick = () => {
         modal.style.display = "none";
@@ -188,24 +198,34 @@ function abrirModalEdicao(dados) {
     document.getElementById("salvarEdicao").onclick = salvarEdicao;
 }
 
+function abrirModalEdicao(dados) {
+    editandoId = dados.id;
+
+    document.getElementById("editDescricao").value = dados.descricao;
+    document.getElementById("editValor").value = dados.valor;
+    document.getElementById("editVencimento").value = dados.vencimento;
+
+    document.getElementById("modalEditar").style.display = "flex";
+}
+
 async function salvarEdicao() {
     const descricao = document.getElementById("editDescricao").value;
     const valor = document.getElementById("editValor").value;
-    const vencimentoBR = document.getElementById("editVencimento").value;
-
-    const vencimentoISO = brParaISO(vencimentoBR);
+    const vencimento = brParaISO(
+        document.getElementById("editVencimento").value
+    );
 
     const { error } = await supabase
         .from("contas_receber")
         .update({
             descricao,
             valor: Number(valor),
-            data_vencimento: vencimentoISO
+            data_vencimento: vencimento
         })
         .eq("id", editandoId);
 
     if (error) {
-        alert("Erro ao salvar edição");
+        alert("Erro ao salvar");
         console.error(error);
         return;
     }
@@ -219,33 +239,9 @@ async function salvarEdicao() {
 // ======================================================
 function gerarPDF() {
     document.body.classList.add("modo-pdf");
-
-    html2pdf()
-        .from(document.getElementById("areaPdf"))
-        .set({
-            margin: 10,
-            filename: "contas_a_receber.pdf",
-            image: { type: "jpeg", quality: 0.98 },
-            html2canvas: { scale: 1 },
-            jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
-        })
-        .save()
+    html2pdf().from(document.getElementById("areaPdf")).save()
         .then(() => document.body.classList.remove("modo-pdf"));
 }
 
 // ======================================================
-// DATA / HORA PDF
-// ======================================================
-function atualizarDataHoraPDF() {
-    const el = document.getElementById("dataHoraPdf");
-    if (!el) return;
-
-    const agora = new Date();
-    el.innerText =
-        agora.toLocaleDateString("pt-BR") +
-        " " +
-        agora.toLocaleTimeString("pt-BR", {
-            hour: "2-digit",
-            minute: "2-digit"
-        });
-}
+function atualizarDataHoraPDF() {}
