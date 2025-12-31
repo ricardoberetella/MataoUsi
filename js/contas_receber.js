@@ -1,5 +1,5 @@
 // ====================================================
-// CONTAS_RECEBER.JS — COM BOTÃO EDITAR
+// CONTAS_RECEBER.JS — FINAL ESTÁVEL
 // ====================================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -29,7 +29,8 @@ function formatarValor(v) {
 
 // ====================================================
 async function carregarLancamentos() {
-  const tbody = document.getElementById("listaLancamentos");
+  // 🔴 ID CORRETO DO TBODY (HTML ATUAL)
+  const tbody = document.querySelector("table tbody");
   if (!tbody) return;
 
   tbody.innerHTML = `<tr><td colspan="5">Carregando...</td></tr>`;
@@ -49,12 +50,16 @@ async function carregarLancamentos() {
 
   tbody.innerHTML = "";
 
+  if (registros.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5">Nenhum lançamento</td></tr>`;
+    return;
+  }
+
   registros.forEach(r => {
-    const status = r.status;
     const classe =
-      status === "VENCIDO"
+      r.status === "VENCIDO"
         ? "linha-vencido"
-        : status === "PAGO"
+        : r.status === "PAGO"
         ? "linha-pago"
         : "";
 
@@ -63,7 +68,7 @@ async function carregarLancamentos() {
         <td>${r.origem || "-"}</td>
         <td>${formatarValor(r.valor)}</td>
         <td>${formatarData(r.data_vencimento)}</td>
-        <td>${status}</td>
+        <td>${r.status}</td>
         <td class="acoes">
           <button class="btn-editar" onclick="editarLancamento(${r.id})">
             Editar
@@ -78,21 +83,20 @@ async function carregarLancamentos() {
 }
 
 // ====================================================
-// EDITAR
-// ====================================================
 window.editarLancamento = function (id) {
   window.location.href = `contas_receber_editar.html?id=${id}`;
 };
 
-// ====================================================
-// PAGAR (inalterado)
 // ====================================================
 window.pagarLancamento = async function (id) {
   if (!confirm("Confirmar pagamento?")) return;
 
   const { error } = await supabase
     .from("contas_receber")
-    .update({ status: "PAGO", data_pagamento: new Date() })
+    .update({
+      status: "PAGO",
+      data_pagamento: new Date(),
+    })
     .eq("id", id);
 
   if (error) {
