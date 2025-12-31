@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filtros de Pedidos</title>
+
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/pedidos.css">
+
+    <style>
+        .filtro-container {
+            padding: 30px;
+            text-align: center;
+        }
+
+        .filtro-box {
+            background: #020617;
+            border: 1px solid rgba(56,189,248,0.25);
+            border-radius: 14px;
+            padding: 30px;
+            max-width: 600px;
+            margin: auto;
+        }
+
+        h2 {
+            color: #38bdf8;
+            margin-bottom: 25px;
+            font-size: 24px;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn-menu {
+            background: #0ea5e9;
+            color: #000;
+            padding: 12px 26px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: 0.2s;
+            min-width: 220px;
+        }
+
+        .btn-menu:hover {
+            background: #38bdf8;
+        }
+
+        .btn-voltar-dark {
+            background: #111827;
+            color: #fff;
+            padding: 12px 26px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            border: 1px solid rgba(148,163,184,0.8);
+            cursor: pointer;
+            transition: 0.2s;
+            min-width: 260px;
+        }
+
+        .btn-voltar-dark:hover {
+            background: #1f2937;
+        }
+        #areaPdf table th:nth-child(3),
+#areaPdf table td:nth-child(3) {
+    text-align: center;
+}
+
+    </style>
+</head>
+
+<body>
+
+<header class="topbar">
+    <h1>Escolha o Tipo de Filtro</h1>
+
+    <a href="pedidos_lista.html">
+        <button class="btn-voltar">Voltar</button>
+    </a>
+</header>
+
+<div class="container filtro-container">
+
+    <div class="filtro-box">
+
+        <h2>Escolha o Tipo de Filtro</h2>
+
+        <div class="btn-group">
+
+            <a href="pedidos_filtro_produto.html">
+                <button class="btn-menu">Filtrar por Produto</button>
+            </a>
+
+            <a href="pedidos_filtro_cliente.html">
+                <button class="btn-menu">Filtrar por Cliente</button>
+            </a>
+
+            <a href="pedidos_lista.html">
+                <button class="btn-voltar-dark">Voltar ao Menu de Pedidos</button>
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- 🔐 BLINDAGEM DE LOGIN -->
+<script type="module">
+    import { verificarLogin } from "./js/auth.js";
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        const user = await verificarLogin();
+        if (!user) return;
+    });
+</script>
+
+</body>
+</html>

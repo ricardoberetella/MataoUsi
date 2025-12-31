@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detalhes do Produto</title>
+
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/produtos.css">
+</head>
+
+<body>
+
+  <header class="topbar">
+    <div class="topbar-left">
+      <a href="produtos.html" class="btn-voltar">⬅ Voltar aos Produtos</a>
+      <span class="topbar-module">Detalhes do Produto</span>
+    </div>
+  </header>
+
+  <main class="page-container">
+
+    <section class="card">
+      <div class="card-header">
+        <h1 id="tituloProduto">Produto</h1>
+      </div>
+
+      <div id="detalhesProduto">
+        <!-- Detalhes preenchidos via JS -->
+      </div>
+
+      <div class="botoes-form" style="margin-top:20px;">
+        <button id="btnEditar" class="btn-primary">✏ Editar</button>
+        <button id="btnExcluir" class="btn-outline">🗑 Excluir</button>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script type="module" src="js/detalhes_produto.js"></script>
+</body>
+</html>

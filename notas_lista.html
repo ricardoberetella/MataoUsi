@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notas Fiscais</title>
+
+<link rel="stylesheet" href="css/global.css">
+<link rel="stylesheet" href="css/pedidos_lista.css">
+
+<style>
+
+/* ===================================================
+   ESCONDER TEXTO DE IMPRESSÃO NO MODO TELA (SOLUÇÃO 1)
+   =================================================== */
+.print-header,
+.print-info,
+.print-title {
+  display: none;
+}
+
+/* ===================================================
+   IMPRESSÃO
+   =================================================== */
+@media print {
+
+  body { background:#fff !important; color:#000 !important; }
+
+  header, .acoes, button, th:last-child, td:last-child {
+    display:none !important;
+  }
+
+  .container, .card {
+    border:none !important;
+    box-shadow:none !important;
+    margin:0 !important;
+    padding:0 !important;
+  }
+
+  /* Cabeçalho do print */
+  .print-header {
+    display:flex !important;
+    align-items:flex-start !important;
+    gap:15px !important;
+    margin:0 0 10px 0 !important;
+  }
+
+  .print-logo-box {
+    width:190px !important;
+    height:55px !important;
+    background-repeat:no-repeat !important;
+    background-size:contain !important;
+    background-position:left top !important;
+
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='380' height='110'%3E%3Crect width='100%25' height='100%25' fill='white'/%3E%3Ctext x='0' y='70' font-family='Arial' font-size='44' font-weight='700' fill='black'%3EMAT%C3%83O%20USINAGEM%3C/text%3E%3C/svg%3E") !important;
+  }
+
+  .print-info {
+    display:block !important;
+    font-size:12px !important;
+    color:#000 !important;
+  }
+
+  .print-title {
+    display:block !important;
+    text-align:center !important;
+    font-weight:bold !important;
+    margin:10px 0 !important;
+    color:#000 !important;
+  }
+
+  table {
+    width:100% !important;
+    border-collapse:collapse !important;
+    font-size:12px !important;
+  }
+
+  th, td {
+    border:1px solid #000 !important;
+    color:#000 !important;
+    text-align:center !important;
+    padding:4px !important;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header class="topbar">
+  <a href="dashboard.html">
+    <button class="btn-voltar">⬅ Voltar ao Menu</button>
+  </a>
+  <h1 class="topbar-title">Notas Fiscais</h1>
+</header>
+
+<!-- CABEÇALHO DE IMPRESSÃO -->
+<div class="print-header">
+  <div class="print-logo-box" aria-label="Matão Usinagem"></div>
+  <div class="print-info">
+    <strong>Relatório:</strong> Notas Fiscais Emitidas<br>
+    <strong>Impresso em:</strong> <span id="dh"></span>
+  </div>
+</div>
+
+<div class="container">
+  <section class="card">
+
+    <h2 class="print-title">Notas Fiscais Emitidas</h2>
+
+    <div class="acoes" id="areaBotoes">
+      <a href="notas_nova.html">
+        <!-- 🔒 BOTÃO CONTROLADO POR ROLE -->
+        <button class="btn-primario" id="btnNovaNF">Lançar Nova NF</button>
+      </a>
+    </div>
+
+    <table class="tabela">
+      <thead>
+        <tr>
+          <th>Número</th>
+          <th>Cliente</th>
+          <th>Data</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="listaNotas">
+        <tr>
+          <td colspan="4" style="text-align:center;color:#94a3b8;">
+            Carregando notas fiscais...
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+  </section>
+</div>
+
+<script>
+  const agora = new Date();
+  document.getElementById("dh").innerText =
+    agora.toLocaleDateString("pt-BR") + " " +
+    agora.toLocaleTimeString("pt-BR", { hour: '2-digit', minute: '2-digit' });
+</script>
+
+<script type="module" src="./js/notas_lista.js"></script>
+</body>
+</html>

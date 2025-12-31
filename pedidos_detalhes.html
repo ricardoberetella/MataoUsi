@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Detalhes do Pedido</title>
+
+  <!-- ESTILOS PADRÃO DO SISTEMA -->
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/pedidos_lista.css" />
+</head>
+
+<body>
+
+  <!-- TOPO PADRÃO -->
+  <header class="topbar">
+    <a href="pedidos_lista.html">
+      <button class="btn-voltar">⬅ Voltar ao Menu</button>
+    </a>
+    <h1 class="topbar-title">Detalhes do Pedido</h1>
+  </header>
+
+  <div class="container">
+    <section class="card">
+
+      <h2 class="card-title">Informações do Pedido</h2>
+
+      <!-- DADOS DO PEDIDO -->
+      <div id="dadosPedido" style="margin-bottom: 25px;">
+        <!-- Preenchido via JS -->
+      </div>
+
+      <h2 class="card-title">Itens do Pedido</h2>
+
+      <!-- TABELA DE ITENS -->
+      <table class="tabela-futurista">
+        <thead>
+          <tr>
+            <th>Produto</th>
+            <th>Qtd</th>
+            <th>Valor Un.</th>
+            <th>Data Entrega</th>
+            <th>Total</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyItens"></tbody>
+      </table>
+
+    </section>
+  </div>
+
+  <!-- JS -->
+  <script type="module" src="js/pedidos_detalhes.js"></script>
+
+</body>
+</html>

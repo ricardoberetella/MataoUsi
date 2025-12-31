@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movimentações - MataoUsi</title>
+
+  <link rel="stylesheet" href="css/movimentacoes.css">
+
+  <!-- Supabase -->
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+    import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
+
+    window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  </script>
+</head>
+
+<body>
+
+  <h2>Movimentações de Estoque</h2>
+
+  <!-- BOTÃO FUTURISTA VOLTAR AO MENU -->
+  <div style="text-align:right; margin: 10px 30px;">
+    <button onclick="location.href='dashboard.html'"
+      style="
+        background: #38bdf8;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 15px;
+        color: #000;
+        box-shadow: 0 0 12px rgba(56,189,248,0.8);
+        transition: 0.3s;
+      "
+      onmouseover="this.style.boxShadow='0 0 20px rgba(56,189,248,1)'"
+      onmouseout="this.style.boxShadow='0 0 12px rgba(56,189,248,0.8)'"
+    >
+      ⬅ Voltar ao Menu
+    </button>
+  </div>
+
+  <div class="container">
+
+    <!-- ABAS -->
+    <div class="tabs">
+      <button class="tab active" data-tab="cadastro">Registrar Movimentação</button>
+      <button class="tab" data-tab="lista">Histórico de Movimentações</button>
+    </div>
+
+    <!-- ========================= CADASTRO ========================= -->
+    <div id="cadastro" class="tab-content active">
+
+      <form id="formMov">
+        <input type="hidden" id="movId">
+
+        <!-- Selecionar Produto -->
+        <label>Produto</label>
+        <select id="produto_id" required></select>
+
+        <!-- Tipo -->
+        <label>Tipo da Movimentação</label>
+        <select id="tipo">
+          <option value="Entrada">Entrada</option>
+          <option value="Saída">Saída</option>
+          <option value="Ajuste">Ajuste</option>
+        </select>
+
+        <label>Quantidade</label>
+        <input type="number" id="quantidade" required>
+
+        <label>Motivo</label>
+        <input type="text" id="motivo" placeholder="Ex: Ajuste de contagem">
+
+        <label>Referência (opcional)</label>
+        <input type="text" id="referencia_id" placeholder="Pedido, OS, etc.">
+
+        <div class="btns">
+          <button type="submit">Salvar</button>
+          <button type="button" id="btnCancelar">Cancelar</button>
+        </div>
+      </form>
+
+    </div>
+
+    <!-- ========================= LISTA ========================= -->
+    <div id="lista" class="tab-content">
+
+      <input type="text" id="busca" placeholder="Buscar por produto, tipo, motivo ou referência">
+
+      <table>
+        <thead>
+          <tr>
+            <th>Produto</th>
+            <th>Tipo</th>
+            <th>Qtd</th>
+            <th>Motivo</th>
+            <th>Referência</th>
+            <th>Data</th>
+          </tr>
+        </thead>
+
+        <tbody id="tabelaMov"></tbody>
+      </table>
+
+    </div>
+
+  </div>
+
+  <script type="module" src="js/movimentacoes.js"></script>
+
+</body>
+</html>

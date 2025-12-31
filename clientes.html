@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clientes</title>
+
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/clientes.css">
+</head>
+<body>
+
+<header class="topbar">
+    <h1 class="topbar-title">Clientes</h1>
+
+    <a href="dashboard.html">
+        <button class="btn-voltar-menu">← Voltar ao Menu</button>
+    </a>
+</header>
+
+<div class="container">
+
+    <!-- BOTÃO NOVO CLIENTE (SOME PARA VIEWER) -->
+    <div class="acoes">
+        <button id="btnNovo" class="btn-primario">Cadastrar Novo Cliente</button>
+    </div>
+
+    <section class="card">
+        <h2 class="card-title">Clientes Cadastrados</h2>
+
+        <table class="tabela-futurista">
+            <thead>
+                <tr id="theadRow">
+                    <th>Razão Social</th>
+                    <th>CNPJ</th>
+                    <th class="th-acoes" style="width:160px;">Ações</th>
+                </tr>
+            </thead>
+
+            <tbody id="listaClientes"></tbody>
+        </table>
+    </section>
+
+</div>
+
+<!-- JS PRINCIPAL -->
+<script type="module">
+    import { supabase, verificarLogin } from "./js/auth.js";
+
+    let role = "viewer";
+
+    /* ===============================
+              VERIFICAR LOGIN
+    =============================== */
+    async function carregarUsuario() {
+        const user = await verificarLogin();
+        if (!user) return;
+
+        role = user.user_metadata?.role || "viewer";
+
+        // Se for VIEWER → ocultar botão "Novo Cliente" e coluna AÇÕES
+        if (role !== "admin") {
+            document.getElementById("btnNovo").style.display = "none";
+
+            // Remover coluna AÇÕES
+            document.querySelector(".th-acoes").style.display = "none";
+        }
+    }
+
+    /* ===============================
+              CARREGAR CLIENTES
+    =============================== */
+    async function carregarClientes() {
+        const tbody = document.getElementById("listaClientes");
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="3" style="text-align:center;color:#94a3b8;">
+                    Carregando clientes...
+                </td>
+            </tr>
+        `;
+
+        const { data, error } = await supabase
+            .from("clientes")
+            .select("*")
+            .order("razao_social");
+
+        if (error) {
+            console.error("Erro ao carregar clientes:", error);
+            tbody.innerHTML = `
+                <tr><td colspan="3" style="color:red;text-align:center;">Erro ao carregar.</td></tr>
+            `;
+            return;
+        }
+
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `
+                <tr><td colspan="3" style="text-align:center;color:#94a3b8;">
+                    Nenhum cliente cadastrado.
+                </td></tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = "";
+
+        data.forEach((c) => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${c.razao_social}</td>
+                    <td>${c.cpf_cnpj}</td>
+                    <td class="col-acoes">
+                        ${
+                            role === "admin"
+                                ? `
+                                    <button onclick="editarCliente(${c.id})" class="btn-azul">Editar</button>
+                                    <button onclick="excluirCliente(${c.id})" class="btn-vermelho">Excluir</button>
+                                  `
+                                : "-"
+                        }
+                    </td>
+                </tr>
+            `;
+        });
+
+        // PARA VIEWER → esconde a coluna de ações das linhas
+        if (role !== "admin") {
+            document.querySelectorAll(".col-acoes").forEach(td => {
+                td.style.display = "none";
+            });
+        }
+    }
+
+    /* ===============================
+           FUNÇÕES DE AÇÃO
+    =============================== */
+    window.editarCliente = (id) => {
+        window.location.href = `clientes_editar.html?id=${id}`;
+    };
+
+    window.excluirCliente = async (id) => {
+        if (!confirm("Excluir cliente?")) return;
+
+        const { error } = await supabase
+            .from("clientes")
+            .delete()
+            .eq("id", id);
+
+        if (error) {
+            alert("Erro ao excluir: " + error.message);
+            return;
+        }
+
+        carregarClientes();
+    };
+
+    /* ===============================
+             INICIAR A PÁGINA
+    =============================== */
+    document.addEventListener("DOMContentLoaded", async () => {
+        await carregarUsuario();
+        await carregarClientes();
+    });
+
+    // Botão novo cliente
+    document.getElementById("btnNovo").addEventListener("click", () => {
+        window.location.href = "clientes_novo.html";
+    });
+</script>
+
+<script defer src="js/mascaras.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Contas a Receber</title>
+
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/pedidos_lista.css">
+
+    <!-- LIB PDF (igual outras telas) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+/* =========================
+   PDF – RELATÓRIO FINAL
+========================= */
+
+/* esconder elementos fora do PDF */
+body.modo-pdf header,
+body.modo-pdf .card:first-child,
+body.modo-pdf button {
+    display: none !important;
+}
+
+/* fundo e fonte */
+body.modo-pdf {
+    background: #fff !important;
+    color: #000 !important;
+    font-family: Arial, sans-serif;
+}
+
+/* container ocupa página */
+body.modo-pdf .container {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* =========================
+   CABEÇALHO DO RELATÓRIO
+========================= */
+.cabecalho-pdf {
+    display: none;
+}
+
+body.modo-pdf .cabecalho-pdf {
+    display: block;
+    margin-bottom: 10px;
+}
+
+.cabecalho-linha {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* LOGO MAIOR */
+.logo-pdf img {
+    height: 70px;
+}
+
+/* data/hora abaixo do logo */
+.data-pdf {
+    font-size: 10px;
+    text-align: center;
+    margin-top: 4px;
+}
+
+.titulo-pdf h2 {
+    margin: 0;
+    font-size: 15px;
+}
+
+.titulo-pdf p {
+    margin: 0;
+    font-size: 11px;
+}
+
+/* =========================
+   TABELA – QUEBRA CORRETA
+========================= */
+body.modo-pdf table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10px;
+}
+
+/* 🔑 FAZ O CABEÇALHO REPETIR */
+body.modo-pdf thead {
+    display: table-header-group;
+}
+
+/* evita quebrar linhas */
+body.modo-pdf tr {
+    page-break-inside: avoid;
+}
+
+/* cabeçalho da tabela */
+body.modo-pdf thead th {
+    background: #e5e7eb;
+    color: #000;
+    border: 1px solid #000;
+    padding: 6px;
+    text-align: center;
+}
+
+/* células */
+body.modo-pdf td {
+    border: 1px solid #000;
+    padding: 5px;
+    text-align: center;
+}
+
+/* remove qualquer destaque antigo */
+body.modo-pdf tr.vencido td {
+    background: #fff !important;
+    color: #000 !important;
+    font-weight: normal;
+}
+
+/* =========================
+   REMOVER FILTROS NO PDF
+========================= */
+body.modo-pdf .card:first-of-type {
+    display: none !important;
+}
+
+/* =========================
+   REMOVER COLUNA AÇÕES NO PDF
+========================= */
+body.modo-pdf th:last-child,
+body.modo-pdf td:last-child {
+    display: none !important;
+}
+
+    /* =========================
+   PDF – AJUSTES FINAIS
+========================= */
+
+/* 🔒 garante fechamento das bordas */
+body.modo-pdf table,
+body.modo-pdf th,
+body.modo-pdf td {
+    box-sizing: border-box;
+}
+
+/* força largura total real */
+body.modo-pdf table {
+    width: 100% !important;
+    margin-left: 0 !important;
+}
+
+/* evita “respiro” lateral invisível */
+body.modo-pdf .card {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+/* =========================
+   LOGO MAIOR
+========================= */
+body.modo-pdf .logo-pdf img {
+    height: 90px; /* era ~70 */
+}
+
+/* =========================
+   CABEÇALHO MAIS CENTRAL
+========================= */
+body.modo-pdf .cabecalho-linha {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    column-gap: 20px;
+}
+
+/* bloco do título centralizado visualmente */
+body.modo-pdf .titulo-pdf {
+    text-align: center;
+    margin-right: 90px; /* compensa o peso visual do logo */
+}
+
+body.modo-pdf .titulo-pdf h2 {
+    font-size: 16px;
+}
+
+body.modo-pdf .titulo-pdf p {
+    font-size: 11px;
+}
+
+    /* =========================
+   PDF – AJUSTE DE ESCALA
+========================= */
+
+/* cria margem real do PDF */
+body.modo-pdf .container {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+}
+
+/* reduz levemente a tabela inteira */
+body.modo-pdf table {
+    transform: scale(0.96);
+    transform-origin: top left;
+}
+
+/* garante que a borda não “vaze” */
+body.modo-pdf table,
+body.modo-pdf th,
+body.modo-pdf td {
+    box-sizing: border-box;
+}
+
+    /* =========================
+   PDF – QUEBRA FINAL CORRETA
+========================= */
+
+/* nunca quebrar linha da tabela */
+body.modo-pdf tr {
+    page-break-inside: avoid !important;
+}
+
+/* garante que o card da tabela não seja cortado */
+body.modo-pdf .card {
+    page-break-inside: avoid;
+}
+
+/* evita qualquer resíduo de texto fora da tabela */
+body.modo-pdf .card:last-of-type {
+    padding-bottom: 20px;
+}
+
+    /* =========================
+   PDF – TOTAL JUNTO DA TABELA
+========================= */
+
+/* mantém tabela + total como um bloco */
+body.modo-pdf .card:last-of-type {
+    page-break-inside: avoid;
+}
+
+/* garante espaçamento correto do total */
+body.modo-pdf .card:last-of-type > div {
+    margin-top: 10px;
+}
+
+    /* =========================
+   PDF – VENCIDOS EM NEGRITO
+========================= */
+
+body.modo-pdf tr.vencido td {
+    font-weight: bold !important;
+}
+
+</style>   
+
+</head>
+
+<body>
+
+<header class="topbar">
+    <a href="dashboard.html">
+        <button class="btn-voltar">⬅ Voltar</button>
+    </a>
+    <h1 class="topbar-title">Contas a Receber</h1>
+</header>
+
+<div class="container" id="areaPdf">
+    
+    <!-- CABEÇALHO DO PDF -->
+    <div class="cabecalho-pdf">
+        <div class="cabecalho-linha">
+            <div class="logo-pdf">
+                <img src="img/logo-mataousi2.png" alt="Matão Usinagem">
+                <div class="data-pdf">
+                    <span id="dataHoraPdf"></span>
+                </div>
+            </div>
+
+            <div class="titulo-pdf">
+                <h2>MATÃO USINAGEM</h2>
+                <p>Relatório de Contas a Receber</p>
+            </div>
+        </div>
+        <hr>
+    </div>
+
+    <!-- FILTROS -->
+    <section class="card">
+        <h2 class="card-title">Filtros</h2>
+
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Status</label>
+                <select id="filtroStatus">
+                    <option value="">Todos</option>
+                    <option value="ABERTO">Em aberto</option>
+                    <option value="VENCIDO">Vencido</option>
+                    <option value="PAGO">Pago</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Vencimento até</label>
+                <input type="date" id="filtroVencimento">
+            </div>
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap">
+            <button id="btnFiltrar" class="btn-azul">Filtrar</button>
+            <button id="btnNovoManual" class="btn-verde">+ Lançamento Manual</button>
+            <button id="btnGerarPDF" class="btn-azul">Gerar PDF</button>
+        </div>
+    </section>
+
+    <!-- TABELA -->
+    <section class="card">
+        <h2 class="card-title">Lançamentos</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>NF / Origem</th>
+                    <th>Valor</th>
+                    <th>Vencimento</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="listaReceber"></tbody>
+        </table>
+
+        <div style="margin-top:10px; font-weight:bold">
+            Total filtrado: <span id="totalReceber">R$ 0,00</span>
+        </div>
+    </section>
+
+</div>
+
+<!-- MODAL LANÇAMENTO MANUAL -->
+<div id="modalManual" class="modal">
+    <div class="modal-conteudo">
+        <h3>Novo Lançamento Manual</h3>
+
+        <label>Origem (NF antiga, código, etc)</label>
+        <input type="text" id="origemManual">
+
+        <label>Valor</label>
+        <input type="number" id="valorManual" step="0.01">
+
+        <label>Vencimento</label>
+        <input type="date" id="vencimentoManual">
+
+        <div class="modal-acoes">
+            <button id="btnSalvarManual" class="btn-verde">Salvar</button>
+            <button id="btnCancelarManual" class="btn-vermelho">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<script type="module" src="js/contas_receber.js"></script>
+</body>
+</html>

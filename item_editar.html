@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editar Item</title>
+
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/pedidos.css">
+
+  <style>
+    .autocomplete-list {
+      background: #0f172a;
+      border: 1px solid #38bdf8;
+      border-radius: 10px;
+      max-height: 240px;
+      overflow-y: auto;
+      display: none;
+      position: absolute;
+      width: calc(100% - 2px);
+      z-index: 1000;
+      box-shadow: 0 0 20px rgba(0,0,0,.55);
+    }
+
+    .autocomplete-item {
+      padding: 10px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(56,189,248,.12);
+    }
+
+    .autocomplete-item:hover {
+      background: rgba(56,189,248,.10);
+    }
+  </style>
+</head>
+
+<body>
+
+  <header class="topbar">
+    <h1 class="topbar-title">Editar Item do Pedido</h1>
+
+    <a id="voltarLink" href="#">
+      <button class="btn-voltar">Voltar</button>
+    </a>
+  </header>
+
+  <div class="container">
+    <section class="card">
+      <h2 class="card-title">Dados do Item</h2>
+
+      <!-- PRODUTO -->
+      <label>Produto</label>
+      <div style="position: relative;">
+        <input type="text" id="busca_produto" placeholder="Buscar código ou descrição" autocomplete="off">
+        <div id="listaProdutos" class="autocomplete-list"></div>
+      </div>
+
+      <!-- QUANTIDADE -->
+      <label>Quantidade</label>
+      <input type="number" id="quantidade" min="1" step="1">
+
+      <!-- VALOR UNITÁRIO -->
+      <label>Valor Unitário (R$)</label>
+      <input type="text" id="valor_unitario" inputmode="decimal" placeholder="Ex: 3,80">
+
+      <!-- DATA DE ENTREGA (DD/MM/AAAA) -->
+      <label>Data de Entrega (DD/MM/AAAA)</label>
+      <input type="text" id="data_entrega" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10">
+
+      <button id="btnSalvarItem" class="btn-primario">Salvar Alterações</button>
+    </section>
+  </div>
+
+  <script type="module" src="js/item_editar.js"></script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - Matão Usinagem</title>
+
+  <link rel="stylesheet" href="css/dashboard.css" />
+</head>
+
+<body>
+
+  <div class="layout">
+
+    <!-- MENU LATERAL -->
+    <aside class="sidebar">
+      <div class="logo-sistema">MATÃO USINAGEM</div>
+
+      <nav class="menu">
+        <div class="menu-titulo">Módulos</div>
+
+        <a href="clientes.html" class="menu-item">👤 Clientes</a>
+        <a href="pedidos_lista.html" class="menu-item">📑 Pedidos</a>
+        <a href="pedidos_abertos.html" class="menu-item">📌 Pedidos em Aberto</a>
+        <a href="produtos_lista.html" class="menu-item">📦 Produtos</a>
+        <a href="notas_lista.html" class="menu-item">🧾 Notas Fiscais</a>
+
+        <!-- ✅ INCLUSÃO: CONTAS A RECEBER -->
+        <a href="contas_receber.html" class="menu-item">💰 Contas a Receber</a>
+      </nav>
+
+      <button id="btnLogout" class="menu-item botao-sair">
+        🚪 Sair
+      </button>
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="main">
+      <section class="secao-painel">
+
+        <!-- LOGO CENTRAL NO TOPO DO PAINEL -->
+        <div class="logo-painel">
+          <img src="img/logo-mataousi.png" alt="Matão Usinagem">
+        </div>
+
+        <div class="cards-grid">
+
+          <a class="card" href="clientes.html">
+            <div class="card-titulo">Clientes</div>
+            <div class="card-legenda">Gerenciar cadastro</div>
+          </a>
+
+          <a class="card" href="pedidos_lista.html">
+            <div class="card-titulo">Pedidos</div>
+            <div class="card-legenda">Lista de pedidos</div>
+          </a>
+
+          <a class="card" href="pedidos_abertos.html">
+            <div class="card-titulo">Pedidos em Aberto</div>
+            <div class="card-legenda">Saldos pendentes</div>
+          </a>
+
+          <a class="card" href="produtos_lista.html">
+            <div class="card-titulo">Produtos</div>
+            <div class="card-legenda">Cadastro de peças</div>
+          </a>
+
+          <a class="card" href="notas_lista.html">
+            <div class="card-titulo">Notas Fiscais</div>
+            <div class="card-legenda">Lançamento e baixa automática</div>
+          </a>
+
+          <!-- ✅ INCLUSÃO: CARD CONTAS A RECEBER -->
+          <a class="card" href="contas_receber.html">
+            <div class="card-titulo">Contas a Receber</div>
+            <div class="card-legenda">Boletos e recebimentos</div>
+          </a>
+
+        </div>
+      </section>
+    </main>
+
+  </div>
+
+  <!-- AUTENTICAÇÃO CORRETA (SEM LOOP) -->
+  <script type="module">
+    import { verificarLogin, supabase } from "./js/auth.js";
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const user = await verificarLogin();
+      if (!user) return;
+
+      document
+        .getElementById("btnLogout")
+        .addEventListener("click", async () => {
+          await supabase.auth.signOut();
+          window.location.href = "index.html";
+        });
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filtro de Pedidos por Cliente</title>
+
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/pedidos_filtro_cliente.css">
+
+    <!-- GERAR PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        .pdf-only { display: none; }
+
+        body.modo-pdf {
+            background: #fff !important;
+            color: #000 !important;
+            font-family: Arial, sans-serif;
+        }
+
+        body.modo-pdf header,
+        body.modo-pdf h2,
+        body.modo-pdf select,
+        body.modo-pdf .botoes-acoes {
+            display: none !important;
+        }
+
+        body.modo-pdf .container,
+        body.modo-pdf .card {
+            background: #fff !important;
+            box-shadow: none !important;
+            border: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        body.modo-pdf .pdf-only {
+            display: block !important;
+        }
+
+        /* ===== CABEÇALHO (APROVADO) ===== */
+        .pdf-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            line-height: 1.25;
+            margin-bottom: 10px;
+        }
+
+        .pdf-header img {
+            height: 60px;
+            flex-shrink: 0;
+        }
+
+        .pdf-title {
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px 0 12px 0;
+        }
+
+        /* ===== TABELA — IGUAL AO PRODUTO (FOLGA NAS LATERAIS) ===== */
+        body.modo-pdf table {
+            width: 98% !important;              /* ✅ cria folga e evita cortar a borda direita */
+            margin: 0 auto !important;          /* ✅ centraliza igual ao print do produto */
+            border-collapse: collapse !important;
+            font-size: 12px !important;
+        }
+
+        body.modo-pdf th,
+        body.modo-pdf td {
+            box-sizing: border-box;
+            border: 1px solid #000 !important;
+            padding: 4px 6px !important;
+            background: #fff !important;
+            color: #000 !important;
+            white-space: nowrap;
+        }
+
+        body.modo-pdf th {
+            font-weight: bold !important;
+        }
+
+        body.modo-pdf tr {
+            page-break-inside: avoid;
+        }
+
+        /* ✅ alinhamento da quantidade (só isso) */
+        body.modo-pdf th:nth-child(4),
+        body.modo-pdf td:nth-child(4) {
+            text-align: right;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<header class="topbar">
+    <h1>Filtro de Pedidos por Cliente</h1>
+    <a href="dashboard.html">
+        <button class="btn-voltar">Voltar</button>
+    </a>
+</header>
+
+<div class="container" id="areaPDF">
+
+    <!-- CABEÇALHO PDF -->
+    <div class="pdf-only">
+        <div class="pdf-header">
+            <img src="img/logo-mataousi2.png" alt="Matão Usinagem">
+            <div>
+                <strong>MATÃO USINAGEM</strong><br>
+                Relatório: Filtro de Pedidos por Cliente<br>
+                Gerado em: <span id="dataGerada"></span><br>
+                Cliente: <span id="clienteNome"></span>
+            </div>
+        </div>
+
+        <div class="pdf-title">
+            Pedidos por Cliente
+        </div>
+    </div>
+
+    <!-- CONTEÚDO NORMAL -->
+    <section class="card">
+        <h2>Selecione o Cliente</h2>
+
+        <select id="clienteSelect" class="campo-select"></select>
+
+        <div class="botoes-acoes">
+            <button id="btnBuscar" class="btn-filtrar">Filtrar Pedidos</button>
+            <button id="btnGerarPDF" class="btn-primario">Gerar PDF</button>
+        </div>
+
+        <table id="tabelaResultados">
+            <thead>
+                <tr>
+                    <th>Pedido</th>
+                    <th>Entrega</th>
+                    <th>Código</th>
+                    <th>Quantidade</th>
+                </tr>
+            </thead>
+            <tbody id="tbodyResultados"></tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3"><strong>TOTAL</strong></td>
+                    <td id="totalQuantidade">0</td>
+                </tr>
+            </tfoot>
+        </table>
+    </section>
+</div>
+
+<script type="module" src="js/pedidos_filtro_cliente.js"></script>
+
+<script>
+    const agora = new Date();
+    document.getElementById("dataGerada").innerText =
+        agora.toLocaleDateString("pt-BR") + " " +
+        agora.toLocaleTimeString("pt-BR", { hour: '2-digit', minute: '2-digit' });
+
+    document.getElementById("btnGerarPDF").addEventListener("click", () => {
+        document.body.classList.add("modo-pdf");
+
+        html2pdf()
+            .set({
+                margin: 10,
+                filename: 'pedidos_por_cliente.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            })
+            .from(document.getElementById("areaPDF"))
+            .save()
+            .then(() => {
+                document.body.classList.remove("modo-pdf");
+            });
+    });
+</script>
+
+</body>
+</html>

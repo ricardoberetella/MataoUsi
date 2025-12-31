@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastrar Produto</title>
+
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/produtos.css">
+</head>
+<body>
+
+<header class="topbar">
+    <a href="produtos_lista.html">
+        <button class="btn-voltar-menu">← Voltar</button>
+    </a>
+
+    <h1 class="topbar-title">Cadastrar Produto</h1>
+</header>
+
+<div class="container">
+
+    <section class="card">
+        <h2 class="card-title">Dados do Produto</h2>
+
+        <label>Código</label>
+        <input type="text" id="codigo">
+
+        <label>Descrição</label>
+        <input type="text" id="descricao">
+
+        <label>Unidade</label>
+        <input type="text" id="unidade">
+
+        <label>Comprimento (mm)</label>
+        <input type="number" id="comprimento">
+
+        <label>Peso Líquido</label>
+        <input type="number" id="peso_liquido" step="0.001">
+
+        <label>Peso Bruto</label>
+        <input type="number" id="peso_bruto" step="0.001">
+
+        <label>Valor Unitário (R$)</label>
+        <input type="number" id="valor_unitario" step="0.01">
+
+        <label>Acabamento</label>
+        <input type="text" id="acabamento">
+
+        <br><br>
+
+        <button class="btn-primario" onclick="salvarProduto()">Salvar</button>
+    </section>
+
+</div>
+
+<script type="module" src="js/produtos_cadastrar.js"></script>
+</body>
+</html>

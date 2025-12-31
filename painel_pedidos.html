@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel de Pedidos</title>
+
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/pedidos.css" />
+</head>
+<body>
+  <!-- TOPBAR FUTURISTA -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1 class="topbar-title">Pedidos</h1>
+    </div>
+    <div class="topbar-right">
+      <a href="index.html">
+        <button class="btn-voltar">Voltar</button>
+      </a>
+    </div>
+  </header>
+
+  <div class="container">
+    <section class="card">
+      <div class="card-header">
+        <h2>Lista de Pedidos</h2>
+        <a href="pedidos_novo.html">
+          <button class="btn-primary">Novo Pedido</button>
+        </a>
+      </div>
+
+      <table class="tabela" id="tabelaPedidos">
+        <thead>
+          <tr>
+            <th>Nº Pedido</th>
+            <th>Cliente</th>
+            <th>Data Pedido</th>
+            <th>Data Entrega</th>
+            <th>Total (R$)</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- preenchido via JS -->
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <script type="module" src="js/pedidos.js"></script>
+</body>
+</html>

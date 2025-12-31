@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Pedido</title>
+
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/pedidos.css">
+
+    <style>
+        /* Wrapper para rolagem horizontal no celular */
+        .tabela-wrapper {
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        /* Centraliza descrição e ações (sem exagero) */
+        .tabela-lista td:nth-child(2),
+        .tabela-lista th:nth-child(2),
+        .tabela-lista td:nth-child(6),
+        .tabela-lista th:nth-child(6) {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="topbar">
+    <h1 class="topbar-title">Editar Pedido</h1>
+
+    <a href="pedidos_lista.html">
+        <button class="btn-voltar">Voltar</button>
+    </a>
+</header>
+
+<div class="container">
+
+    <!-- ========================================================= -->
+    <!--  DADOS DO PEDIDO                                         -->
+    <!-- ========================================================= -->
+    <section class="card">
+
+        <h2 class="card-title">Dados do Pedido</h2>
+
+        <label>Cliente</label>
+        <select id="cliente"></select>
+
+        <label>Data do Pedido</label>
+        <input type="date" id="data_pedido">
+
+        <button id="btnSalvarPedido" class="btn-primario">Salvar Pedido</button>
+
+        <button id="btnExcluirPedido" class="btn-danger" style="margin-top: 15px;">
+            Excluir Pedido
+        </button>
+
+    </section>
+
+    <!-- ========================================================= -->
+    <!--  LISTA DE ITENS                                           -->
+    <!-- ========================================================= -->
+    <section class="card">
+
+        <h2 class="card-title">Itens do Pedido</h2>
+
+        <div class="tabela-wrapper">
+            <table class="tabela-lista">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Descrição</th>
+                        <th>Qtd</th>
+                        <th>Valor Unit.</th>
+                        <th>Entrega</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+
+                <tbody id="tabelaItens"></tbody>
+            </table>
+        </div>
+
+        <button id="btnAdicionarItem" class="btn-primario" style="margin-top: 15px;">
+            Adicionar Item
+        </button>
+
+    </section>
+
+</div>
+
+<!-- ========================================================= -->
+<!--  SCRIPT PRINCIPAL                                         -->
+<!-- ========================================================= -->
+<script type="module">
+
+import { supabase, verificarLogin } from "./js/auth.js";
+
+let pedidoId = null;
+let role = "admin";
+
+/* ==============================================================
+      FORMATAR DATA BR
+============================================================== */
+function formatarDataBR(dataISO) {
+    if (!dataISO) return "";
+    const [ano, mes, dia] = dataISO.split("-");
+    return `${dia}/${mes}/${ano}`;
+}
+
+/* ==============================================================
+      INICIAR
+============================================================== */
+document.addEventListener("DOMContentLoaded", async () => {
+    const user = await verificarLogin();
+    if (!user) return;
+
+    role = user.user_metadata?.role ?? "admin";
+
+    const params = new URLSearchParams(window.location.search);
+    pedidoId = params.get("id");
+
+    if (!pedidoId) {
+        alert("Erro: pedido inválido.");
+        window.location.href = "pedidos_lista.html";
+        return;
+    }
+
+    await carregarClientes();
+    await carregarPedido();
+    await carregarItens();
+
+    aplicarPermissoes();
+});
+
+/* ==============================================================
+      PERMISSÕES
+============================================================== */
+function aplicarPermissoes() {
+    if (role === "viewer") {
+        document.getElementById("btnSalvarPedido").style.display = "none";
+        document.getElementById("btnExcluirPedido").style.display = "none";
+        document.getElementById("btnAdicionarItem").style.display = "none";
+    }
+}
+
+/* ==============================================================
+      CARREGAR CLIENTES
+============================================================== */
+async function carregarClientes() {
+    const { data, error } = await supabase
+        .from("clientes")
+        .select("id, razao_social")
+        .order("razao_social");
+
+    if (error) {
+        alert("Erro ao carregar clientes!");
+        return;
+    }
+
+    const sel = document.getElementById("cliente");
+    sel.innerHTML = "";
+
+    data.forEach(c => {
+        const op = document.createElement("option");
+        op.value = c.id;
+        op.textContent = c.razao_social;
+        sel.appendChild(op);
+    });
+}
+
+/* ==============================================================
+      CARREGAR PEDIDO
+============================================================== */
+async function carregarPedido() {
+    const { data, error } = await supabase
+        .from("pedidos")
+        .select("*")
+        .eq("id", pedidoId)
+        .single();
+
+    if (error) {
+        alert("Erro ao carregar pedido!");
+        return;
+    }
+
+    document.getElementById("cliente").value = data.cliente_id;
+    document.getElementById("data_pedido").value = data.data_pedido;
+}
+
+/* ==============================================================
+      CARREGAR ITENS
+============================================================== */
+async function carregarItens() {
+    const { data, error } = await supabase
+        .from("pedidos_itens")
+        .select("*, produtos(codigo, descricao)")
+        .eq("pedido_id", pedidoId)
+        .order("id");
+
+    if (error) {
+        alert("Erro ao carregar itens!");
+        return;
+    }
+
+    const tabela = document.getElementById("tabelaItens");
+    tabela.innerHTML = "";
+
+    data.forEach(item => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td>${item.produtos.codigo}</td>
+            <td>${item.produtos.descricao}</td>
+            <td>${item.quantidade}</td>
+            <td>R$ ${item.valor_unitario.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+            <td>${formatarDataBR(item.data_entrega)}</td>
+            <td>
+                <button class="btn-editar" onclick="editarItem(${item.id})">Editar</button>
+                <button class="btn-danger" onclick="excluirItem(${item.id})">Excluir</button>
+            </td>
+        `;
+
+        if (role === "viewer") {
+            tr.querySelector(".btn-editar").style.display = "none";
+            tr.querySelector(".btn-danger").style.display = "none";
+        }
+
+        tabela.appendChild(tr);
+    });
+}
+
+/* ==============================================================
+      EDITAR ITEM
+============================================================== */
+window.editarItem = (idItem) => {
+    window.location.href = `item_editar.html?idItem=${idItem}&idPedido=${pedidoId}`;
+};
+
+/* ==============================================================
+      EXCLUIR ITEM
+============================================================== */
+window.excluirItem = async (idItem) => {
+    if (!confirm("Excluir este item?")) return;
+
+    const { error } = await supabase
+        .from("pedidos_itens")
+        .delete()
+        .eq("id", idItem);
+
+    if (error) {
+        alert("Erro ao excluir!");
+        return;
+    }
+
+    carregarItens();
+};
+
+/* ==============================================================
+      ADICIONAR ITEM
+============================================================== */
+document.getElementById("btnAdicionarItem").addEventListener("click", () => {
+    window.location.href = `item_adicionar.html?idPedido=${pedidoId}`;
+});
+
+/* ==============================================================
+      SALVAR PEDIDO
+============================================================== */
+document.getElementById("btnSalvarPedido").addEventListener("click", async () => {
+    const cliente = document.getElementById("cliente").value;
+    const dataPedido = document.getElementById("data_pedido").value;
+
+    const { error } = await supabase
+        .from("pedidos")
+        .update({
+            cliente_id: cliente,
+            data_pedido: dataPedido
+        })
+        .eq("id", pedidoId);
+
+    if (error) {
+        alert("Erro ao salvar pedido!");
+        return;
+    }
+
+    alert("Pedido atualizado!");
+});
+
+/* ==============================================================
+      EXCLUIR PEDIDO
+============================================================== */
+document.getElementById("btnExcluirPedido").addEventListener("click", async () => {
+    if (!confirm("Deseja excluir o pedido e todos os itens?")) return;
+
+    await supabase.from("pedidos_itens").delete().eq("pedido_id", pedidoId);
+    await supabase.from("pedidos").delete().eq("id", pedidoId);
+
+    alert("Pedido excluído!");
+    window.location.href = "pedidos_lista.html";
+});
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Pedido</title>
+
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/pedidos.css">
+
+    <style>
+        .btn-azul {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .btn-azul:hover {
+            background: #2563eb;
+        }
+
+        .btn-vermelho {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .btn-vermelho:hover {
+            background: #b91c1c;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="topbar">
+        <h1>Editar Pedido</h1>
+        <a href="pedidos_lista.html"><button class="btn-voltar">Voltar</button></a>
+    </header>
+
+    <div class="container">
+
+        <!-- DADOS DO PEDIDO -->
+        <section class="card">
+            <h2>Dados do Pedido</h2>
+
+            <label>Cliente</label>
+            <select id="cliente"></select>
+
+            <label>Data do Pedido</label>
+            <input type="date" id="data_pedido">
+
+            <label>Número do Pedido</label>
+            <input type="text" id="numero_pedido">
+        </section>
+
+        <!-- ITENS DO PEDIDO -->
+        <section class="card">
+            <h2>Itens do Pedido</h2>
+
+            <button id="btnNovoItem" class="btn-azul">Adicionar Item</button>
+
+            <table class="tabela-futurista">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Produto</th>
+                        <th>Qtd</th>
+                        <th>Valor Unit.</th>
+                        <th>Data Entrega</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+
+                <tbody id="tabelaItens"></tbody>
+            </table>
+
+            <div class="total-box">
+                Total do Pedido: <span id="total">R$ 0,00</span>
+            </div>
+
+            <button class="btn-salvar" onclick="salvarAlteracoes()">Salvar Alterações</button>
+        </section>
+
+    </div>
+
+    <script type="module" src="js/pedidos_editar.js"></script>
+</body>
+
+</html>
