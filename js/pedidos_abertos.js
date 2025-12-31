@@ -1,5 +1,5 @@
 // ====================================================
-// PEDIDOS_ABERTOS.JS — FIFO CORRETO + BLINDADO
+// PEDIDOS_ABERTOS.JS — FIFO REAL + JOIN CORRETO
 // ====================================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -26,13 +26,11 @@ function formatarData(valor) {
 }
 
 // ====================================================
-// CARREGAR FILTROS (COM PROTEÇÃO)
+// CARREGAR FILTROS
 // ====================================================
 async function carregarFiltros() {
   const selCliente = document.getElementById("filtroCliente");
   const selProduto = document.getElementById("filtroProduto");
-
-  // Se os filtros não existirem no HTML, sai sem quebrar
   if (!selCliente || !selProduto) return;
 
   const { data: clientes } = await supabase
@@ -76,10 +74,19 @@ async function carregarPedidosAbertos() {
       quantidade,
       quantidade_baixada,
       data_entrega,
-      pedidos ( numero_pedido ),
-      produtos ( codigo, descricao )
+      pedidos!inner (
+        id,
+        numero_pedido,
+        cliente_id
+      ),
+      produtos!inner (
+        codigo,
+        descricao
+      )
     `);
 
+  // 🔹 FILTROS REAIS
+  if (clienteId) query = query.eq("pedidos.cliente_id", clienteId);
   if (produtoId) query = query.eq("produto_id", produtoId);
   if (entregaAte) query = query.lte("data_entrega", entregaAte);
 
@@ -100,8 +107,8 @@ async function carregarPedidosAbertos() {
     if (da < db) return -1;
     if (da > db) return 1;
 
-    const pa = Number(a.pedidos?.numero_pedido || a.pedido_id);
-    const pb = Number(b.pedidos?.numero_pedido || b.pedido_id);
+    const pa = Number(a.pedidos.numero_pedido);
+    const pb = Number(b.pedidos.numero_pedido);
     return pa - pb;
   });
 
@@ -115,7 +122,7 @@ async function carregarPedidosAbertos() {
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${item.pedidos?.numero_pedido || item.pedido_id}</td>
+      <td>${item.pedidos.numero_pedido}</td>
       <td>${item.produtos.codigo} - ${item.produtos.descricao}</td>
       <td>${formatarData(item.data_entrega)}</td>
       <td>${total}</td>
