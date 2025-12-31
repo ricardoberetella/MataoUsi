@@ -1,12 +1,14 @@
 // ====================================================
-// CONTAS_RECEBER.JS — ESTÁVEL E DEFINITIVO
-// NF ORIGEM + EDITAR + PAGAR
+// CONTAS_RECEBER.JS — DEFINITIVO / À PROVA DE RLS
+// NF ORIGEM COM FALLBACK SEGURO
 // ====================================================
 
 import { supabase, verificarLogin } from "./auth.js";
 
 let registros = [];
+let mapaNF = {};
 
+// ====================================================
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
@@ -34,7 +36,7 @@ function formatarValor(valor) {
 }
 
 // ====================================================
-// CARREGAR LANÇAMENTOS
+// CARREGAR LANÇAMENTOS (SEM JOIN)
 // ====================================================
 async function carregarLancamentos() {
     const tbody = document.getElementById("listaLancamentos");
@@ -47,16 +49,7 @@ async function carregarLancamentos() {
 
     let query = supabase
         .from("contas_receber")
-        .select(`
-            id,
-            valor,
-            vencimento,
-            status,
-            nota_fiscal_id,
-            notas_fiscais:nota_fiscal_id (
-                numero
-            )
-        `)
+        .select("id, valor, vencimento, status, nota_fiscal_id")
         .order("vencimento", { ascending: true });
 
     if (statusFiltro) query = query.eq("status", statusFiltro);
@@ -77,7 +70,35 @@ async function carregarLancamentos() {
         return;
     }
 
+    await carregarNFs();
     renderizarTabela();
+}
+
+// ====================================================
+// CARREGAR NFs EM LOTE (SE EXISTIREM)
+// ====================================================
+async function carregarNFs() {
+    mapaNF = {};
+
+    const idsNF = registros
+        .map(r => r.nota_fiscal_id)
+        .filter(id => id);
+
+    if (idsNF.length === 0) return;
+
+    const { data, error } = await supabase
+        .from("notas_fiscais")
+        .select("id, numero")
+        .in("id", idsNF);
+
+    if (error) {
+        console.warn("NF não carregadas (RLS):", error);
+        return;
+    }
+
+    data.forEach(nf => {
+        mapaNF[nf.id] = nf.numero;
+    });
 }
 
 // ====================================================
@@ -88,7 +109,7 @@ function renderizarTabela() {
     tbody.innerHTML = "";
 
     registros.forEach(r => {
-        const nfOrigem = r.notas_fiscais?.numero || "-";
+        const nfOrigem = mapaNF[r.nota_fiscal_id] || "-";
 
         tbody.innerHTML += `
             <tr>
