@@ -1,7 +1,7 @@
 // ====================================================
-// PEDIDOS_ABERTOS.JS — ORDENAÇÃO FIFO CORRETA
+// PEDIDOS_ABERTOS.JS — ORDENAÇÃO FIFO CORRETA (FINAL)
 // 1) Data de entrega mais antiga
-// 2) Pedido mais antigo (em caso de empate)
+// 2) Número do pedido menor (pedido mais antigo)
 // ====================================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -72,7 +72,7 @@ async function carregarPedidosAbertos() {
       quantidade,
       quantidade_baixada,
       data_entrega,
-      pedidos ( data_pedido, numero_pedido ),
+      pedidos ( numero_pedido ),
       produtos ( codigo, descricao )
     `);
 
@@ -88,22 +88,19 @@ async function carregarPedidosAbertos() {
   }
 
   // ====================================================
-  // ORDENAÇÃO FIFO REAL
+  // ORDENAÇÃO FIFO DEFINITIVA
   // ====================================================
   data.sort((a, b) => {
-    // 1) Data de entrega
+    // 1) Data de entrega (mais antiga primeiro)
     const da = String(a.data_entrega).substring(0, 10);
     const db = String(b.data_entrega).substring(0, 10);
     if (da < db) return -1;
     if (da > db) return 1;
 
-    // 2) Pedido mais antigo
-    const pa = a.pedidos?.data_pedido || "";
-    const pb = b.pedidos?.data_pedido || "";
-    if (pa < pb) return -1;
-    if (pa > pb) return 1;
-
-    return 0;
+    // 2) Número do pedido (MENOR primeiro)
+    const pa = Number(a.pedidos?.numero_pedido || a.pedido_id);
+    const pb = Number(b.pedidos?.numero_pedido || b.pedido_id);
+    return pa - pb;
   });
 
   const tbody = document.getElementById("tbodyPedidosAbertos");
