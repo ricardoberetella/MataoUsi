@@ -1,5 +1,7 @@
 // ====================================================
-// PEDIDOS_ABERTOS.JS — FIFO REAL + JOIN CORRETO
+// PEDIDOS_ABERTOS.JS — FIFO CORRETO (FINAL ESTÁVEL)
+// 1) Data de entrega mais antiga
+// 2) Número do pedido menor (pedido mais antigo)
 // ====================================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -11,8 +13,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   await carregarFiltros();
   await carregarPedidosAbertos();
 
-  const btn = document.getElementById("btnFiltrar");
-  if (btn) btn.addEventListener("click", carregarPedidosAbertos);
+  document
+    .getElementById("btnFiltrar")
+    ?.addEventListener("click", carregarPedidosAbertos);
 });
 
 // ====================================================
@@ -29,15 +32,12 @@ function formatarData(valor) {
 // CARREGAR FILTROS
 // ====================================================
 async function carregarFiltros() {
-  const selCliente = document.getElementById("filtroCliente");
-  const selProduto = document.getElementById("filtroProduto");
-  if (!selCliente || !selProduto) return;
-
   const { data: clientes } = await supabase
     .from("clientes")
     .select("id, razao_social")
     .order("razao_social");
 
+  const selCliente = document.getElementById("filtroCliente");
   selCliente.innerHTML = `<option value="">Todos</option>`;
   clientes?.forEach(c => {
     selCliente.innerHTML += `<option value="${c.id}">${c.razao_social}</option>`;
@@ -48,6 +48,7 @@ async function carregarFiltros() {
     .select("id, codigo, descricao")
     .order("codigo");
 
+  const selProduto = document.getElementById("filtroProduto");
   selProduto.innerHTML = `<option value="">Todos</option>`;
   produtos?.forEach(p => {
     selProduto.innerHTML += `<option value="${p.id}">${p.codigo} - ${p.descricao}</option>`;
@@ -58,12 +59,9 @@ async function carregarFiltros() {
 // CARREGAR PEDIDOS EM ABERTO
 // ====================================================
 async function carregarPedidosAbertos() {
-  const tbody = document.getElementById("tbodyPedidosAbertos");
-  if (!tbody) return;
-
-  const clienteId = document.getElementById("filtroCliente")?.value || "";
-  const produtoId = document.getElementById("filtroProduto")?.value || "";
-  const entregaAte = document.getElementById("filtroEntrega")?.value || "";
+  const clienteId = document.getElementById("filtroCliente").value;
+  const produtoId = document.getElementById("filtroProduto").value;
+  const entregaAte = document.getElementById("filtroEntrega").value;
 
   let query = supabase
     .from("pedidos_itens")
@@ -74,19 +72,10 @@ async function carregarPedidosAbertos() {
       quantidade,
       quantidade_baixada,
       data_entrega,
-      pedidos!inner (
-        id,
-        numero_pedido,
-        cliente_id
-      ),
-      produtos!inner (
-        codigo,
-        descricao
-      )
+      pedidos ( numero_pedido ),
+      produtos ( codigo, descricao )
     `);
 
-  // 🔹 FILTROS REAIS
-  if (clienteId) query = query.eq("pedidos.cliente_id", clienteId);
   if (produtoId) query = query.eq("produto_id", produtoId);
   if (entregaAte) query = query.lte("data_entrega", entregaAte);
 
@@ -99,19 +88,22 @@ async function carregarPedidosAbertos() {
   }
 
   // ====================================================
-  // ORDENAÇÃO FIFO DEFINITIVA
+  // ORDENAÇÃO FIFO CORRETA
   // ====================================================
   data.sort((a, b) => {
+    // 1) Data de entrega
     const da = String(a.data_entrega).substring(0, 10);
     const db = String(b.data_entrega).substring(0, 10);
     if (da < db) return -1;
     if (da > db) return 1;
 
-    const pa = Number(a.pedidos.numero_pedido);
-    const pb = Number(b.pedidos.numero_pedido);
+    // 2) Número do pedido (FIFO REAL)
+    const pa = Number(a.pedidos?.numero_pedido || a.pedido_id);
+    const pb = Number(b.pedidos?.numero_pedido || b.pedido_id);
     return pa - pb;
   });
 
+  const tbody = document.getElementById("tbodyPedidosAbertos");
   tbody.innerHTML = "";
 
   data.forEach(item => {
@@ -122,7 +114,7 @@ async function carregarPedidosAbertos() {
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${item.pedidos.numero_pedido}</td>
+      <td>${item.pedidos?.numero_pedido || item.pedido_id}</td>
       <td>${item.produtos.codigo} - ${item.produtos.descricao}</td>
       <td>${formatarData(item.data_entrega)}</td>
       <td>${total}</td>
