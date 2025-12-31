@@ -1,131 +1,212 @@
-// ====================================================
-// PEDIDOS_ABERTOS.JS — FINAL DEFINITIVO
-// COMPATÍVEL COM O HTML ATUAL
-// ====================================================
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Pedidos com Saldo em Aberto</title>
 
-import { supabase, verificarLogin } from "./auth.js";
+<link rel="stylesheet" href="css/global.css">
+<link rel="stylesheet" href="css/pedidos_lista.css">
 
-document.addEventListener("DOMContentLoaded", async () => {
-  const user = await verificarLogin();
-  if (!user) return;
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-  await carregarFiltros();
-  await carregarPedidosAbertos();
+<style>
+/* =========================
+   PADRÃO
+========================= */
+.logo-print,
+.info-print,
+.cabecalho-print { display: none; }
 
-  document
-    .getElementById("btnFiltrar")
-    ?.addEventListener("click", carregarPedidosAbertos);
+/* =========================
+   MODO PDF (DESKTOP)
+========================= */
+body.modo-pdf header,
+body.modo-pdf .card:first-child,
+body.modo-pdf button {
+    display: none !important;
+}
+
+body.modo-pdf #areaPdf,
+body.modo-pdf #areaPdf * {
+    background: #fff !important;
+    color: #000 !important;
+    box-shadow: none !important;
+}
+
+/* Cabeçalho */
+body.modo-pdf .cabecalho-print {
+    display: flex !important;
+    gap: 12px;
+    margin-bottom: 4px;
+    align-items: flex-start;
+}
+
+body.modo-pdf .logo-print {
+    display: block !important;
+    height: 46px;
+}
+
+body.modo-pdf .info-print {
+    display: block !important;
+    font-size: 11px;
+    line-height: 1.1;
+}
+
+/* =========================
+   TABELA – GRADE COMPLETA
+========================= */
+body.modo-pdf table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: fixed !important;
+    border: 1px solid #000 !important;
+}
+
+body.modo-pdf thead {
+    display: table-header-group !important;
+}
+
+body.modo-pdf thead th {
+    background: #e5e5e5 !important;
+    border: 1px solid #000 !important;
+    font-weight: bold !important;
+}
+
+body.modo-pdf th,
+body.modo-pdf td {
+    border: 1px solid #000 !important;
+    padding: 3px 4px !important;
+    font-size: 11.5px !important;
+    line-height: 1.1 !important;
+    text-align: center !important;
+}
+
+body.modo-pdf td:nth-child(2),
+body.modo-pdf td:nth-child(3) {
+    text-align: left !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+}
+
+body.modo-pdf tr {
+    page-break-inside: avoid !important;
+}
+
+body.modo-pdf .card {
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+}
+</style>
+</head>
+
+<body>
+
+<header class="topbar">
+    <a href="dashboard.html">
+        <button class="btn-voltar">⬅ Voltar ao Menu</button>
+    </a>
+    <h1 class="topbar-title">Pedidos com Saldo em Aberto</h1>
+</header>
+
+<div class="container" id="areaPdf">
+
+<section class="card">
+    <h2 class="card-title">Filtros</h2>
+    <div class="form-grid">
+
+        <div class="form-group">
+            <label>Cliente:</label>
+            <select id="clienteFiltro">
+                <option value="">Todos</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Produto:</label>
+            <select id="produtoFiltro">
+                <option value="">Todos</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Entrega até:</label>
+            <input type="date" id="dataFiltro">
+        </div>
+
+        <div class="form-group" style="display:flex;gap:10px;">
+            <button id="btnFiltrar" class="btn-primario">Filtrar</button>
+            <button id="btnPdf" class="btn-primario" style="background:#22c55e;color:#000;">
+                Gerar PDF
+            </button>
+        </div>
+
+    </div>
+</section>
+
+<section class="card">
+
+<div class="cabecalho-print">
+    <img src="/img/logo-mataousi2.png" class="logo-print">
+    <div class="info-print">
+        <strong>Relatório:</strong> Pedidos com Saldo em Aberto<br>
+        <strong>Gerado em:</strong> <span id="dataHoraImpressao"></span><br>
+        <strong>Cliente:</strong> <span id="relCliente">Todos</span><br>
+        <strong>Produto:</strong> <span id="relProduto">Todos</span>
+    </div>
+</div>
+
+<table>
+    <colgroup>
+        <col style="width:10%">
+        <col style="width:45%">
+        <col style="width:15%">
+        <col style="width:10%">
+        <col style="width:10%">
+        <col style="width:10%">
+    </colgroup>
+    <thead>
+        <tr>
+            <th>Pedido</th>
+            <th>Produto</th>
+            <th>Entrega</th>
+            <th>Total</th>
+            <th>Baixado</th>
+            <th>Em Aberto</th>
+        </tr>
+    </thead>
+    <tbody id="listaPedidos">
+        <tr><td colspan="6">Carregando...</td></tr>
+    </tbody>
+</table>
+
+</section>
+</div>
+
+<!-- ÚNICO SCRIPT DA PÁGINA -->
+<script type="module" src="js/pedidos_abertos.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const agora = new Date();
+    document.getElementById("dataHoraImpressao").innerText =
+        agora.toLocaleDateString("pt-BR") + " " +
+        agora.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
 });
 
-// ====================================================
-// FORMATAR DATA DD/MM/AAAA
-// ====================================================
-function formatarData(valor) {
-  if (!valor) return "-";
-  const [a, m, d] = String(valor).substring(0, 10).split("-");
-  return `${d}/${m}/${a}`;
-}
+document.getElementById("btnPdf").addEventListener("click", () => {
+    document.body.classList.add("modo-pdf");
+    html2pdf().from(document.getElementById("areaPdf")).set({
+        margin: [4, 8, 8, 8],
+        filename: "pedidos_em_aberto.pdf",
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 1, backgroundColor: "#ffffff" },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+    }).save().then(() => {
+        document.body.classList.remove("modo-pdf");
+    });
+});
+</script>
 
-// ====================================================
-// CARREGAR FILTROS (IDs DO HTML)
-// ====================================================
-async function carregarFiltros() {
-  const selCliente = document.getElementById("clienteFiltro");
-  const selProduto = document.getElementById("produtoFiltro");
-  if (!selCliente || !selProduto) return;
-
-  const { data: clientes } = await supabase
-    .from("clientes")
-    .select("id, razao_social")
-    .order("razao_social");
-
-  selCliente.innerHTML = `<option value="">Todos</option>`;
-  clientes?.forEach(c => {
-    selCliente.innerHTML += `<option value="${c.id}">${c.razao_social}</option>`;
-  });
-
-  const { data: produtos } = await supabase
-    .from("produtos")
-    .select("id, codigo, descricao")
-    .order("codigo");
-
-  selProduto.innerHTML = `<option value="">Todos</option>`;
-  produtos?.forEach(p => {
-    selProduto.innerHTML += `<option value="${p.id}">${p.codigo} - ${p.descricao}</option>`;
-  });
-}
-
-// ====================================================
-// CARREGAR PEDIDOS EM ABERTO
-// ====================================================
-async function carregarPedidosAbertos() {
-  const tbody = document.getElementById("listaPedidos");
-  if (!tbody) return;
-
-  // Estado carregando
-  tbody.innerHTML = `<tr><td colspan="6">Carregando...</td></tr>`;
-
-  const produtoId = document.getElementById("produtoFiltro")?.value || "";
-  const entregaAte = document.getElementById("dataFiltro")?.value || "";
-
-  let query = supabase
-    .from("pedidos_itens")
-    .select(`
-      id,
-      pedido_id,
-      produto_id,
-      quantidade,
-      quantidade_baixada,
-      data_entrega,
-      pedidos:pedido_id ( numero_pedido ),
-      produtos:produto_id ( codigo, descricao )
-    `);
-
-  if (produtoId) query = query.eq("produto_id", produtoId);
-  if (entregaAte) query = query.lte("data_entrega", entregaAte);
-
-  const { data, error } = await query;
-
-  if (error) {
-    console.error(error);
-    tbody.innerHTML = `<tr><td colspan="6">Erro ao carregar</td></tr>`;
-    return;
-  }
-
-  // Filtra somente saldo em aberto e joins válidos
-  const abertos = data.filter(i => {
-    const aberto = i.quantidade - (i.quantidade_baixada || 0);
-    return aberto > 0 && i.pedidos && i.produtos;
-  });
-
-  if (abertos.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6">Nenhum pedido em aberto</td></tr>`;
-    return;
-  }
-
-  // FIFO REAL
-  abertos.sort((a, b) => {
-    const da = a.data_entrega;
-    const db = b.data_entrega;
-    if (da < db) return -1;
-    if (da > db) return 1;
-    return Number(a.pedidos.numero_pedido) - Number(b.pedidos.numero_pedido);
-  });
-
-  // Render
-  tbody.innerHTML = "";
-
-  abertos.forEach(i => {
-    const aberto = i.quantidade - (i.quantidade_baixada || 0);
-    tbody.innerHTML += `
-      <tr>
-        <td>${i.pedidos.numero_pedido}</td>
-        <td>${i.produtos.codigo} - ${i.produtos.descricao}</td>
-        <td>${formatarData(i.data_entrega)}</td>
-        <td>${i.quantidade}</td>
-        <td>${i.quantidade_baixada || 0}</td>
-        <td>${aberto}</td>
-      </tr>
-    `;
-  });
-}
+</body>
+</html>
