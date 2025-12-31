@@ -1,5 +1,6 @@
 // ======================================================
 // CONTAS_RECEBER.JS — VERSÃO CORRETA / ESTÁVEL
+// EDITAR FUNCIONAL (SEM QUEBRAR NADA)
 // ======================================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -85,7 +86,11 @@ async function carregarLancamentos() {
             <td>${formatarData(l.data_vencimento)}</td>
             <td>${l.status}</td>
             <td style="display:flex; gap:6px; justify-content:center">
-                <button class="btn-azul btn-editar" data-id="${l.id}">
+                <button class="btn-azul btn-editar"
+                    data-id="${l.id}"
+                    data-descricao="${l.descricao || ""}"
+                    data-valor="${l.valor || 0}"
+                    data-vencimento="${l.data_vencimento || ""}">
                     Editar
                 </button>
                 <button class="btn-vermelho btn-pagar" data-id="${l.id}">
@@ -105,12 +110,51 @@ async function carregarLancamentos() {
 // AÇÕES
 // ======================================================
 function bindAcoes() {
+
+    // ===== EDITAR (FUNCIONAL E ISOLADO) =====
     document.querySelectorAll(".btn-editar").forEach(btn => {
-        btn.addEventListener("click", () => {
-            alert("Editar ID: " + btn.dataset.id);
+        btn.addEventListener("click", async () => {
+
+            const id = btn.dataset.id;
+
+            const novaDescricao = prompt(
+                "NF / Origem:",
+                btn.dataset.descricao
+            );
+            if (novaDescricao === null) return;
+
+            const novoValor = prompt(
+                "Valor:",
+                btn.dataset.valor
+            );
+            if (novoValor === null) return;
+
+            const novoVencimento = prompt(
+                "Vencimento (YYYY-MM-DD):",
+                btn.dataset.vencimento
+            );
+            if (novoVencimento === null) return;
+
+            const { error } = await supabase
+                .from("contas_receber")
+                .update({
+                    descricao: novaDescricao,
+                    valor: Number(novoValor),
+                    data_vencimento: novoVencimento
+                })
+                .eq("id", id);
+
+            if (error) {
+                alert("Erro ao editar lançamento");
+                console.error(error);
+                return;
+            }
+
+            carregarLancamentos();
         });
     });
 
+    // ===== PAGAR (NÃO MEXIDO) =====
     document.querySelectorAll(".btn-pagar").forEach(btn => {
         btn.addEventListener("click", () => {
             alert("Pagar ID: " + btn.dataset.id);
