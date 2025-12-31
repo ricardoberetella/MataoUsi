@@ -1,23 +1,29 @@
 // ====================================================
-// CONTAS_RECEBER.JS — FINAL ESTÁVEL
+// CONTAS_RECEBER.JS — ESTÁVEL
 // ====================================================
 
 import { supabase, verificarLogin } from "./auth.js";
 
 // ====================================================
+// INIT
+// ====================================================
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
 
-    await carregarLancamentos();
+    carregarLancamentos();
 
     document.getElementById("btnFiltrar")
         ?.addEventListener("click", carregarLancamentos);
 
     document.getElementById("btnGerarPDF")
         ?.addEventListener("click", gerarPDF);
+
+    atualizarDataHoraPDF();
 });
 
+// ====================================================
+// FORMATADORES
 // ====================================================
 function formatarValor(v) {
     return Number(v || 0).toLocaleString("pt-BR", {
@@ -32,11 +38,15 @@ function formatarData(d) {
 }
 
 // ====================================================
+// CARREGAR LANÇAMENTOS
+// ====================================================
 async function carregarLancamentos() {
     const tbody = document.getElementById("listaReceber");
     const totalEl = document.getElementById("totalReceber");
 
-    tbody.innerHTML = `<tr><td colspan="5">Carregando...</td></tr>`;
+    if (!tbody) return;
+
+    tbody.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
     totalEl.innerText = "R$ 0,00";
 
     const status = document.getElementById("filtroStatus")?.value || "";
@@ -54,12 +64,12 @@ async function carregarLancamentos() {
 
     if (error) {
         console.error("ERRO CONTAS_RECEBER:", error);
-        tbody.innerHTML = `<tr><td colspan="5">Erro ao carregar</td></tr>`;
+        tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar</td></tr>";
         return;
     }
 
     if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5">Nenhum lançamento encontrado</td></tr>`;
+        tbody.innerHTML = "<tr><td colspan='5'>Nenhum lançamento</td></tr>";
         return;
     }
 
@@ -70,13 +80,10 @@ async function carregarLancamentos() {
         total += Number(l.valor || 0);
 
         const tr = document.createElement("tr");
-
-        if (l.status === "VENCIDO") {
-            tr.classList.add("vencido");
-        }
+        if (l.status === "VENCIDO") tr.classList.add("vencido");
 
         tr.innerHTML = `
-            <td>${l.origem && l.origem.trim() !== "" ? l.origem : "—"}</td>
+            <td>${l.origem || "-"}</td>
             <td>${formatarValor(l.valor)}</td>
             <td>${formatarData(l.vencimento)}</td>
             <td>${l.status}</td>
@@ -94,35 +101,52 @@ async function carregarLancamentos() {
 }
 
 // ====================================================
+// AÇÕES
+// ====================================================
 function bindAcoes() {
     document.querySelectorAll(".btn-editar").forEach(btn => {
         btn.onclick = () => {
-            alert("Editar lançamento ID: " + btn.dataset.id);
+            alert("Editar ID: " + btn.dataset.id);
         };
     });
 
     document.querySelectorAll(".btn-pagar").forEach(btn => {
         btn.onclick = () => {
-            alert("Pagar lançamento ID: " + btn.dataset.id);
+            alert("Pagar ID: " + btn.dataset.id);
         };
     });
 }
 
 // ====================================================
+// PDF
+// ====================================================
 function gerarPDF() {
     document.body.classList.add("modo-pdf");
 
-    html2pdf()
-        .from(document.getElementById("areaPdf"))
-        .set({
-            margin: 10,
-            filename: "contas_a_receber.pdf",
-            image: { type: "jpeg", quality: 0.98 },
-            html2canvas: { scale: 1 },
-            jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
-        })
-        .save()
-        .then(() => {
-            document.body.classList.remove("modo-pdf");
+    html2pdf().from(document.getElementById("areaPdf")).set({
+        margin: 10,
+        filename: "contas_a_receber.pdf",
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 1 },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+    }).save().then(() => {
+        document.body.classList.remove("modo-pdf");
+    });
+}
+
+// ====================================================
+// DATA / HORA PDF
+// ====================================================
+function atualizarDataHoraPDF() {
+    const el = document.getElementById("dataHoraPdf");
+    if (!el) return;
+
+    const agora = new Date();
+    el.innerText =
+        agora.toLocaleDateString("pt-BR") +
+        " " +
+        agora.toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit"
         });
 }
