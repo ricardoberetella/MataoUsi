@@ -1,24 +1,21 @@
 // ====================================================
-// PEDIDOS_DETALHES.JS — DETALHES DO PEDIDO + ITENS
-// (com botões Editar / Excluir por item)
+// PEDIDOS_DETALHES.JS — ESTÁVEL (ITENS SEM ERRO)
 // ====================================================
 
 import { supabase, verificarLogin } from "./auth.js";
 
 let pedidoId = null;
-let roleUsuario = "viewer";
 
+// ====================================================
 document.addEventListener("DOMContentLoaded", async () => {
   const user = await verificarLogin();
   if (!user) return;
-
-  roleUsuario = user.user_metadata?.role || "viewer";
 
   const params = new URLSearchParams(window.location.search);
   pedidoId = params.get("id");
 
   if (!pedidoId) {
-    alert("Pedido não informado.");
+    alert("Pedido não informado");
     window.location.href = "pedidos_lista.html";
     return;
   }
@@ -27,221 +24,136 @@ document.addEventListener("DOMContentLoaded", async () => {
   await carregarItens();
 });
 
-// ===============================================
-// HELPERS
-// ===============================================
-function dinheiroBR(v) {
-  const n = Number(v || 0);
-  return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
-
-function dataBR(iso) {
-  if (!iso) return "—";
-  // Não usa new Date() para evitar "dia anterior" e para lidar com timestamps
-  const s = String(iso).split("T")[0];
-  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!m) return "—";
-  return `${m[3]}/${m[2]}/${m[1]}`;
-}
-
-async function atualizarTotalPedido() {
-  const { data, error } = await supabase
-    .from("pedidos_itens")
-    .select("total_item")
-    .eq("pedido_id", pedidoId);
-
-  if (error) {
-    console.error("Erro ao somar itens:", error);
-    return;
-  }
-
-  const total = (data || []).reduce((acc, it) => acc + Number(it.total_item || 0), 0);
-
-  const { error: errUp } = await supabase
-    .from("pedidos")
-    .update({ total })
-    .eq("id", pedidoId);
-
-  if (errUp) console.error("Erro ao atualizar total do pedido:", errUp);
-
-  // Atualiza o card na tela (se existir)
-  const elTotal = document.getElementById("valorTotalPedido");
-  if (elTotal) elTotal.textContent = dinheiroBR(total);
-}
-
-// ===============================================
-// CARREGAR PEDIDO
-// ===============================================
+// ====================================================
+// PEDIDO
+// ====================================================
 async function carregarPedido() {
-  const dadosPedido = document.getElementById("dadosPedido");
-  if (!dadosPedido) {
-    console.error("Elemento #dadosPedido não encontrado no HTML.");
-    return;
-  }
-
   const { data, error } = await supabase
     .from("pedidos")
-    .select(
-      `
+    .select(`
       id,
       numero_pedido,
       data_pedido,
       total,
-      clientes:cliente_id ( razao_social )
-    `
-    )
+      clientes ( razao_social )
+    `)
     .eq("id", pedidoId)
     .single();
 
   if (error) {
-    console.error("Erro ao carregar pedido:", error);
+    console.error(error);
     alert("Erro ao carregar pedido");
     return;
   }
 
-  const cliente = data?.clientes?.razao_social || "—";
-  const numero = data?.numero_pedido ?? data?.id ?? "—";
-  const dt = dataBR(data?.data_pedido);
-  const total = dinheiroBR(data?.total);
-
-  const podeEditar = roleUsuario !== "viewer";
-
-  dadosPedido.innerHTML = `
-    <div class="info-grid" style="display:grid; gap:10px;">
-      <div><strong>Número do Pedido:</strong> ${numero}</div>
-      <div><strong>Cliente:</strong> ${cliente}</div>
-      <div><strong>Data do Pedido:</strong> ${dt}</div>
-      <div><strong>Total:</strong> <span id="valorTotalPedido">${total}</span></div>
-
-      ${
-        podeEditar
-          ? `
-        <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
-          <a href="pedidos_editar.html?id=${pedidoId}">
-            <button class="btn-primario">Editar Pedido</button>
-          </a>
-        </div>`
-          : ""
-      }
-    </div>
+  document.getElementById("dadosPedido").innerHTML = `
+    <p><strong>Número do Pedido:</strong> ${data.numero_pedido}</p>
+    <p><strong>Cliente:</strong> ${data.clientes?.razao_social || "-"}</p>
+    <p><strong>Data do Pedido:</strong> ${formatarData(data.data_pedido)}</p>
+    <p><strong>Total:</strong> R$ ${Number(data.total).toFixed(2)}</p>
   `;
 }
 
-// ===============================================
-// CARREGAR ITENS
-// ===============================================
+// ====================================================
+// ITENS DO PEDIDO (SEM SQL INVÁLIDO)
+// ====================================================
 async function carregarItens() {
   const tbody = document.getElementById("tbodyItens");
-  if (!tbody) {
-    console.error("Elemento #tbodyItens não encontrado no HTML.");
-    return;
-  }
-
   tbody.innerHTML = "";
 
-  const { data, error } = await supabase
+  const { data: itens, error } = await supabase
     .from("pedidos_itens")
-    .select(
-      `
+    .select(`
       id,
       produto_id,
       quantidade,
       valor_unitario,
-      total_item,
-      data_entrega,
-      produtos:produto_id ( codigo, descricao )
-    `
-    )
-    .eq("pedido_id", pedidoId)
-    .order("id", { ascending: true });
+      data_entrega
+    `)
+    .eq("pedido_id", pedidoId);
 
   if (error) {
-    console.error("Erro ao carregar itens:", error);
-    // Não trava a tela: mostra mensagem na tabela
+    console.error("ERRO ITENS:", error);
     tbody.innerHTML = `
       <tr>
-        <td colspan="6" style="text-align:center; opacity:.85;">
+        <td colspan="6" style="text-align:center">
           Erro ao carregar itens do pedido.
         </td>
-      </tr>
-    `;
+      </tr>`;
     return;
   }
 
-  const podeEditar = roleUsuario !== "viewer";
-
-  if (!data || data.length === 0) {
+  if (!itens.length) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="6" style="text-align:center; opacity:.85;">
-          Nenhum item cadastrado neste pedido.
+        <td colspan="6" style="text-align:center">
+          Nenhum item neste pedido.
         </td>
-      </tr>
-    `;
+      </tr>`;
     return;
   }
 
-  data.forEach((item) => {
-    const prod = item?.produtos
-      ? `${item.produtos.codigo} - ${item.produtos.descricao}`
-      : "(produto não encontrado)";
+  // 🔹 Busca produtos separadamente (seguro)
+  const ids = [...new Set(itens.map(i => i.produto_id))];
 
-    const qtd = Number(item.quantidade || 0);
-    const vUnit = Number(item.valor_unitario || 0);
-    const totalItem = Number(item.total_item ?? qtd * vUnit);
-    const dtEntrega = dataBR(item.data_entrega);
+  const { data: produtos } = await supabase
+    .from("produtos")
+    .select("id, codigo, descricao")
+    .in("id", ids);
 
-    const acoes = podeEditar
-      ? `
-        <button class="btn-editar" data-editar="${item.id}">Editar</button>
-        <button class="btn-excluir" data-excluir="${item.id}">Excluir</button>
-      `
-      : `<span style="opacity:.7;">—</span>`;
+  const mapa = {};
+  produtos?.forEach(p => mapa[p.id] = p);
 
-    tbody.insertAdjacentHTML(
-      "beforeend",
-      `
-      <tr>
-        <td>${prod}</td>
-        <td>${qtd}</td>
-        <td>${dinheiroBR(vUnit)}</td>
-        <td>${dtEntrega}</td>
-        <td>${dinheiroBR(totalItem)}</td>
-        <td>${acoes}</td>
-      </tr>
-      `
-    );
+  itens.forEach(item => {
+    const prod = mapa[item.produto_id];
+    const total = item.quantidade * item.valor_unitario;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${prod?.codigo || "-"}</td>
+      <td>${prod?.descricao || "-"}</td>
+      <td>${item.quantidade}</td>
+      <td>R$ ${Number(item.valor_unitario).toFixed(2)}</td>
+      <td>${formatarData(item.data_entrega)}</td>
+      <td>
+        <button class="btn-editar"
+          onclick="editarItem(${item.id})">Editar</button>
+        <button class="btn-excluir"
+          onclick="excluirItem(${item.id})">Excluir</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
   });
+}
 
-  // Eventos (delegação)
-  tbody.addEventListener("click", async (e) => {
-    const btnEditar = e.target.closest("[data-editar]");
-    const btnExcluir = e.target.closest("[data-excluir]");
+// ====================================================
+window.editarItem = (idItem) => {
+  window.location.href =
+    `item_editar.html?idItem=${idItem}&idPedido=${pedidoId}`;
+};
 
-    if (btnEditar) {
-      const idItem = btnEditar.getAttribute("data-editar");
-      window.location.href = `item_editar.html?idItem=${idItem}&idPedido=${pedidoId}`;
-      return;
-    }
+window.excluirItem = async (idItem) => {
+  if (!confirm("Excluir este item?")) return;
 
-    if (btnExcluir) {
-      const idItem = btnExcluir.getAttribute("data-excluir");
-      const ok = confirm("Excluir este item do pedido?");
-      if (!ok) return;
+  const { error } = await supabase
+    .from("pedidos_itens")
+    .delete()
+    .eq("id", idItem);
 
-      const { error: errDel } = await supabase
-        .from("pedidos_itens")
-        .delete()
-        .eq("id", idItem);
+  if (error) {
+    alert("Erro ao excluir item");
+    return;
+  }
 
-      if (errDel) {
-        console.error("Erro ao excluir item:", errDel);
-        alert("Erro ao excluir item.");
-        return;
-      }
+  await carregarItens();
+};
 
-      await atualizarTotalPedido();
-      await carregarItens();
-    }
-  }, { once: true });
+// ====================================================
+// DATA DD/MM/AAAA (BLINDADO)
+// ====================================================
+function formatarData(valor) {
+  if (!valor) return "-";
+  const limpa = String(valor).substring(0, 10);
+  const [ano, mes, dia] = limpa.split("-");
+  return `${dia}/${mes}/${ano}`;
 }
