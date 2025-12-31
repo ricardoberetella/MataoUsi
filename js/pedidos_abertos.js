@@ -1,258 +1,130 @@
 // ====================================================
-// PEDIDOS COM SALDO EM ABERTO
-// - Datas corretas (pedidos_itens.data_entrega)
-// - Agrupado por produto
-// - Ordenado por data crescente (mais antigas primeiro)
-// - Atrasados destacados
-// - BAIXADOS calculados via notas_pedidos_baixas (quantidade_baixada)
+// PEDIDOS_ABERTOS.JS — ORDENAÇÃO FIFO CORRETA
+// 1) Data de entrega mais antiga
+// 2) Pedido mais antigo (em caso de empate)
 // ====================================================
 
-import { supabase, protegerPagina } from "./auth.js";
+import { supabase, verificarLogin } from "./auth.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
-    // 🔐 Blindagem: exige login para acessar esta tela
-    await protegerPagina();
+  const user = await verificarLogin();
+  if (!user) return;
 
-    await carregarFiltros();
-    document.getElementById("btnFiltrar").addEventListener("click", carregarPedidos);
-    await carregarPedidos();
+  await carregarFiltros();
+  await carregarPedidosAbertos();
+
+  document
+    .getElementById("btnFiltrar")
+    ?.addEventListener("click", carregarPedidosAbertos);
 });
+
+// ====================================================
+// FORMATAR DATA DD/MM/AAAA
+// ====================================================
+function formatarData(valor) {
+  if (!valor) return "-";
+  const limpa = String(valor).substring(0, 10);
+  const [ano, mes, dia] = limpa.split("-");
+  return `${dia}/${mes}/${ano}`;
+}
 
 // ====================================================
 // CARREGAR FILTROS
 // ====================================================
 async function carregarFiltros() {
-    const clienteSelect = document.getElementById("clienteFiltro");
-    const produtoSelect = document.getElementById("produtoFiltro");
+  const { data: clientes } = await supabase
+    .from("clientes")
+    .select("id, razao_social")
+    .order("razao_social");
 
-    clienteSelect.innerHTML = `<option value="">Todos</option>`;
-    produtoSelect.innerHTML = `<option value="">Todos</option>`;
+  const selCliente = document.getElementById("filtroCliente");
+  selCliente.innerHTML = `<option value="">Todos</option>`;
+  clientes?.forEach(c => {
+    selCliente.innerHTML += `<option value="${c.id}">${c.razao_social}</option>`;
+  });
 
-    const { data: clientes, error: errClientes } = await supabase
-        .from("clientes")
-        .select("id, razao_social")
-        .order("razao_social");
+  const { data: produtos } = await supabase
+    .from("produtos")
+    .select("id, codigo, descricao")
+    .order("codigo");
 
-    if (errClientes) console.error("Erro clientes:", errClientes);
-
-    (clientes || []).forEach(c => {
-        clienteSelect.innerHTML += `<option value="${c.id}">${c.razao_social}</option>`;
-    });
-
-    const { data: produtos, error: errProdutos } = await supabase
-        .from("produtos")
-        .select("id, codigo, descricao")
-        .order("codigo");
-
-    if (errProdutos) console.error("Erro produtos:", errProdutos);
-
-    (produtos || []).forEach(p => {
-        produtoSelect.innerHTML += `<option value="${p.id}">${p.codigo} - ${p.descricao}</option>`;
-    });
+  const selProduto = document.getElementById("filtroProduto");
+  selProduto.innerHTML = `<option value="">Todos</option>`;
+  produtos?.forEach(p => {
+    selProduto.innerHTML += `<option value="${p.id}">${p.codigo} - ${p.descricao}</option>`;
+  });
 }
 
 // ====================================================
-// CARREGAR PEDIDOS
+// CARREGAR PEDIDOS EM ABERTO
 // ====================================================
-async function carregarPedidos() {
-    const clienteId = document.getElementById("clienteFiltro").value;
-    const produtoId = document.getElementById("produtoFiltro").value;
-    const dataFiltro = document.getElementById("dataFiltro").value;
+async function carregarPedidosAbertos() {
+  const clienteId = document.getElementById("filtroCliente").value;
+  const produtoId = document.getElementById("filtroProduto").value;
+  const entregaAte = document.getElementById("filtroEntrega").value;
 
-    // 1) Se tiver cliente, pegar ids dos pedidos desse cliente
-    let pedidosIds = null;
+  let query = supabase
+    .from("pedidos_itens")
+    .select(`
+      id,
+      pedido_id,
+      produto_id,
+      quantidade,
+      quantidade_baixada,
+      data_entrega,
+      pedidos ( data_pedido, numero_pedido ),
+      produtos ( codigo, descricao )
+    `);
 
-    if (clienteId) {
-        const { data: pedidosCliente, error: errPedidosCliente } = await supabase
-            .from("pedidos")
-            .select("id")
-            .eq("cliente_id", clienteId);
+  if (produtoId) query = query.eq("produto_id", produtoId);
+  if (entregaAte) query = query.lte("data_entrega", entregaAte);
 
-        if (errPedidosCliente) {
-            console.error("Erro pedidosCliente:", errPedidosCliente);
-            alert("Erro ao carregar pedidos");
-            return;
-        }
+  const { data, error } = await query;
 
-        pedidosIds = (pedidosCliente || []).map(p => p.id);
+  if (error) {
+    console.error(error);
+    alert("Erro ao carregar pedidos em aberto");
+    return;
+  }
 
-        if (pedidosIds.length === 0) {
-            renderizarTabela([]);
-            atualizarCabecalhoPrint();
-            return;
-        }
-    }
+  // ====================================================
+  // ORDENAÇÃO FIFO REAL
+  // ====================================================
+  data.sort((a, b) => {
+    // 1) Data de entrega
+    const da = String(a.data_entrega).substring(0, 10);
+    const db = String(b.data_entrega).substring(0, 10);
+    if (da < db) return -1;
+    if (da > db) return 1;
 
-    // 2) Buscar itens do pedido
-    let query = supabase
-        .from("pedidos_itens")
-        .select(`
-            id,
-            pedido_id,
-            produto_id,
-            quantidade,
-            data_entrega,
-            pedidos ( numero_pedido ),
-            produtos ( codigo, descricao )
-        `)
-        .gt("quantidade", 0);
+    // 2) Pedido mais antigo
+    const pa = a.pedidos?.data_pedido || "";
+    const pb = b.pedidos?.data_pedido || "";
+    if (pa < pb) return -1;
+    if (pa > pb) return 1;
 
-    if (pedidosIds) query = query.in("pedido_id", pedidosIds);
-    if (produtoId) query = query.eq("produto_id", produtoId);
-    if (dataFiltro) query = query.lte("data_entrega", dataFiltro);
+    return 0;
+  });
 
-    const { data: itens, error: errItens } = await query;
+  const tbody = document.getElementById("tbodyPedidosAbertos");
+  tbody.innerHTML = "";
 
-    if (errItens) {
-        console.error("Erro itens:", errItens);
-        alert("Erro ao carregar pedidos");
-        return;
-    }
+  data.forEach(item => {
+    const total = item.quantidade;
+    const baixado = item.quantidade_baixada || 0;
+    const aberto = total - baixado;
 
-    const itensSeguros = itens || [];
+    if (aberto <= 0) return;
 
-    // 👉 ATUALIZA CABEÇALHO DO PRINT (CLIENTE / PRODUTO)
-    atualizarCabecalhoPrint();
-
-    if (itensSeguros.length === 0) {
-        renderizarTabela([]);
-        return;
-    }
-
-    // 3) Buscar baixas na tabela REAL: notas_pedidos_baixas
-    const itemIds = itensSeguros.map(i => i.id);
-
-    const { data: baixas, error: errBaixas } = await supabase
-        .from("notas_pedidos_baixas")
-        .select("pedido_item_id, quantidade_baixada")
-        .in("pedido_item_id", itemIds);
-
-    if (errBaixas) {
-        console.error("Erro baixas (notas_pedidos_baixas):", errBaixas);
-    }
-
-    // Mapa: pedido_item_id -> soma(quantidade_baixada)
-    const mapaBaixado = new Map();
-    (baixas || []).forEach(b => {
-        const k = b.pedido_item_id;
-        const q = Number(b.quantidade_baixada || 0);
-        mapaBaixado.set(k, (mapaBaixado.get(k) || 0) + q);
-    });
-
-    // anexar baixado calculado
-    const itensComBaixa = itensSeguros.map(i => ({
-        ...i,
-        _baixado_calc: mapaBaixado.get(i.id) || 0
-    }));
-
-    renderizarTabela(itensComBaixa);
-}
-
-// ====================================================
-// ATUALIZAR CABEÇALHO DO PRINT
-// ====================================================
-function atualizarCabecalhoPrint() {
-    const clienteSelect = document.getElementById("clienteFiltro");
-    const produtoSelect = document.getElementById("produtoFiltro");
-
-    const relCliente = document.getElementById("relCliente");
-    const relProduto = document.getElementById("relProduto");
-
-    if (relCliente) {
-        relCliente.textContent =
-            clienteSelect && clienteSelect.value
-                ? clienteSelect.options[clienteSelect.selectedIndex].text
-                : "Todos";
-    }
-
-    if (relProduto) {
-        relProduto.textContent =
-            produtoSelect && produtoSelect.value
-                ? produtoSelect.options[produtoSelect.selectedIndex].text
-                : "Todos";
-    }
-}
-
-// ====================================================
-// RENDERIZAR TABELA
-// ====================================================
-function renderizarTabela(dados) {
-    const tbody = document.getElementById("listaPedidos");
-    tbody.innerHTML = "";
-
-    if (!dados || dados.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" style="text-align:center;">
-                    Nenhum pedido em aberto encontrado
-                </td>
-            </tr>`;
-        return;
-    }
-
-    // Hoje em ISO local (YYYY-MM-DD) para comparar sem "shift" de fuso
-    const hoje = (() => {
-        const d = new Date();
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, "0");
-        const day = String(d.getDate()).padStart(2, "0");
-        return `${y}-${m}-${day}`;
-    })();
-
-    const grupos = {};
-    dados.forEach(item => {
-        const codigo = item.produtos.codigo;
-        if (!grupos[codigo]) grupos[codigo] = [];
-        grupos[codigo].push(item);
-    });
-
-    Object.values(grupos).forEach(itensProduto => {
-        itensProduto.sort((a, b) => {
-            const da = String(a.data_entrega || "").split("T")[0];
-            const db = String(b.data_entrega || "").split("T")[0];
-            return da.localeCompare(db);
-        });
-
-        itensProduto.forEach(item => {
-            const total = Number(item.quantidade || 0);
-            const baixado = Number(item._baixado_calc || 0);
-            const emAberto = total - baixado;
-            if (emAberto <= 0) return;
-
-            const dataEntregaISO = String(item.data_entrega || "").split("T")[0];
-            const atrasado = dataEntregaISO && dataEntregaISO < hoje;
-
-            const tr = document.createElement("tr");
-            if (atrasado) {
-                tr.style.background = "rgba(220,38,38,0.15)";
-                tr.style.color = "#fecaca";
-            }
-
-            tr.innerHTML = `
-                <td>${item.pedidos.numero_pedido}</td>
-                <td>${item.produtos.codigo} - ${item.produtos.descricao}</td>
-                <td>${formatarData(item.data_entrega)}</td>
-                <td>${total}</td>
-                <td>${baixado}</td>
-                <td>${emAberto}</td>
-            `;
-
-            tbody.appendChild(tr);
-        });
-
-        const sep = document.createElement("tr");
-        sep.innerHTML = `<td colspan="6" style="background:#0b1f33;height:6px;"></td>`;
-        tbody.appendChild(sep);
-    });
-}
-
-// ====================================================
-// FORMATAR DATA
-// ====================================================
-function formatarData(data) {
-    if (!data) return "";
-    const s = String(data).split("T")[0];
-    const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (!m) return "";
-    return `${m[3]}/${m[2]}/${m[1]}`;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${item.pedidos?.numero_pedido || item.pedido_id}</td>
+      <td>${item.produtos.codigo} - ${item.produtos.descricao}</td>
+      <td>${formatarData(item.data_entrega)}</td>
+      <td>${total}</td>
+      <td>${baixado}</td>
+      <td>${aberto}</td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
