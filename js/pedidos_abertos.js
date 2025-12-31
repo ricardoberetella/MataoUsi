@@ -1,7 +1,5 @@
 // ====================================================
-// PEDIDOS_ABERTOS.JS — FIFO CORRETO (FINAL ESTÁVEL)
-// 1) Data de entrega mais antiga
-// 2) Número do pedido menor (pedido mais antigo)
+// PEDIDOS_ABERTOS.JS — FIFO CORRETO (ESTÁVEL)
 // ====================================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -29,15 +27,20 @@ function formatarData(valor) {
 }
 
 // ====================================================
-// CARREGAR FILTROS
+// CARREGAR FILTROS (SEM QUEBRAR SE ID NÃO EXISTIR)
 // ====================================================
 async function carregarFiltros() {
+  const selCliente = document.getElementById("filtroCliente");
+  const selProduto = document.getElementById("filtroProduto");
+
+  // 👉 Se o HTML não tiver esses filtros, sai sem erro
+  if (!selCliente || !selProduto) return;
+
   const { data: clientes } = await supabase
     .from("clientes")
     .select("id, razao_social")
     .order("razao_social");
 
-  const selCliente = document.getElementById("filtroCliente");
   selCliente.innerHTML = `<option value="">Todos</option>`;
   clientes?.forEach(c => {
     selCliente.innerHTML += `<option value="${c.id}">${c.razao_social}</option>`;
@@ -48,7 +51,6 @@ async function carregarFiltros() {
     .select("id, codigo, descricao")
     .order("codigo");
 
-  const selProduto = document.getElementById("filtroProduto");
   selProduto.innerHTML = `<option value="">Todos</option>`;
   produtos?.forEach(p => {
     selProduto.innerHTML += `<option value="${p.id}">${p.codigo} - ${p.descricao}</option>`;
@@ -59,9 +61,12 @@ async function carregarFiltros() {
 // CARREGAR PEDIDOS EM ABERTO
 // ====================================================
 async function carregarPedidosAbertos() {
-  const clienteId = document.getElementById("filtroCliente").value;
-  const produtoId = document.getElementById("filtroProduto").value;
-  const entregaAte = document.getElementById("filtroEntrega").value;
+  const tbody = document.getElementById("tbodyPedidosAbertos");
+  if (!tbody) return;
+
+  const clienteId = document.getElementById("filtroCliente")?.value || "";
+  const produtoId = document.getElementById("filtroProduto")?.value || "";
+  const entregaAte = document.getElementById("filtroEntrega")?.value || "";
 
   let query = supabase
     .from("pedidos_itens")
@@ -91,19 +96,16 @@ async function carregarPedidosAbertos() {
   // ORDENAÇÃO FIFO CORRETA
   // ====================================================
   data.sort((a, b) => {
-    // 1) Data de entrega
     const da = String(a.data_entrega).substring(0, 10);
     const db = String(b.data_entrega).substring(0, 10);
     if (da < db) return -1;
     if (da > db) return 1;
 
-    // 2) Número do pedido (FIFO REAL)
     const pa = Number(a.pedidos?.numero_pedido || a.pedido_id);
     const pb = Number(b.pedidos?.numero_pedido || b.pedido_id);
     return pa - pb;
   });
 
-  const tbody = document.getElementById("tbodyPedidosAbertos");
   tbody.innerHTML = "";
 
   data.forEach(item => {
