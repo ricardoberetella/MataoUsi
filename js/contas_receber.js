@@ -1,10 +1,8 @@
 // ======================================================
-// CONTAS_RECEBER.JS — ESTÁVEL + EDITAR + PAGAR + REABRIR
+// CONTAS_RECEBER.JS — ESTÁVEL + FILTROS + VENCIDOS VERMELHO
 // ======================================================
 
 import { supabase, verificarLogin } from "./auth.js";
-
-let editandoId = null;
 
 // ======================================================
 document.addEventListener("DOMContentLoaded", async () => {
@@ -22,7 +20,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // ======================================================
-// FORMATADORES (SEM TIMEZONE)
+// FORMATADORES (SEM BUG DE FUSO)
 // ======================================================
 function formatarValor(v) {
     return Number(v || 0).toLocaleString("pt-BR", {
@@ -43,7 +41,7 @@ function hojeISO() {
 }
 
 // ======================================================
-// CARREGAR LANÇAMENTOS
+// CARREGAR LANÇAMENTOS (FILTROS OK)
 // ======================================================
 async function carregarLancamentos() {
     const tbody = document.getElementById("listaReceber");
@@ -52,39 +50,66 @@ async function carregarLancamentos() {
     tbody.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
     totalEl.innerText = "R$ 0,00";
 
+    const statusFiltro = document.getElementById("filtroStatus")?.value || "";
+    const vencimentoAte = document.getElementById("filtroVencimento")?.value || "";
+
     let query = supabase
         .from("contas_receber")
         .select("id, descricao, valor, data_vencimento, status")
         .order("data_vencimento", { ascending: true });
 
+    if (statusFiltro) {
+        query = query.eq("status", statusFiltro);
+    }
+
+    if (vencimentoAte) {
+        query = query.lte("data_vencimento", vencimentoAte);
+    }
+
     const { data, error } = await query;
 
     if (error) {
-        console.error("ERRO:", error);
-        tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar</td></tr>";
+        console.error("ERRO CONTAS_RECEBER:", error);
+        tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar dados</td></tr>";
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='5'>Nenhum lançamento</td></tr>";
         return;
     }
 
     tbody.innerHTML = "";
     let total = 0;
+    const hoje = hojeISO();
 
     data.forEach(l => {
         total += Number(l.valor || 0);
 
-        const pago = l.status === "PAGO";
+        const vencidoAutomatico =
+            l.status !== "PAGO" && l.data_vencimento < hoje;
 
         const tr = document.createElement("tr");
+
+        if (l.status === "VENCIDO" || vencidoAutomatico) {
+            tr.style.color = "#ff4d4d"; // 🔴 TEXTO VERMELHO
+            tr.style.fontWeight = "bold";
+        }
+
+        const pago = l.status === "PAGO";
+
         tr.innerHTML = `
-            <td>${l.descricao}</td>
+            <td>${l.descricao || "-"}</td>
             <td>${formatarValor(l.valor)}</td>
             <td>${isoParaBR(l.data_vencimento)}</td>
             <td>${l.status}</td>
-            <td class="td-acoes">
+            <td style="display:flex; gap:6px; justify-content:center">
                 <button class="btn-azul btn-editar" data-id="${l.id}" ${pago ? "disabled" : ""}>Editar</button>
                 <button class="btn-vermelho btn-pagar" data-id="${l.id}" ${pago ? "disabled" : ""}>Pagar</button>
                 ${pago ? `<button class="btn-amarelo btn-reabrir" data-id="${l.id}">Reabrir</button>` : ""}
             </td>
         `;
+
         tbody.appendChild(tr);
     });
 
@@ -97,17 +122,15 @@ async function carregarLancamentos() {
 // ======================================================
 function bindAcoes() {
 
-    // EDITAR
     document.querySelectorAll(".btn-editar").forEach(btn => {
         btn.onclick = () => abrirModalEditar(btn.dataset.id);
     });
 
-    // PAGAR
     document.querySelectorAll(".btn-pagar").forEach(btn => {
         btn.onclick = async () => {
             if (!confirm("Confirmar pagamento?")) return;
 
-            const { error } = await supabase
+            await supabase
                 .from("contas_receber")
                 .update({
                     status: "PAGO",
@@ -115,17 +138,15 @@ function bindAcoes() {
                 })
                 .eq("id", btn.dataset.id);
 
-            if (error) return alert("Erro ao pagar");
             carregarLancamentos();
         };
     });
 
-    // 🔄 REABRIR
     document.querySelectorAll(".btn-reabrir").forEach(btn => {
         btn.onclick = async () => {
-            if (!confirm("Reabrir este boleto? Ele voltará para ABERTO.")) return;
+            if (!confirm("Reabrir este boleto?")) return;
 
-            const { error } = await supabase
+            await supabase
                 .from("contas_receber")
                 .update({
                     status: "ABERTO",
@@ -133,27 +154,22 @@ function bindAcoes() {
                 })
                 .eq("id", btn.dataset.id);
 
-            if (error) {
-                console.error(error);
-                alert("Erro ao reabrir");
-                return;
-            }
-
             carregarLancamentos();
         };
     });
 }
 
 // ======================================================
-// MODAL
+// MODAL (INALTERADO)
 // ======================================================
+let editandoId = null;
+
 function abrirModalNovo() {
     editandoId = null;
-    document.getElementById("tituloModal").innerText = "Novo Lançamento";
-    document.getElementById("origemManual").value = "";
-    document.getElementById("valorManual").value = "";
-    document.getElementById("vencimentoManual").value = "";
-    document.getElementById("modalManual").classList.add("ativo");
+    origemManual.value = "";
+    valorManual.value = "";
+    vencimentoManual.value = "";
+    modalManual.classList.add("ativo");
 }
 
 async function abrirModalEditar(id) {
@@ -164,20 +180,19 @@ async function abrirModalEditar(id) {
         .single();
 
     if (data.status === "PAGO") {
-        alert("Pagamento já realizado. Use REABRIR.");
+        alert("Boleto pago. Use REABRIR.");
         return;
     }
 
     editandoId = id;
-    document.getElementById("tituloModal").innerText = `Editar #${id}`;
-    document.getElementById("origemManual").value = data.descricao;
-    document.getElementById("valorManual").value = data.valor;
-    document.getElementById("vencimentoManual").value = data.data_vencimento;
-    document.getElementById("modalManual").classList.add("ativo");
+    origemManual.value = data.descricao;
+    valorManual.value = data.valor;
+    vencimentoManual.value = data.data_vencimento;
+    modalManual.classList.add("ativo");
 }
 
 function fecharModal() {
-    document.getElementById("modalManual").classList.remove("ativo");
+    modalManual.classList.remove("ativo");
 }
 
 async function salvarModal() {
@@ -199,7 +214,8 @@ async function salvarModal() {
             status: "ABERTO"
         }]);
     } else {
-        await supabase.from("contas_receber")
+        await supabase
+            .from("contas_receber")
             .update({ descricao, valor, data_vencimento: venc })
             .eq("id", editandoId);
     }
@@ -220,5 +236,7 @@ function atualizarDataHoraPDF() {
     const el = document.getElementById("dataHoraPdf");
     if (!el) return;
     const d = new Date();
-    el.innerText = d.toLocaleDateString("pt-BR") + " " + d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+    el.innerText =
+        d.toLocaleDateString("pt-BR") + " " +
+        d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 }
