@@ -1,107 +1,84 @@
-// ====================================================
-// ITEM_EDITAR.JS — CORREÇÃO DEFINITIVA (DATA + UPDATE)
-// ====================================================
+// ======================================================
+// ITEM_EDITAR.JS — VERSÃO ESTÁVEL
+// ======================================================
 
 import { supabase, verificarLogin } from "./auth.js";
 
-let itemId = null;
-let pedidoId = null;
+let idItem = null;
 
+// ======================================================
 document.addEventListener("DOMContentLoaded", async () => {
-  const user = await verificarLogin();
-  if (!user) return;
+    const user = await verificarLogin();
+    if (!user) return;
 
-  const params = new URLSearchParams(window.location.search);
-  itemId = params.get("idItem");
-  pedidoId = params.get("idPedido");
+    const params = new URLSearchParams(window.location.search);
+    idItem = params.get("idItem");
 
-  if (!itemId || !pedidoId) {
-    alert("Parâmetros inválidos");
-    return;
-  }
+    if (!idItem) {
+        alert("Item não encontrado");
+        return;
+    }
 
-  document
-    .getElementById("btnSalvar")
-    ?.addEventListener("click", salvarAlteracoes);
+    await carregarItem();
 
-  carregarItem();
+    document.getElementById("btnSalvar")
+        ?.addEventListener("click", salvarAlteracoes);
 });
 
-// ====================================================
+// ======================================================
 // CARREGAR ITEM
-// ====================================================
+// ======================================================
 async function carregarItem() {
-  const { data, error } = await supabase
-    .from("pedidos_itens")
-    .select(`
-      id,
-      quantidade,
-      valor_unitario,
-      data_entrega,
-      produtos ( codigo, descricao )
-    `)
-    .eq("id", itemId)
-    .single();
+    const { data, error } = await supabase
+        .from("pedidos_itens")
+        .select("quantidade, valor_unitario, data_entrega")
+        .eq("id", idItem)
+        .single();
 
-  if (error) {
-    console.error(error);
-    alert("Erro ao carregar item");
-    return;
-  }
+    if (error || !data) {
+        console.error("Erro ao carregar item:", error);
+        alert("Erro ao carregar item");
+        return;
+    }
 
-  document.getElementById("produto").value =
-    `${data.produtos.codigo} — ${data.produtos.descricao}`;
+    document.getElementById("quantidade").value = data.quantidade;
+    document.getElementById("valor_unitario").value =
+        Number(data.valor_unitario).toFixed(2).replace(".", ",");
 
-  document.getElementById("quantidade").value = data.quantidade;
-  document.getElementById("valorUnitario").value = data.valor_unitario;
-
-  if (data.data_entrega) {
-    const [y, m, d] = data.data_entrega.split("-");
-    document.getElementById("dataEntrega").value = `${d}/${m}/${y}`;
-  }
+    document.getElementById("data_entrega").value =
+        data.data_entrega ? data.data_entrega.split("T")[0] : "";
 }
 
-// ====================================================
-// CONVERTER DATA BR → ISO
-// ====================================================
-function brParaISO(dataBR) {
-  if (!dataBR) return null;
-  const [d, m, y] = dataBR.split("/");
-  if (!d || !m || !y) return null;
-  return `${y}-${m}-${d}`;
-}
-
-// ====================================================
-// SALVAR ALTERAÇÕES
-// ====================================================
+// ======================================================
+// SALVAR
+// ======================================================
 async function salvarAlteracoes() {
-  const quantidade = Number(document.getElementById("quantidade").value);
-  const valorUnitario = Number(
-    document.getElementById("valorUnitario").value.replace(",", ".")
-  );
-  const dataEntregaBR = document.getElementById("dataEntrega").value;
-  const dataEntregaISO = brParaISO(dataEntregaBR);
+    const quantidade = Number(document.getElementById("quantidade").value);
+    const valorUnitario = Number(
+        document.getElementById("valor_unitario").value.replace(",", ".")
+    );
+    const dataEntrega = document.getElementById("data_entrega").value;
 
-  if (!quantidade || !valorUnitario) {
-    alert("Preencha quantidade e valor");
-    return;
-  }
+    if (!quantidade || !valorUnitario || !dataEntrega) {
+        alert("Preencha todos os campos");
+        return;
+    }
 
-  const { error } = await supabase
-    .from("pedidos_itens")
-    .update({
-      quantidade,
-      valor_unitario: valorUnitario,
-      data_entrega: dataEntregaISO
-    })
-    .eq("id", itemId);
+    const { error } = await supabase
+        .from("pedidos_itens")
+        .update({
+            quantidade,
+            valor_unitario: valorUnitario,
+            data_entrega: dataEntrega
+        })
+        .eq("id", idItem);
 
-  if (error) {
-    console.error("Erro ao atualizar item:", error);
-    alert("Erro ao atualizar item.");
-    return;
-  }
+    if (error) {
+        console.error("Erro ao atualizar item:", error);
+        alert("Erro ao atualizar item");
+        return;
+    }
 
-  alert("Item atualizado com sucesso!");
-  window.location.href = `pedido_ver.html?id=${pedidoId}`;
+    alert("Item atualizado com sucesso");
+    history.back();
 }
