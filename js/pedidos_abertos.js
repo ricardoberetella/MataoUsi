@@ -1,6 +1,8 @@
 // ====================================================
-// PEDIDOS_ABERTOS.JS — FINAL ESTÁVEL
-// FIFO REAL: data_entrega ASC + numero_pedido ASC
+// PEDIDOS_ABERTOS.JS — ESTÁVEL E FUNCIONAL
+// FIFO REAL:
+// 1) Data de entrega mais antiga
+// 2) Número do pedido menor
 // ====================================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -14,7 +16,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document
     .getElementById("btnFiltrar")
-    .addEventListener("click", carregarPedidosAbertos);
+    ?.addEventListener("click", carregarPedidosAbertos);
 });
 
 // ====================================================
@@ -22,16 +24,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 // ====================================================
 function formatarData(valor) {
   if (!valor) return "-";
-  const [a, m, d] = valor.substring(0, 10).split("-");
+  const [a, m, d] = String(valor).substring(0, 10).split("-");
   return `${d}/${m}/${a}`;
 }
 
 // ====================================================
-// FILTROS
+// CARREGAR FILTROS
 // ====================================================
 async function carregarFiltros() {
   const selCliente = document.getElementById("clienteFiltro");
   const selProduto = document.getElementById("produtoFiltro");
+  if (!selCliente || !selProduto) return;
 
   const { data: clientes } = await supabase
     .from("clientes")
@@ -55,38 +58,32 @@ async function carregarFiltros() {
 }
 
 // ====================================================
-// PEDIDOS EM ABERTO
+// CARREGAR PEDIDOS EM ABERTO
 // ====================================================
 async function carregarPedidosAbertos() {
   const tbody = document.getElementById("listaPedidos");
+  if (!tbody) return;
+
   tbody.innerHTML = `<tr><td colspan="6">Carregando...</td></tr>`;
 
-  const produtoId = document.getElementById("produtoFiltro").value;
-  const entregaAte = document.getElementById("dataFiltro").value;
+  const produtoId = document.getElementById("produtoFiltro")?.value || "";
+  const entregaAte = document.getElementById("dataFiltro")?.value || "";
 
   let query = supabase
     .from("pedidos_itens")
     .select(`
       id,
+      pedido_id,
+      produto_id,
       quantidade,
       quantidade_baixada,
       data_entrega,
-      pedidos (
-        numero_pedido
-      ),
-      produtos (
-        codigo,
-        descricao
-      )
+      pedidos ( numero_pedido ),
+      produtos ( codigo, descricao )
     `);
 
-  if (produtoId) {
-    query = query.eq("produto_id", produtoId);
-  }
-
-  if (entregaAte) {
-    query = query.lte("data_entrega", entregaAte);
-  }
+  if (produtoId) query = query.eq("produto_id", produtoId);
+  if (entregaAte) query = query.lte("data_entrega", entregaAte);
 
   const { data, error } = await query;
 
@@ -96,6 +93,7 @@ async function carregarPedidosAbertos() {
     return;
   }
 
+  // Apenas saldo em aberto
   const abertos = data.filter(i => {
     const aberto = i.quantidade - (i.quantidade_baixada || 0);
     return aberto > 0 && i.pedidos && i.produtos;
@@ -106,14 +104,12 @@ async function carregarPedidosAbertos() {
     return;
   }
 
-  // ====================================================
   // FIFO REAL
-  // 1º data_entrega
-  // 2º numero_pedido
-  // ====================================================
   abertos.sort((a, b) => {
-    if (a.data_entrega < b.data_entrega) return -1;
-    if (a.data_entrega > b.data_entrega) return 1;
+    const da = a.data_entrega;
+    const db = b.data_entrega;
+    if (da < db) return -1;
+    if (da > db) return 1;
     return Number(a.pedidos.numero_pedido) - Number(b.pedidos.numero_pedido);
   });
 
