@@ -2,7 +2,7 @@
 // PEDIDOS_ABERTOS.JS — FIFO CORRETO + ROBUSTO
 // ====================================================
 
-import { supabase, verificarLogin } from "./auth.js";
+import { supabase, verificarLogin } from "../auth.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
   const user = await verificarLogin();
