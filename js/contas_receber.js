@@ -1,9 +1,11 @@
 // ======================================================
-// CONTAS_RECEBER.JS — ESTÁVEL FINAL
+// CONTAS_RECEBER.JS — ESTÁVEL + EDITAR + LANÇAMENTO MANUAL
+// (corrige 1 dia anterior / timezone e coluna errada)
 // ======================================================
 
 import { supabase, verificarLogin } from "./auth.js";
 
+// estado
 let editandoId = null;
 
 // ======================================================
@@ -11,179 +13,334 @@ document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
 
+    // botões
     document.getElementById("btnFiltrar")?.addEventListener("click", carregarLancamentos);
     document.getElementById("btnGerarPDF")?.addEventListener("click", gerarPDF);
 
-    // 🔥 BOTÃO LANÇAMENTO MANUAL (CORRIGIDO)
-    document.querySelector(".btn-verde")?.addEventListener("click", abrirNovo);
+    document.getElementById("btnNovoManual")?.addEventListener("click", () => {
+        abrirModalNovo();
+    });
 
-    criarModal();
+    document.getElementById("btnCancelarManual")?.addEventListener("click", fecharModal);
+
+    document.getElementById("modalManual")?.addEventListener("click", (e) => {
+        if (e.target?.id === "modalManual") fecharModal();
+    });
+
+    document.getElementById("btnSalvarManual")?.addEventListener("click", salvarModal);
+
+    atualizarDataHoraPDF();
     carregarLancamentos();
 });
 
 // ======================================================
+// FORMATADORES (SEM new Date() PARA NÃO VOLTAR 1 DIA)
+// ======================================================
 function formatarValor(v) {
-    return Number(v || 0).toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL"
-    });
+    return Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-function isoParaBR(d) {
-    if (!d) return "";
-    const [y,m,dd] = d.split("-");
-    return `${dd}/${m}/${y}`;
+function isoParaBR(iso) {
+    // iso = "YYYY-MM-DD" (date no Supabase)
+    if (!iso) return "-";
+    const p = String(iso).split("-");
+    if (p.length !== 3) return "-";
+    return `${p[2]}/${p[1]}/${p[0]}`;
 }
 
-function brParaISO(d) {
-    if (!d) return null;
-    const [dd,m,y] = d.split("/");
-    return `${y}-${m}-${dd}`;
+function hojeISO() {
+    // gera YYYY-MM-DD no fuso local sem timezone shift
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
 }
 
+// ======================================================
+// CARREGAR LANÇAMENTOS
 // ======================================================
 async function carregarLancamentos() {
     const tbody = document.getElementById("listaReceber");
     const totalEl = document.getElementById("totalReceber");
+    if (!tbody || !totalEl) return;
 
     tbody.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
     totalEl.innerText = "R$ 0,00";
 
-    const { data, error } = await supabase
+    const statusFiltro = document.getElementById("filtroStatus")?.value || "";
+    const vencimentoAte = document.getElementById("filtroVencimento")?.value || "";
+
+    // IMPORTANTE:
+    // sua tabela NÃO tem "origem". Ela tem "descricao" e "data_vencimento".
+    let query = supabase
         .from("contas_receber")
         .select("id, descricao, valor, data_vencimento, status")
-        .order("data_vencimento");
+        .order("data_vencimento", { ascending: true });
+
+    if (statusFiltro) query = query.eq("status", statusFiltro);
+    if (vencimentoAte) query = query.lte("data_vencimento", vencimentoAte);
+
+    const { data, error } = await query;
 
     if (error) {
-        console.error(error);
-        tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar</td></tr>";
+        console.error("ERRO CONTAS_RECEBER:", error);
+        tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar dados</td></tr>";
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='5'>Nenhum lançamento</td></tr>";
         return;
     }
 
     tbody.innerHTML = "";
     let total = 0;
 
-    data.forEach(l => {
+    data.forEach((l) => {
         total += Number(l.valor || 0);
 
         const tr = document.createElement("tr");
+        if (l.status === "VENCIDO") tr.classList.add("vencido");
+
+        const bloqueado = (l.status === "PAGO");
+
         tr.innerHTML = `
-            <td>${l.descricao}</td>
+            <td>${l.descricao || "-"}</td>
             <td>${formatarValor(l.valor)}</td>
             <td>${isoParaBR(l.data_vencimento)}</td>
-            <td>${l.status}</td>
-            <td style="display:flex; gap:6px; justify-content:center">
-                <button class="btn-azul editar"
-                    data-id="${l.id}"
-                    data-descricao="${l.descricao}"
-                    data-valor="${l.valor}"
-                    data-vencimento="${l.data_vencimento}"
-                    data-status="${l.status}">
+            <td>${l.status || "-"}</td>
+            <td class="td-acoes">
+                <button class="btn-azul btn-editar" data-id="${l.id}" ${bloqueado ? "disabled style='opacity:.45;cursor:not-allowed'" : ""}>
                     Editar
                 </button>
-                <button class="btn-vermelho">Pagar</button>
+                <button class="btn-vermelho btn-pagar btn-pagar" data-id="${l.id}" ${bloqueado ? "disabled style='opacity:.45;cursor:not-allowed'" : ""}>
+                    Pagar
+                </button>
             </td>
         `;
+
         tbody.appendChild(tr);
     });
 
     totalEl.innerText = formatarValor(total);
-    bindEditar();
+    bindAcoes();
 }
 
 // ======================================================
-function bindEditar() {
-    document.querySelectorAll(".editar").forEach(btn => {
-        btn.onclick = () => {
-            if (btn.dataset.status === "PAGO") {
-                alert("Lançamento pago não pode ser editado");
+// AÇÕES (EDITAR / PAGAR)
+// ======================================================
+function bindAcoes() {
+    document.querySelectorAll(".btn-editar").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+            const id = Number(btn.dataset.id);
+            if (!id) return;
+            await abrirModalEditar(id);
+        });
+    });
+
+    document.querySelectorAll(".btn-pagar").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+            const id = Number(btn.dataset.id);
+            if (!id) return;
+
+            const ok = confirm("Confirmar pagamento deste lançamento?");
+            if (!ok) return;
+
+            const { error } = await supabase
+                .from("contas_receber")
+                .update({
+                    status: "PAGO",
+                    data_pagamento: hojeISO()
+                })
+                .eq("id", id);
+
+            if (error) {
+                console.error("ERRO PAGAR:", error);
+                alert("Erro ao marcar como pago.");
                 return;
             }
 
-            editandoId = btn.dataset.id;
-            abrirModal(
-                "Editar Lançamento",
-                btn.dataset.descricao,
-                btn.dataset.valor,
-                isoParaBR(btn.dataset.vencimento),
-                salvarEdicao
-            );
-        };
+            carregarLancamentos();
+        });
     });
 }
 
 // ======================================================
-// MODAL
+// MODAL (NOVO / EDITAR)
 // ======================================================
-function criarModal() {
-    const modal = document.createElement("div");
-    modal.id = "modal";
-    modal.style = `
-        position:fixed; inset:0; background:rgba(0,0,0,.7);
-        display:none; align-items:center; justify-content:center; z-index:9999
-    `;
-
-    modal.innerHTML = `
-        <div style="background:#0f172a;padding:20px;border-radius:12px;width:320px;color:#fff">
-            <h3 id="tituloModal"></h3>
-            <input id="campoDesc" placeholder="NF / Origem" style="width:100%;margin-bottom:8px">
-            <input id="campoValor" type="number" step="0.01" style="width:100%;margin-bottom:8px">
-            <input id="campoVenc" placeholder="dd/mm/aaaa" style="width:100%;margin-bottom:12px">
-            <div style="display:flex;justify-content:flex-end;gap:8px">
-                <button id="cancelar" class="btn-vermelho">Cancelar</button>
-                <button id="salvar" class="btn-verde">Salvar</button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-
-    document.getElementById("cancelar").onclick = () => modal.style.display = "none";
-}
-
-// ======================================================
-function abrirModal(titulo, desc, valor, venc, acao) {
-    document.getElementById("tituloModal").innerText = titulo;
-    document.getElementById("campoDesc").value = desc || "";
-    document.getElementById("campoValor").value = valor || "";
-    document.getElementById("campoVenc").value = venc || "";
-
-    document.getElementById("salvar").onclick = acao;
-    document.getElementById("modal").style.display = "flex";
-}
-
-// ======================================================
-function abrirNovo() {
+function abrirModalNovo() {
     editandoId = null;
-    abrirModal("Novo Lançamento", "", "", "", salvarNovo);
+
+    const modal = document.getElementById("modalManual");
+    const titulo = document.getElementById("tituloModal");
+    const aviso = document.getElementById("avisoModal");
+
+    const desc = document.getElementById("origemManual");
+    const valor = document.getElementById("valorManual");
+    const venc = document.getElementById("vencimentoManual");
+
+    if (!modal || !titulo || !aviso || !desc || !valor || !venc) return;
+
+    titulo.innerText = "Novo Lançamento Manual";
+    aviso.innerText = "Será salvo como ABERTO.";
+    desc.value = "";
+    valor.value = "";
+    venc.value = "";
+
+    modal.classList.add("ativo");
+    desc.focus();
 }
 
-// ======================================================
-async function salvarNovo() {
-    await supabase.from("contas_receber").insert({
-        descricao: campoDesc.value,
-        valor: campoValor.value,
-        data_vencimento: brParaISO(campoVenc.value),
-        status: "ABERTO"
-    });
+async function abrirModalEditar(id) {
+    const modal = document.getElementById("modalManual");
+    const titulo = document.getElementById("tituloModal");
+    const aviso = document.getElementById("avisoModal");
 
-    modal.style.display = "none";
-    carregarLancamentos();
+    const desc = document.getElementById("origemManual");
+    const valor = document.getElementById("valorManual");
+    const venc = document.getElementById("vencimentoManual");
+
+    if (!modal || !titulo || !aviso || !desc || !valor || !venc) return;
+
+    const { data, error } = await supabase
+        .from("contas_receber")
+        .select("id, descricao, valor, data_vencimento, status")
+        .eq("id", id)
+        .maybeSingle();
+
+    if (error || !data) {
+        console.error("ERRO BUSCAR EDITAR:", error);
+        alert("Não foi possível abrir para editar.");
+        return;
+    }
+
+    if (data.status === "PAGO") {
+        alert("Lançamento PAGO não pode ser editado.");
+        return;
+    }
+
+    editandoId = data.id;
+
+    titulo.innerText = `Editar Lançamento #${data.id}`;
+    aviso.innerText = "Status PAGO é bloqueado (somente via botão Pagar).";
+
+    desc.value = data.descricao || "";
+    valor.value = Number(data.valor || 0);
+    venc.value = data.data_vencimento || ""; // mantém YYYY-MM-DD
+
+    modal.classList.add("ativo");
+    desc.focus();
 }
 
-// ======================================================
-async function salvarEdicao() {
-    await supabase
+function fecharModal() {
+    const modal = document.getElementById("modalManual");
+    if (!modal) return;
+    modal.classList.remove("ativo");
+}
+
+async function salvarModal() {
+    const desc = document.getElementById("origemManual");
+    const valor = document.getElementById("valorManual");
+    const venc = document.getElementById("vencimentoManual");
+
+    if (!desc || !valor || !venc) return;
+
+    const descricao = (desc.value || "").trim();
+    const v = Number(valor.value || 0);
+    const data_vencimento = venc.value || "";
+
+    if (!descricao) {
+        alert("Preencha NF / Origem.");
+        desc.focus();
+        return;
+    }
+    if (!data_vencimento) {
+        alert("Preencha o Vencimento.");
+        venc.focus();
+        return;
+    }
+    if (!isFinite(v) || v <= 0) {
+        alert("Valor inválido.");
+        valor.focus();
+        return;
+    }
+
+    // INSERT (novo)
+    if (!editandoId) {
+        // mantém compatibilidade com sua estrutura:
+        // descricao, valor, data_vencimento, status
+        // origem_tipo = "BOLETO" (como seus registros)
+        const { error } = await supabase
+            .from("contas_receber")
+            .insert([{
+                origem_tipo: "BOLETO",
+                descricao,
+                valor: v,
+                data_vencimento,
+                status: "ABERTO"
+            }]);
+
+        if (error) {
+            console.error("ERRO SALVAR MANUAL:", error);
+            alert("Erro ao salvar lançamento manual.");
+            return;
+        }
+
+        fecharModal();
+        carregarLancamentos();
+        return;
+    }
+
+    // UPDATE (editar) — não mexe em status aqui
+    const { error } = await supabase
         .from("contas_receber")
         .update({
-            descricao: campoDesc.value,
-            valor: campoValor.value,
-            data_vencimento: brParaISO(campoVenc.value)
+            descricao,
+            valor: v,
+            data_vencimento
         })
         .eq("id", editandoId);
 
-    modal.style.display = "none";
+    if (error) {
+        console.error("ERRO ATUALIZAR:", error);
+        alert("Erro ao atualizar lançamento.");
+        return;
+    }
+
+    fecharModal();
     carregarLancamentos();
 }
 
 // ======================================================
-function gerarPDF() {}
+// PDF
+// ======================================================
+function gerarPDF() {
+    document.body.classList.add("modo-pdf");
+
+    html2pdf()
+        .from(document.getElementById("areaPdf"))
+        .set({
+            margin: 10,
+            filename: "contas_a_receber.pdf",
+            image: { type: "jpeg", quality: 0.98 },
+            html2canvas: { scale: 1 },
+            jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+        })
+        .save()
+        .then(() => document.body.classList.remove("modo-pdf"));
+}
+
+// ======================================================
+// DATA / HORA PDF
+// ======================================================
+function atualizarDataHoraPDF() {
+    const el = document.getElementById("dataHoraPdf");
+    if (!el) return;
+
+    const agora = new Date();
+    el.innerText =
+        agora.toLocaleDateString("pt-BR") +
+        " " +
+        agora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+}
