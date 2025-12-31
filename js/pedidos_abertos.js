@@ -1,5 +1,5 @@
 // ====================================================
-// PEDIDOS_ABERTOS.JS — FIFO CORRETO (ESTÁVEL)
+// PEDIDOS_ABERTOS.JS — FIFO CORRETO + CONTROLE DE ESTADO
 // ====================================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -27,13 +27,11 @@ function formatarData(valor) {
 }
 
 // ====================================================
-// CARREGAR FILTROS (SEM QUEBRAR SE ID NÃO EXISTIR)
+// CARREGAR FILTROS
 // ====================================================
 async function carregarFiltros() {
   const selCliente = document.getElementById("filtroCliente");
   const selProduto = document.getElementById("filtroProduto");
-
-  // 👉 Se o HTML não tiver esses filtros, sai sem erro
   if (!selCliente || !selProduto) return;
 
   const { data: clientes } = await supabase
@@ -64,7 +62,15 @@ async function carregarPedidosAbertos() {
   const tbody = document.getElementById("tbodyPedidosAbertos");
   if (!tbody) return;
 
-  const clienteId = document.getElementById("filtroCliente")?.value || "";
+  // 🔄 estado carregando
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="6" style="text-align:center;padding:20px;">
+        Carregando...
+      </td>
+    </tr>
+  `;
+
   const produtoId = document.getElementById("filtroProduto")?.value || "";
   const entregaAte = document.getElementById("filtroEntrega")?.value || "";
 
@@ -88,31 +94,63 @@ async function carregarPedidosAbertos() {
 
   if (error) {
     console.error(error);
-    alert("Erro ao carregar pedidos em aberto");
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align:center;color:red;">
+          Erro ao carregar pedidos
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  // ====================================================
+  // FILTRAR APENAS COM SALDO EM ABERTO
+  // ====================================================
+  const abertos = data.filter(item => {
+    const total = item.quantidade;
+    const baixado = item.quantidade_baixada || 0;
+    return total - baixado > 0;
+  });
+
+  // ====================================================
+  // SEM RESULTADOS
+  // ====================================================
+  if (abertos.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align:center;padding:20px;">
+          Nenhum pedido em aberto
+        </td>
+      </tr>
+    `;
     return;
   }
 
   // ====================================================
   // ORDENAÇÃO FIFO CORRETA
   // ====================================================
-  data.sort((a, b) => {
+  abertos.sort((a, b) => {
     const da = String(a.data_entrega).substring(0, 10);
     const db = String(b.data_entrega).substring(0, 10);
     if (da < db) return -1;
     if (da > db) return 1;
 
-    const pa = Number(a.pedidos?.numero_pedido || a.pedido_id);
-    const pb = Number(b.pedidos?.numero_pedido || b.pedido_id);
-    return pa - pb;
+    return (
+      Number(a.pedidos?.numero_pedido || a.pedido_id) -
+      Number(b.pedidos?.numero_pedido || b.pedido_id)
+    );
   });
 
+  // ====================================================
+  // RENDERIZAÇÃO FINAL
+  // ====================================================
   tbody.innerHTML = "";
 
-  data.forEach(item => {
+  abertos.forEach(item => {
     const total = item.quantidade;
     const baixado = item.quantidade_baixada || 0;
     const aberto = total - baixado;
-    if (aberto <= 0) return;
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
