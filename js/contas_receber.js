@@ -1,5 +1,5 @@
 // ======================================================
-// CONTAS_RECEBER.JS — VERSÃO ESTÁVEL (FILTROS OK + VENCIDO VERMELHO)
+// CONTAS_RECEBER.JS — VERSÃO ESTÁVEL + PAGAR FUNCIONAL
 // ======================================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -31,7 +31,6 @@ function formatarValor(v) {
 
 function formatarData(isoYYYYMMDD) {
     if (!isoYYYYMMDD) return "-";
-    // evita bug de fuso (não usa new Date("YYYY-MM-DD") direto)
     const [y, m, d] = String(isoYYYYMMDD).split("-");
     const dt = new Date(Number(y), Number(m) - 1, Number(d));
     return dt.toLocaleDateString("pt-BR");
@@ -42,7 +41,7 @@ function hojeISOlocal() {
     const y = now.getFullYear();
     const m = String(now.getMonth() + 1).padStart(2, "0");
     const d = String(now.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`; // YYYY-MM-DD em horário local
+    return `${y}-${m}-${d}`;
 }
 
 // ======================================================
@@ -60,23 +59,13 @@ async function carregarLancamentos() {
     const statusFiltro = (document.getElementById("filtroStatus")?.value || "").trim();
     const vencimentoAte = (document.getElementById("filtroVencimento")?.value || "").trim();
 
-    // ---------------------------
-    // Estratégia:
-    // - Sempre busca os dados necessários
-    // - Aplica filtro "VENCIDO" por data (data_vencimento < hoje e status != PAGO)
-    // - Aplica filtro "ABERTO" por status != PAGO e não vencido
-    // - Aplica filtro "PAGO" por status == PAGO
-    // ---------------------------
     let query = supabase
         .from("contas_receber")
         .select("id, descricao, valor, data_vencimento, status")
         .order("data_vencimento", { ascending: true });
 
-    // filtro por vencimento até (sempre pode aplicar no banco)
     if (vencimentoAte) query = query.lte("data_vencimento", vencimentoAte);
 
-    // Para não depender do seu status estar “VENCIDO”, o filtro por status é tratado aqui:
-    // (se quiser manter parte no banco, teria que garantir o status correto na tabela)
     const { data, error } = await query;
 
     if (error) {
@@ -86,8 +75,6 @@ async function carregarLancamentos() {
     }
 
     const hoje = hojeISOlocal();
-
-    // aplica filtros em memória (resolve o “Vencido” sem depender do status gravado)
     let lista = Array.isArray(data) ? data : [];
 
     if (statusFiltro === "PAGO") {
@@ -95,19 +82,16 @@ async function carregarLancamentos() {
     } else if (statusFiltro === "VENCIDO") {
         lista = lista.filter(l => {
             const status = (l.status || "").toUpperCase();
-            const venc = (l.data_vencimento || "");
-            return status !== "PAGO" && venc && venc < hoje;
+            return status !== "PAGO" && l.data_vencimento < hoje;
         });
     } else if (statusFiltro === "ABERTO") {
         lista = lista.filter(l => {
             const status = (l.status || "").toUpperCase();
-            const venc = (l.data_vencimento || "");
-            const estaVencido = venc && venc < hoje;
-            return status !== "PAGO" && !estaVencido;
+            return status !== "PAGO" && l.data_vencimento >= hoje;
         });
-    } // "" = Todos => não filtra
+    }
 
-    if (!lista || lista.length === 0) {
+    if (lista.length === 0) {
         tbody.innerHTML = "<tr><td colspan='5'>Nenhum lançamento</td></tr>";
         totalEl.innerText = "R$ 0,00";
         return;
@@ -140,9 +124,7 @@ async function carregarLancamentos() {
             </td>
         `;
 
-        // ✅ Texto vermelho para vencidos (sem mexer em CSS)
         if (estaVencido) {
-            // pinta só as colunas de texto (não mexe nos botões)
             const tds = tr.querySelectorAll("td");
             for (let i = 0; i < 4; i++) {
                 if (tds[i]) {
@@ -160,7 +142,7 @@ async function carregarLancamentos() {
 }
 
 // ======================================================
-// AÇÕES (mantido como estava)
+// AÇÕES
 // ======================================================
 function bindAcoes() {
     document.querySelectorAll(".btn-editar").forEach(btn => {
@@ -170,8 +152,28 @@ function bindAcoes() {
     });
 
     document.querySelectorAll(".btn-pagar").forEach(btn => {
-        btn.addEventListener("click", () => {
-            alert("Pagar ID: " + btn.dataset.id);
+        btn.addEventListener("click", async () => {
+            const id = Number(btn.dataset.id);
+            if (!id) return;
+
+            if (!confirm("Confirmar pagamento deste lançamento?")) return;
+
+            const { error } = await supabase
+                .from("contas_receber")
+                .update({
+                    status: "PAGO",
+                    data_pagamento: hojeISOlocal()
+                })
+                .eq("id", id);
+
+            if (error) {
+                alert("Erro ao pagar: " + error.message);
+                console.error(error);
+                return;
+            }
+
+            alert("Pagamento realizado com sucesso");
+            carregarLancamentos();
         });
     });
 }
