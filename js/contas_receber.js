@@ -1,19 +1,29 @@
 // ======================================================
-// CONTAS_RECEBER.JS — ESTÁVEL + MODAL NOVO/EDITAR (FIX ORIGEM)
+// CONTAS_RECEBER.JS — ROLE AWARE (ADMIN x VISUALIZADOR)
 // ======================================================
 
 import { supabase, verificarLogin } from "./auth.js";
 
 let editandoId = null;
+let roleUsuario = "visualizador"; // default seguro
 
 // ======================================================
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
 
+    roleUsuario = user.user_metadata?.role || "visualizador";
+
     document.getElementById("btnFiltrar")?.addEventListener("click", carregarLancamentos);
     document.getElementById("btnGerarPDF")?.addEventListener("click", gerarPDF);
-    document.getElementById("btnNovoManual")?.addEventListener("click", abrirModalNovo);
+
+    // botão novo manual → só admin
+    if (roleUsuario !== "visualizador") {
+        document.getElementById("btnNovoManual")
+            ?.addEventListener("click", abrirModalNovo);
+    } else {
+        document.getElementById("btnNovoManual")?.remove();
+    }
 
     document.getElementById("btnCancelarManual")?.addEventListener("click", fecharModal);
     document.getElementById("btnSalvarManual")?.addEventListener("click", salvarManual);
@@ -90,20 +100,26 @@ async function carregarLancamentos() {
         const pago = l.status === "PAGO";
         const vencido = !pago && l.data_vencimento < hoje;
 
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${l.descricao || "-"}</td>
-            <td>${formatarValor(l.valor)}</td>
-            <td>${formatarData(l.data_vencimento)}</td>
-            <td>${l.status}</td>
-            <td class="td-acoes">
+        // === AÇÕES CONDICIONAIS POR ROLE ===
+        let acoesHTML = "-";
+        if (roleUsuario !== "visualizador") {
+            acoesHTML = `
                 <button class="btn-azul btn-editar" data-id="${l.id}">Editar</button>
                 ${
                     pago
                         ? `<button class="btn-cinza btn-reverter" data-id="${l.id}">Reverter</button>`
                         : `<button class="btn-pagar" data-id="${l.id}">Pagar</button>`
                 }
-            </td>
+            `;
+        }
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${l.descricao || "-"}</td>
+            <td>${formatarValor(l.valor)}</td>
+            <td>${formatarData(l.data_vencimento)}</td>
+            <td>${l.status}</td>
+            <td class="td-acoes">${acoesHTML}</td>
         `;
 
         if (vencido) {
@@ -119,11 +135,11 @@ async function carregarLancamentos() {
     });
 
     totalEl.innerText = formatarValor(total);
-    bindAcoes();
+    if (roleUsuario !== "visualizador") bindAcoes();
 }
 
 // ======================================================
-// AÇÕES TABELA
+// AÇÕES (SÓ ADMIN)
 // ======================================================
 function bindAcoes() {
 
@@ -151,12 +167,9 @@ function bindAcoes() {
     document.querySelectorAll(".btn-pagar").forEach(btn => {
         btn.onclick = async () => {
             if (!confirm("Confirmar pagamento?")) return;
-
-            await supabase
-                .from("contas_receber")
+            await supabase.from("contas_receber")
                 .update({ status: "PAGO", data_pagamento: hojeISO() })
                 .eq("id", btn.dataset.id);
-
             carregarLancamentos();
         };
     });
@@ -164,12 +177,9 @@ function bindAcoes() {
     document.querySelectorAll(".btn-reverter").forEach(btn => {
         btn.onclick = async () => {
             if (!confirm("Reverter pagamento?")) return;
-
-            await supabase
-                .from("contas_receber")
+            await supabase.from("contas_receber")
                 .update({ status: "ABERTO", data_pagamento: null })
                 .eq("id", btn.dataset.id);
-
             carregarLancamentos();
         };
     });
@@ -206,13 +216,11 @@ async function salvarManual() {
     }
 
     if (editandoId) {
-        await supabase
-            .from("contas_receber")
+        await supabase.from("contas_receber")
             .update({ descricao, valor, data_vencimento: venc })
             .eq("id", editandoId);
     } else {
-        await supabase
-            .from("contas_receber")
+        await supabase.from("contas_receber")
             .insert({ descricao, valor, data_vencimento: venc, status: "ABERTO" });
     }
 
