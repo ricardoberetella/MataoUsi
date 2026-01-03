@@ -1,24 +1,24 @@
 // ======================================================
-// CONTAS_RECEBER.JS — ROLE AWARE (ADMIN x VISUALIZADOR)
+// CONTAS_RECEBER.JS — ROLE AWARE (ADMIN x VIEWER)
 // ======================================================
 
 import { supabase, verificarLogin } from "./auth.js";
 
 let editandoId = null;
-let roleUsuario = "visualizador"; // default seguro
+let roleUsuario = "viewer"; // PADRÃO CORRETO
 
 // ======================================================
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
 
-    roleUsuario = user.user_metadata?.role || "visualizador";
+    roleUsuario = user.user_metadata?.role || "viewer";
 
     document.getElementById("btnFiltrar")?.addEventListener("click", carregarLancamentos);
     document.getElementById("btnGerarPDF")?.addEventListener("click", gerarPDF);
 
-    // botão novo manual → só admin
-    if (roleUsuario !== "visualizador") {
+    // + Lançamento Manual → SOMENTE admin / operador
+    if (roleUsuario !== "viewer") {
         document.getElementById("btnNovoManual")
             ?.addEventListener("click", abrirModalNovo);
     } else {
@@ -100,9 +100,8 @@ async function carregarLancamentos() {
         const pago = l.status === "PAGO";
         const vencido = !pago && l.data_vencimento < hoje;
 
-        // === AÇÕES CONDICIONAIS POR ROLE ===
         let acoesHTML = "-";
-        if (roleUsuario !== "visualizador") {
+        if (roleUsuario !== "viewer") {
             acoesHTML = `
                 <button class="btn-azul btn-editar" data-id="${l.id}">Editar</button>
                 ${
@@ -135,11 +134,11 @@ async function carregarLancamentos() {
     });
 
     totalEl.innerText = formatarValor(total);
-    if (roleUsuario !== "visualizador") bindAcoes();
+    if (roleUsuario !== "viewer") bindAcoes();
 }
 
 // ======================================================
-// AÇÕES (SÓ ADMIN)
+// AÇÕES (ADMIN / OPERADOR)
 // ======================================================
 function bindAcoes() {
 
