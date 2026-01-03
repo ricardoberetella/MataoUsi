@@ -1,5 +1,5 @@
 // ======================================================
-// CONTAS_RECEBER.JS — VERSÃO ESTÁVEL + PAGAR FUNCIONAL
+// CONTAS_RECEBER.JS — ESTÁVEL + EDITAR + PAGAR + REVERTER
 // ======================================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -29,19 +29,15 @@ function formatarValor(v) {
     });
 }
 
-function formatarData(isoYYYYMMDD) {
-    if (!isoYYYYMMDD) return "-";
-    const [y, m, d] = String(isoYYYYMMDD).split("-");
-    const dt = new Date(Number(y), Number(m) - 1, Number(d));
-    return dt.toLocaleDateString("pt-BR");
+function formatarData(iso) {
+    if (!iso) return "-";
+    const [y, m, d] = String(iso).split("-");
+    return new Date(y, m - 1, d).toLocaleDateString("pt-BR");
 }
 
 function hojeISOlocal() {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, "0");
-    const d = String(now.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
 
 // ======================================================
@@ -50,14 +46,13 @@ function hojeISOlocal() {
 async function carregarLancamentos() {
     const tbody = document.getElementById("listaReceber");
     const totalEl = document.getElementById("totalReceber");
-
     if (!tbody) return;
 
     tbody.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
     totalEl.innerText = "R$ 0,00";
 
-    const statusFiltro = (document.getElementById("filtroStatus")?.value || "").trim();
-    const vencimentoAte = (document.getElementById("filtroVencimento")?.value || "").trim();
+    const statusFiltro = document.getElementById("filtroStatus")?.value || "";
+    const vencimentoAte = document.getElementById("filtroVencimento")?.value || "";
 
     let query = supabase
         .from("contas_receber")
@@ -67,34 +62,21 @@ async function carregarLancamentos() {
     if (vencimentoAte) query = query.lte("data_vencimento", vencimentoAte);
 
     const { data, error } = await query;
-
     if (error) {
-        console.error("ERRO CONTAS_RECEBER:", error);
-        tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar dados</td></tr>";
+        console.error(error);
+        tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar</td></tr>";
         return;
     }
 
     const hoje = hojeISOlocal();
-    let lista = Array.isArray(data) ? data : [];
+    let lista = data || [];
 
     if (statusFiltro === "PAGO") {
-        lista = lista.filter(l => (l.status || "").toUpperCase() === "PAGO");
+        lista = lista.filter(l => l.status === "PAGO");
     } else if (statusFiltro === "VENCIDO") {
-        lista = lista.filter(l => {
-            const status = (l.status || "").toUpperCase();
-            return status !== "PAGO" && l.data_vencimento < hoje;
-        });
+        lista = lista.filter(l => l.status !== "PAGO" && l.data_vencimento < hoje);
     } else if (statusFiltro === "ABERTO") {
-        lista = lista.filter(l => {
-            const status = (l.status || "").toUpperCase();
-            return status !== "PAGO" && l.data_vencimento >= hoje;
-        });
-    }
-
-    if (lista.length === 0) {
-        tbody.innerHTML = "<tr><td colspan='5'>Nenhum lançamento</td></tr>";
-        totalEl.innerText = "R$ 0,00";
-        return;
+        lista = lista.filter(l => l.status !== "PAGO" && l.data_vencimento >= hoje);
     }
 
     tbody.innerHTML = "";
@@ -103,35 +85,31 @@ async function carregarLancamentos() {
     lista.forEach(l => {
         total += Number(l.valor || 0);
 
-        const status = (l.status || "ABERTO").toUpperCase();
-        const vencISO = l.data_vencimento || "";
-        const estaVencido = status !== "PAGO" && vencISO && vencISO < hoje;
+        const pago = l.status === "PAGO";
+        const vencido = !pago && l.data_vencimento < hoje;
 
         const tr = document.createElement("tr");
-
         tr.innerHTML = `
             <td>${l.descricao || "-"}</td>
             <td>${formatarValor(l.valor)}</td>
             <td>${formatarData(l.data_vencimento)}</td>
-            <td>${status}</td>
+            <td>${l.status}</td>
             <td style="display:flex; gap:6px; justify-content:center">
-                <button class="btn-azul btn-editar" data-id="${l.id}">
-                    Editar
-                </button>
-                <button class="btn-vermelho btn-pagar" data-id="${l.id}">
-                    Pagar
-                </button>
+                <button class="btn-azul btn-editar" data-id="${l.id}">Editar</button>
+                ${pago
+                    ? `<button class="btn-cinza btn-reverter" data-id="${l.id}">Reverter</button>`
+                    : `<button class="btn-vermelho btn-pagar" data-id="${l.id}">Pagar</button>`
+                }
             </td>
         `;
 
-        if (estaVencido) {
-            const tds = tr.querySelectorAll("td");
-            for (let i = 0; i < 4; i++) {
-                if (tds[i]) {
-                    tds[i].style.color = "#ff3b3b";
-                    tds[i].style.fontWeight = "700";
+        if (vencido) {
+            tr.querySelectorAll("td").forEach((td, i) => {
+                if (i < 4) {
+                    td.style.color = "#ff3b3b";
+                    td.style.fontWeight = "700";
                 }
-            }
+            });
         }
 
         tbody.appendChild(tr);
@@ -145,36 +123,43 @@ async function carregarLancamentos() {
 // AÇÕES
 // ======================================================
 function bindAcoes() {
+
     document.querySelectorAll(".btn-editar").forEach(btn => {
-        btn.addEventListener("click", () => {
-            alert("Editar ID: " + btn.dataset.id);
-        });
+        btn.onclick = () => {
+            window.location.href = `contas_receber_editar.html?id=${btn.dataset.id}`;
+        };
     });
 
     document.querySelectorAll(".btn-pagar").forEach(btn => {
-        btn.addEventListener("click", async () => {
-            const id = Number(btn.dataset.id);
-            if (!id) return;
+        btn.onclick = async () => {
+            if (!confirm("Confirmar pagamento?")) return;
 
-            if (!confirm("Confirmar pagamento deste lançamento?")) return;
-
-            const { error } = await supabase
+            await supabase
                 .from("contas_receber")
                 .update({
                     status: "PAGO",
                     data_pagamento: hojeISOlocal()
                 })
-                .eq("id", id);
+                .eq("id", btn.dataset.id);
 
-            if (error) {
-                alert("Erro ao pagar: " + error.message);
-                console.error(error);
-                return;
-            }
-
-            alert("Pagamento realizado com sucesso");
             carregarLancamentos();
-        });
+        };
+    });
+
+    document.querySelectorAll(".btn-reverter").forEach(btn => {
+        btn.onclick = async () => {
+            if (!confirm("Reverter pagamento?")) return;
+
+            await supabase
+                .from("contas_receber")
+                .update({
+                    status: "ABERTO",
+                    data_pagamento: null
+                })
+                .eq("id", btn.dataset.id);
+
+            carregarLancamentos();
+        };
     });
 }
 
@@ -183,33 +168,15 @@ function bindAcoes() {
 // ======================================================
 function gerarPDF() {
     document.body.classList.add("modo-pdf");
-
-    html2pdf()
-        .from(document.getElementById("areaPdf"))
-        .set({
-            margin: 10,
-            filename: "contas_a_receber.pdf",
-            image: { type: "jpeg", quality: 0.98 },
-            html2canvas: { scale: 1 },
-            jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
-        })
-        .save()
+    html2pdf().from(document.getElementById("areaPdf")).save()
         .then(() => document.body.classList.remove("modo-pdf"));
 }
 
 // ======================================================
-// DATA / HORA PDF
-// ======================================================
 function atualizarDataHoraPDF() {
     const el = document.getElementById("dataHoraPdf");
     if (!el) return;
-
-    const agora = new Date();
-    el.innerText =
-        agora.toLocaleDateString("pt-BR") +
-        " " +
-        agora.toLocaleTimeString("pt-BR", {
-            hour: "2-digit",
-            minute: "2-digit"
-        });
+    const d = new Date();
+    el.innerText = d.toLocaleDateString("pt-BR") + " " +
+        d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 }
