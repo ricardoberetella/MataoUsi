@@ -1,5 +1,5 @@
 // ======================================================
-// CONTAS_RECEBER.JS — ESTÁVEL + MODAL NOVO/EDITAR
+// CONTAS_RECEBER.JS — ESTÁVEL + MODAL NOVO/EDITAR (FIX ORIGEM)
 // ======================================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -86,12 +86,13 @@ async function carregarLancamentos() {
 
     lista.forEach(l => {
         total += Number(l.valor || 0);
+
         const pago = l.status === "PAGO";
         const vencido = !pago && l.data_vencimento < hoje;
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
-            <td>${l.origem || "-"}</td>
+            <td>${l.descricao || "-"}</td>
             <td>${formatarValor(l.valor)}</td>
             <td>${formatarData(l.data_vencimento)}</td>
             <td>${l.status}</td>
@@ -129,6 +130,7 @@ function bindAcoes() {
     document.querySelectorAll(".btn-editar").forEach(btn => {
         btn.onclick = async () => {
             const id = btn.dataset.id;
+
             const { data } = await supabase
                 .from("contas_receber")
                 .select("*")
@@ -139,7 +141,7 @@ function bindAcoes() {
 
             editandoId = id;
             document.getElementById("tituloModal").innerText = "Editar Lançamento";
-            document.getElementById("origemManual").value = data.origem || "";
+            document.getElementById("origemManual").value = data.descricao || "";
             document.getElementById("valorManual").value = data.valor || "";
             document.getElementById("vencimentoManual").value = data.data_vencimento || "";
             abrirModal();
@@ -149,9 +151,12 @@ function bindAcoes() {
     document.querySelectorAll(".btn-pagar").forEach(btn => {
         btn.onclick = async () => {
             if (!confirm("Confirmar pagamento?")) return;
-            await supabase.from("contas_receber")
+
+            await supabase
+                .from("contas_receber")
                 .update({ status: "PAGO", data_pagamento: hojeISO() })
                 .eq("id", btn.dataset.id);
+
             carregarLancamentos();
         };
     });
@@ -159,9 +164,12 @@ function bindAcoes() {
     document.querySelectorAll(".btn-reverter").forEach(btn => {
         btn.onclick = async () => {
             if (!confirm("Reverter pagamento?")) return;
-            await supabase.from("contas_receber")
+
+            await supabase
+                .from("contas_receber")
                 .update({ status: "ABERTO", data_pagamento: null })
                 .eq("id", btn.dataset.id);
+
             carregarLancamentos();
         };
     });
@@ -187,25 +195,25 @@ function fecharModal() {
     document.getElementById("modalManual").classList.remove("ativo");
 }
 
-// ======================================================
 async function salvarManual() {
-    const origem = document.getElementById("origemManual").value.trim();
+    const descricao = document.getElementById("origemManual").value.trim();
     const valor = Number(document.getElementById("valorManual").value);
     const venc = document.getElementById("vencimentoManual").value;
 
-    if (!origem || !valor || !venc) {
+    if (!descricao || !valor || !venc) {
         alert("Preencha todos os campos");
         return;
     }
 
     if (editandoId) {
-        await supabase.from("contas_receber").update({
-            origem, valor, data_vencimento: venc
-        }).eq("id", editandoId);
+        await supabase
+            .from("contas_receber")
+            .update({ descricao, valor, data_vencimento: venc })
+            .eq("id", editandoId);
     } else {
-        await supabase.from("contas_receber").insert({
-            origem, valor, data_vencimento: venc, status: "ABERTO"
-        });
+        await supabase
+            .from("contas_receber")
+            .insert({ descricao, valor, data_vencimento: venc, status: "ABERTO" });
     }
 
     fecharModal();
