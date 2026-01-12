@@ -25,8 +25,11 @@
         <a href="produtos_lista.html" class="menu-item">📦 Produtos</a>
         <a href="notas_lista.html" class="menu-item">🧾 Notas Fiscais</a>
 
-        <!-- ✅ INCLUSÃO: CONTAS A RECEBER -->
+        <!-- ✅ CONTAS A RECEBER -->
         <a href="contas_receber.html" class="menu-item">💰 Contas a Receber</a>
+
+        <!-- ✅ NOVO: ZINCAGEM / TRATAMENTO -->
+        <a href="zincagem.html" class="menu-item">⚙️ Zincagem / Tratamento</a>
       </nav>
 
       <button id="btnLogout" class="menu-item botao-sair">
@@ -70,10 +73,15 @@
             <div class="card-legenda">Lançamento e baixa automática</div>
           </a>
 
-          <!-- ✅ INCLUSÃO: CARD CONTAS A RECEBER -->
           <a class="card" href="contas_receber.html">
             <div class="card-titulo">Contas a Receber</div>
             <div class="card-legenda">Boletos e recebimentos</div>
+          </a>
+
+          <!-- 🆕 NOVO CARD -->
+          <a class="card" href="zincagem.html">
+            <div class="card-titulo">Zincagem / Tratamento</div>
+            <div class="card-legenda">Controle de zincagem e térmico</div>
           </a>
 
         </div>
@@ -82,7 +90,7 @@
 
   </div>
 
-  <!-- AUTENTICAÇÃO CORRETA (SEM LOOP) -->
+  <!-- AUTENTICAÇÃO -->
   <script type="module">
     import { verificarLogin, supabase } from "./js/auth.js";
 
