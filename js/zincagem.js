@@ -12,13 +12,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // =============================
-// Carregar produtos válidos
+// Carregar produtos (SEM FILTRO NA API)
 // =============================
 async function carregarProdutos(){
   const { data, error } = await supabase
     .from("produtos")
-    .select("id, codigo, comprimento, acabamento, peso_liquido, peso_bruto, pecas_por_caixa")
-    .eq("usar_em_acabamento", true)
+    .select("id, codigo, comprimento, acabamento, peso_liquido, peso_bruto, pecas_por_caixa, usar_em_acabamento")
     .order("codigo");
 
   if(error){
@@ -27,11 +26,13 @@ async function carregarProdutos(){
     return;
   }
 
-  produtos = data;
+  // Filtra no JS, não no Supabase
+  produtos = data.filter(p => p.usar_em_acabamento === true);
+
   const select = document.getElementById("produtoSelect");
   select.innerHTML = `<option value="">Selecione</option>`;
 
-  data.forEach(p=>{
+  produtos.forEach(p=>{
     const opt = document.createElement("option");
     opt.value = p.id;
     opt.textContent = p.codigo;
@@ -55,7 +56,6 @@ function configurarEventos(){
   });
 
   document.getElementById("kg").addEventListener("input", recalcular);
-
   document.getElementById("btnSalvar").addEventListener("click", salvar);
 }
 
