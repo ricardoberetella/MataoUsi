@@ -98,6 +98,7 @@ import { supabase } from "./js/auth.js";
 let produtos = [];
 let produtoSelecionado = null;
 
+// Aguarda sessão válida do Supabase (corrige bug do Vercel)
 async function aguardarSessao(){
   for(let i=0;i<10;i++){
     const { data } = await supabase.auth.getSession();
@@ -117,6 +118,9 @@ window.addEventListener("load", async ()=>{
   configurarEventos();
 });
 
+// ========================
+// CARREGAR PRODUTOS
+// ========================
 async function carregarProdutos(){
   const { data, error } = await supabase
     .from("produtos")
@@ -142,6 +146,9 @@ async function carregarProdutos(){
   });
 }
 
+// ========================
+// EVENTOS
+// ========================
 function configurarEventos(){
   document.getElementById("produtoSelect").addEventListener("change", e=>{
     produtoSelecionado = produtos.find(p=>p.id == e.target.value);
@@ -158,6 +165,9 @@ function configurarEventos(){
   document.getElementById("btnSalvar").addEventListener("click", salvar);
 }
 
+// ========================
+// CÁLCULOS
+// ========================
 function recalcular(){
   if(!produtoSelecionado) return;
   const kg = parseFloat(document.getElementById("kg").value || 0);
@@ -167,6 +177,9 @@ function recalcular(){
   document.getElementById("kgBruto").value = kgBruto.toFixed(2);
 }
 
+// ========================
+// SALVAR
+// ========================
 async function salvar(){
   if(!produtoSelecionado){
     alert("Selecione o produto");
@@ -178,9 +191,6 @@ async function salvar(){
     data: document.getElementById("data").value,
     produto_id: produtoSelecionado.id,
     codigo_peca: produtoSelecionado.codigo,
-    comp: produtoSelecionado.comprimento_mm,
-    pecas_por_caixa: produtoSelecionado.pecas_por_caixa,
-    servico: produtoSelecionado.acabamento,
     kg: parseFloat(document.getElementById("kg").value),
     quantidade: parseFloat(document.getElementById("quantidade").value),
     kg_material_bruto: parseFloat(document.getElementById("kgBruto").value),
@@ -189,7 +199,9 @@ async function salvar(){
     boleto: document.getElementById("boleto").value === "true"
   };
 
-  const { error } = await supabase.from("zincagem_tratamento").insert(payload);
+  const { error } = await supabase
+    .from("zincagem_tratamento")
+    .insert(payload);
 
   if(error){
     alert("Erro ao salvar");
