@@ -40,6 +40,14 @@ input[readonly]{background:#020b1a;color:#7dd3fc;}
   cursor:pointer;
 }
 .botao:hover{opacity:.9}
+.link-controle{
+  display:inline-block;
+  border:1px solid #38bdf8;
+  padding:8px 14px;
+  border-radius:8px;
+  color:#38bdf8;
+  text-decoration:none;
+}
 </style>
 </head>
 
@@ -54,7 +62,11 @@ input[readonly]{background:#020b1a;color:#7dd3fc;}
 </aside>
 
 <main class="main">
-<h1 style="color:#38bdf8;margin-bottom:20px">Zincagem / Tratamento Térmico</h1>
+<h1 style="color:#38bdf8;margin-bottom:10px">Zincagem / Tratamento</h1>
+
+<div style="text-align:right;margin-bottom:12px">
+  <a href="zincagem_lista.html" class="link-controle">📋 Controle de Zincagem</a>
+</div>
 
 <div class="form-zincagem">
 <div class="form-grid">
@@ -72,17 +84,11 @@ input[readonly]{background:#020b1a;color:#7dd3fc;}
 <div><label>Kg Material Bruto</label><input id="kgBruto" readonly></div>
 
 <div><label>Entregue</label>
-<select id="entregue">
-<option value="false"></option>
-<option value="true">OK</option>
-</select>
+<select id="entregue"><option value="false"></option><option value="true">OK</option></select>
 </div>
 
 <div><label>Boleto</label>
-<select id="boleto">
-<option value="false"></option>
-<option value="true">OK</option>
-</select>
+<select id="boleto"><option value="false"></option><option value="true">OK</option></select>
 </div>
 
 </div>
@@ -95,123 +101,64 @@ input[readonly]{background:#020b1a;color:#7dd3fc;}
 <script type="module">
 import { supabase } from "./js/auth.js";
 
-let produtos = [];
-let produtoSelecionado = null;
+let produtos=[], produto=null;
 
-// Aguarda sessão válida do Supabase (corrige bug do Vercel)
-async function aguardarSessao(){
-  for(let i=0;i<10;i++){
-    const { data } = await supabase.auth.getSession();
-    if(data?.session) return data.session;
-    await new Promise(r=>setTimeout(r,300));
-  }
-  return null;
+window.onload = async ()=>{
+  const { data:{session} } = await supabase.auth.getSession();
+  if(!session){ location.href="login.html"; return; }
+  carregarProdutos();
+  document.getElementById("kg").addEventListener("input",calc);
+  document.getElementById("produtoSelect").addEventListener("change",sel);
+  document.getElementById("btnSalvar").addEventListener("click",salvar);
 }
 
-window.addEventListener("load", async ()=>{
-  const session = await aguardarSessao();
-  if(!session){
-    window.location.href="login.html";
-    return;
-  }
-  await carregarProdutos();
-  configurarEventos();
-});
-
-// ========================
-// CARREGAR PRODUTOS
-// ========================
 async function carregarProdutos(){
-  const { data, error } = await supabase
-    .from("produtos")
-    .select("id, codigo, comprimento_mm, acabamento, peso_liquido, peso_bruto, pecas_por_caixa, usar_em_acabamento")
-    .order("codigo");
-
-  if(error){
-    alert("Erro ao carregar produtos");
-    console.error(error);
-    return;
-  }
-
-  produtos = data.filter(p => p.usar_em_acabamento === true);
-
-  const select = document.getElementById("produtoSelect");
-  select.innerHTML = `<option value="">Selecione</option>`;
-
-  produtos.forEach(p=>{
-    const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = p.codigo;
-    select.appendChild(opt);
-  });
+  const {data} = await supabase.from("produtos")
+  .select("id,codigo,comprimento_mm,acabamento,peso_liquido,peso_bruto,pecas_por_caixa,usar_em_acabamento")
+  .eq("usar_em_acabamento",true);
+  produtos=data;
+  produtoSelect.innerHTML='<option value="">Selecione</option>';
+  data.forEach(p=>produtoSelect.innerHTML+=`<option value="${p.id}">${p.codigo}</option>`);
 }
 
-// ========================
-// EVENTOS
-// ========================
-function configurarEventos(){
-  document.getElementById("produtoSelect").addEventListener("change", e=>{
-    produtoSelecionado = produtos.find(p=>p.id == e.target.value);
-    if(!produtoSelecionado) return;
-
-    document.getElementById("comp").value = produtoSelecionado.comprimento_mm || "";
-    document.getElementById("servico").value = produtoSelecionado.acabamento || "";
-    document.getElementById("ppc").value = produtoSelecionado.pecas_por_caixa || "";
-
-    recalcular();
-  });
-
-  document.getElementById("kg").addEventListener("input", recalcular);
-  document.getElementById("btnSalvar").addEventListener("click", salvar);
+function sel(e){
+  produto=produtos.find(p=>p.id==e.target.value);
+  if(!produto) return;
+  comp.value=produto.comprimento_mm;
+  servico.value=produto.acabamento;
+  ppc.value=produto.pecas_por_caixa;
+  calc();
 }
 
-// ========================
-// CÁLCULOS
-// ========================
-function recalcular(){
-  if(!produtoSelecionado) return;
-  const kg = parseFloat(document.getElementById("kg").value || 0);
-  const quantidade = kg / (produtoSelecionado.peso_liquido || 1);
-  const kgBruto = quantidade * (produtoSelecionado.peso_bruto || 0);
-  document.getElementById("quantidade").value = quantidade.toFixed(0);
-  document.getElementById("kgBruto").value = kgBruto.toFixed(2);
+function calc(){
+  if(!produto) return;
+  const kg=+document.getElementById("kg").value||0;
+  const qtd=kg/(produto.peso_liquido||1);
+  quantidade.value=qtd.toFixed(0);
+  kgBruto.value=(qtd*(produto.peso_bruto||0)).toFixed(2);
 }
 
-// ========================
-// SALVAR
-// ========================
 async function salvar(){
-  if(!produtoSelecionado){
-    alert("Selecione o produto");
-    return;
-  }
+  const dataISO=data.value;
+  if(!dataISO || !produto) return alert("Informe data e produto");
 
-  const payload = {
-    op: document.getElementById("op").value,
-    data: document.getElementById("data").value,
-    produto_id: produtoSelecionado.id,
-    codigo_peca: produtoSelecionado.codigo,
-    kg: parseFloat(document.getElementById("kg").value),
-    quantidade: parseFloat(document.getElementById("quantidade").value),
-    kg_material_bruto: parseFloat(document.getElementById("kgBruto").value),
-    peso_caixa: produtoSelecionado.peso_bruto,
-    entregue: document.getElementById("entregue").value === "true",
-    boleto: document.getElementById("boleto").value === "true"
+  const payload={
+    op:op.value,
+    data:dataISO,
+    produto_id:produto.id,
+    codigo_peca:produto.codigo,
+    kg:+kg.value,
+    quantidade:+quantidade.value,
+    kg_material_bruto:+kgBruto.value,
+    peso_caixa:produto.peso_bruto,
+    entregue:entregue.value==="true",
+    boleto:boleto.value==="true"
   };
 
-  const { error } = await supabase
-    .from("zincagem_tratamento")
-    .insert(payload);
-
-  if(error){
-    alert("Erro ao salvar");
-    console.error(error);
-  } else {
-    alert("Registro salvo");
-    window.location.reload();
-  }
+  const {error}=await supabase.from("zincagem_tratamento").insert(payload);
+  if(error){alert("Erro");console.error(error);}
+  else{alert("Salvo");location.reload();}
 }
 </script>
-
 </body>
 </html>
