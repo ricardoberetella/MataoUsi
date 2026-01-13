@@ -1,0 +1,97 @@
+import { supabase, obterRole } from "./js/auth.js";
+
+let dados = [];
+let role = "viewer";
+
+document.addEventListener("DOMContentLoaded", async ()=>{
+  role = await obterRole();
+  await carregar();
+  document.querySelectorAll("input,select").forEach(el=>el.addEventListener("input", aplicarFiltros));
+});
+
+async function carregar(){
+  const { data, error } = await supabase
+    .from("zincagem_tratamento")
+    .select("*")
+    .order("data",{ascending:false});
+
+  if(error){
+    alert("Erro ao carregar");
+    console.error(error);
+    return;
+  }
+
+  dados = data;
+  aplicarFiltros();
+}
+
+function aplicarFiltros(){
+  const op = document.getElementById("filtroOP").value.toLowerCase();
+  const prod = document.getElementById("filtroProduto").value.toLowerCase();
+  const ini = document.getElementById("filtroInicio").value;
+  const fim = document.getElementById("filtroFim").value;
+  const ent = document.getElementById("filtroEntregue").value;
+  const bol = document.getElementById("filtroBoleto").value;
+
+  let filtrado = dados.filter(r=>{
+    if(op && !String(r.op).toLowerCase().includes(op)) return false;
+    if(prod && !r.codigo_peca.toLowerCase().includes(prod)) return false;
+    if(ini && r.data < ini) return false;
+    if(fim && r.data > fim) return false;
+    if(ent !== "" && String(r.entregue) !== ent) return false;
+    if(bol !== "" && String(r.boleto) !== bol) return false;
+    return true;
+  });
+
+  renderizar(filtrado);
+}
+
+function renderizar(lista){
+  const tbody = document.getElementById("lista");
+  tbody.innerHTML = "";
+
+  let totKg=0, totQtd=0, totBruto=0;
+
+  lista.forEach(r=>{
+    totKg += r.kg;
+    totQtd += r.quantidade;
+    totBruto += r.kg_material_bruto;
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${r.data}</td>
+      <td>${r.op}</td>
+      <td>${r.codigo_peca}</td>
+      <td>${r.quantidade}</td>
+      <td>${r.kg.toFixed(2)}</td>
+      <td>${r.kg_material_bruto.toFixed(2)}</td>
+      <td class="${r.entregue?'status-ok':'status-pendente'}">${r.entregue?'OK':'Pendente'}</td>
+      <td class="${r.boleto?'status-ok':'status-pendente'}">${r.boleto?'OK':'Pendente'}</td>
+      <td>
+        ${role==="admin"?`
+        <button class="botao btn-ok" onclick="marcar('${r.id}','entregue')">Ent</button>
+        <button class="botao btn-ok" onclick="marcar('${r.id}','boleto')">Bol</button>`:""}
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById("totais").textContent =
+    `Total Peças: ${totQtd} | Total Kg: ${totKg.toFixed(2)} | Total Bruto: ${totBruto.toFixed(2)}`;
+}
+
+window.marcar = async (id,campo)=>{
+  const { error } = await supabase
+    .from("zincagem_tratamento")
+    .update({ [campo]: true })
+    .eq("id",id);
+
+  if(error){
+    alert("Erro");
+    console.error(error);
+  }else{
+    await carregar();
+  }
+}
