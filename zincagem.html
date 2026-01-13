@@ -51,6 +51,7 @@ th{color:#38bdf8;}
 <div class="zincagem-card">
 
 <div class="grid4">
+
 <div class="field"><label>OP</label><input id="op"></div>
 <div class="field"><label>Data</label><input type="date" id="data"></div>
 <div class="field"><label>Produto</label><select id="produtoSelect"></select></div>
@@ -65,6 +66,7 @@ th{color:#38bdf8;}
 <div class="field"><label>Quantidade</label><input id="quantidade" readonly></div>
 <div class="field"><label>Kg Material Bruto</label><input id="kgBruto" readonly></div>
 <div class="field"><label></label><button class="botao" id="salvar">Salvar</button></div>
+
 </div>
 
 <input id="filtroOP" placeholder="Filtrar OP" style="max-width:200px;margin-top:10px">
@@ -110,11 +112,11 @@ window.onload=async()=>{
 
 function carregarProduto(){
  if(!produto)return;
- codigo.value=produto.codigo;
- comp.value=produto.comprimento_mm||"";
- ppc.value=produto.pecas_por_caixa||"";
- acabamento.value=produto.acabamento||"";
- pesoCaixa.value=produto.peso_bruto||"";
+ codigo.value = produto.codigo;
+ comp.value = produto.comprimento_mm || "";
+ ppc.value = produto.pecas_por_caixa || "";
+ acabamento.value = produto.acabamento || "";
+ pesoCaixa.value = produto.peso_bruto || "";
  calcular();
 }
 
@@ -128,6 +130,7 @@ function calcular(){
 
 async function salvarRegistro(){
  if(!produto||!data.value)return alert("Informe data e produto");
+
  const payload={
   op:op.value,
   data:data.value,
@@ -143,8 +146,9 @@ async function salvarRegistro(){
   entregue:false,
   boleto:false
  };
+
  const {error}=await supabase.from("zincagem_tratamento").insert(payload);
- if(error){alert("Erro");console.error(error);}
+ if(error){alert("Erro ao salvar");console.error(error);}
  else{op.value="";kg.value="";await carregarLista();}
 }
 
