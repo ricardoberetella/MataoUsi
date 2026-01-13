@@ -7,31 +7,18 @@
 <link rel="stylesheet" href="css/dashboard.css">
 
 <style>
-.zincagem-card{
-  max-width:1200px;
-  margin:auto;
-  background:rgba(0,0,0,.55);
-  padding:20px;
-  border-radius:16px;
-}
-.grid4{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:14px;
-}
-.field{display:flex;flex-direction:column;gap:4px;}
-.field label{font-size:12px;color:#7dd3fc;}
-.field input,.field select{
-  padding:10px;border-radius:8px;
-  background:#020617;border:1px solid #38bdf8;color:#e5e7eb;
-}
-.field input[readonly]{background:#020b1a;color:#a5f3fc;}
-.tabela{width:100%;border-collapse:collapse;margin-top:20px;}
-th,td{padding:8px;border-bottom:1px solid rgba(56,189,248,.25);text-align:center;}
-th{color:#38bdf8;}
-.btn-status{padding:4px 10px;border:none;border-radius:6px;cursor:pointer;font-weight:bold;}
-.btn-ok{background:#22c55e;color:#022c22;}
-.btn-pendente{background:#ef4444;color:white;}
+.zincagem-card{max-width:1200px;margin:auto;background:rgba(0,0,0,.55);padding:20px;border-radius:16px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12px;color:#7dd3fc}
+.field input,.field select{padding:10px;border-radius:8px;background:#020617;border:1px solid #38bdf8;color:#e5e7eb}
+.field input[readonly]{background:#020b1a;color:#a5f3fc}
+.tabela{width:100%;border-collapse:collapse;margin-top:20px}
+th,td{padding:8px;border-bottom:1px solid rgba(56,189,248,.25);text-align:center}
+th{color:#38bdf8}
+.btn-status{padding:4px 10px;border:none;border-radius:6px;cursor:pointer;font-weight:bold}
+.btn-ok{background:#22c55e;color:#022c22}
+.btn-pendente{background:#ef4444;color:#fff}
 </style>
 </head>
 
@@ -51,22 +38,20 @@ th{color:#38bdf8;}
 <div class="zincagem-card">
 
 <div class="grid4">
-
 <div class="field"><label>OP</label><input id="op"></div>
 <div class="field"><label>Data</label><input type="date" id="data"></div>
 <div class="field"><label>Produto</label><select id="produtoSelect"></select></div>
-<div class="field"><label>Código</label><input id="codigo" readonly></div>
+<div></div>
 
 <div class="field"><label>Comprimento</label><input id="comp" readonly></div>
 <div class="field"><label>Peças por Caixa</label><input id="ppc" readonly></div>
 <div class="field"><label>Acabamento</label><input id="acabamento" readonly></div>
-<div class="field"><label>Peso Caixa</label><input id="pesoCaixa" readonly></div>
+<div class="field"><label>Peso da Caixa (kg)</label><input id="pesoCaixa" readonly></div>
 
 <div class="field"><label>Kg</label><input id="kg" type="number" step="0.01"></div>
 <div class="field"><label>Quantidade</label><input id="quantidade" readonly></div>
 <div class="field"><label>Kg Material Bruto</label><input id="kgBruto" readonly></div>
 <div class="field"><label></label><button class="botao" id="salvar">Salvar</button></div>
-
 </div>
 
 <input id="filtroOP" placeholder="Filtrar OP" style="max-width:200px;margin-top:10px">
@@ -112,24 +97,31 @@ window.onload=async()=>{
 
 function carregarProduto(){
  if(!produto)return;
- codigo.value = produto.codigo;
+
+ const pesoCaixaCalc = produto.pecas_por_caixa * produto.peso_liquido;
+
  comp.value = produto.comprimento_mm || "";
  ppc.value = produto.pecas_por_caixa || "";
  acabamento.value = produto.acabamento || "";
- pesoCaixa.value = produto.peso_bruto || "";
+ pesoCaixa.value = pesoCaixaCalc.toFixed(2);
+
  calcular();
 }
 
 function calcular(){
  if(!produto)return;
- const kgv=parseFloat(kg.value||0);
- const qtd=kgv/(produto.peso_liquido||1);
- quantidade.value=qtd.toFixed(0);
- kgBruto.value=(qtd*(produto.peso_bruto||0)).toFixed(2);
+
+ const kgv = parseFloat(kg.value||0);
+ const qtd = kgv / (produto.peso_liquido || 1);
+
+ quantidade.value = qtd.toFixed(0);
+ kgBruto.value = (qtd * (produto.peso_bruto||0)).toFixed(2);
 }
 
 async function salvarRegistro(){
- if(!produto||!data.value)return alert("Informe data e produto");
+ if(!produto || !data.value) return alert("Informe OP, data e produto");
+
+ const pesoCaixaCalc = produto.pecas_por_caixa * produto.peso_liquido;
 
  const payload={
   op:op.value,
@@ -142,7 +134,7 @@ async function salvarRegistro(){
   kg:+kg.value,
   quantidade:+quantidade.value,
   kg_material_bruto:+kgBruto.value,
-  peso_caixa:+pesoCaixa.value,
+  peso_caixa:pesoCaixaCalc,
   entregue:false,
   boleto:false
  };
