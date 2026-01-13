@@ -2,57 +2,148 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Controle de Zincagem</title>
+<title>Zincagem / Tratamento</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="css/dashboard.css">
+
+<style>
+.filtro{
+  max-width:900px;
+  margin:20px auto;
+}
+.tabela{
+  width:100%;
+  border-collapse:collapse;
+}
+th,td{
+  padding:10px;
+  border-bottom:1px solid rgba(56,189,248,.3);
+  text-align:center;
+}
+th{color:#38bdf8}
+.status-ok{color:#22c55e;font-weight:bold}
+.status-pendente{color:#ef4444;font-weight:bold}
+</style>
 </head>
 
 <body>
 <div class="layout">
+
 <aside class="sidebar">
   <div class="logo-sistema">MATÃO USINAGEM</div>
   <nav class="menu">
-    <a href="zincagem.html" class="menu-item">⬅ Voltar</a>
+    <a href="dashboard.html" class="menu-item">⬅ Voltar</a>
   </nav>
 </aside>
 
 <main class="main">
-<h1 style="color:#38bdf8">Controle de Zincagem</h1>
 
-<input id="filtroOP" placeholder="OP" style="margin-bottom:10px">
+<h1 style="color:#38bdf8">Zincagem / Tratamento</h1>
 
-<table class="tabela" style="width:100%">
+<div class="form-zincagem">
+  <div class="form-grid">
+    <input id="op" placeholder="OP">
+    <input type="date" id="data">
+    <select id="produto"></select>
+    <input id="kg" placeholder="Kg">
+    <button class="botao" id="salvar">Salvar</button>
+  </div>
+</div>
+
+<div class="filtro">
+  <input id="filtroOP" placeholder="Filtrar OP">
+</div>
+
+<table class="tabela">
 <thead>
-<tr><th>Data</th><th>OP</th><th>Produto</th><th>Qtd</th><th>Kg</th><th>Bruto</th><th>Entregue</th><th>Boleto</th></tr>
+<tr>
+<th>Data</th><th>OP</th><th>Produto</th><th>Qtd</th><th>Kg</th><th>Bruto</th><th>Entregue</th><th>Boleto</th>
+</tr>
 </thead>
 <tbody id="lista"></tbody>
 </table>
+
 </main>
 </div>
 
 <script type="module">
 import { supabase } from "./js/auth.js";
 
-let dados=[];
-window.onload=async()=>{
-  const {data:{session}}=await supabase.auth.getSession();
-  if(!session){location.href="login.html";return;}
-  const {data}=await supabase.from("zincagem_tratamento").select("*").order("data",{ascending:false});
-  dados=data;
-  filtroOP.oninput=render;
+let produtos=[], registros=[];
+
+window.onload = async ()=>{
+  const {data:{session}} = await supabase.auth.getSession();
+  if(!session){ location.href="login.html"; return; }
+
+  carregarProdutos();
+  carregarRegistros();
+  document.getElementById("salvar").onclick = salvar;
+  document.getElementById("filtroOP").oninput = render;
+}
+
+async function carregarProdutos(){
+  const {data} = await supabase.from("produtos")
+    .select("id,codigo,peso_liquido,peso_bruto")
+    .eq("usar_em_acabamento",true);
+
+  produtos=data;
+  produto.innerHTML='<option value="">Produto</option>';
+  data.forEach(p=>produto.innerHTML+=`<option value="${p.id}">${p.codigo}</option>`);
+}
+
+async function carregarRegistros(){
+  const {data} = await supabase.from("zincagem_tratamento").select("*").order("data",{ascending:false});
+  registros=data;
   render();
 }
 
 function render(){
-  const f=filtroOP.value.toLowerCase();
+  const f = filtroOP.value;
   lista.innerHTML="";
-  dados.filter(r=>!f||String(r.op).includes(f)).forEach(r=>{
-    lista.innerHTML+=`<tr>
-    <td>${r.data}</td><td>${r.op}</td><td>${r.codigo_peca}</td>
-    <td>${r.quantidade}</td><td>${r.kg}</td><td>${r.kg_material_bruto}</td>
-    <td>${r.entregue?"OK":"Pendente"}</td><td>${r.boleto?"OK":"Pendente"}</td>
+  registros.filter(r=>!f||String(r.op).includes(f)).forEach(r=>{
+    lista.innerHTML+=`
+    <tr>
+      <td>${r.data}</td>
+      <td>${r.op}</td>
+      <td>${r.codigo_peca}</td>
+      <td>${r.quantidade}</td>
+      <td>${r.kg}</td>
+      <td>${r.kg_material_bruto}</td>
+      <td class="${r.entregue?'status-ok':'status-pendente'}">${r.entregue?'OK':'Pendente'}</td>
+      <td class="${r.boleto?'status-ok':'status-pendente'}">${r.boleto?'OK':'Pendente'}</td>
     </tr>`;
   });
 }
+
+async function salvar(){
+  const p = produtos.find(x=>x.id==produto.value);
+  if(!p) return alert("Selecione produto");
+
+  const kg = parseFloat(document.getElementById("kg").value||0);
+  const qtd = kg/(p.peso_liquido||1);
+  const bruto = qtd*(p.peso_bruto||0);
+
+  const payload={
+    op:op.value,
+    data:data.value,
+    produto_id:p.id,
+    codigo_peca:p.codigo,
+    kg,
+    quantidade:qtd,
+    kg_material_bruto:bruto,
+    peso_caixa:p.peso_bruto,
+    entregue:false,
+    boleto:false
+  };
+
+  const {error} = await supabase.from("zincagem_tratamento").insert(payload);
+  if(error){ alert("Erro"); console.error(error); }
+  else{
+    op.value=""; kg.value="";
+    await carregarRegistros();
+  }
+}
 </script>
+
 </body>
 </html>
