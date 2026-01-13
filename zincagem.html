@@ -1,163 +1,57 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Zincagem / Tratamento</title>
-
+<meta charset="UTF-8">
+<title>Controle de Zincagem</title>
 <link rel="stylesheet" href="css/dashboard.css">
-
-<style>
-.form-zincagem{
-  max-width:900px;
-  margin:auto;
-  background:rgba(0,0,0,.5);
-  padding:24px;
-  border-radius:16px;
-}
-.form-grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:16px;
-}
-label{font-size:13px;opacity:.8;}
-input,select{
-  width:100%;
-  padding:10px;
-  background:#020617;
-  border:1px solid #38bdf8;
-  color:#e5e7eb;
-  border-radius:8px;
-}
-input[readonly]{background:#020b1a;color:#7dd3fc;}
-.botao{
-  padding:12px;
-  background:#22c55e;
-  border:none;
-  color:#022c22;
-  font-weight:bold;
-  border-radius:10px;
-  cursor:pointer;
-}
-.botao:hover{opacity:.9}
-.link-controle{
-  display:inline-block;
-  border:1px solid #38bdf8;
-  padding:8px 14px;
-  border-radius:8px;
-  color:#38bdf8;
-  text-decoration:none;
-}
-</style>
 </head>
 
 <body>
 <div class="layout">
-
 <aside class="sidebar">
   <div class="logo-sistema">MATÃO USINAGEM</div>
   <nav class="menu">
-    <a href="dashboard.html" class="menu-item">⬅ Voltar</a>
+    <a href="zincagem.html" class="menu-item">⬅ Voltar</a>
   </nav>
 </aside>
 
 <main class="main">
-<h1 style="color:#38bdf8;margin-bottom:10px">Zincagem / Tratamento</h1>
+<h1 style="color:#38bdf8">Controle de Zincagem</h1>
 
-<div style="text-align:right;margin-bottom:12px">
-  <a href="zincagem_lista.html" class="link-controle">📋 Controle de Zincagem</a>
-</div>
+<input id="filtroOP" placeholder="OP" style="margin-bottom:10px">
 
-<div class="form-zincagem">
-<div class="form-grid">
-
-<div><label>OP</label><input id="op"></div>
-<div><label>Data</label><input type="date" id="data"></div>
-<div><label>Produto</label><select id="produtoSelect"></select></div>
-
-<div><label>Comprimento</label><input id="comp" readonly></div>
-<div><label>Serviço</label><input id="servico" readonly></div>
-<div><label>Peças por Caixa</label><input id="ppc" readonly></div>
-
-<div><label>Kg</label><input id="kg" type="number" step="0.01"></div>
-<div><label>Quantidade</label><input id="quantidade" readonly></div>
-<div><label>Kg Material Bruto</label><input id="kgBruto" readonly></div>
-
-<div><label>Entregue</label>
-<select id="entregue"><option value="false"></option><option value="true">OK</option></select>
-</div>
-
-<div><label>Boleto</label>
-<select id="boleto"><option value="false"></option><option value="true">OK</option></select>
-</div>
-
-</div>
-<br>
-<button class="botao" id="btnSalvar">Salvar</button>
-</div>
+<table class="tabela" style="width:100%">
+<thead>
+<tr><th>Data</th><th>OP</th><th>Produto</th><th>Qtd</th><th>Kg</th><th>Bruto</th><th>Entregue</th><th>Boleto</th></tr>
+</thead>
+<tbody id="lista"></tbody>
+</table>
 </main>
 </div>
 
 <script type="module">
 import { supabase } from "./js/auth.js";
 
-let produtos=[], produto=null;
-
-window.onload = async ()=>{
-  const { data:{session} } = await supabase.auth.getSession();
-  if(!session){ location.href="login.html"; return; }
-  carregarProdutos();
-  document.getElementById("kg").addEventListener("input",calc);
-  document.getElementById("produtoSelect").addEventListener("change",sel);
-  document.getElementById("btnSalvar").addEventListener("click",salvar);
+let dados=[];
+window.onload=async()=>{
+  const {data:{session}}=await supabase.auth.getSession();
+  if(!session){location.href="login.html";return;}
+  const {data}=await supabase.from("zincagem_tratamento").select("*").order("data",{ascending:false});
+  dados=data;
+  filtroOP.oninput=render;
+  render();
 }
 
-async function carregarProdutos(){
-  const {data} = await supabase.from("produtos")
-  .select("id,codigo,comprimento_mm,acabamento,peso_liquido,peso_bruto,pecas_por_caixa,usar_em_acabamento")
-  .eq("usar_em_acabamento",true);
-  produtos=data;
-  produtoSelect.innerHTML='<option value="">Selecione</option>';
-  data.forEach(p=>produtoSelect.innerHTML+=`<option value="${p.id}">${p.codigo}</option>`);
-}
-
-function sel(e){
-  produto=produtos.find(p=>p.id==e.target.value);
-  if(!produto) return;
-  comp.value=produto.comprimento_mm;
-  servico.value=produto.acabamento;
-  ppc.value=produto.pecas_por_caixa;
-  calc();
-}
-
-function calc(){
-  if(!produto) return;
-  const kg=+document.getElementById("kg").value||0;
-  const qtd=kg/(produto.peso_liquido||1);
-  quantidade.value=qtd.toFixed(0);
-  kgBruto.value=(qtd*(produto.peso_bruto||0)).toFixed(2);
-}
-
-async function salvar(){
-  const dataISO=data.value;
-  if(!dataISO || !produto) return alert("Informe data e produto");
-
-  const payload={
-    op:op.value,
-    data:dataISO,
-    produto_id:produto.id,
-    codigo_peca:produto.codigo,
-    kg:+kg.value,
-    quantidade:+quantidade.value,
-    kg_material_bruto:+kgBruto.value,
-    peso_caixa:produto.peso_bruto,
-    entregue:entregue.value==="true",
-    boleto:boleto.value==="true"
-  };
-
-  const {error}=await supabase.from("zincagem_tratamento").insert(payload);
-  if(error){alert("Erro");console.error(error);}
-  else{alert("Salvo");location.reload();}
+function render(){
+  const f=filtroOP.value.toLowerCase();
+  lista.innerHTML="";
+  dados.filter(r=>!f||String(r.op).includes(f)).forEach(r=>{
+    lista.innerHTML+=`<tr>
+    <td>${r.data}</td><td>${r.op}</td><td>${r.codigo_peca}</td>
+    <td>${r.quantidade}</td><td>${r.kg}</td><td>${r.kg_material_bruto}</td>
+    <td>${r.entregue?"OK":"Pendente"}</td><td>${r.boleto?"OK":"Pendente"}</td>
+    </tr>`;
+  });
 }
 </script>
 </body>
