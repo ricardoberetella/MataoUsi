@@ -20,10 +20,7 @@
   grid-template-columns:repeat(3,1fr);
   gap:16px;
 }
-label{
-  font-size:13px;
-  opacity:.8;
-}
+label{font-size:13px;opacity:.8;}
 input,select{
   width:100%;
   padding:10px;
@@ -32,10 +29,7 @@ input,select{
   color:#e5e7eb;
   border-radius:8px;
 }
-input[readonly]{
-  background:#020b1a;
-  color:#7dd3fc;
-}
+input[readonly]{background:#020b1a;color:#7dd3fc;}
 .botao{
   padding:12px;
   background:#22c55e;
@@ -47,204 +41,164 @@ input[readonly]{
 }
 .botao:hover{opacity:.9}
 </style>
-
 </head>
-<body>
 
+<body>
 <div class="layout">
 
-  <aside class="sidebar">
-    <div class="logo-sistema">MATÃO USINAGEM</div>
-    <nav class="menu">
-      <a href="dashboard.html" class="menu-item">⬅ Voltar</a>
-    </nav>
-  </aside>
+<aside class="sidebar">
+  <div class="logo-sistema">MATÃO USINAGEM</div>
+  <nav class="menu">
+    <a href="dashboard.html" class="menu-item">⬅ Voltar</a>
+  </nav>
+</aside>
 
-  <main class="main">
-    <h1 style="color:#38bdf8;margin-bottom:20px">Zincagem / Tratamento Térmico</h1>
+<main class="main">
+<h1 style="color:#38bdf8;margin-bottom:20px">Zincagem / Tratamento Térmico</h1>
 
-    <div class="form-zincagem">
-      <div class="form-grid">
+<div class="form-zincagem">
+<div class="form-grid">
 
-        <div>
-          <label>OP</label>
-          <input id="op">
-        </div>
+<div><label>OP</label><input id="op"></div>
+<div><label>Data</label><input type="date" id="data"></div>
+<div><label>Produto</label><select id="produtoSelect"></select></div>
 
-        <div>
-          <label>Data</label>
-          <input type="date" id="data">
-        </div>
+<div><label>Comprimento</label><input id="comp" readonly></div>
+<div><label>Serviço</label><input id="servico" readonly></div>
+<div><label>Peças por Caixa</label><input id="ppc" readonly></div>
 
-        <div>
-          <label>Produto</label>
-          <select id="produtoSelect"></select>
-        </div>
+<div><label>Kg</label><input id="kg" type="number" step="0.01"></div>
+<div><label>Quantidade</label><input id="quantidade" readonly></div>
+<div><label>Kg Material Bruto</label><input id="kgBruto" readonly></div>
 
-        <div>
-          <label>Comprimento</label>
-          <input id="comp" readonly>
-        </div>
+<div><label>Entregue</label>
+<select id="entregue">
+<option value="false"></option>
+<option value="true">OK</option>
+</select>
+</div>
 
-        <div>
-          <label>Serviço</label>
-          <input id="servico" readonly>
-        </div>
+<div><label>Boleto</label>
+<select id="boleto">
+<option value="false"></option>
+<option value="true">OK</option>
+</select>
+</div>
 
-        <div>
-          <label>Peças por Caixa</label>
-          <input id="ppc" readonly>
-        </div>
-
-        <div>
-          <label>Kg</label>
-          <input id="kg" type="number" step="0.01">
-        </div>
-
-        <div>
-          <label>Quantidade</label>
-          <input id="quantidade" readonly>
-        </div>
-
-        <div>
-          <label>Kg Material Bruto</label>
-          <input id="kgBruto" readonly>
-        </div>
-
-        <div>
-          <label>Entregue</label>
-          <select id="entregue">
-            <option value="false"></option>
-            <option value="true">OK</option>
-          </select>
-        </div>
-
-        <div>
-          <label>Boleto</label>
-          <select id="boleto">
-            <option value="false"></option>
-            <option value="true">OK</option>
-          </select>
-        </div>
-
-      </div>
-
-      <br>
-      <button class="botao" id="btnSalvar">Salvar</button>
-
-    </div>
-
-  </main>
+</div>
+<br>
+<button class="botao" id="btnSalvar">Salvar</button>
+</div>
+</main>
 </div>
 
 <script type="module">
-  import { supabase } from "./js/auth.js";
+import { supabase } from "./js/auth.js";
 
-  let produtos = [];
-  let produtoSelecionado = null;
+let produtos = [];
+let produtoSelecionado = null;
 
-  async function aguardarSessao() {
-    for (let i = 0; i < 10; i++) {
-      const { data } = await supabase.auth.getSession();
-      if (data?.session) return data.session;
-      await new Promise(r => setTimeout(r, 300));
-    }
-    return null;
+async function aguardarSessao(){
+  for(let i=0;i<10;i++){
+    const { data } = await supabase.auth.getSession();
+    if(data?.session) return data.session;
+    await new Promise(r=>setTimeout(r,300));
+  }
+  return null;
+}
+
+window.addEventListener("load", async ()=>{
+  const session = await aguardarSessao();
+  if(!session){
+    window.location.href="login.html";
+    return;
+  }
+  await carregarProdutos();
+  configurarEventos();
+});
+
+async function carregarProdutos(){
+  const { data, error } = await supabase
+    .from("produtos")
+    .select("id, codigo, comprimento_mm, acabamento, peso_liquido, peso_bruto, pecas_por_caixa, usar_em_acabamento")
+    .order("codigo");
+
+  if(error){
+    alert("Erro ao carregar produtos");
+    console.error(error);
+    return;
   }
 
-  window.addEventListener("load", async () => {
-    const session = await aguardarSessao();
-    if (!session) {
-      window.location.href = "login.html";
-      return;
-    }
+  produtos = data.filter(p => p.usar_em_acabamento === true);
 
-    await carregarProdutos();
-    configurarEventos();
+  const select = document.getElementById("produtoSelect");
+  select.innerHTML = `<option value="">Selecione</option>`;
+
+  produtos.forEach(p=>{
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = p.codigo;
+    select.appendChild(opt);
+  });
+}
+
+function configurarEventos(){
+  document.getElementById("produtoSelect").addEventListener("change", e=>{
+    produtoSelecionado = produtos.find(p=>p.id == e.target.value);
+    if(!produtoSelecionado) return;
+
+    document.getElementById("comp").value = produtoSelecionado.comprimento_mm || "";
+    document.getElementById("servico").value = produtoSelecionado.acabamento || "";
+    document.getElementById("ppc").value = produtoSelecionado.pecas_por_caixa || "";
+
+    recalcular();
   });
 
-  async function carregarProdutos(){
-    const { data, error } = await supabase
-      .from("produtos")
-      .select("id, codigo, comprimento, acabamento, peso_liquido, peso_bruto, pecas_por_caixa, usar_em_acabamento")
-      .order("codigo");
+  document.getElementById("kg").addEventListener("input", recalcular);
+  document.getElementById("btnSalvar").addEventListener("click", salvar);
+}
 
-    if(error){
-      alert("Erro ao carregar produtos");
-      console.error(error);
-      return;
-    }
+function recalcular(){
+  if(!produtoSelecionado) return;
+  const kg = parseFloat(document.getElementById("kg").value || 0);
+  const quantidade = kg / (produtoSelecionado.peso_liquido || 1);
+  const kgBruto = quantidade * (produtoSelecionado.peso_bruto || 0);
+  document.getElementById("quantidade").value = quantidade.toFixed(0);
+  document.getElementById("kgBruto").value = kgBruto.toFixed(2);
+}
 
-    produtos = data.filter(p => p.usar_em_acabamento === true);
-
-    const select = document.getElementById("produtoSelect");
-    select.innerHTML = `<option value="">Selecione</option>`;
-
-    produtos.forEach(p=>{
-      const opt = document.createElement("option");
-      opt.value = p.id;
-      opt.textContent = p.codigo;
-      select.appendChild(opt);
-    });
+async function salvar(){
+  if(!produtoSelecionado){
+    alert("Selecione o produto");
+    return;
   }
 
-  function configurarEventos(){
-    document.getElementById("produtoSelect").addEventListener("change", e=>{
-      produtoSelecionado = produtos.find(p=>p.id == e.target.value);
-      if(!produtoSelecionado) return;
+  const payload = {
+    op: document.getElementById("op").value,
+    data: document.getElementById("data").value,
+    produto_id: produtoSelecionado.id,
+    codigo_peca: produtoSelecionado.codigo,
+    comp: produtoSelecionado.comprimento_mm,
+    pecas_por_caixa: produtoSelecionado.pecas_por_caixa,
+    servico: produtoSelecionado.acabamento,
+    kg: parseFloat(document.getElementById("kg").value),
+    quantidade: parseFloat(document.getElementById("quantidade").value),
+    kg_material_bruto: parseFloat(document.getElementById("kgBruto").value),
+    peso_caixa: produtoSelecionado.peso_bruto,
+    entregue: document.getElementById("entregue").value === "true",
+    boleto: document.getElementById("boleto").value === "true"
+  };
 
-      document.getElementById("comp").value = produtoSelecionado.comprimento || "";
-      document.getElementById("servico").value = produtoSelecionado.acabamento || "";
-      document.getElementById("ppc").value = produtoSelecionado.pecas_por_caixa || "";
+  const { error } = await supabase.from("zincagem_tratamento").insert(payload);
 
-      recalcular();
-    });
-
-    document.getElementById("kg").addEventListener("input", recalcular);
-    document.getElementById("btnSalvar").addEventListener("click", salvar);
+  if(error){
+    alert("Erro ao salvar");
+    console.error(error);
+  } else {
+    alert("Registro salvo");
+    window.location.reload();
   }
-
-  function recalcular(){
-    if(!produtoSelecionado) return;
-    const kg = parseFloat(document.getElementById("kg").value || 0);
-    const quantidade = kg / (produtoSelecionado.peso_liquido || 1);
-    const kgBruto = quantidade * (produtoSelecionado.peso_bruto || 0);
-    document.getElementById("quantidade").value = quantidade.toFixed(0);
-    document.getElementById("kgBruto").value = kgBruto.toFixed(2);
-  }
-
-  async function salvar(){
-    if(!produtoSelecionado){
-      alert("Selecione o produto");
-      return;
-    }
-
-    const payload = {
-      op: document.getElementById("op").value,
-      data: document.getElementById("data").value,
-      produto_id: produtoSelecionado.id,
-      codigo_peca: produtoSelecionado.codigo,
-      comp: produtoSelecionado.comprimento,
-      pecas_por_caixa: produtoSelecionado.pecas_por_caixa,
-      servico: produtoSelecionado.acabamento,
-      kg: parseFloat(document.getElementById("kg").value),
-      quantidade: parseFloat(document.getElementById("quantidade").value),
-      kg_material_bruto: parseFloat(document.getElementById("kgBruto").value),
-      peso_caixa: produtoSelecionado.peso_bruto,
-      entregue: document.getElementById("entregue").value === "true",
-      boleto: document.getElementById("boleto").value === "true"
-    };
-
-    const { error } = await supabase.from("zincagem_tratamento").insert(payload);
-
-    if(error){
-      alert("Erro ao salvar");
-      console.error(error);
-    } else {
-      alert("Registro salvo");
-      window.location.reload();
-    }
-  }
+}
 </script>
 
 </body>
