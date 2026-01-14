@@ -26,11 +26,8 @@
         <a href="notas_lista.html" class="menu-item">🧾 Notas Fiscais</a>
         <a href="contas_receber.html" class="menu-item">💰 Contas a Receber</a>
 
-        <!-- Lançamento -->
+        <!-- ÚNICO módulo de zincagem -->
         <a href="zincagem.html" class="menu-item">⚙️ Zincagem / Tratamento</a>
-
-        <!-- Controle -->
-        <a href="zincagem_lista.html" class="menu-item">📋 Controle de Zincagem</a>
       </nav>
 
       <button id="btnLogout" class="menu-item botao-sair">
@@ -79,16 +76,10 @@
             <div class="card-legenda">Boletos e recebimentos</div>
           </a>
 
-          <!-- Lançamento -->
+          <!-- ÚNICO card de zincagem -->
           <a class="card" href="zincagem.html">
             <div class="card-titulo">Zincagem / Tratamento</div>
-            <div class="card-legenda">Lançar OP de zincagem</div>
-          </a>
-
-          <!-- Controle -->
-          <a class="card" href="zincagem_lista.html">
-            <div class="card-titulo">Controle de Zincagem</div>
-            <div class="card-legenda">Acompanhar OPs e status</div>
+            <div class="card-legenda">Lançar e acompanhar OPs</div>
           </a>
 
         </div>
@@ -97,6 +88,7 @@
 
   </div>
 
+  <!-- AUTENTICAÇÃO -->
   <script type="module">
     import { verificarLogin, supabase } from "./js/auth.js";
 
