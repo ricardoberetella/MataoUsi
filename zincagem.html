@@ -4,32 +4,59 @@
 <meta charset="UTF-8">
 <title>Zincagem / Tratamento</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <link rel="stylesheet" href="css/dashboard.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-.form-grid{
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.75);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+}
+.modal-box{
+  width:900px;
+  background:#020617;
+  border-radius:18px;
+  padding:24px;
+  border:2px solid #38bdf8;
+}
+.grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
   gap:14px;
 }
-input,select,button{
+input,select{
   width:100%;
   padding:10px;
-  background:#020617;
-  border:1px solid #38bdf8;
-  color:#e5e7eb;
   border-radius:8px;
+  border:1px solid #38bdf8;
+  background:#020b1a;
+  color:#e5e7eb;
 }
-input[readonly]{background:#020b1a;color:#7dd3fc}
-.botao-salvar{background:#22c55e;color:#022c22;font-weight:bold}
-.tabela{margin-top:20px}
-.tabela table{width:100%;border-collapse:collapse}
-.tabela th,.tabela td{padding:10px;border-bottom:1px solid #1e293b}
-.btn-status{padding:6px 10px;border-radius:6px;border:none;cursor:pointer}
-.btn-ok{background:#22c55e;color:#022c22}
-.btn-pendente{background:#ef4444;color:#fff}
+input[readonly]{opacity:.7}
+.btn{
+  padding:12px 18px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+}
+.btn-green{background:#22c55e;color:#022c22}
+.btn-red{background:#ef4444;color:#fff}
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:20px;
+}
+th,td{
+  border-bottom:1px solid #1e293b;
+  padding:10px;
+  text-align:center;
+}
+th{color:#38bdf8}
 </style>
 </head>
 
@@ -38,141 +65,118 @@ input[readonly]{background:#020b1a;color:#7dd3fc}
 
 <aside class="sidebar">
   <div class="logo-sistema">MATÃO USINAGEM</div>
-  <nav class="menu">
-    <a href="dashboard.html" class="menu-item">⬅ Voltar</a>
-  </nav>
+  <a href="dashboard.html" class="menu-item">← Voltar</a>
 </aside>
 
 <main class="main">
-<h1 style="color:#38bdf8">Zincagem / Tratamento</h1>
 
-<div class="form-grid">
-  <input id="op" placeholder="OP">
-  <input type="date" id="data">
-  <select id="produto"></select>
-  <input id="comprimento" placeholder="Comprimento" readonly>
+<button class="btn btn-green" onclick="abrirModal()">+ Nova OP</button>
+<input id="filtro" placeholder="Filtrar OP" oninput="carregar()">
 
-  <input id="pecas_caixa" placeholder="Peças por Caixa" readonly>
-  <input id="acabamento" placeholder="Acabamento" readonly>
-  <input id="peso_caixa" placeholder="Peso da Caixa (kg)" readonly>
-  <input id="kg" placeholder="Kg">
-
-  <input id="quantidade" placeholder="Quantidade" readonly>
-  <input id="kg_bruto" placeholder="Kg Material Bruto" readonly>
-  <button class="botao-salvar" onclick="salvar()">Salvar</button>
-</div>
-
-<input id="filtroOp" placeholder="Filtrar OP" style="margin-top:15px">
-
-<div class="tabela">
 <table>
 <thead>
 <tr>
-<th>OP</th><th>Data</th><th>Peça</th><th>Comp</th><th>Pç/Cx</th>
-<th>Acab.</th><th>Kg</th><th>Bruto</th><th>Peso Caixa</th>
-<th>Qtd</th><th>Entregue</th><th>Boleto</th>
+<th>OP</th><th>Data</th><th>Peça</th><th>Comp</th><th>Pc/Cx</th>
+<th>Acabamento</th><th>Kg</th><th>Bruto</th><th>Peso Caixa</th><th>Qtd</th>
+<th>Entregue</th><th>Boleto</th>
 </tr>
 </thead>
 <tbody id="lista"></tbody>
 </table>
-</div>
 
 </main>
+</div>
+
+<div class="modal" id="modal">
+<div class="modal-box">
+<div class="grid">
+<input id="op" placeholder="OP">
+<input type="date" id="data">
+<select id="produto"></select>
+<input id="comp" readonly placeholder="Comprimento">
+<input id="pcx" readonly placeholder="Peças/Caixa">
+<input id="acabamento" readonly placeholder="Acabamento">
+<input id="peso_caixa" readonly placeholder="Peso Caixa">
+<input id="kg" placeholder="Kg">
+<input id="qtd" readonly placeholder="Qtd">
+<input id="bruto" readonly placeholder="Kg Bruto">
+</div>
+<br>
+<button class="btn btn-green" onclick="salvar()">Salvar</button>
+<button class="btn btn-red" onclick="fechar()">Cancelar</button>
+</div>
 </div>
 
 <script type="module">
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
-
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-let produtos=[]; let produtoSel=null;
 
-async function carregarProdutos(){
-  const {data}=await supabase.from("produtos")
-    .select("id,codigo,comprimento_mm,pecas_por_caixa,acabamento,peso_liquido")
-    .order("codigo");
+let produtos = [], produtoSel = null;
 
-  produtos=data;
-  const sel=document.getElementById("produto");
-  sel.innerHTML="<option value=''>Produto</option>";
+window.onload = async ()=>{
+  const {data} = await supabase.from("produtos").select("*");
+  produtos = data;
+  const sel = document.getElementById("produto");
   data.forEach(p=>{
-    sel.innerHTML+=`<option value="${p.id}">${p.codigo}</option>`;
+    sel.innerHTML += `<option value="${p.id}">${p.codigo}</option>`;
   });
-}
+  sel.onchange = ()=>{
+    produtoSel = produtos.find(p=>p.id==sel.value);
+    document.getElementById("comp").value = produtoSel.comprimento_mm;
+    document.getElementById("pcx").value = produtoSel.pecas_por_caixa;
+    document.getElementById("acabamento").value = produtoSel.acabamento;
+    document.getElementById("peso_caixa").value =
+      (produtoSel.pecas_por_caixa * produtoSel.peso_liquido).toFixed(2);
+  };
+  document.getElementById("kg").oninput = ()=>{
+    const kg = parseFloat(kgInput.value||0);
+    const qtd = kg / produtoSel.peso_liquido;
+    document.getElementById("qtd").value = Math.floor(qtd);
+    document.getElementById("bruto").value =
+      (qtd * produtoSel.peso_bruto).toFixed(2);
+  };
+  carregar();
+};
 
-document.getElementById("produto").addEventListener("change",e=>{
-  produtoSel=produtos.find(p=>p.id==e.target.value);
-  if(!produtoSel)return;
-
-  comprimento.value=produtoSel.comprimento_mm;
-  pecas_caixa.value=produtoSel.pecas_por_caixa;
-  acabamento.value=produtoSel.acabamento;
-  peso_caixa.value=(produtoSel.pecas_por_caixa*produtoSel.peso_liquido).toFixed(2);
-  recalcular();
-});
-
-document.getElementById("kg").addEventListener("input",recalcular);
-
-function recalcular(){
-  if(!produtoSel)return;
-  const kgv=parseFloat(kg.value||0);
-  const qtd=kgv/produtoSel.peso_liquido;
-  quantidade.value=qtd.toFixed(0);
-  kg_bruto.value=(qtd*produtoSel.peso_liquido).toFixed(2);
-}
-
-async function salvar(){
-  await supabase.from("zincagem_tratamento").insert({
-    op:op.value,
-    data:data.value,
-    produto_id:produtoSel.id,
-    comprimento:produtoSel.comprimento_mm,
-    pecas_por_caixa:produtoSel.pecas_por_caixa,
-    acabamento:produtoSel.acabamento,
-    kg:parseFloat(kg.value),
-    quantidade:parseInt(quantidade.value),
-    kg_material_bruto:parseFloat(kg_bruto.value),
-    peso_caixa:parseFloat(peso_caixa.value),
-    entregue:false,
-    boleto:false
-  });
-  location.reload();
-}
-
-async function carregarLista(){
-  const {data}=await supabase.from("zincagem_tratamento")
-    .select("*,produtos(codigo)").order("data",{ascending:false});
-  lista.innerHTML="";
+async function carregar(){
+  let {data} = await supabase.from("zincagem_tratamento").select("*").order("data",{ascending:false});
+  const f = document.getElementById("filtro").value;
+  if(f) data = data.filter(d=>d.op.includes(f));
+  const tb = document.getElementById("lista");
+  tb.innerHTML="";
   data.forEach(r=>{
-    lista.innerHTML+=`
+    tb.innerHTML+=`
     <tr>
-      <td>${r.op}</td>
-      <td>${r.data}</td>
-      <td>${r.produtos.codigo}</td>
-      <td>${r.comprimento}</td>
-      <td>${r.pecas_por_caixa}</td>
-      <td>${r.acabamento}</td>
-      <td>${r.kg}</td>
-      <td>${r.kg_material_bruto}</td>
-      <td>${r.peso_caixa}</td>
-      <td>${r.quantidade}</td>
-      <td><button class="btn-status ${r.entregue?'btn-ok':'btn-pendente'}"
-        onclick="atualizar(${r.id},'entregue')">${r.entregue?'OK':'Marcar'}</button></td>
-      <td><button class="btn-status ${r.boleto?'btn-ok':'btn-pendente'}"
-        onclick="atualizar(${r.id},'boleto')">${r.boleto?'OK':'Marcar'}</button></td>
+      <td>${r.op}</td><td>${r.data}</td><td>${r.codigo_peca}</td>
+      <td>${r.comp}</td><td>${r.pecas_por_caixa}</td>
+      <td>${r.servico}</td><td>${r.kg}</td><td>${r.kg_material_bruto}</td>
+      <td>${r.peso_caixa}</td><td>${r.quantidade}</td>
+      <td><button class="btn btn-green" onclick="marcar(${r.id},'entregue')">OK</button></td>
+      <td><button class="btn btn-green" onclick="marcar(${r.id},'boleto')">OK</button></td>
     </tr>`;
   });
 }
 
-async function atualizar(id,campo){
-  await supabase.from("zincagem_tratamento").update({[campo]:true}).eq("id",id);
-  carregarLista();
+async function salvar(){
+  await supabase.from("zincagem_tratamento").insert({
+    op: op.value, data:data.value,
+    produto_id:produtoSel.id, codigo_peca:produtoSel.codigo,
+    comp:produtoSel.comprimento_mm, pecas_por_caixa:produtoSel.pecas_por_caixa,
+    servico:produtoSel.acabamento, peso_caixa: peso_caixa.value,
+    kg:kg.value, quantidade:qtd.value, kg_material_bruto:bruto.value,
+    entregue:false, boleto:false
+  });
+  fechar(); carregar();
 }
 
-window.onload=async()=>{
-  await carregarProdutos();
-  await carregarLista();
-};
+async function marcar(id,campo){
+  await supabase.from("zincagem_tratamento").update({[campo]:true}).eq("id",id);
+  carregar();
+}
+
+window.abrirModal=()=>modal.style.display="flex";
+window.fechar=()=>modal.style.display="none";
 </script>
 
 </body>
