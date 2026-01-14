@@ -8,7 +8,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-.modal{
+.modal-bg{
   position:fixed;
   inset:0;
   background:rgba(0,0,0,.75);
@@ -17,46 +17,45 @@
   justify-content:center;
   z-index:999;
 }
-.modal-box{
-  width:900px;
-  background:#020617;
-  border-radius:18px;
+.modal{
+  background:#020b1a;
   padding:24px;
+  border-radius:14px;
+  width:720px;
   border:2px solid #38bdf8;
 }
+.modal h2{color:#38bdf8;margin-top:0}
 .grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  gap:14px;
+  gap:12px;
 }
-input,select{
+.grid label{font-size:12px}
+.grid input,.grid select{
   width:100%;
   padding:10px;
-  border-radius:8px;
+  background:#020617;
   border:1px solid #38bdf8;
-  background:#020b1a;
   color:#e5e7eb;
+  border-radius:8px;
 }
-input[readonly]{opacity:.7}
+.table{
+  width:100%;
+  border-collapse:collapse;
+}
+.table th,.table td{
+  padding:8px;
+  border-bottom:1px solid #1e293b;
+}
+.table th{color:#38bdf8}
 .btn{
-  padding:12px 18px;
+  padding:8px 14px;
+  border-radius:8px;
   border:none;
-  border-radius:10px;
   cursor:pointer;
 }
 .btn-green{background:#22c55e;color:#022c22}
-.btn-red{background:#ef4444;color:#fff}
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:20px;
-}
-th,td{
-  border-bottom:1px solid #1e293b;
-  padding:10px;
-  text-align:center;
-}
-th{color:#38bdf8}
+.btn-red{background:#ef4444;color:white}
 </style>
 </head>
 
@@ -65,119 +64,138 @@ th{color:#38bdf8}
 
 <aside class="sidebar">
   <div class="logo-sistema">MATÃO USINAGEM</div>
-  <a href="dashboard.html" class="menu-item">← Voltar</a>
+  <a href="dashboard.html" class="menu-item">⬅ Voltar</a>
 </aside>
 
 <main class="main">
+  <h1 style="color:#38bdf8">Zincagem / Tratamento</h1>
+  <button class="btn btn-green" onclick="abrirModal()">+ Nova OP</button>
 
-<button class="btn btn-green" onclick="abrirModal()">+ Nova OP</button>
-<input id="filtro" placeholder="Filtrar OP" oninput="carregar()">
+  <br><br>
 
-<table>
-<thead>
-<tr>
-<th>OP</th><th>Data</th><th>Peça</th><th>Comp</th><th>Pc/Cx</th>
-<th>Acabamento</th><th>Kg</th><th>Bruto</th><th>Peso Caixa</th><th>Qtd</th>
-<th>Entregue</th><th>Boleto</th>
-</tr>
-</thead>
-<tbody id="lista"></tbody>
-</table>
+  <input id="filtroOP" placeholder="Filtrar OP" oninput="carregarLista()">
 
+  <table class="table">
+    <thead>
+      <tr>
+        <th>OP</th><th>Data</th><th>Peça</th><th>Comp</th><th>Pç/Cx</th>
+        <th>Acabamento</th><th>Kg</th><th>Bruto</th><th>Peso Caixa</th><th>Qtd</th>
+        <th>Entregue</th><th>Boleto</th>
+      </tr>
+    </thead>
+    <tbody id="lista"></tbody>
+  </table>
 </main>
 </div>
 
-<div class="modal" id="modal">
-<div class="modal-box">
-<div class="grid">
-<input id="op" placeholder="OP">
-<input type="date" id="data">
-<select id="produto"></select>
-<input id="comp" readonly placeholder="Comprimento">
-<input id="pcx" readonly placeholder="Peças/Caixa">
-<input id="acabamento" readonly placeholder="Acabamento">
-<input id="peso_caixa" readonly placeholder="Peso Caixa">
-<input id="kg" placeholder="Kg">
-<input id="qtd" readonly placeholder="Qtd">
-<input id="bruto" readonly placeholder="Kg Bruto">
-</div>
-<br>
-<button class="btn btn-green" onclick="salvar()">Salvar</button>
-<button class="btn btn-red" onclick="fechar()">Cancelar</button>
-</div>
+<!-- MODAL -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h2>Nova OP</h2>
+    <div class="grid">
+      <div><label>OP</label><input id="op"></div>
+      <div><label>Data</label><input type="date" id="data"></div>
+      <div><label>Produto</label><select id="produto"></select></div>
+      <div><label>Kg</label><input id="kg" type="number" step="0.01"></div>
+
+      <div><label>Comprimento</label><input id="comp" readonly></div>
+      <div><label>Peças/Caixa</label><input id="pcx" readonly></div>
+      <div><label>Acabamento</label><input id="acab" readonly></div>
+      <div><label>Peso Caixa</label><input id="pesoCx" readonly></div>
+
+      <div><label>Quantidade</label><input id="qtd" readonly></div>
+      <div><label>Kg Bruto</label><input id="bruto" readonly></div>
+    </div>
+    <br>
+    <button class="btn btn-green" onclick="salvar()">Salvar</button>
+    <button class="btn btn-red" onclick="fecharModal()">Cancelar</button>
+  </div>
 </div>
 
 <script type="module">
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let produtos=[];
 
-let produtos = [], produtoSel = null;
+window.abrirModal=()=>document.getElementById("modal").style.display="flex";
+window.fecharModal=()=>document.getElementById("modal").style.display="none";
 
-window.onload = async ()=>{
-  const {data} = await supabase.from("produtos").select("*");
-  produtos = data;
-  const sel = document.getElementById("produto");
-  data.forEach(p=>{
-    sel.innerHTML += `<option value="${p.id}">${p.codigo}</option>`;
-  });
-  sel.onchange = ()=>{
-    produtoSel = produtos.find(p=>p.id==sel.value);
-    document.getElementById("comp").value = produtoSel.comprimento_mm;
-    document.getElementById("pcx").value = produtoSel.pecas_por_caixa;
-    document.getElementById("acabamento").value = produtoSel.acabamento;
-    document.getElementById("peso_caixa").value =
-      (produtoSel.pecas_por_caixa * produtoSel.peso_liquido).toFixed(2);
-  };
-  document.getElementById("kg").oninput = ()=>{
-    const kg = parseFloat(kgInput.value||0);
-    const qtd = kg / produtoSel.peso_liquido;
-    document.getElementById("qtd").value = Math.floor(qtd);
-    document.getElementById("bruto").value =
-      (qtd * produtoSel.peso_bruto).toFixed(2);
-  };
-  carregar();
-};
-
-async function carregar(){
-  let {data} = await supabase.from("zincagem_tratamento").select("*").order("data",{ascending:false});
-  const f = document.getElementById("filtro").value;
-  if(f) data = data.filter(d=>d.op.includes(f));
-  const tb = document.getElementById("lista");
-  tb.innerHTML="";
-  data.forEach(r=>{
-    tb.innerHTML+=`
-    <tr>
-      <td>${r.op}</td><td>${r.data}</td><td>${r.codigo_peca}</td>
-      <td>${r.comp}</td><td>${r.pecas_por_caixa}</td>
-      <td>${r.servico}</td><td>${r.kg}</td><td>${r.kg_material_bruto}</td>
-      <td>${r.peso_caixa}</td><td>${r.quantidade}</td>
-      <td><button class="btn btn-green" onclick="marcar(${r.id},'entregue')">OK</button></td>
-      <td><button class="btn btn-green" onclick="marcar(${r.id},'boleto')">OK</button></td>
-    </tr>`;
-  });
+async function carregarProdutos(){
+ const {data}=await supabase.from("produtos")
+ .select("id,codigo,comprimento_mm,pecas_por_caixa,acabamento,peso_liquido,peso_bruto")
+ .order("codigo");
+ produtos=data;
+ const sel=document.getElementById("produto");
+ sel.innerHTML="<option></option>";
+ data.forEach(p=>{
+   let o=document.createElement("option");
+   o.value=p.id;o.textContent=p.codigo;
+   sel.appendChild(o);
+ });
 }
 
-async function salvar(){
-  await supabase.from("zincagem_tratamento").insert({
-    op: op.value, data:data.value,
-    produto_id:produtoSel.id, codigo_peca:produtoSel.codigo,
-    comp:produtoSel.comprimento_mm, pecas_por_caixa:produtoSel.pecas_por_caixa,
-    servico:produtoSel.acabamento, peso_caixa: peso_caixa.value,
-    kg:kg.value, quantidade:qtd.value, kg_material_bruto:bruto.value,
-    entregue:false, boleto:false
-  });
-  fechar(); carregar();
+document.getElementById("produto").onchange=e=>{
+ const p=produtos.find(x=>x.id==e.target.value);
+ if(!p)return;
+ comp.value=p.comprimento_mm;
+ pcx.value=p.pecas_por_caixa;
+ acab.value=p.acabamento;
+ pesoCx.value=(p.pecas_por_caixa*p.peso_liquido).toFixed(2);
+ calcular();
 }
 
-async function marcar(id,campo){
-  await supabase.from("zincagem_tratamento").update({[campo]:true}).eq("id",id);
-  carregar();
+kg.oninput=calcular;
+function calcular(){
+ const p=produtos.find(x=>x.id==produto.value);
+ if(!p)return;
+ const k=parseFloat(kg.value||0);
+ const q=k/p.peso_liquido;
+ qtd.value=q.toFixed(0);
+ bruto.value=(q*p.peso_bruto).toFixed(2);
 }
 
-window.abrirModal=()=>modal.style.display="flex";
-window.fechar=()=>modal.style.display="none";
+window.salvar=async()=>{
+ const p=produtos.find(x=>x.id==produto.value);
+ await supabase.from("zincagem_tratamento").insert({
+   op:op.value,
+   data:data.value,
+   produto_id:p.id,
+   codigo_peca:p.codigo,
+   comprimento:p.comprimento_mm,
+   pecas_por_caixa:p.pecas_por_caixa,
+   acabamento:p.acabamento,
+   kg:parseFloat(kg.value),
+   quantidade:parseFloat(qtd.value),
+   kg_material_bruto:parseFloat(bruto.value),
+   peso_caixa:parseFloat(pesoCx.value),
+   entregue:false,
+   boleto:false
+ });
+ fecharModal();
+ carregarLista();
+}
+
+window.carregarLista=async()=>{
+ const f=filtroOP.value;
+ let q=supabase.from("zincagem_tratamento").select("*").order("data",{ascending:false});
+ if(f) q=q.ilike("op","%"+f+"%");
+ const {data}=await q;
+ lista.innerHTML="";
+ data.forEach(r=>{
+  lista.innerHTML+=`<tr>
+    <td>${r.op}</td><td>${r.data}</td><td>${r.codigo_peca}</td>
+    <td>${r.comprimento}</td><td>${r.pecas_por_caixa}</td><td>${r.acabamento}</td>
+    <td>${r.kg}</td><td>${r.kg_material_bruto}</td><td>${r.peso_caixa}</td><td>${r.quantidade}</td>
+    <td>${r.entregue?"OK":"Pendente"}</td>
+    <td>${r.boleto?"OK":"Pendente"}</td>
+  </tr>`;
+ });
+}
+
+carregarProdutos();
+carregarLista();
 </script>
-
 </body>
 </html>
