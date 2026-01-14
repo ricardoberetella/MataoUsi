@@ -4,19 +4,30 @@
 <meta charset="UTF-8">
 <title>Zincagem / Tratamento</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <link rel="stylesheet" href="css/dashboard.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-.zincagem-card{max-width:1200px;margin:auto;background:rgba(0,0,0,.55);padding:20px;border-radius:16px}
-.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-.field{display:flex;flex-direction:column;gap:4px}
-.field label{font-size:12px;color:#7dd3fc}
-.field input,.field select{padding:10px;border-radius:8px;background:#020617;border:1px solid #38bdf8;color:#e5e7eb}
-.field input[readonly]{background:#020b1a;color:#a5f3fc}
-.tabela{width:100%;border-collapse:collapse;margin-top:20px}
-th,td{padding:8px;border-bottom:1px solid rgba(56,189,248,.25);text-align:center}
-th{color:#38bdf8}
-.btn-status{padding:4px 10px;border:none;border-radius:6px;cursor:pointer;font-weight:bold}
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:14px;
+}
+input,select,button{
+  width:100%;
+  padding:10px;
+  background:#020617;
+  border:1px solid #38bdf8;
+  color:#e5e7eb;
+  border-radius:8px;
+}
+input[readonly]{background:#020b1a;color:#7dd3fc}
+.botao-salvar{background:#22c55e;color:#022c22;font-weight:bold}
+.tabela{margin-top:20px}
+.tabela table{width:100%;border-collapse:collapse}
+.tabela th,.tabela td{padding:10px;border-bottom:1px solid #1e293b}
+.btn-status{padding:6px 10px;border-radius:6px;border:none;cursor:pointer}
 .btn-ok{background:#22c55e;color:#022c22}
 .btn-pendente{background:#ef4444;color:#fff}
 </style>
@@ -33,143 +44,135 @@ th{color:#38bdf8}
 </aside>
 
 <main class="main">
-<h1 style="color:#38bdf8;margin-bottom:15px">Zincagem / Tratamento</h1>
+<h1 style="color:#38bdf8">Zincagem / Tratamento</h1>
 
-<div class="zincagem-card">
+<div class="form-grid">
+  <input id="op" placeholder="OP">
+  <input type="date" id="data">
+  <select id="produto"></select>
+  <input id="comprimento" placeholder="Comprimento" readonly>
 
-<div class="grid4">
-<div class="field"><label>OP</label><input id="op"></div>
-<div class="field"><label>Data</label><input type="date" id="data"></div>
-<div class="field"><label>Produto</label><select id="produtoSelect"></select></div>
-<div></div>
+  <input id="pecas_caixa" placeholder="Peças por Caixa" readonly>
+  <input id="acabamento" placeholder="Acabamento" readonly>
+  <input id="peso_caixa" placeholder="Peso da Caixa (kg)" readonly>
+  <input id="kg" placeholder="Kg">
 
-<div class="field"><label>Comprimento</label><input id="comp" readonly></div>
-<div class="field"><label>Peças por Caixa</label><input id="ppc" readonly></div>
-<div class="field"><label>Acabamento</label><input id="acabamento" readonly></div>
-<div class="field"><label>Peso da Caixa (kg)</label><input id="pesoCaixa" readonly></div>
-
-<div class="field"><label>Kg</label><input id="kg" type="number" step="0.01"></div>
-<div class="field"><label>Quantidade</label><input id="quantidade" readonly></div>
-<div class="field"><label>Kg Material Bruto</label><input id="kgBruto" readonly></div>
-<div class="field"><label></label><button class="botao" id="salvar">Salvar</button></div>
+  <input id="quantidade" placeholder="Quantidade" readonly>
+  <input id="kg_bruto" placeholder="Kg Material Bruto" readonly>
+  <button class="botao-salvar" onclick="salvar()">Salvar</button>
 </div>
 
-<input id="filtroOP" placeholder="Filtrar OP" style="max-width:200px;margin-top:10px">
+<input id="filtroOp" placeholder="Filtrar OP" style="margin-top:15px">
 
-<table class="tabela">
+<div class="tabela">
+<table>
 <thead>
 <tr>
-<th>OP</th><th>Data</th><th>Peça</th><th>Comp</th><th>Pç/Cx</th><th>Acabamento</th>
-<th>Kg</th><th>Bruto</th><th>Peso Caixa</th><th>Qtd</th><th>Entregue</th><th>Boleto</th>
+<th>OP</th><th>Data</th><th>Peça</th><th>Comp</th><th>Pç/Cx</th>
+<th>Acab.</th><th>Kg</th><th>Bruto</th><th>Peso Caixa</th>
+<th>Qtd</th><th>Entregue</th><th>Boleto</th>
 </tr>
 </thead>
 <tbody id="lista"></tbody>
 </table>
-
 </div>
+
 </main>
 </div>
 
 <script type="module">
-import { supabase } from "./js/auth.js";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
 
-let produtos=[], registros=[], produto=null;
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let produtos=[]; let produtoSel=null;
 
-window.onload=async()=>{
- const {data:{session}}=await supabase.auth.getSession();
- if(!session){location.href="login.html";return;}
+async function carregarProdutos(){
+  const {data}=await supabase.from("produtos")
+    .select("id,codigo,comprimento_mm,pecas_por_caixa,acabamento,peso_liquido")
+    .order("codigo");
 
- const {data}=await supabase.from("produtos")
- .select("id,codigo,comprimento_mm,acabamento,peso_liquido,peso_bruto,pecas_por_caixa")
- .eq("usar_em_acabamento",true);
-
- produtos=data;
- produtoSelect.innerHTML='<option value="">Selecione</option>';
- data.forEach(p=>produtoSelect.innerHTML+=`<option value="${p.id}">${p.codigo}</option>`);
-
- produtoSelect.onchange=()=>{produto=produtos.find(p=>p.id==produtoSelect.value);carregarProduto();}
- kg.oninput=calcular;
- salvar.onclick=salvarRegistro;
- filtroOP.oninput=render;
-
- carregarLista();
+  produtos=data;
+  const sel=document.getElementById("produto");
+  sel.innerHTML="<option value=''>Produto</option>";
+  data.forEach(p=>{
+    sel.innerHTML+=`<option value="${p.id}">${p.codigo}</option>`;
+  });
 }
 
-function carregarProduto(){
- if(!produto)return;
+document.getElementById("produto").addEventListener("change",e=>{
+  produtoSel=produtos.find(p=>p.id==e.target.value);
+  if(!produtoSel)return;
 
- const pesoCaixaCalc = produto.pecas_por_caixa * produto.peso_liquido;
+  comprimento.value=produtoSel.comprimento_mm;
+  pecas_caixa.value=produtoSel.pecas_por_caixa;
+  acabamento.value=produtoSel.acabamento;
+  peso_caixa.value=(produtoSel.pecas_por_caixa*produtoSel.peso_liquido).toFixed(2);
+  recalcular();
+});
 
- comp.value = produto.comprimento_mm || "";
- ppc.value = produto.pecas_por_caixa || "";
- acabamento.value = produto.acabamento || "";
- pesoCaixa.value = pesoCaixaCalc.toFixed(2);
+document.getElementById("kg").addEventListener("input",recalcular);
 
- calcular();
+function recalcular(){
+  if(!produtoSel)return;
+  const kgv=parseFloat(kg.value||0);
+  const qtd=kgv/produtoSel.peso_liquido;
+  quantidade.value=qtd.toFixed(0);
+  kg_bruto.value=(qtd*produtoSel.peso_liquido).toFixed(2);
 }
 
-function calcular(){
- if(!produto)return;
-
- const kgv = parseFloat(kg.value||0);
- const qtd = kgv / (produto.peso_liquido || 1);
-
- quantidade.value = qtd.toFixed(0);
- kgBruto.value = (qtd * (produto.peso_bruto||0)).toFixed(2);
-}
-
-async function salvarRegistro(){
- if(!produto || !data.value) return alert("Informe OP, data e produto");
-
- const pesoCaixaCalc = produto.pecas_por_caixa * produto.peso_liquido;
-
- const payload={
-  op:op.value,
-  data:data.value,
-  produto_id:produto.id,
-  codigo_peca:produto.codigo,
-  comp:produto.comprimento_mm,
-  pecas_por_caixa:produto.pecas_por_caixa,
-  acabamento:produto.acabamento,
-  kg:+kg.value,
-  quantidade:+quantidade.value,
-  kg_material_bruto:+kgBruto.value,
-  peso_caixa:pesoCaixaCalc,
-  entregue:false,
-  boleto:false
- };
-
- const {error}=await supabase.from("zincagem_tratamento").insert(payload);
- if(error){alert("Erro ao salvar");console.error(error);}
- else{op.value="";kg.value="";await carregarLista();}
-}
-
-async function marcar(id,campo){
- await supabase.from("zincagem_tratamento").update({[campo]:true}).eq("id",id);
- carregarLista();
+async function salvar(){
+  await supabase.from("zincagem_tratamento").insert({
+    op:op.value,
+    data:data.value,
+    produto_id:produtoSel.id,
+    comprimento:produtoSel.comprimento_mm,
+    pecas_por_caixa:produtoSel.pecas_por_caixa,
+    acabamento:produtoSel.acabamento,
+    kg:parseFloat(kg.value),
+    quantidade:parseInt(quantidade.value),
+    kg_material_bruto:parseFloat(kg_bruto.value),
+    peso_caixa:parseFloat(peso_caixa.value),
+    entregue:false,
+    boleto:false
+  });
+  location.reload();
 }
 
 async function carregarLista(){
- const {data}=await supabase.from("zincagem_tratamento").select("*").order("data",{ascending:false});
- registros=data;
- render();
+  const {data}=await supabase.from("zincagem_tratamento")
+    .select("*,produtos(codigo)").order("data",{ascending:false});
+  lista.innerHTML="";
+  data.forEach(r=>{
+    lista.innerHTML+=`
+    <tr>
+      <td>${r.op}</td>
+      <td>${r.data}</td>
+      <td>${r.produtos.codigo}</td>
+      <td>${r.comprimento}</td>
+      <td>${r.pecas_por_caixa}</td>
+      <td>${r.acabamento}</td>
+      <td>${r.kg}</td>
+      <td>${r.kg_material_bruto}</td>
+      <td>${r.peso_caixa}</td>
+      <td>${r.quantidade}</td>
+      <td><button class="btn-status ${r.entregue?'btn-ok':'btn-pendente'}"
+        onclick="atualizar(${r.id},'entregue')">${r.entregue?'OK':'Marcar'}</button></td>
+      <td><button class="btn-status ${r.boleto?'btn-ok':'btn-pendente'}"
+        onclick="atualizar(${r.id},'boleto')">${r.boleto?'OK':'Marcar'}</button></td>
+    </tr>`;
+  });
 }
 
-function render(){
- const f=filtroOP.value;
- lista.innerHTML="";
- registros.filter(r=>!f||String(r.op).includes(f)).forEach(r=>{
-  lista.innerHTML+=`
-  <tr>
-  <td>${r.op}</td><td>${r.data}</td><td>${r.codigo_peca}</td>
-  <td>${r.comp||""}</td><td>${r.pecas_por_caixa||""}</td><td>${r.acabamento||""}</td>
-  <td>${r.kg}</td><td>${r.kg_material_bruto}</td><td>${r.peso_caixa}</td><td>${r.quantidade}</td>
-  <td>${r.entregue?'<span class="btn-status btn-ok">OK</span>':`<button class="btn-status btn-pendente" onclick="marcar(${r.id},'entregue')">Marcar</button>`}</td>
-  <td>${r.boleto?'<span class="btn-status btn-ok">OK</span>':`<button class="btn-status btn-pendente" onclick="marcar(${r.id},'boleto')">Marcar</button>`}</td>
-  </tr>`;
- });
+async function atualizar(id,campo){
+  await supabase.from("zincagem_tratamento").update({[campo]:true}).eq("id",id);
+  carregarLista();
 }
-window.marcar=marcar;
+
+window.onload=async()=>{
+  await carregarProdutos();
+  await carregarLista();
+};
 </script>
 
 </body>
