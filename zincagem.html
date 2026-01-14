@@ -81,7 +81,6 @@
   <h1 style="color:#38bdf8">Zincagem / Tratamento</h1>
 
   <button class="btn btn-green" onclick="abrirModal()">+ Nova OP</button>
-
   <br><br>
 
   <input id="filtroOP" class="filtro" placeholder="Filtrar OP" oninput="carregarLista()">
@@ -132,21 +131,21 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-let produtos=[];
+let produtos = [];
 
-window.abrirModal=()=>modal.style.display="flex";
-window.fecharModal=()=>modal.style.display="none";
+window.abrirModal = () => modal.style.display = "flex";
+window.fecharModal = () => modal.style.display = "none";
 
 async function carregarProdutos(){
- const {data}=await supabase
+ const {data} = await supabase
  .from("produtos")
  .select("id,codigo,comprimento_mm,pecas_por_caixa,acabamento,peso_liquido,peso_bruto")
  .order("codigo");
 
- produtos=data;
+ produtos = data || [];
 
- produto.innerHTML="<option value=''></option>";
- data.forEach(p=>{
+ produto.innerHTML = "<option value=''></option>";
+ produtos.forEach(p=>{
    const o=document.createElement("option");
    o.value=p.id;
    o.textContent=p.codigo;
@@ -154,33 +153,32 @@ async function carregarProdutos(){
  });
 }
 
-produto.onchange=()=>{
- const p=produtos.find(x=>x.id==produto.value);
+produto.onchange = ()=>{
+ const p = produtos.find(x=>x.id==produto.value);
  if(!p) return;
 
- comp.value=p.comprimento_mm;
- pcx.value=p.pecas_por_caixa;
- acab.value=p.acabamento;
- pesoCx.value=(p.pecas_por_caixa * p.peso_liquido).toFixed(2);
-
+ comp.value = p.comprimento_mm;
+ pcx.value = p.pecas_por_caixa;
+ acab.value = p.acabamento;
+ pesoCx.value = (p.pecas_por_caixa * p.peso_liquido).toFixed(2);
  calcular();
 };
 
-kg.oninput=calcular;
+kg.oninput = calcular;
 
 function calcular(){
- const p=produtos.find(x=>x.id==produto.value);
+ const p = produtos.find(x=>x.id==produto.value);
  if(!p) return;
 
- const k=parseFloat(kg.value||0);
- const q=k / p.peso_liquido;
+ const k = parseFloat(kg.value||0);
+ const q = k / p.peso_liquido;
 
- qtd.value=q.toFixed(0);
- bruto.value=(q * p.peso_bruto).toFixed(2);
+ qtd.value = q.toFixed(0);
+ bruto.value = (q * p.peso_bruto).toFixed(2);
 }
 
 window.salvar = async()=>{
- const p=produtos.find(x=>x.id==produto.value);
+ const p = produtos.find(x=>x.id==produto.value);
  if(!p) return alert("Selecione o produto");
 
  const { error } = await supabase
@@ -190,7 +188,7 @@ window.salvar = async()=>{
    data: data.value,
    produto_id: p.id,
    codigo_peca: p.codigo,
-   comprimento: p.comprimento_mm,
+   comprimento_mm: p.comprimento_mm,
    pecas_por_caixa: p.pecas_por_caixa,
    acabamento: p.acabamento,
    kg: parseFloat(kg.value),
@@ -212,25 +210,25 @@ window.salvar = async()=>{
 };
 
 window.carregarLista = async()=>{
- const f=filtroOP.value;
+ const f = filtroOP.value;
 
  let q = supabase
    .from("zincagem_tratamento")
    .select("*")
    .order("data",{ascending:false});
 
- if(f) q=q.ilike("op","%"+f+"%");
+ if(f) q = q.ilike("op","%"+f+"%");
 
- const {data}=await q;
+ const {data} = await q;
 
  lista.innerHTML="";
- data.forEach(r=>{
+ (data||[]).forEach(r=>{
   lista.innerHTML+=`
    <tr>
     <td>${r.op}</td>
     <td>${r.data}</td>
     <td>${r.codigo_peca}</td>
-    <td>${r.comprimento}</td>
+    <td>${r.comprimento_mm}</td>
     <td>${r.pecas_por_caixa}</td>
     <td>${r.acabamento}</td>
     <td>${r.kg}</td>
