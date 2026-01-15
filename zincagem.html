@@ -9,15 +9,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body{
-  background:radial-gradient(circle at top,#0b1224,#020617 70%);
-  color:#e5e7eb;
-  font-family:Segoe UI,Arial;
-}
+body{margin:0}
+.main{margin:0;padding:20px}
 
-.main{
-  padding:30px;
-}
+h1{color:#38bdf8;margin:0 0 16px 0}
 
 .modal-bg{
   position:fixed;
@@ -32,7 +27,7 @@ body{
   background:#020b1a;
   padding:24px;
   border-radius:14px;
-  width:720px;
+  width:820px;
   border:2px solid #38bdf8;
 }
 .modal h2{color:#38bdf8;margin-top:0}
@@ -52,24 +47,14 @@ body{
   border-radius:8px;
 }
 
-.table{
-  width:100%;
-  border-collapse:collapse;
-}
-.table th,.table td{
-  padding:10px;
-  border-bottom:1px solid #1e293b;
-}
+.table{width:100%;border-collapse:collapse;margin-top:10px}
+.table th,.table td{padding:10px;border-bottom:1px solid #1e293b;text-align:center}
 .table th{color:#38bdf8}
 
-.btn{
-  padding:8px 16px;
-  border-radius:8px;
-  border:none;
-  cursor:pointer;
-}
+.btn{padding:6px 12px;border-radius:8px;border:none;cursor:pointer;font-weight:bold}
 .btn-green{background:#22c55e;color:#022c22}
 .btn-red{background:#ef4444;color:white}
+.btn-blue{background:#38bdf8;color:#022c22}
 
 .filtro{
   padding:10px;
@@ -77,8 +62,7 @@ body{
   border:1px solid #38bdf8;
   background:#020617;
   color:#e5e7eb;
-  margin:15px 0;
-  width:240px;
+  margin-left:12px;
 }
 </style>
 </head>
@@ -87,18 +71,17 @@ body{
 
 <main class="main">
 
-<h1 style="color:#38bdf8">Zincagem / Tratamento</h1>
+<h1>Zincagem / Tratamento</h1>
 
 <button class="btn btn-green" onclick="abrirModal()">+ Nova OP</button>
-
 <input id="filtroOP" class="filtro" placeholder="Filtrar OP" oninput="carregarLista()">
 
 <table class="table">
 <thead>
 <tr>
-  <th>OP</th><th>Data</th><th>Peça</th><th>Comp</th><th>Pç/Cx</th>
-  <th>Acabamento</th><th>Kg</th><th>Bruto</th><th>Peso Caixa</th><th>Qtd</th>
-  <th>Entregue</th><th>Boleto</th>
+<th>OP</th><th>Data</th><th>Peça</th><th>Comp</th><th>Pç/Cx</th>
+<th>Acabamento</th><th>Kg</th><th>Bruto</th><th>Peso Caixa</th><th>Qtd</th>
+<th>Entregue</th><th>Boleto</th>
 </tr>
 </thead>
 <tbody id="lista"></tbody>
@@ -108,29 +91,28 @@ body{
 
 <!-- MODAL -->
 <div class="modal-bg" id="modal">
-  <div class="modal">
-    <h2>Nova OP</h2>
+<div class="modal">
+<h2>Nova OP</h2>
 
-    <div class="grid">
-      <div><label>OP</label><input id="op"></div>
-      <div><label>Data</label><input type="date" id="data"></div>
-      <div><label>Produto</label><select id="produto"></select></div>
-      <div><label>Kg</label><input id="kg" type="number" step="0.01"></div>
+<div class="grid">
+<div><label>OP</label><input id="op"></div>
+<div><label>Data</label><input type="date" id="data"></div>
+<div><label>Produto</label><select id="produto"></select></div>
+<div><label>Kg</label><input id="kg" type="number" step="0.01"></div>
 
-      <div><label>Comprimento</label><input id="comp" readonly></div>
-      <div><label>Peças/Caixa</label><input id="pcx" readonly></div>
-      <div><label>Acabamento</label><input id="acab" readonly></div>
-      <div><label>Peso da Caixa</label><input id="pesoCx" readonly></div>
+<div><label>Comprimento</label><input id="comp" readonly></div>
+<div><label>Peças/Caixa</label><input id="pcx" readonly></div>
+<div><label>Acabamento</label><input id="acab" readonly></div>
+<div><label>Peso da Caixa</label><input id="pesoCx" readonly></div>
 
-      <div><label>Quantidade</label><input id="qtd" readonly></div>
-      <div><label>Kg Bruto</label><input id="bruto" readonly></div>
-    </div>
+<div><label>Quantidade</label><input id="qtd" readonly></div>
+<div><label>Kg Bruto</label><input id="bruto" readonly></div>
+</div>
 
-    <br>
-
-    <button class="btn btn-green" onclick="salvar()">Salvar</button>
-    <button class="btn btn-red" onclick="fecharModal()">Cancelar</button>
-  </div>
+<br>
+<button class="btn btn-green" onclick="salvar()">Salvar</button>
+<button class="btn btn-red" onclick="fecharModal()">Cancelar</button>
+</div>
 </div>
 
 <script type="module">
@@ -143,17 +125,21 @@ let produtos=[];
 window.abrirModal=()=>modal.style.display="flex";
 window.fecharModal=()=>modal.style.display="none";
 
-function fmt(n){ return n.toLocaleString("pt-BR",{minimumFractionDigits:2}); }
+const br = n => Number(n||0).toLocaleString("pt-BR",{minimumFractionDigits:2});
+
+const dataBR = iso=>{
+ if(!iso) return "";
+ const [y,m,d]=iso.split("-");
+ return `${d}/${m}/${y}`;
+};
 
 async function carregarProdutos(){
- const {data}=await supabase
- .from("produtos")
+ const {data}=await supabase.from("produtos")
  .select("id,codigo,comprimento_mm,pecas_por_caixa,acabamento,peso_liquido,peso_bruto")
  .order("codigo");
 
  produtos=data;
- produto.innerHTML="<option value=''></option>";
-
+ produto.innerHTML="<option></option>";
  data.forEach(p=>{
    const o=document.createElement("option");
    o.value=p.id;
@@ -165,11 +151,10 @@ async function carregarProdutos(){
 produto.onchange=()=>{
  const p=produtos.find(x=>x.id==produto.value);
  if(!p) return;
-
  comp.value=p.comprimento_mm;
  pcx.value=p.pecas_por_caixa;
  acab.value=p.acabamento;
- pesoCx.value=fmt(p.pecas_por_caixa * p.peso_liquido);
+ pesoCx.value=br(p.pecas_por_caixa*p.peso_liquido);
  calcular();
 };
 
@@ -179,61 +164,61 @@ function calcular(){
  const p=produtos.find(x=>x.id==produto.value);
  if(!p) return;
  const k=parseFloat(kg.value||0);
- const q=k / p.peso_liquido;
- qtd.value=q.toFixed(0);
- bruto.value=fmt(q * p.peso_bruto);
+ const q=k/p.peso_liquido;
+ qtd.value=Math.round(q);
+ bruto.value=br(q*p.peso_bruto);
 }
 
-window.salvar = async()=>{
+window.salvar=async()=>{
  const p=produtos.find(x=>x.id==produto.value);
- if(!p) return alert("Selecione o produto");
-
- const { error } = await supabase.from("zincagem_tratamento").insert({
-   op: op.value,
-   data: data.value,
-   produto_id: p.id,
-   codigo_peca: p.codigo,
-   comprimento_mm: p.comprimento_mm,
-   pecas_por_caixa: p.pecas_por_caixa,
-   acabamento: p.acabamento,
-   kg: parseFloat(kg.value),
-   quantidade: parseFloat(qtd.value),
-   kg_material_bruto: parseFloat(bruto.value.replace(",", ".")),
-   peso_caixa: parseFloat(pesoCx.value.replace(",", ".")),
-   entregue:false,
-   boleto:false
+ const {error}=await supabase.from("zincagem_tratamento").insert({
+  op:op.value,
+  data:data.value,
+  produto_id:p.id,
+  codigo_peca:p.codigo,
+  comprimento_mm:p.comprimento_mm,
+  pecas_por_caixa:p.pecas_por_caixa,
+  acabamento:p.acabamento,
+  kg:kg.value,
+  quantidade:qtd.value,
+  kg_material_bruto:bruto.value.replace(".","").replace(",","."),
+  peso_caixa:pesoCx.value.replace(".","").replace(",","."),
+  entregue:false,
+  boleto:false
  });
+ if(error) return alert(error.message);
+ fecharModal();carregarLista();
+};
 
- if(error){ alert(error.message); return; }
-
- fecharModal();
+window.toggleCampo=async(id,campo,valor)=>{
+ await supabase.from("zincagem_tratamento")
+ .update({[campo]:!valor}).eq("id",id);
  carregarLista();
 };
 
-window.carregarLista = async()=>{
+window.carregarLista=async()=>{
  const f=filtroOP.value;
- let q = supabase.from("zincagem_tratamento").select("*").order("data",{ascending:false});
+ let q=supabase.from("zincagem_tratamento").select("*").order("data",{ascending:false});
  if(f) q=q.ilike("op","%"+f+"%");
  const {data}=await q;
 
  lista.innerHTML="";
  data.forEach(r=>{
-  const d = new Date(r.data).toLocaleDateString("pt-BR");
   lista.innerHTML+=`
-   <tr>
-    <td>${r.op}</td>
-    <td>${d}</td>
-    <td>${r.codigo_peca}</td>
-    <td>${r.comprimento_mm}</td>
-    <td>${r.pecas_por_caixa}</td>
-    <td>${r.acabamento}</td>
-    <td>${fmt(r.kg)}</td>
-    <td>${fmt(r.kg_material_bruto)}</td>
-    <td>${fmt(r.peso_caixa)}</td>
-    <td>${r.quantidade}</td>
-    <td>${r.entregue?"OK":"Pendente"}</td>
-    <td>${r.boleto?"OK":"Pendente"}</td>
-   </tr>`;
+  <tr>
+   <td>${r.op}</td>
+   <td>${dataBR(r.data)}</td>
+   <td>${r.codigo_peca}</td>
+   <td>${r.comprimento_mm}</td>
+   <td>${r.pecas_por_caixa}</td>
+   <td>${r.acabamento}</td>
+   <td>${br(r.kg)}</td>
+   <td>${br(r.kg_material_bruto)}</td>
+   <td>${br(r.peso_caixa)}</td>
+   <td>${r.quantidade}</td>
+   <td><button class="btn ${r.entregue?"btn-green":"btn-red"}" onclick="toggleCampo(${r.id},'entregue',${r.entregue})">${r.entregue?"OK":"Pendente"}</button></td>
+   <td><button class="btn ${r.boleto?"btn-green":"btn-red"}" onclick="toggleCampo(${r.id},'boleto',${r.boleto})">${r.boleto?"OK":"Pendente"}</button></td>
+  </tr>`;
  });
 };
 
