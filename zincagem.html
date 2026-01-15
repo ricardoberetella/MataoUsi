@@ -9,6 +9,49 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
+body{
+  margin:0;
+  background:radial-gradient(circle at top,#0b1224,#020617 70%);
+  color:#e5e7eb;
+  font-family:Segoe UI,Arial;
+}
+header{
+  padding:20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+h1{color:#38bdf8;margin:0;}
+.btn{
+  padding:10px 18px;
+  border-radius:10px;
+  border:none;
+  cursor:pointer;
+  font-weight:600;
+}
+.btn-green{background:#22c55e;color:#022c22}
+.btn-red{background:#ef4444;color:white}
+
+.filtro{
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #38bdf8;
+  background:#020617;
+  color:#e5e7eb;
+  width:200px;
+}
+
+.table{
+  width:100%;
+  border-collapse:collapse;
+}
+.table th,.table td{
+  padding:10px;
+  border-bottom:1px solid #1e293b;
+  text-align:center;
+}
+.table th{color:#38bdf8}
+
 .modal-bg{
   position:fixed;
   inset:0;
@@ -22,7 +65,7 @@
   background:#020b1a;
   padding:24px;
   border-radius:14px;
-  width:720px;
+  width:760px;
   border:2px solid #38bdf8;
 }
 .modal h2{color:#38bdf8;margin-top:0}
@@ -40,90 +83,63 @@
   color:#e5e7eb;
   border-radius:8px;
 }
-.table{
-  width:100%;
-  border-collapse:collapse;
-}
-.table th,.table td{
-  padding:8px;
-  border-bottom:1px solid #1e293b;
-}
-.table th{color:#38bdf8}
-.btn{
-  padding:8px 14px;
-  border-radius:8px;
-  border:none;
-  cursor:pointer;
-}
-.btn-green{background:#22c55e;color:#022c22}
-.btn-red{background:#ef4444;color:white}
-.filtro{
-  padding:10px;
-  border-radius:8px;
-  border:1px solid #38bdf8;
-  background:#020617;
-  color:#e5e7eb;
-  margin-bottom:12px;
-}
 </style>
 </head>
 
 <body>
 
-<div class="layout">
+<header>
+  <h1>Zincagem / Tratamento</h1>
+  <div>
+    <button class="btn btn-green" onclick="abrirModal()">+ Nova OP</button>
+    <a href="dashboard.html" class="btn" style="background:#020b1a;border:1px solid #38bdf8;color:#38bdf8">Voltar</a>
+  </div>
+</header>
 
-<aside class="sidebar">
-  <div class="logo-sistema">MATÃO USINAGEM</div>
-  <a href="dashboard.html" class="menu-item">⬅ Voltar</a>
-</aside>
+<div style="padding:20px">
 
-<main class="main">
-  <h1 style="color:#38bdf8">Zincagem / Tratamento</h1>
+<input id="filtroOP" class="filtro" placeholder="Filtrar OP" oninput="carregarLista()">
 
-  <button class="btn btn-green" onclick="abrirModal()">+ Nova OP</button>
-  <br><br>
+<br><br>
 
-  <input id="filtroOP" class="filtro" placeholder="Filtrar OP" oninput="carregarLista()">
-
-  <table class="table">
-    <thead>
-      <tr>
-        <th>OP</th><th>Data</th><th>Peça</th><th>Comp</th><th>Pç/Cx</th>
-        <th>Acabamento</th><th>Kg</th><th>Bruto</th><th>Peso Caixa</th><th>Qtd</th>
-        <th>Entregue</th><th>Boleto</th>
-      </tr>
-    </thead>
-    <tbody id="lista"></tbody>
-  </table>
-</main>
+<table class="table">
+<thead>
+<tr>
+<th>OP</th><th>Data</th><th>Peça</th><th>Comp</th><th>Pç/Cx</th>
+<th>Acabamento</th><th>Kg</th><th>Bruto</th><th>Peso Caixa</th><th>Qtd</th>
+<th>Entregue</th><th>Boleto</th>
+</tr>
+</thead>
+<tbody id="lista"></tbody>
+</table>
 
 </div>
 
 <!-- MODAL -->
 <div class="modal-bg" id="modal">
-  <div class="modal">
-    <h2>Nova OP</h2>
+<div class="modal">
+<h2>Nova OP</h2>
 
-    <div class="grid">
-      <div><label>OP</label><input id="op"></div>
-      <div><label>Data</label><input type="date" id="data"></div>
-      <div><label>Produto</label><select id="produto"></select></div>
-      <div><label>Kg</label><input id="kg" type="number" step="0.01"></div>
+<div class="grid">
+<div><label>OP</label><input id="op"></div>
+<div><label>Data</label><input type="date" id="data"></div>
+<div><label>Produto</label><select id="produto"></select></div>
+<div><label>Kg</label><input id="kg" type="number" step="0.01"></div>
 
-      <div><label>Comprimento</label><input id="comp" readonly></div>
-      <div><label>Peças/Caixa</label><input id="pcx" readonly></div>
-      <div><label>Acabamento</label><input id="acab" readonly></div>
-      <div><label>Peso da Caixa</label><input id="pesoCx" readonly></div>
+<div><label>Comprimento</label><input id="comp" readonly></div>
+<div><label>Peças/Caixa</label><input id="pcx" readonly></div>
+<div><label>Acabamento</label><input id="acab" readonly></div>
+<div><label>Peso da Caixa</label><input id="pesoCx" readonly></div>
 
-      <div><label>Quantidade</label><input id="qtd" readonly></div>
-      <div><label>Kg Bruto</label><input id="bruto" readonly></div>
-    </div>
+<div><label>Quantidade</label><input id="qtd" readonly></div>
+<div><label>Kg Bruto</label><input id="bruto" readonly></div>
+</div>
 
-    <br>
+<br>
+<button class="btn btn-green" onclick="salvar()">Salvar</button>
+<button class="btn btn-red" onclick="fecharModal()">Cancelar</button>
 
-    <button class="btn btn-green" onclick="salvar()">Salvar</button>
-    <button class="btn btn-red" onclick="fecharModal()">Cancelar</button>
-  </div>
+</div>
 </div>
 
 <script type="module">
@@ -131,21 +147,27 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-let produtos = [];
+let produtos=[];
 
-window.abrirModal = () => modal.style.display = "flex";
-window.fecharModal = () => modal.style.display = "none";
+window.abrirModal=()=>modal.style.display="flex";
+window.fecharModal=()=>modal.style.display="none";
+
+function formatarDataBR(iso){
+  if(!iso) return "";
+  const [a,m,d]=iso.split("-");
+  return `${d}/${m}/${a}`;
+}
 
 async function carregarProdutos(){
- const {data} = await supabase
+ const {data}=await supabase
  .from("produtos")
  .select("id,codigo,comprimento_mm,pecas_por_caixa,acabamento,peso_liquido,peso_bruto")
  .order("codigo");
 
- produtos = data || [];
+ produtos=data;
 
- produto.innerHTML = "<option value=''></option>";
- produtos.forEach(p=>{
+ produto.innerHTML="<option value=''></option>";
+ data.forEach(p=>{
    const o=document.createElement("option");
    o.value=p.id;
    o.textContent=p.codigo;
@@ -153,32 +175,30 @@ async function carregarProdutos(){
  });
 }
 
-produto.onchange = ()=>{
- const p = produtos.find(x=>x.id==produto.value);
+produto.onchange=()=>{
+ const p=produtos.find(x=>x.id==produto.value);
  if(!p) return;
 
- comp.value = p.comprimento_mm;
- pcx.value = p.pecas_por_caixa;
- acab.value = p.acabamento;
- pesoCx.value = (p.pecas_por_caixa * p.peso_liquido).toFixed(2);
+ comp.value=p.comprimento_mm;
+ pcx.value=p.pecas_por_caixa;
+ acab.value=p.acabamento;
+ pesoCx.value=(p.pecas_por_caixa * p.peso_liquido).toFixed(2);
  calcular();
 };
 
-kg.oninput = calcular;
+kg.oninput=calcular;
 
 function calcular(){
- const p = produtos.find(x=>x.id==produto.value);
+ const p=produtos.find(x=>x.id==produto.value);
  if(!p) return;
-
- const k = parseFloat(kg.value||0);
- const q = k / p.peso_liquido;
-
- qtd.value = q.toFixed(0);
- bruto.value = (q * p.peso_bruto).toFixed(2);
+ const k=parseFloat(kg.value||0);
+ const q=k / p.peso_liquido;
+ qtd.value=q.toFixed(0);
+ bruto.value=(q * p.peso_bruto).toFixed(2);
 }
 
 window.salvar = async()=>{
- const p = produtos.find(x=>x.id==produto.value);
+ const p=produtos.find(x=>x.id==produto.value);
  if(!p) return alert("Selecione o produto");
 
  const { error } = await supabase
@@ -210,23 +230,17 @@ window.salvar = async()=>{
 };
 
 window.carregarLista = async()=>{
- const f = filtroOP.value;
-
- let q = supabase
-   .from("zincagem_tratamento")
-   .select("*")
-   .order("data",{ascending:false});
-
- if(f) q = q.ilike("op","%"+f+"%");
-
- const {data} = await q;
+ const f=filtroOP.value;
+ let q = supabase.from("zincagem_tratamento").select("*").order("data",{ascending:false});
+ if(f) q=q.ilike("op","%"+f+"%");
+ const {data}=await q;
 
  lista.innerHTML="";
- (data||[]).forEach(r=>{
+ data.forEach(r=>{
   lista.innerHTML+=`
    <tr>
     <td>${r.op}</td>
-    <td>${r.data}</td>
+    <td>${formatarDataBR(r.data)}</td>
     <td>${r.codigo_peca}</td>
     <td>${r.comprimento_mm}</td>
     <td>${r.pecas_por_caixa}</td>
