@@ -9,60 +9,71 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body{margin:0}
-.main{margin:0;padding:20px}
+body{margin:0;background:#020617;color:#e5e7eb}
+.main{padding:20px}
+h1{color:#38bdf8;margin:0 0 12px 0}
 
-h1{color:#38bdf8;margin:0 0 16px 0}
-
-.modal-bg{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.75);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:999;
-}
-.modal{
-  background:#020b1a;
-  padding:24px;
-  border-radius:14px;
-  width:820px;
-  border:2px solid #38bdf8;
-}
-.modal h2{color:#38bdf8;margin-top:0}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
+.topbar{
+  display:flex;
   gap:12px;
+  align-items:center;
+  margin-bottom:12px;
 }
-.grid label{font-size:12px}
-.grid input,.grid select{
-  width:100%;
-  padding:10px;
-  background:#020617;
-  border:1px solid #38bdf8;
-  color:#e5e7eb;
+.btn{
+  padding:8px 14px;
   border-radius:8px;
+  border:none;
+  cursor:pointer;
+  font-weight:600;
 }
-
-.table{width:100%;border-collapse:collapse;margin-top:10px}
-.table th,.table td{padding:10px;border-bottom:1px solid #1e293b;text-align:center}
-.table th{color:#38bdf8}
-
-.btn{padding:6px 12px;border-radius:8px;border:none;cursor:pointer;font-weight:bold}
 .btn-green{background:#22c55e;color:#022c22}
 .btn-red{background:#ef4444;color:white}
 .btn-blue{background:#38bdf8;color:#022c22}
+.btn-gray{background:#334155;color:white}
 
-.filtro{
-  padding:10px;
-  border-radius:8px;
+.filtros-box{
+  display:none;
+  background:#020b1a;
   border:1px solid #38bdf8;
+  border-radius:10px;
+  padding:12px;
+  margin-bottom:12px;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+}
+.filtros-box input, .filtros-box select{
+  padding:8px;
   background:#020617;
+  border:1px solid #38bdf8;
+  border-radius:8px;
   color:#e5e7eb;
-  margin-left:12px;
+}
+
+.table{width:100%;border-collapse:collapse;margin-top:10px}
+.table th,.table td{
+  padding:10px;
+  border-bottom:1px solid #1e293b;
+  text-align:center;
+}
+.table th{color:#38bdf8}
+
+.modal-bg{
+  position:fixed; inset:0; background:rgba(0,0,0,.75);
+  display:none; align-items:center; justify-content:center; z-index:999;
+}
+.modal{
+  background:#020b1a; padding:24px; border-radius:14px;
+  width:820px; border:2px solid #38bdf8;
+}
+.modal h2{color:#38bdf8;margin-top:0}
+.grid{
+  display:grid; grid-template-columns:repeat(4,1fr); gap:12px;
+}
+.grid label{font-size:12px}
+.grid input,.grid select{
+  width:100%; padding:10px; background:#020617;
+  border:1px solid #38bdf8; color:#e5e7eb; border-radius:8px;
 }
 </style>
 </head>
@@ -73,8 +84,18 @@ h1{color:#38bdf8;margin:0 0 16px 0}
 
 <h1>Zincagem / Tratamento</h1>
 
-<button class="btn btn-green" onclick="abrirModal()">+ Nova OP</button>
-<input id="filtroOP" class="filtro" placeholder="Filtrar OP" oninput="carregarLista()">
+<div class="topbar">
+  <button class="btn btn-blue" onclick="location.href='dashboard.html'">⬅ Voltar</button>
+  <button class="btn btn-green" onclick="abrirModal()">+ Nova OP</button>
+  <button class="btn btn-gray" onclick="toggleFiltros()">Filtros</button>
+</div>
+
+<div class="filtros-box" id="filtrosBox">
+  <input id="filtroOP" placeholder="OP">
+  <input id="filtroPeca" placeholder="Peça">
+  <input id="filtroData" type="date">
+  <button class="btn btn-blue" onclick="carregarLista()">Aplicar</button>
+</div>
 
 <table class="table">
 <thead>
@@ -118,39 +139,33 @@ h1{color:#38bdf8;margin:0 0 16px 0}
 <script type="module">
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
+const supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let produtos=[];
 
+const br=n=>Number(n||0).toLocaleString("pt-BR",{minimumFractionDigits:2});
+const dataBR=iso=>{if(!iso)return"";const[a,b,c]=iso.split("-");return`${c}/${b}/${a}`};
+
+window.toggleFiltros=()=>filtrosBox.style.display=filtrosBox.style.display=="grid"?"none":"grid";
 window.abrirModal=()=>modal.style.display="flex";
 window.fecharModal=()=>modal.style.display="none";
-
-const br = n => Number(n||0).toLocaleString("pt-BR",{minimumFractionDigits:2});
-
-const dataBR = iso=>{
- if(!iso) return "";
- const [y,m,d]=iso.split("-");
- return `${d}/${m}/${y}`;
-};
 
 async function carregarProdutos(){
  const {data}=await supabase.from("produtos")
  .select("id,codigo,comprimento_mm,pecas_por_caixa,acabamento,peso_liquido,peso_bruto")
  .order("codigo");
-
  produtos=data;
  produto.innerHTML="<option></option>";
  data.forEach(p=>{
-   const o=document.createElement("option");
-   o.value=p.id;
-   o.textContent=p.codigo;
-   produto.appendChild(o);
+  const o=document.createElement("option");
+  o.value=p.id;o.textContent=p.codigo;
+  produto.appendChild(o);
  });
 }
 
 produto.onchange=()=>{
  const p=produtos.find(x=>x.id==produto.value);
- if(!p) return;
+ if(!p)return;
  comp.value=p.comprimento_mm;
  pcx.value=p.pecas_por_caixa;
  acab.value=p.acabamento;
@@ -159,10 +174,9 @@ produto.onchange=()=>{
 };
 
 kg.oninput=calcular;
-
 function calcular(){
  const p=produtos.find(x=>x.id==produto.value);
- if(!p) return;
+ if(!p)return;
  const k=parseFloat(kg.value||0);
  const q=k/p.peso_liquido;
  qtd.value=Math.round(q);
@@ -186,7 +200,7 @@ window.salvar=async()=>{
   entregue:false,
   boleto:false
  });
- if(error) return alert(error.message);
+ if(error)return alert(error.message);
  fecharModal();carregarLista();
 };
 
@@ -197,11 +211,12 @@ window.toggleCampo=async(id,campo,valor)=>{
 };
 
 window.carregarLista=async()=>{
- const f=filtroOP.value;
  let q=supabase.from("zincagem_tratamento").select("*").order("data",{ascending:false});
- if(f) q=q.ilike("op","%"+f+"%");
- const {data}=await q;
+ if(filtroOP.value) q=q.ilike("op","%"+filtroOP.value+"%");
+ if(filtroPeca.value) q=q.ilike("codigo_peca","%"+filtroPeca.value+"%");
+ if(filtroData.value) q=q.eq("data",filtroData.value);
 
+ const {data}=await q;
  lista.innerHTML="";
  data.forEach(r=>{
   lista.innerHTML+=`
