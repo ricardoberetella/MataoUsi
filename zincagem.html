@@ -79,7 +79,7 @@ th{color:#38bdf8}
   background:#020b1a;
   padding:24px;
   border-radius:16px;
-  width:800px;
+  width:900px;
   max-width:95vw;
   border:2px solid #38bdf8;
 }
@@ -120,6 +120,7 @@ th{color:#38bdf8}
       <tr>
         <th>OP</th><th>Data</th><th>Peça</th><th>Comp</th><th>Pç/Cx</th>
         <th>Acabamento</th><th>Kg</th><th>Bruto</th><th>Peso Caixa</th><th>Qtd</th>
+        <th>R$/Kg</th><th>Total R$</th>
         <th>Entregue</th><th>Boleto</th>
       </tr>
     </thead>
@@ -146,6 +147,9 @@ th{color:#38bdf8}
 
 <input id="qtd" readonly placeholder="Quantidade">
 <input id="bruto" readonly placeholder="Kg Bruto">
+
+<input id="valorKg" placeholder="R$/Kg">
+<input id="total" readonly placeholder="Total R$">
 </div>
 
 <br>
@@ -176,6 +180,8 @@ const acab = document.getElementById("acab");
 const pesoCx = document.getElementById("pesoCx");
 const qtd = document.getElementById("qtd");
 const bruto = document.getElementById("bruto");
+const valorKg = document.getElementById("valorKg");
+const total = document.getElementById("total");
 const lista = document.getElementById("lista");
 
 let produtos=[];
@@ -183,6 +189,9 @@ let produtos=[];
 // ===== Modal =====
 window.abrirModal=()=>modal.style.display="flex";
 window.fecharModal=()=>modal.style.display="none";
+
+window.salvar = salvar;
+window.carregar = carregar;
 
 function formatar(n){ return Number(n).toLocaleString("pt-BR",{minimumFractionDigits:2}) }
 function dataBR(d){ return d.split("-").reverse().join("/") }
@@ -208,7 +217,9 @@ produto.onchange=()=>{
  pesoCx.value=formatar(p.pecas_por_caixa * p.peso_liquido);
  calcular();
 }
+
 kg.oninput=calcular;
+valorKg.oninput=calcularTotal;
 
 function calcular(){
  const p=produtos.find(x=>x.id==produto.value);
@@ -216,6 +227,12 @@ function calcular(){
  const q = kg.value / p.peso_liquido;
  qtd.value=Math.round(q);
  bruto.value=formatar(q * p.peso_bruto);
+ calcularTotal();
+}
+
+function calcularTotal(){
+ if(!valorKg.value || !kg.value) return;
+ total.value = formatar(valorKg.value * kg.value);
 }
 
 // ===== Salvar =====
@@ -233,6 +250,8 @@ async function salvar(){
   quantidade:qtd.value,
   kg_material_bruto:bruto.value.replace(".","").replace(",","."), 
   peso_caixa:pesoCx.value.replace(".","").replace(",","."), 
+  valor_kg:valorKg.value.replace(",","."), 
+  valor_total:total.value.replace(".","").replace(",","."), 
   entregue:false,
   boleto:false
  });
@@ -265,6 +284,8 @@ async function carregar(){
    <td>${formatar(r.kg_material_bruto)}</td>
    <td>${formatar(r.peso_caixa)}</td>
    <td>${r.quantidade}</td>
+   <td>${formatar(r.valor_kg)}</td>
+   <td>${formatar(r.valor_total)}</td>
    <td><button class="btn ${r.entregue?'btn-green':'btn-red'}" onclick="toggle(${r.id},'entregue',${r.entregue})">${r.entregue?'OK':'Pendente'}</button></td>
    <td><button class="btn ${r.boleto?'btn-green':'btn-red'}" onclick="toggle(${r.id},'boleto',${r.boleto})">${r.boleto?'OK':'Pendente'}</button></td>
   </tr>`;
