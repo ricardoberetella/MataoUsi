@@ -9,9 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-html{
-  height:100%;
-}
+html{height:100%}
 
 body{
   margin:0;
@@ -26,14 +24,8 @@ body{
 .main{
   padding:30px;
   min-height:100vh;
-}
-
-/* ============================= */
-/* CORREÇÃO CONFLITO DASHBOARD */
-/* ============================= */
-.main{
-  margin-top: 0 !important;
-  padding-top: 60px !important;
+  margin-top:0 !important;
+  padding-top:60px !important;
 }
 
 .topo{
@@ -70,14 +62,8 @@ h1{color:#38bdf8;margin:0}
   color:#e5e7eb;
 }
 
-table{
-  width:100%;
-  border-collapse:collapse;
-}
-th,td{
-  padding:10px;
-  border-bottom:1px solid #1e293b;
-}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px;border-bottom:1px solid #1e293b}
 th{color:#38bdf8}
 
 .modal-bg{
@@ -142,19 +128,66 @@ th{color:#38bdf8}
 
 </div>
 
+<!-- MODAL -->
+<div class="modal-bg" id="modal">
+<div class="modal">
+<h2 style="color:#38bdf8">Nova OP</h2>
+
+<div class="grid">
+<input id="op" placeholder="OP">
+<input type="date" id="data">
+<select id="produto"></select>
+<input id="kg" placeholder="Kg">
+
+<input id="comp" readonly placeholder="Comprimento">
+<input id="pcx" readonly placeholder="Pç/Cx">
+<input id="acab" readonly placeholder="Acabamento">
+<input id="pesoCx" readonly placeholder="Peso Caixa">
+
+<input id="qtd" readonly placeholder="Quantidade">
+<input id="bruto" readonly placeholder="Kg Bruto">
+</div>
+
+<br>
+<button class="btn btn-green" onclick="salvar()">Salvar</button>
+<button class="btn btn-red" onclick="fecharModal()">Cancelar</button>
+
+</div>
+</div>
+
 <script type="module">
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ===== DOM =====
+const modal = document.getElementById("modal");
+const produto = document.getElementById("produto");
+const filtroPeca = document.getElementById("filtroPeca");
+const filtroOp = document.getElementById("filtroOp");
+const filtroData = document.getElementById("filtroData");
+const op = document.getElementById("op");
+const data = document.getElementById("data");
+const kg = document.getElementById("kg");
+const comp = document.getElementById("comp");
+const pcx = document.getElementById("pcx");
+const acab = document.getElementById("acab");
+const pesoCx = document.getElementById("pesoCx");
+const qtd = document.getElementById("qtd");
+const bruto = document.getElementById("bruto");
+const lista = document.getElementById("lista");
+
 let produtos=[];
 
+// ===== Modal =====
 window.abrirModal=()=>modal.style.display="flex";
 window.fecharModal=()=>modal.style.display="none";
 
 function formatar(n){ return Number(n).toLocaleString("pt-BR",{minimumFractionDigits:2}) }
 function dataBR(d){ return d.split("-").reverse().join("/") }
 
+// ===== Produtos =====
 async function carregarProdutos(){
  const {data}=await supabase.from("produtos").select("*").order("codigo");
  produtos=data;
@@ -185,6 +218,7 @@ function calcular(){
  bruto.value=formatar(q * p.peso_bruto);
 }
 
+// ===== Salvar =====
 async function salvar(){
  const p=produtos.find(x=>x.id==produto.value);
  await supabase.from("zincagem_tratamento").insert({
@@ -206,6 +240,7 @@ async function salvar(){
  carregar();
 }
 
+// ===== Listar =====
 async function carregar(){
  let q=supabase.from("zincagem_tratamento").select("*");
  if(filtroOp.value) q=q.eq("op",filtroOp.value);
