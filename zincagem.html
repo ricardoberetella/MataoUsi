@@ -9,22 +9,35 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
+html{
+  height:100%;
+}
+
 body{
   margin:0;
   background:radial-gradient(circle at top,#0b1224,#020617 70%);
   color:#e5e7eb;
   font-family:Segoe UI,Arial;
+
+  min-height:100vh;      /* permite crescer */
+  overflow-y:auto;      /* ativa scroll */
+  overflow-x:hidden;    /* nunca cria scroll lateral */
 }
+
 .main{
   padding:30px;
+  min-height:100vh;
 }
+
 .topo{
   display:flex;
   justify-content:space-between;
   align-items:center;
   margin-bottom:20px;
 }
+
 h1{color:#38bdf8;margin:0}
+
 .btn{
   padding:10px 16px;
   border:none;
@@ -74,6 +87,7 @@ th{color:#38bdf8}
   padding:24px;
   border-radius:16px;
   width:800px;
+  max-width:95vw;
   border:2px solid #38bdf8;
 }
 .grid{
@@ -158,7 +172,7 @@ let produtos=[];
 window.abrirModal=()=>modal.style.display="flex";
 window.fecharModal=()=>modal.style.display="none";
 
-function formatar(n){ return n.toLocaleString("pt-BR",{minimumFractionDigits:2}) }
+function formatar(n){ return Number(n).toLocaleString("pt-BR",{minimumFractionDigits:2}) }
 function dataBR(d){ return d.split("-").reverse().join("/") }
 
 async function carregarProdutos(){
@@ -174,6 +188,7 @@ async function carregarProdutos(){
 
 produto.onchange=()=>{
  const p=produtos.find(x=>x.id==produto.value);
+ if(!p) return;
  comp.value=p.comprimento_mm;
  pcx.value=p.pecas_por_caixa;
  acab.value=p.acabamento;
@@ -184,6 +199,7 @@ kg.oninput=calcular;
 
 function calcular(){
  const p=produtos.find(x=>x.id==produto.value);
+ if(!p || !kg.value) return;
  const q = kg.value / p.peso_liquido;
  qtd.value=Math.round(q);
  bruto.value=formatar(q * p.peso_bruto);
@@ -201,8 +217,8 @@ async function salvar(){
   acabamento:p.acabamento,
   kg:kg.value,
   quantidade:qtd.value,
-  kg_material_bruto:bruto.value.replace(",","."), 
-  peso_caixa:pesoCx.value.replace(",","."), 
+  kg_material_bruto:bruto.value.replace(".","").replace(",","."), 
+  peso_caixa:pesoCx.value.replace(".","").replace(",","."), 
   entregue:false,
   boleto:false
  });
