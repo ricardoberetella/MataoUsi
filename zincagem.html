@@ -9,36 +9,39 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-html,body{height:100%}
-body{
-  margin:0;
-  background:radial-gradient(circle at top,#0b1224,#020617 70%);
+html,body{
+  height:100%;
+}
+
+/* NEUTRALIZA O DASHBOARD.CSS */
+body .main{
+  margin-top: 0 !important;
+}
+
+/* CONTAINER EXCLUSIVO DESTA TELA */
+.zincagem-wrapper{
+  padding: 90px 24px 24px 24px; /* espaço REAL no topo */
+  min-height: 100vh;
+  background: radial-gradient(circle at top,#0b1224,#020617 70%);
   color:#e5e7eb;
   font-family:Segoe UI,Arial;
-  overflow-x:hidden;
-  overflow-y:auto;
 }
 
-/* ===== CONTEÚDO ===== */
-.main{
-  padding:20px 24px;
-  padding-top:40px; /* evita corte do topo */
-}
-
-/* ===== TOPO ===== */
+/* TOPO */
 .topo{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin-bottom:16px;
+  margin-bottom:18px;
 }
-h1{
+
+.topo h1{
   color:#38bdf8;
   margin:0;
   font-size:26px;
 }
 
-/* ===== BOTÕES ===== */
+/* BOTÕES */
 .btn{
   padding:8px 14px;
   border:none;
@@ -51,7 +54,7 @@ h1{
 .btn-blue{background:#38bdf8;color:#022c22}
 .btn-red{background:#ef4444;color:white}
 
-/* ===== FILTROS ===== */
+/* FILTROS */
 .filtros{
   display:grid;
   grid-template-columns:160px 200px 160px 120px;
@@ -67,7 +70,7 @@ h1{
   font-size:13px;
 }
 
-/* ===== TABELA ===== */
+/* TABELA */
 table{
   width:100%;
   border-collapse:collapse;
@@ -75,7 +78,7 @@ table{
   font-size:12.5px;
 }
 th,td{
-  padding:5px 3px;            /* REDUZIDO */
+  padding:5px 3px;
   border-bottom:1px solid #1e293b;
   text-align:center;
   white-space:nowrap;
@@ -85,35 +88,36 @@ th{
   font-weight:600;
 }
 
-/* ===== LARGURAS DAS COLUNAS ===== */
-th:nth-child(1),td:nth-child(1){width:50px}   /* OP */
-th:nth-child(2),td:nth-child(2){width:80px}   /* Data */
-th:nth-child(3),td:nth-child(3){width:70px}   /* Peça */
-th:nth-child(4),td:nth-child(4){width:50px}   /* Comp */
-th:nth-child(5),td:nth-child(5){width:50px}   /* Pç/Cx */
-th:nth-child(6),td:nth-child(6){width:80px}   /* Acab */
-th:nth-child(7),td:nth-child(7){width:60px}   /* Kg */
-th:nth-child(8),td:nth-child(8){width:70px}   /* Bruto */
-th:nth-child(9),td:nth-child(9){width:70px}   /* Caixa */
-th:nth-child(10),td:nth-child(10){width:50px} /* Qtd */
-th:nth-child(11),td:nth-child(11){width:60px} /* R$/Kg */
-th:nth-child(12),td:nth-child(12){width:70px} /* Total */
-th:nth-child(13),td:nth-child(13){width:80px} /* Recebido */
-th:nth-child(14),td:nth-child(14){width:80px} /* Boleto */
-
+/* LARGURAS */
+th:nth-child(1),td:nth-child(1){width:50px}
+th:nth-child(2),td:nth-child(2){width:80px}
+th:nth-child(3),td:nth-child(3){width:70px}
+th:nth-child(4),td:nth-child(4){width:50px}
+th:nth-child(5),td:nth-child(5){width:50px}
+th:nth-child(6),td:nth-child(6){width:80px}
+th:nth-child(7),td:nth-child(7){width:60px}
+th:nth-child(8),td:nth-child(8){width:70px}
+th:nth-child(9),td:nth-child(9){width:70px}
+th:nth-child(10),td:nth-child(10){width:50px}
+th:nth-child(11),td:nth-child(11){width:60px}
+th:nth-child(12),td:nth-child(12){width:70px}
+th:nth-child(13),td:nth-child(13){width:80px}
+th:nth-child(14),td:nth-child(14){width:80px}
 </style>
 </head>
 
 <body>
 
-<div class="main">
+<div class="zincagem-wrapper">
 
+  <!-- TOPO VISÍVEL -->
   <div class="topo">
     <button class="btn btn-blue" onclick="location.href='dashboard.html'">⬅ Voltar</button>
     <h1>Zincagem / Tratamento</h1>
     <button class="btn btn-green" onclick="abrirModal()">+ Nova OP</button>
   </div>
 
+  <!-- FILTROS -->
   <div class="filtros">
     <select id="filtroOp"></select>
     <select id="filtroPeca"></select>
@@ -121,6 +125,7 @@ th:nth-child(14),td:nth-child(14){width:80px} /* Boleto */
     <button class="btn btn-blue" onclick="carregar()">Filtrar</button>
   </div>
 
+  <!-- TABELA -->
   <table>
     <thead>
       <tr>
