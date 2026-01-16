@@ -20,138 +20,114 @@ body{
 
 /* TOPO */
 .topo{
-  display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:14px;
 }
-.topo h1{ color:#38bdf8; margin:0; font-size:26px; }
+.topo h1{
+  color:#38bdf8;
+  margin:0;
+  font-size:26px;
+}
 
 /* BOTÕES */
 .btn{
-  padding:7px 12px; border:none; border-radius:8px;
-  cursor:pointer; font-weight:600; font-size:13px;
+  padding:7px 12px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:600;
+  font-size:13px;
 }
 .btn-blue{background:#38bdf8;color:#022c22}
 .btn-green{background:#22c55e;color:#022c22}
 .btn-red{background:#ef4444;color:white}
 
-.btn-status{
-  padding:4px 8px; font-size:11.5px; min-width:64px; margin:0 2px;
-}
-
-/* FILTROS */
-.filtros{
-  display:grid;
-  grid-template-columns:140px 180px 160px 160px 160px 120px;
-  gap:10px; margin-bottom:10px;
-}
-.filtros select,.filtros input{
-  padding:8px; border-radius:8px; border:1px solid #38bdf8;
-  background:#020617; color:#e5e7eb; font-size:13px;
-}
-
-/* TABELA */
-table{ width:100%; border-collapse:collapse; table-layout:fixed; font-size:12.5px; }
-th,td{
-  padding:5px 3px; border-bottom:1px solid #1e293b;
-  text-align:center; white-space:nowrap;
-}
-th{ color:#38bdf8; font-weight:600; }
-tfoot td{
-  font-weight:700; color:#38bdf8;
-  border-top:2px solid #38bdf8; padding-top:8px;
-}
-
 /* MODAL */
 .modal-bg{
-  position:fixed; inset:0; background:rgba(0,0,0,.85);
-  display:none; align-items:center; justify-content:center; z-index:9999;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.85);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
 }
 .modal{
-  background:#020b1a; padding:24px; border-radius:16px;
-  width:900px; max-width:95vw; border:2px solid #38bdf8;
+  background:#020b1a;
+  padding:24px;
+  border-radius:16px;
+  width:900px;
+  max-width:95vw;
+  border:2px solid #38bdf8;
 }
-.modal h2{ color:#38bdf8; margin-top:0; }
 
+/* FORM */
 .form-grid{
-  display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:10px;
+  display:grid;
+  grid-template-columns:repeat(4, minmax(0,1fr));
+  gap:14px;
+  margin-top:12px;
+}
+.form-group{
+  min-width:0;
 }
 .form-group label{
-  font-size:12px; color:#38bdf8; margin-bottom:4px; display:block;
+  font-size:12px;
+  color:#38bdf8;
+  margin-bottom:4px;
+  display:block;
 }
-.form-group input,.form-group select{
-  width:100%; padding:8px; border-radius:8px;
-  border:1px solid #38bdf8; background:#020617; color:#e5e7eb;
+.form-group input,
+.form-group select{
+  width:100%;
+  padding:8px;
+  border-radius:8px;
+  border:1px solid #38bdf8;
+  background:#020617;
+  color:#e5e7eb;
 }
-.modal-actions{ margin-top:16px; display:flex; gap:10px; }
+
+.modal-actions{
+  margin-top:18px;
+  display:flex;
+  gap:10px;
+}
 </style>
 </head>
 
 <body>
 
 <div class="zincagem-wrapper">
-
   <div class="topo">
     <button class="btn btn-blue" onclick="location.href='dashboard.html'">⬅ Voltar</button>
     <h1>Zincagem / Tratamento</h1>
     <button class="btn btn-green" id="btnNovaOp">+ Nova OP</button>
   </div>
-
-  <!-- FILTROS -->
-  <div class="filtros">
-    <select id="filtroOp"><option value="">Todas OPs</option></select>
-    <select id="filtroPeca"><option value="">Todas as Peças</option></select>
-    <select id="filtroAcab">
-      <option value="">Todos Acabamentos</option>
-      <option value="Zincado">Zincado</option>
-      <option value="Tratado">Tratado</option>
-    </select>
-    <input type="date" id="dataIni">
-    <input type="date" id="dataFim">
-    <button class="btn btn-blue" id="btnFiltrar">Filtrar</button>
-  </div>
-
-  <!-- TABELA -->
-  <table>
-    <thead>
-      <tr>
-        <th>OP</th><th>Data</th><th>Peça</th><th>Comp</th><th>Pç/Cx</th>
-        <th>Acabamento</th><th>Kg</th><th>Bruto</th><th>Peso Caixa</th>
-        <th>Qtd</th><th>R$/Kg</th><th>Total</th><th>Recebido</th><th>Boleto</th>
-      </tr>
-    </thead>
-    <tbody id="lista"></tbody>
-    <tfoot>
-      <tr>
-        <td colspan="6">TOTAL</td>
-        <td id="tKg"></td>
-        <td id="tBruto"></td>
-        <td></td>
-        <td id="tQtd"></td>
-        <td></td>
-        <td id="tTotal"></td>
-        <td colspan="2"></td>
-      </tr>
-    </tfoot>
-  </table>
 </div>
 
-<!-- MODAL NOVA OP -->
+<!-- MODAL -->
 <div class="modal-bg" id="modal">
   <div class="modal">
-    <h2>Nova OP</h2>
+    <h2 style="color:#38bdf8">Nova OP</h2>
 
     <div class="form-grid">
       <div class="form-group">
         <label>OP</label>
         <input id="op">
       </div>
+
       <div class="form-group">
         <label>Data</label>
         <input type="date" id="data">
       </div>
+
       <div class="form-group">
         <label>Peça</label>
         <select id="produto"></select>
       </div>
+
       <div class="form-group">
         <label>Kg Líquido</label>
         <input id="kg">
@@ -161,14 +137,17 @@ tfoot td{
         <label>Comprimento (mm)</label>
         <input id="comp" readonly>
       </div>
+
       <div class="form-group">
         <label>Peças por Caixa</label>
         <input id="pcx" readonly>
       </div>
+
       <div class="form-group">
         <label>Acabamento</label>
         <input id="acab" readonly>
       </div>
+
       <div class="form-group">
         <label>Peso da Caixa (Kg)</label>
         <input id="pesoCx" readonly>
@@ -178,14 +157,17 @@ tfoot td{
         <label>Quantidade</label>
         <input id="qtd" readonly>
       </div>
+
       <div class="form-group">
         <label>Kg Bruto</label>
         <input id="bruto" readonly>
       </div>
+
       <div class="form-group">
         <label>R$ / Kg</label>
         <input id="valorKg">
       </div>
+
       <div class="form-group">
         <label>Total (R$)</label>
         <input id="total" readonly>
@@ -202,12 +184,14 @@ tfoot td{
 <script type="module">
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const modal=document.getElementById("modal");
-document.getElementById("btnNovaOp").onclick=()=>modal.style.display="flex";
-window.fecharModal=()=>modal.style.display="none";
+const modal = document.getElementById("modal");
+document.getElementById("btnNovaOp").onclick = () => modal.style.display = "flex";
+window.fecharModal = () => modal.style.display = "none";
 
+/* ELEMENTOS */
 const produto=document.getElementById("produto");
 const op=document.getElementById("op");
 const data=document.getElementById("data");
@@ -223,7 +207,7 @@ const total=document.getElementById("total");
 
 let produtos=[];
 
-function f(n){return Number(n||0).toLocaleString("pt-BR",{minimumFractionDigits:2});}
+function f(n){ return Number(n||0).toLocaleString("pt-BR",{minimumFractionDigits:2}); }
 
 async function carregarProdutos(){
   const {data}=await supabase.from("produtos").select("*").order("codigo");
@@ -243,19 +227,21 @@ produto.onchange=()=>{
   pesoCx.value=f(p.pecas_por_caixa*p.peso_liquido);
   calcular();
 };
+
 kg.oninput=calcular;
 valorKg.oninput=calcular;
 
 function calcular(){
   const p=produtos.find(x=>x.id==produto.value);
-  if(!p||!kg.value) return;
+  if(!p||!kg.value||!valorKg.value) return;
   const q=kg.value/p.peso_liquido;
   qtd.value=Math.round(q);
   bruto.value=f(q*p.peso_bruto);
   total.value=f(kg.value*valorKg.value);
 }
 
-async function salvar(){
+/* 🔥 FUNÇÃO GLOBAL */
+window.salvar = async function salvar(){
   const p=produtos.find(x=>x.id==produto.value);
   await supabase.from("zincagem_tratamento").insert({
     op:op.value,
@@ -274,9 +260,8 @@ async function salvar(){
     recebido:false,
     boleto:false
   });
-  fecharModal();
   location.reload();
-}
+};
 
 carregarProdutos();
 </script>
