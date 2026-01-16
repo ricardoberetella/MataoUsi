@@ -14,7 +14,8 @@ body{
   color:#e5e7eb;
   font-family:Segoe UI,Arial;
 }
-.main{ padding:20px 30px }
+
+.main{padding:20px 30px}
 
 .topo{
   display:flex;
@@ -22,7 +23,7 @@ body{
   align-items:center;
   margin-bottom:20px;
 }
-h1{ color:#38bdf8; margin:0 }
+h1{color:#38bdf8;margin:0}
 
 .btn{
   padding:8px 14px;
@@ -35,6 +36,31 @@ h1{ color:#38bdf8; margin:0 }
 .btn-blue{background:#38bdf8;color:#022c22}
 .btn-red{background:#ef4444;color:white}
 .btn-mini{padding:6px 10px;font-size:13px}
+
+.filtros{
+  display:grid;
+  grid-template-columns:180px 200px 200px 160px 160px auto;
+  gap:10px;
+  margin-bottom:14px;
+}
+.filtros select,.filtros input{
+  padding:8px;
+  border-radius:8px;
+  border:1px solid #38bdf8;
+  background:#020617;
+  color:#e5e7eb;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+th,td{
+  padding:8px;
+  border-bottom:1px solid #1e293b;
+  text-align:center;
+}
+th{color:#38bdf8;font-size:13px}
 
 .modal-bg{
   position:fixed;
@@ -49,7 +75,7 @@ h1{ color:#38bdf8; margin:0 }
   background:#020b1a;
   padding:22px;
   border-radius:18px;
-  width:920px;
+  width:900px;
   max-width:96vw;
   border:2px solid #38bdf8;
 }
@@ -59,14 +85,10 @@ h1{ color:#38bdf8; margin:0 }
   grid-template-columns:repeat(4,1fr);
   gap:14px;
 }
-
 .campo label{
   font-size:12px;
   color:#38bdf8;
-  display:block;
-  margin-bottom:4px;
 }
-
 .campo input,.campo select{
   width:100%;
   padding:8px;
@@ -87,34 +109,58 @@ h1{ color:#38bdf8; margin:0 }
     <button class="btn btn-green" onclick="abrirModal()">+ Nova OP</button>
   </div>
 
+  <div class="filtros">
+    <select id="filtroOp"><option value="">Todas OPs</option></select>
+    <select id="filtroPeca"><option value="">Todas Peças</option></select>
+    <select id="filtroAcab">
+      <option value="">Todos Acabamentos</option>
+      <option value="Zincado">Zincado</option>
+      <option value="Tratado">Tratado</option>
+    </select>
+    <input type="date" id="dataIni">
+    <input type="date" id="dataFim">
+    <button class="btn btn-blue" onclick="carregar()">Filtrar</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>OP</th><th>Data</th><th>Peça</th><th>Comp</th><th>Pç/Cx</th>
+        <th>Acabamento</th><th>Kg</th><th>Bruto</th><th>Peso Caixa</th>
+        <th>Qtd</th><th>R$/Kg</th><th>Total</th><th>Recebido</th><th>Boleto</th>
+      </tr>
+    </thead>
+    <tbody id="lista"></tbody>
+  </table>
+
 </div>
 
 <!-- MODAL -->
 <div class="modal-bg" id="modal">
-  <div class="modal">
-    <h2 style="color:#38bdf8">Nova OP</h2>
+<div class="modal">
+<h2 style="color:#38bdf8">Nova OP</h2>
 
-    <div class="grid">
-      <div class="campo"><label>OP</label><input id="op"></div>
-      <div class="campo"><label>Data</label><input type="date" id="data"></div>
-      <div class="campo"><label>Peça</label><select id="produto"></select></div>
-      <div class="campo"><label>Kg Líquido</label><input id="kg"></div>
+<div class="grid">
+  <div class="campo"><label>OP</label><input id="op"></div>
+  <div class="campo"><label>Data</label><input type="date" id="data"></div>
+  <div class="campo"><label>Peça</label><select id="produto"></select></div>
+  <div class="campo"><label>Kg Líquido</label><input id="kg"></div>
 
-      <div class="campo"><label>Comprimento</label><input id="comp" readonly></div>
-      <div class="campo"><label>Pç/Cx</label><input id="pcx" readonly></div>
-      <div class="campo"><label>Acabamento</label><input id="acab" readonly></div>
-      <div class="campo"><label>Peso Caixa</label><input id="pesoCx" readonly></div>
+  <div class="campo"><label>Comprimento</label><input id="comp" readonly></div>
+  <div class="campo"><label>Pç/Cx</label><input id="pcx" readonly></div>
+  <div class="campo"><label>Acabamento</label><input id="acab" readonly></div>
+  <div class="campo"><label>Peso Caixa</label><input id="pesoCx" readonly></div>
 
-      <div class="campo"><label>Quantidade</label><input id="qtd" readonly></div>
-      <div class="campo"><label>Kg Bruto</label><input id="bruto" readonly></div>
-      <div class="campo"><label>R$/Kg</label><input id="valorKg"></div>
-      <div class="campo"><label>Total (R$)</label><input id="total" readonly></div>
-    </div>
+  <div class="campo"><label>Quantidade</label><input id="qtd" readonly></div>
+  <div class="campo"><label>Kg Bruto</label><input id="bruto" readonly></div>
+  <div class="campo"><label>R$/Kg</label><input id="valorKg"></div>
+  <div class="campo"><label>Total</label><input id="total" readonly></div>
+</div>
 
-    <br>
-    <button class="btn btn-green" onclick="salvar()">Salvar</button>
-    <button class="btn btn-red" onclick="fecharModal()">Cancelar</button>
-  </div>
+<br>
+<button class="btn btn-green" onclick="salvar()">Salvar</button>
+<button class="btn btn-red" onclick="fecharModal()">Cancelar</button>
+</div>
 </div>
 
 <script type="module">
@@ -124,27 +170,20 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let produtos=[];
 
-function abrirModal(){
-  modal.style.display="flex";
-  carregarProdutos();
-}
-function fecharModal(){
-  modal.style.display="none";
-}
+function abrirModal(){ modal.style.display="flex"; carregarProdutos(); }
+function fecharModal(){ modal.style.display="none"; }
 
-function fmt(n){
-  return Number(n||0).toLocaleString("pt-BR",{minimumFractionDigits:2});
-}
-function parseBR(v){
-  return Number(String(v).replace(".","").replace(",","."));
-}
+function parseBR(v){ return Number(String(v||0).replace(".","").replace(",",".")); }
+function fmt(v){ return Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2}); }
 
 async function carregarProdutos(){
   const {data}=await supabase.from("produtos").select("*").order("codigo");
   produtos=data||[];
   produto.innerHTML="<option value=''>Selecione</option>";
-  produtos.forEach(p=>{
+  filtroPeca.innerHTML="<option value=''>Todas Peças</option>";
+  data.forEach(p=>{
     produto.innerHTML+=`<option value="${p.id}">${p.codigo}</option>`;
+    filtroPeca.innerHTML+=`<option value="${p.id}">${p.codigo}</option>`;
   });
 }
 
@@ -157,50 +196,52 @@ produto.onchange=()=>{
   pesoCx.value=fmt(p.pecas_por_caixa*p.peso_liquido);
   calcular();
 };
-
 kg.oninput=calcular;
 valorKg.oninput=calcular;
 
 function calcular(){
   const p=produtos.find(x=>x.id==produto.value);
-  if(!p || !kg.value) return;
-
-  const kgLiq=parseBR(kg.value);
-  const valor=parseBR(valorKg.value);
-
-  const qtdCalc=Math.round(kgLiq/p.peso_liquido);
+  if(!p) return;
+  const kgL=parseBR(kg.value);
+  const qtdCalc=Math.round(kgL/p.peso_liquido);
   const brutoCalc=qtdCalc*p.peso_bruto;
-  const totalCalc=kgLiq*valor;
-
   qtd.value=qtdCalc;
   bruto.value=fmt(brutoCalc);
-  total.value=fmt(totalCalc);
+  total.value=fmt(kgL*parseBR(valorKg.value));
 }
 
 async function salvar(){
   const p=produtos.find(x=>x.id==produto.value);
-  if(!p) return alert("Selecione a peça");
-
   await supabase.from("zincagem_tratamento").insert({
-    op:op.value,
-    data:data.value,
-    produto_id:p.id,
-    codigo_peca:p.codigo,
-    comprimento_mm:p.comprimento_mm,
-    pecas_por_caixa:p.pecas_por_caixa,
-    acabamento:p.acabamento,
-    kg:parseBR(kg.value),
-    quantidade:qtd.value,
-    kg_material_bruto:parseBR(bruto.value),
-    peso_caixa:parseBR(pesoCx.value),
-    valor_kg:parseBR(valorKg.value),
-    valor_total:parseBR(total.value),
-    recebido:false,
-    boleto:false
+    op:op.value,data:data.value,produto_id:p.id,codigo_peca:p.codigo,
+    comprimento_mm:p.comprimento_mm,pecas_por_caixa:p.pecas_por_caixa,
+    acabamento:p.acabamento,kg:parseBR(kg.value),quantidade:qtd.value,
+    kg_material_bruto:parseBR(bruto.value),peso_caixa:parseBR(pesoCx.value),
+    valor_kg:parseBR(valorKg.value),valor_total:parseBR(total.value),
+    recebido:false,boleto:false
   });
-
-  fecharModal();
+  fecharModal(); carregar();
 }
+
+async function carregar(){
+  const {data}=await supabase.from("zincagem_tratamento").select("*").order("data");
+  lista.innerHTML="";
+  data.forEach(r=>{
+    lista.innerHTML+=`
+    <tr>
+      <td>${r.op}</td><td>${r.data}</td><td>${r.codigo_peca}</td>
+      <td>${r.comprimento_mm}</td><td>${r.pecas_por_caixa}</td>
+      <td>${r.acabamento}</td><td>${fmt(r.kg)}</td>
+      <td>${fmt(r.kg_material_bruto)}</td><td>${fmt(r.peso_caixa)}</td>
+      <td>${r.quantidade}</td><td>${fmt(r.valor_kg)}</td>
+      <td>${fmt(r.valor_total)}</td>
+      <td><button class="btn btn-mini ${r.recebido?'btn-green':'btn-red'}">${r.recebido?'OK':'Pendente'}</button></td>
+      <td><button class="btn btn-mini ${r.boleto?'btn-green':'btn-red'}">${r.boleto?'OK':'Pendente'}</button></td>
+    </tr>`;
+  });
+}
+
+carregar();
 </script>
 </body>
 </html>
