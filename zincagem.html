@@ -15,34 +15,57 @@ body{
   color:#e5e7eb;
   font-family:Segoe UI,Arial;
 }
-
-.zincagem-wrapper{ padding:50px 24px 24px; }
+.container{ padding:50px 24px 24px; }
 
 /* TOPO */
 .topo{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin-bottom:14px;
 }
-.topo h1{
-  color:#38bdf8;
-  margin:0;
-  font-size:26px;
-}
+h1{ color:#38bdf8; margin:0; }
 
 /* BOTÕES */
 .btn{
-  padding:7px 12px;
-  border:none;
+  padding:6px 10px;
   border-radius:8px;
+  border:none;
   cursor:pointer;
+  font-size:13px;
   font-weight:600;
+}
+.btn-blue{ background:#38bdf8;color:#022c22 }
+.btn-green{ background:#22c55e;color:#022c22 }
+.btn-red{ background:#ef4444;color:white }
+.btn-small{ padding:4px 8px;font-size:12px }
+
+/* FILTROS */
+.filtros{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:10px;
+  margin:16px 0;
+}
+select,input{
+  background:#020617;
+  color:#e5e7eb;
+  border:1px solid #38bdf8;
+  border-radius:8px;
+  padding:6px;
+}
+
+/* TABELA */
+table{
+  width:100%;
+  border-collapse:collapse;
   font-size:13px;
 }
-.btn-blue{background:#38bdf8;color:#022c22}
-.btn-green{background:#22c55e;color:#022c22}
-.btn-red{background:#ef4444;color:white}
+th,td{
+  padding:6px;
+  text-align:center;
+  border-bottom:1px solid rgba(255,255,255,.1);
+}
+th{ color:#38bdf8; }
 
 /* MODAL */
 .modal-bg{
@@ -50,61 +73,85 @@ body{
   inset:0;
   background:rgba(0,0,0,.85);
   display:none;
-  align-items:center;
   justify-content:center;
-  z-index:9999;
+  align-items:center;
 }
 .modal{
   background:#020b1a;
-  padding:24px;
-  border-radius:16px;
-  width:900px;
-  max-width:95vw;
   border:2px solid #38bdf8;
+  border-radius:16px;
+  padding:20px;
+  width:900px;
 }
-
-/* FORM */
 .form-grid{
   display:grid;
-  grid-template-columns:repeat(4, minmax(0,1fr));
-  gap:14px;
-  margin-top:12px;
-}
-.form-group{
-  min-width:0;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
 }
 .form-group label{
   font-size:12px;
   color:#38bdf8;
-  margin-bottom:4px;
-  display:block;
 }
-.form-group input,
-.form-group select{
+.form-group input, .form-group select{
   width:100%;
-  padding:8px;
-  border-radius:8px;
-  border:1px solid #38bdf8;
-  background:#020617;
-  color:#e5e7eb;
 }
 
-.modal-actions{
-  margin-top:18px;
-  display:flex;
-  gap:10px;
+/* TOTAL */
+tfoot td{
+  font-weight:bold;
+  color:#38bdf8;
 }
 </style>
 </head>
 
 <body>
 
-<div class="zincagem-wrapper">
+<div class="container">
+
   <div class="topo">
-    <button class="btn btn-blue" onclick="location.href='dashboard.html'">⬅ Voltar</button>
+    <button class="btn btn-blue" onclick="history.back()">⬅ Voltar</button>
     <h1>Zincagem / Tratamento</h1>
-    <button class="btn btn-green" id="btnNovaOp">+ Nova OP</button>
+    <button class="btn btn-green" id="btnNova">+ Nova OP</button>
   </div>
+
+  <!-- FILTROS -->
+  <div class="filtros">
+    <select id="fOp"><option value="">Todas OPs</option></select>
+    <select id="fPeca"><option value="">Todas Peças</option></select>
+    <select id="fAcab">
+      <option value="">Todos Acabamentos</option>
+      <option>Zincado</option>
+      <option>Tratado</option>
+    </select>
+    <input type="date" id="fIni">
+    <input type="date" id="fFim">
+    <button class="btn btn-blue" onclick="carregar()">Filtrar</button>
+  </div>
+
+  <!-- TABELA -->
+  <table>
+    <thead>
+      <tr>
+        <th>OP</th><th>Data</th><th>Peça</th><th>Comp</th><th>Pc/Cx</th>
+        <th>Acab</th><th>Kg</th><th>Bruto</th><th>Peso Cx</th>
+        <th>Qtd</th><th>R$/Kg</th><th>Total</th><th>Recebido</th><th>Boleto</th>
+      </tr>
+    </thead>
+    <tbody id="lista"></tbody>
+    <tfoot>
+      <tr>
+        <td colspan="6">TOTAL</td>
+        <td id="tKg"></td>
+        <td id="tBruto"></td>
+        <td></td>
+        <td id="tQtd"></td>
+        <td></td>
+        <td id="tTotal"></td>
+        <td colspan="2"></td>
+      </tr>
+    </tfoot>
+  </table>
+
 </div>
 
 <!-- MODAL -->
@@ -113,157 +160,84 @@ body{
     <h2 style="color:#38bdf8">Nova OP</h2>
 
     <div class="form-grid">
-      <div class="form-group">
-        <label>OP</label>
-        <input id="op">
-      </div>
-
-      <div class="form-group">
-        <label>Data</label>
-        <input type="date" id="data">
-      </div>
-
-      <div class="form-group">
-        <label>Peça</label>
-        <select id="produto"></select>
-      </div>
-
-      <div class="form-group">
-        <label>Kg Líquido</label>
-        <input id="kg">
-      </div>
-
-      <div class="form-group">
-        <label>Comprimento (mm)</label>
-        <input id="comp" readonly>
-      </div>
-
-      <div class="form-group">
-        <label>Peças por Caixa</label>
-        <input id="pcx" readonly>
-      </div>
-
-      <div class="form-group">
-        <label>Acabamento</label>
-        <input id="acab" readonly>
-      </div>
-
-      <div class="form-group">
-        <label>Peso da Caixa (Kg)</label>
-        <input id="pesoCx" readonly>
-      </div>
-
-      <div class="form-group">
-        <label>Quantidade</label>
-        <input id="qtd" readonly>
-      </div>
-
-      <div class="form-group">
-        <label>Kg Bruto</label>
-        <input id="bruto" readonly>
-      </div>
-
-      <div class="form-group">
-        <label>R$ / Kg</label>
-        <input id="valorKg">
-      </div>
-
-      <div class="form-group">
-        <label>Total (R$)</label>
-        <input id="total" readonly>
-      </div>
+      <div class="form-group"><label>OP</label><input id="op"></div>
+      <div class="form-group"><label>Data</label><input type="date" id="data"></div>
+      <div class="form-group"><label>Peça</label><select id="produto"></select></div>
+      <div class="form-group"><label>Kg Líquido</label><input id="kg"></div>
+      <div class="form-group"><label>R$/Kg</label><input id="valorKg"></div>
+      <div class="form-group"><label>Total</label><input id="total" readonly></div>
     </div>
 
-    <div class="modal-actions">
-      <button class="btn btn-green" onclick="salvar()">Salvar</button>
-      <button class="btn btn-red" onclick="fecharModal()">Cancelar</button>
-    </div>
+    <br>
+    <button class="btn btn-green" onclick="salvar()">Salvar</button>
+    <button class="btn btn-red" onclick="modal.style.display='none'">Cancelar</button>
   </div>
 </div>
 
 <script type="module">
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
-
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const modal = document.getElementById("modal");
-document.getElementById("btnNovaOp").onclick = () => modal.style.display = "flex";
-window.fecharModal = () => modal.style.display = "none";
+const lista=document.getElementById("lista");
+const modal=document.getElementById("modal");
 
-/* ELEMENTOS */
-const produto=document.getElementById("produto");
-const op=document.getElementById("op");
-const data=document.getElementById("data");
-const kg=document.getElementById("kg");
-const comp=document.getElementById("comp");
-const pcx=document.getElementById("pcx");
-const acab=document.getElementById("acab");
-const pesoCx=document.getElementById("pesoCx");
-const qtd=document.getElementById("qtd");
-const bruto=document.getElementById("bruto");
-const valorKg=document.getElementById("valorKg");
-const total=document.getElementById("total");
+document.getElementById("btnNova").onclick=()=>modal.style.display="flex";
 
-let produtos=[];
+function n(v){return Number(v||0);}
+function f(v){return n(v).toLocaleString("pt-BR",{minimumFractionDigits:2});}
 
-function f(n){ return Number(n||0).toLocaleString("pt-BR",{minimumFractionDigits:2}); }
+window.carregar = async function(){
+  lista.innerHTML="";
+  let {data}=await supabase.from("zincagem_tratamento").select("*").order("data",{ascending:false});
+  let tKg=0,tBruto=0,tQtd=0,tTotal=0;
 
-async function carregarProdutos(){
-  const {data}=await supabase.from("produtos").select("*").order("codigo");
-  produtos=data;
-  produto.innerHTML="<option value=''>Selecione</option>";
-  data.forEach(p=>{
-    produto.innerHTML+=`<option value="${p.id}">${p.codigo}</option>`;
+  data.forEach(r=>{
+    tKg+=n(r.kg);
+    tBruto+=n(r.kg_material_bruto);
+    tQtd+=n(r.quantidade);
+    tTotal+=n(r.valor_total);
+
+    lista.innerHTML+=`
+    <tr>
+      <td>${r.op}</td>
+      <td>${r.data.split("-").reverse().join("/")}</td>
+      <td>${r.codigo_peca}</td>
+      <td>${r.comprimento_mm}</td>
+      <td>${r.pecas_por_caixa}</td>
+      <td>${r.acabamento}</td>
+      <td>${f(r.kg)}</td>
+      <td>${f(r.kg_material_bruto)}</td>
+      <td>${f(r.peso_caixa)}</td>
+      <td>${r.quantidade}</td>
+      <td>${f(r.valor_kg)}</td>
+      <td>${f(r.valor_total)}</td>
+      <td><button class="btn btn-small ${r.recebido?'btn-green':'btn-red'}">${r.recebido?'OK':'Pendente'}</button></td>
+      <td><button class="btn btn-small ${r.boleto?'btn-green':'btn-red'}">${r.boleto?'OK':'Pendente'}</button></td>
+    </tr>`;
   });
+
+  tKgEl.textContent=f(tKg);
+  tBrutoEl.textContent=f(tBruto);
+  tQtdEl.textContent=tQtd;
+  tTotalEl.textContent=f(tTotal);
 }
 
-produto.onchange=()=>{
-  const p=produtos.find(x=>x.id==produto.value);
-  if(!p) return;
-  comp.value=p.comprimento_mm;
-  pcx.value=p.pecas_por_caixa;
-  acab.value=p.acabamento;
-  pesoCx.value=f(p.pecas_por_caixa*p.peso_liquido);
-  calcular();
-};
-
-kg.oninput=calcular;
-valorKg.oninput=calcular;
-
-function calcular(){
-  const p=produtos.find(x=>x.id==produto.value);
-  if(!p||!kg.value||!valorKg.value) return;
-  const q=kg.value/p.peso_liquido;
-  qtd.value=Math.round(q);
-  bruto.value=f(q*p.peso_bruto);
-  total.value=f(kg.value*valorKg.value);
-}
-
-/* 🔥 FUNÇÃO GLOBAL */
-window.salvar = async function salvar(){
-  const p=produtos.find(x=>x.id==produto.value);
+window.salvar = async function(){
   await supabase.from("zincagem_tratamento").insert({
     op:op.value,
     data:data.value,
-    produto_id:p.id,
-    codigo_peca:p.codigo,
-    comprimento_mm:p.comprimento_mm,
-    pecas_por_caixa:p.pecas_por_caixa,
-    acabamento:p.acabamento,
     kg:kg.value,
-    quantidade:qtd.value,
-    kg_material_bruto:bruto.value.replace(".","").replace(",","."),
-    peso_caixa:pesoCx.value.replace(".","").replace(",","."),
-    valor_kg:valorKg.value.replace(",","."),
-    valor_total:total.value.replace(".","").replace(",","."),
+    valor_kg:valorKg.value,
+    valor_total:kg.value*valorKg.value,
     recebido:false,
     boleto:false
   });
-  location.reload();
-};
+  modal.style.display="none";
+  carregar();
+}
 
-carregarProdutos();
+carregar();
 </script>
 
 </body>
