@@ -9,35 +9,49 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-html,body{height:100%}
-body .main{margin-top:0!important}
-
-.zincagem-wrapper{
-  padding:48px 24px 24px;
-  min-height:100vh;
+body{
+  margin:0;
   background:radial-gradient(circle at top,#0b1224,#020617 70%);
   color:#e5e7eb;
   font-family:Segoe UI,Arial;
 }
 
+.zincagem-wrapper{
+  padding:50px 24px 24px;
+}
+
 /* TOPO */
-.topo{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-.topo h1{color:#38bdf8;margin:0;font-size:26px}
+.topo{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:16px;
+}
+.topo h1{
+  color:#38bdf8;
+  margin:0;
+  font-size:26px;
+}
 
 /* BOTÕES */
-.btn{padding:7px 12px;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px}
-.btn-green{background:#22c55e;color:#022c22}
+.btn{
+  padding:7px 12px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:600;
+  font-size:13px;
+}
 .btn-blue{background:#38bdf8;color:#022c22}
+.btn-green{background:#22c55e;color:#022c22}
 .btn-red{background:#ef4444;color:white}
 
-/* botões status */
+/* BOTÕES STATUS */
 .btn-status{
   padding:4px 8px;
   font-size:11.5px;
-  min-width:60px;
-  display:inline-flex;
-  justify-content:center;
-  margin:0 2px;
+  min-width:64px;
+  margin:0 3px;
 }
 
 /* FILTROS */
@@ -69,7 +83,10 @@ th,td{
   text-align:center;
   white-space:nowrap;
 }
-th{color:#38bdf8;font-weight:600}
+th{
+  color:#38bdf8;
+  font-weight:600;
+}
 
 /* TOTAL */
 tfoot td{
@@ -78,22 +95,6 @@ tfoot td{
   border-top:2px solid #38bdf8;
   padding-top:8px;
 }
-
-/* larguras */
-th:nth-child(1),td:nth-child(1){width:50px}
-th:nth-child(2),td:nth-child(2){width:80px}
-th:nth-child(3),td:nth-child(3){width:70px}
-th:nth-child(4),td:nth-child(4){width:50px}
-th:nth-child(5),td:nth-child(5){width:50px}
-th:nth-child(6),td:nth-child(6){width:80px}
-th:nth-child(7),td:nth-child(7){width:60px}
-th:nth-child(8),td:nth-child(8){width:70px}
-th:nth-child(9),td:nth-child(9){width:70px}
-th:nth-child(10),td:nth-child(10){width:50px}
-th:nth-child(11),td:nth-child(11){width:60px}
-th:nth-child(12),td:nth-child(12){width:70px}
-th:nth-child(13),td:nth-child(13){width:80px}
-th:nth-child(14),td:nth-child(14){width:80px}
 </style>
 </head>
 
@@ -101,10 +102,11 @@ th:nth-child(14),td:nth-child(14){width:80px}
 
 <div class="zincagem-wrapper">
 
+  <!-- TOPO -->
   <div class="topo">
     <button class="btn btn-blue" onclick="location.href='dashboard.html'">⬅ Voltar</button>
     <h1>Zincagem / Tratamento</h1>
-    <button class="btn btn-green" onclick="abrirModal()">+ Nova OP</button>
+    <button class="btn btn-green" id="btnNovaOp">+ Nova OP</button>
   </div>
 
   <!-- FILTROS -->
@@ -114,9 +116,10 @@ th:nth-child(14),td:nth-child(14){width:80px}
     <select id="filtroAcab"></select>
     <input type="date" id="dataIni">
     <input type="date" id="dataFim">
-    <button class="btn btn-blue" onclick="carregar()">Filtrar</button>
+    <button class="btn btn-blue" id="btnFiltrar">Filtrar</button>
   </div>
 
+  <!-- TABELA -->
   <table>
     <thead>
       <tr>
@@ -142,11 +145,21 @@ th:nth-child(14),td:nth-child(14){width:80px}
 
 </div>
 
+<!-- MODAL -->
+<div class="modal-bg" id="modal" style="display:none">
+  <div class="modal">
+    <h2 style="color:#38bdf8">Nova OP</h2>
+    <!-- mantém seu modal existente -->
+    <button class="btn btn-red" onclick="fecharModal()">Fechar</button>
+  </div>
+</div>
+
 <script type="module">
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
 const supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
+/* ELEMENTOS */
 const lista=document.getElementById("lista");
 const filtroOp=document.getElementById("filtroOp");
 const filtroPeca=document.getElementById("filtroPeca");
@@ -159,15 +172,24 @@ const tBruto=document.getElementById("tBruto");
 const tQtd=document.getElementById("tQtd");
 const tTotal=document.getElementById("tTotal");
 
-function f(n){return Number(n).toLocaleString("pt-BR",{minimumFractionDigits:2})}
+const modal=document.getElementById("modal");
+document.getElementById("btnNovaOp").onclick=()=>modal.style.display="flex";
+document.getElementById("btnFiltrar").onclick=carregar;
+
+window.fecharModal=()=>modal.style.display="none";
+
+function f(n){return Number(n||0).toLocaleString("pt-BR",{minimumFractionDigits:2})}
 function dataBR(d){return d.split("-").reverse().join("/")}
 
+/* TOGGLE */
 window.toggle=async(id,campo,valor)=>{
   await supabase.from("zincagem_tratamento")
-    .update({[campo]:!valor}).eq("id",id);
+    .update({[campo]:!valor})
+    .eq("id",id);
   carregar();
 };
 
+/* CARREGAR */
 async function carregar(){
   let q=supabase.from("zincagem_tratamento").select("*").order("data",{ascending:false});
 
@@ -178,6 +200,7 @@ async function carregar(){
   if(dataFim.value) q=q.lte("data",dataFim.value);
 
   const {data}=await q;
+
   lista.innerHTML="";
   filtroOp.innerHTML="<option value=''>Todas OPs</option>";
 
@@ -185,10 +208,10 @@ async function carregar(){
 
   data.forEach(r=>{
     filtroOp.innerHTML+=`<option>${r.op}</option>`;
-    sKg+=Number(r.kg||0);
-    sBruto+=Number(r.kg_material_bruto||0);
-    sQtd+=Number(r.quantidade||0);
-    sTotal+=Number(r.valor_total||0);
+    sKg+=+r.kg||0;
+    sBruto+=+r.kg_material_bruto||0;
+    sQtd+=+r.quantidade||0;
+    sTotal+=+r.valor_total||0;
 
     lista.innerHTML+=`
       <tr>
