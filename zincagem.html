@@ -18,15 +18,22 @@ body{
   background:radial-gradient(circle at top,#0b1224,#020617 70%);
   color:#e5e7eb;
   font-family:Segoe UI,Arial;
-
-  min-height:100vh;      /* permite crescer */
-  overflow-y:auto;      /* ativa scroll */
-  overflow-x:hidden;    /* nunca cria scroll lateral */
+  min-height:100vh;
+  overflow-y:auto;
+  overflow-x:hidden;
 }
 
 .main{
   padding:30px;
   min-height:100vh;
+}
+
+/* ============================= */
+/* CORREÇÃO CONFLITO DASHBOARD */
+/* ============================= */
+.main{
+  margin-top: 0 !important;
+  padding-top: 60px !important;
 }
 
 .topo{
@@ -133,33 +140,6 @@ th{color:#38bdf8}
     <tbody id="lista"></tbody>
   </table>
 
-</div>
-
-<!-- MODAL -->
-<div class="modal-bg" id="modal">
-<div class="modal">
-<h2 style="color:#38bdf8">Nova OP</h2>
-
-<div class="grid">
-<input id="op" placeholder="OP">
-<input type="date" id="data">
-<select id="produto"></select>
-<input id="kg" placeholder="Kg">
-
-<input id="comp" readonly placeholder="Comprimento">
-<input id="pcx" readonly placeholder="Pç/Cx">
-<input id="acab" readonly placeholder="Acabamento">
-<input id="pesoCx" readonly placeholder="Peso Caixa">
-
-<input id="qtd" readonly placeholder="Quantidade">
-<input id="bruto" readonly placeholder="Kg Bruto">
-</div>
-
-<br>
-<button class="btn btn-green" onclick="salvar()">Salvar</button>
-<button class="btn btn-red" onclick="fecharModal()">Cancelar</button>
-
-</div>
 </div>
 
 <script type="module">
