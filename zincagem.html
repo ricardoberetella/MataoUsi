@@ -14,14 +14,12 @@ body{
   color:#e5e7eb;
   font-family:Segoe UI,Arial;
 }
-
 .main{padding:20px 30px}
-
 .topo{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin-bottom:20px;
+  margin-bottom:16px;
 }
 h1{color:#38bdf8;margin:0}
 
@@ -32,16 +30,16 @@ h1{color:#38bdf8;margin:0}
   cursor:pointer;
   font-weight:600;
 }
-.btn-green{background:#22c55e;color:#022c22}
 .btn-blue{background:#38bdf8;color:#022c22}
-.btn-red{background:#ef4444;color:white}
+.btn-green{background:#22c55e;color:#022c22}
+.btn-red{background:#ef4444;color:#fff}
 .btn-mini{padding:6px 10px;font-size:13px}
 
 .filtros{
   display:grid;
   grid-template-columns:180px 200px 200px 160px 160px auto;
   gap:10px;
-  margin-bottom:14px;
+  margin-bottom:12px;
 }
 .filtros select,.filtros input{
   padding:8px;
@@ -75,11 +73,10 @@ th{color:#38bdf8;font-size:13px}
   background:#020b1a;
   padding:22px;
   border-radius:18px;
-  width:900px;
+  width:920px;
   max-width:96vw;
   border:2px solid #38bdf8;
 }
-
 .grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
@@ -104,14 +101,14 @@ th{color:#38bdf8;font-size:13px}
 <div class="main">
 
   <div class="topo">
-    <button class="btn btn-blue" onclick="location.href='dashboard.html'">← Voltar</button>
+    <button class="btn btn-blue" onclick="window.location.href='dashboard.html'">← Voltar</button>
     <h1>Zincagem / Tratamento</h1>
     <button class="btn btn-green" onclick="abrirModal()">+ Nova OP</button>
   </div>
 
   <div class="filtros">
-    <select id="filtroOp"><option value="">Todas OPs</option></select>
-    <select id="filtroPeca"><option value="">Todas Peças</option></select>
+    <select id="filtroOp"></select>
+    <select id="filtroPeca"></select>
     <select id="filtroAcab">
       <option value="">Todos Acabamentos</option>
       <option value="Zincado">Zincado</option>
@@ -170,8 +167,20 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let produtos=[];
 
-function abrirModal(){ modal.style.display="flex"; carregarProdutos(); }
-function fecharModal(){ modal.style.display="none"; }
+/* ========= EXPOR FUNÇÕES ========= */
+window.abrirModal = abrirModal;
+window.fecharModal = fecharModal;
+window.carregar = carregar;
+window.salvar = salvar;
+
+/* ========= FUNÇÕES ========= */
+function abrirModal(){
+  modal.style.display="flex";
+  carregarProdutos();
+}
+function fecharModal(){
+  modal.style.display="none";
+}
 
 function parseBR(v){ return Number(String(v||0).replace(".","").replace(",",".")); }
 function fmt(v){ return Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2}); }
@@ -181,7 +190,7 @@ async function carregarProdutos(){
   produtos=data||[];
   produto.innerHTML="<option value=''>Selecione</option>";
   filtroPeca.innerHTML="<option value=''>Todas Peças</option>";
-  data.forEach(p=>{
+  produtos.forEach(p=>{
     produto.innerHTML+=`<option value="${p.id}">${p.codigo}</option>`;
     filtroPeca.innerHTML+=`<option value="${p.id}">${p.codigo}</option>`;
   });
@@ -212,31 +221,69 @@ function calcular(){
 
 async function salvar(){
   const p=produtos.find(x=>x.id==produto.value);
+  if(!p) return alert("Selecione a peça");
+
   await supabase.from("zincagem_tratamento").insert({
-    op:op.value,data:data.value,produto_id:p.id,codigo_peca:p.codigo,
-    comprimento_mm:p.comprimento_mm,pecas_por_caixa:p.pecas_por_caixa,
-    acabamento:p.acabamento,kg:parseBR(kg.value),quantidade:qtd.value,
-    kg_material_bruto:parseBR(bruto.value),peso_caixa:parseBR(pesoCx.value),
-    valor_kg:parseBR(valorKg.value),valor_total:parseBR(total.value),
-    recebido:false,boleto:false
+    op:op.value,
+    data:data.value,
+    produto_id:p.id,
+    codigo_peca:p.codigo,
+    comprimento_mm:p.comprimento_mm,
+    pecas_por_caixa:p.pecas_por_caixa,
+    acabamento:p.acabamento,
+    kg:parseBR(kg.value),
+    quantidade:qtd.value,
+    kg_material_bruto:parseBR(bruto.value),
+    peso_caixa:parseBR(pesoCx.value),
+    valor_kg:parseBR(valorKg.value),
+    valor_total:parseBR(total.value),
+    recebido:false,
+    boleto:false
   });
-  fecharModal(); carregar();
+
+  fecharModal();
+  carregar();
 }
 
 async function carregar(){
-  const {data}=await supabase.from("zincagem_tratamento").select("*").order("data");
+  let q=supabase.from("zincagem_tratamento").select("*").order("data",{ascending:false});
+  if(filtroPeca.value) q=q.eq("produto_id",filtroPeca.value);
+  if(filtroAcab.value) q=q.eq("acabamento",filtroAcab.value);
+  if(dataIni.value) q=q.gte("data",dataIni.value);
+  if(dataFim.value) q=q.lte("data",dataFim.value);
+
+  const {data}=await q;
   lista.innerHTML="";
+  filtroOp.innerHTML="<option value=''>Todas OPs</option>";
+
   data.forEach(r=>{
+    filtroOp.innerHTML+=`<option>${r.op}</option>`;
     lista.innerHTML+=`
     <tr>
-      <td>${r.op}</td><td>${r.data}</td><td>${r.codigo_peca}</td>
-      <td>${r.comprimento_mm}</td><td>${r.pecas_por_caixa}</td>
-      <td>${r.acabamento}</td><td>${fmt(r.kg)}</td>
-      <td>${fmt(r.kg_material_bruto)}</td><td>${fmt(r.peso_caixa)}</td>
-      <td>${r.quantidade}</td><td>${fmt(r.valor_kg)}</td>
+      <td>${r.op}</td>
+      <td>${r.data}</td>
+      <td>${r.codigo_peca}</td>
+      <td>${r.comprimento_mm}</td>
+      <td>${r.pecas_por_caixa}</td>
+      <td>${r.acabamento}</td>
+      <td>${fmt(r.kg)}</td>
+      <td>${fmt(r.kg_material_bruto)}</td>
+      <td>${fmt(r.peso_caixa)}</td>
+      <td>${r.quantidade}</td>
+      <td>${fmt(r.valor_kg)}</td>
       <td>${fmt(r.valor_total)}</td>
-      <td><button class="btn btn-mini ${r.recebido?'btn-green':'btn-red'}">${r.recebido?'OK':'Pendente'}</button></td>
-      <td><button class="btn btn-mini ${r.boleto?'btn-green':'btn-red'}">${r.boleto?'OK':'Pendente'}</button></td>
+      <td>
+        <button class="btn btn-mini ${r.recebido?'btn-green':'btn-red'}"
+          onclick="supabase.from('zincagem_tratamento').update({recebido:!${r.recebido}}).eq('id',${r.id}).then(carregar)">
+          ${r.recebido?'OK':'Pendente'}
+        </button>
+      </td>
+      <td>
+        <button class="btn btn-mini ${r.boleto?'btn-green':'btn-red'}"
+          onclick="supabase.from('zincagem_tratamento').update({boleto:!${r.boleto}}).eq('id',${r.id}).then(carregar)">
+          ${r.boleto?'OK':'Pendente'}
+        </button>
+      </td>
     </tr>`;
   });
 }
