@@ -31,33 +31,16 @@ h1{color:#38bdf8;margin:0}
 .btn-green{background:#22c55e;color:#022c22}
 .btn-blue{background:#38bdf8;color:#022c22}
 .btn-red{background:#ef4444;color:white}
-
 .filtros{display:grid;grid-template-columns:200px 200px 200px auto;gap:12px;margin-bottom:20px}
 .filtros select,.filtros input{padding:10px;border-radius:8px;border:1px solid #38bdf8;background:#020617;color:#e5e7eb}
-
 table{width:100%;border-collapse:collapse}
 th,td{padding:10px;border-bottom:1px solid #1e293b}
 th{color:#38bdf8}
-
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:999}
 .modal{background:#020b1a;padding:24px;border-radius:16px;width:950px;max-width:95vw;border:2px solid #38bdf8}
-
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-
-.field label{
-  font-size:12px;
-  color:#38bdf8;
-  margin-bottom:4px;
-  display:block;
-}
-.field input,.field select{
-  width:100%;
-  padding:10px;
-  border-radius:8px;
-  border:1px solid #38bdf8;
-  background:#020617;
-  color:#e5e7eb;
-}
+.field label{font-size:12px;color:#38bdf8;margin-bottom:4px;display:block}
+.field input,.field select{width:100%;padding:10px;border-radius:8px;border:1px solid #38bdf8;background:#020617;color:#e5e7eb}
 </style>
 </head>
 
@@ -74,7 +57,8 @@ th{color:#38bdf8}
 <table>
 <thead>
 <tr>
-<th>OP</th><th>Data</th><th>Peça</th><th>Comp</th><th>Pç/Cx</th><th>Acabamento</th><th>Kg</th><th>Bruto</th><th>Peso Caixa</th><th>Qtd</th><th>R$/Kg</th><th>Total</th><th>Entregue</th><th>Boleto</th>
+<th>OP</th><th>Data</th><th>Peça</th><th>Comp</th><th>Pç/Cx</th><th>Acabamento</th>
+<th>Kg</th><th>Bruto</th><th>Peso Caixa</th><th>Qtd</th><th>R$/Kg</th><th>Total</th><th>Entregue</th><th>Boleto</th>
 </tr>
 </thead>
 <tbody id="lista"></tbody>
@@ -115,24 +99,13 @@ th{color:#38bdf8}
 <script type="module">
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
-
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// DOM
-const modal = document.getElementById("modal");
-const produto = document.getElementById("produto");
-const op = document.getElementById("op");
-const data = document.getElementById("data");
-const kg = document.getElementById("kg");
-const comp = document.getElementById("comp");
-const pcx = document.getElementById("pcx");
-const acab = document.getElementById("acab");
-const pesoCx = document.getElementById("pesoCx");
-const qtd = document.getElementById("qtd");
-const bruto = document.getElementById("bruto");
-const valorKg = document.getElementById("valorKg");
-const total = document.getElementById("total");
-const lista = document.getElementById("lista");
+const modal=document.getElementById("modal"),produto=document.getElementById("produto"),op=document.getElementById("op"),
+data=document.getElementById("data"),kg=document.getElementById("kg"),comp=document.getElementById("comp"),
+pcx=document.getElementById("pcx"),acab=document.getElementById("acab"),pesoCx=document.getElementById("pesoCx"),
+qtd=document.getElementById("qtd"),bruto=document.getElementById("bruto"),valorKg=document.getElementById("valorKg"),
+total=document.getElementById("total"),lista=document.getElementById("lista");
 
 let produtos=[];
 
@@ -140,32 +113,30 @@ window.abrirModal=()=>modal.style.display="flex";
 window.fecharModal=()=>modal.style.display="none";
 window.salvar=salvar;
 
-function formatar(n){return Number(n).toLocaleString("pt-BR",{minimumFractionDigits:2})}
+function f(n){return Number(n).toLocaleString("pt-BR",{minimumFractionDigits:2})}
+function num(v){return parseFloat(String(v).replace(".","").replace(",","."))||0}
 
 async function carregarProdutos(){
  const {data}=await supabase.from("produtos").select("*").order("codigo");
- produtos=data;
- produto.innerHTML="<option value=''>Selecione</option>";
+ produtos=data; produto.innerHTML="<option value=''>Selecione</option>";
  data.forEach(p=>produto.innerHTML+=`<option value="${p.id}">${p.codigo}</option>`);
 }
 
 produto.onchange=()=>{
  const p=produtos.find(x=>x.id==produto.value);
- comp.value=p.comprimento_mm;
- pcx.value=p.pecas_por_caixa;
- acab.value=p.acabamento;
- pesoCx.value=formatar(p.pecas_por_caixa*p.peso_liquido);
- calcular();
+ comp.value=p.comprimento_mm; pcx.value=p.pecas_por_caixa; acab.value=p.acabamento;
+ pesoCx.value=f(p.pecas_por_caixa*p.peso_liquido); calcular();
 }
-kg.oninput=calcular;
-valorKg.oninput=()=>total.value=formatar(kg.value*valorKg.value);
+kg.oninput=calcular; valorKg.oninput=calcular;
 
 function calcular(){
  const p=produtos.find(x=>x.id==produto.value);
- const q=kg.value/p.peso_liquido;
+ const kgL=num(kg.value); const preco=num(valorKg.value);
+ if(!p||!kgL) return;
+ const q=kgL/p.peso_liquido;
  qtd.value=Math.round(q);
- bruto.value=formatar(q*p.peso_bruto);
- total.value=formatar(kg.value*valorKg.value);
+ bruto.value=f(q*p.peso_bruto);
+ total.value=f(kgL*preco);
 }
 
 async function salvar(){
@@ -173,9 +144,9 @@ async function salvar(){
  await supabase.from("zincagem_tratamento").insert({
   op:op.value,data:data.value,produto_id:p.id,codigo_peca:p.codigo,
   comprimento_mm:p.comprimento_mm,pecas_por_caixa:p.pecas_por_caixa,
-  acabamento:p.acabamento,kg:kg.value,quantidade:qtd.value,
-  kg_material_bruto:bruto.value.replace(",","."),peso_caixa:pesoCx.value.replace(",","."),
-  valor_kg:valorKg.value.replace(",","."),valor_total:total.value.replace(",","."),
+  acabamento:p.acabamento,kg:num(kg.value),quantidade:qtd.value,
+  kg_material_bruto:num(bruto.value),peso_caixa:num(pesoCx.value),
+  valor_kg:num(valorKg.value),valor_total:num(total.value),
   entregue:false,boleto:false
  });
  fecharModal();
