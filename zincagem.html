@@ -15,12 +15,14 @@ body{
   background:radial-gradient(circle at top,#0b1224,#020617 70%);
   color:#e5e7eb;
   font-family:Segoe UI,Arial;
-  overflow-y:auto;
   overflow-x:hidden;
+  overflow-y:auto;
 }
+
+/* ===== CONTEÚDO ===== */
 .main{
-  padding:30px;
-  padding-top:60px!important;
+  padding:20px 24px;
+  padding-top:40px; /* evita corte do topo */
 }
 
 /* ===== TOPO ===== */
@@ -28,13 +30,17 @@ body{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin-bottom:20px;
+  margin-bottom:16px;
 }
-h1{color:#38bdf8;margin:0}
+h1{
+  color:#38bdf8;
+  margin:0;
+  font-size:26px;
+}
 
 /* ===== BOTÕES ===== */
 .btn{
-  padding:8px 12px;
+  padding:8px 14px;
   border:none;
   border-radius:8px;
   cursor:pointer;
@@ -50,7 +56,7 @@ h1{color:#38bdf8;margin:0}
   display:grid;
   grid-template-columns:160px 200px 160px 120px;
   gap:10px;
-  margin-bottom:16px;
+  margin-bottom:14px;
 }
 .filtros select,.filtros input{
   padding:8px;
@@ -61,36 +67,39 @@ h1{color:#38bdf8;margin:0}
   font-size:13px;
 }
 
-/* ===== TABELA AJUSTADA ===== */
+/* ===== TABELA ===== */
 table{
   width:100%;
   border-collapse:collapse;
   table-layout:fixed;
-  font-size:13px;
+  font-size:12.5px;
 }
 th,td{
-  padding:6px 4px;
+  padding:5px 3px;            /* REDUZIDO */
   border-bottom:1px solid #1e293b;
   text-align:center;
   white-space:nowrap;
 }
-th{color:#38bdf8;font-weight:600}
+th{
+  color:#38bdf8;
+  font-weight:600;
+}
 
-/* larguras por coluna */
-th:nth-child(1),td:nth-child(1){width:60px}   /* OP */
-th:nth-child(2),td:nth-child(2){width:90px}   /* Data */
-th:nth-child(3),td:nth-child(3){width:80px}   /* Peça */
-th:nth-child(4),td:nth-child(4){width:60px}   /* Comp */
-th:nth-child(5),td:nth-child(5){width:60px}   /* Pç/Cx */
-th:nth-child(6),td:nth-child(6){width:90px}   /* Acab */
-th:nth-child(7),td:nth-child(7){width:70px}   /* Kg */
-th:nth-child(8),td:nth-child(8){width:80px}   /* Bruto */
-th:nth-child(9),td:nth-child(9){width:80px}   /* Caixa */
-th:nth-child(10),td:nth-child(10){width:60px} /* Qtd */
-th:nth-child(11),td:nth-child(11){width:70px} /* R$/Kg */
-th:nth-child(12),td:nth-child(12){width:80px} /* Total */
-th:nth-child(13),td:nth-child(13){width:90px} /* Receb */
-th:nth-child(14),td:nth-child(14){width:90px} /* Boleto */
+/* ===== LARGURAS DAS COLUNAS ===== */
+th:nth-child(1),td:nth-child(1){width:50px}   /* OP */
+th:nth-child(2),td:nth-child(2){width:80px}   /* Data */
+th:nth-child(3),td:nth-child(3){width:70px}   /* Peça */
+th:nth-child(4),td:nth-child(4){width:50px}   /* Comp */
+th:nth-child(5),td:nth-child(5){width:50px}   /* Pç/Cx */
+th:nth-child(6),td:nth-child(6){width:80px}   /* Acab */
+th:nth-child(7),td:nth-child(7){width:60px}   /* Kg */
+th:nth-child(8),td:nth-child(8){width:70px}   /* Bruto */
+th:nth-child(9),td:nth-child(9){width:70px}   /* Caixa */
+th:nth-child(10),td:nth-child(10){width:50px} /* Qtd */
+th:nth-child(11),td:nth-child(11){width:60px} /* R$/Kg */
+th:nth-child(12),td:nth-child(12){width:70px} /* Total */
+th:nth-child(13),td:nth-child(13){width:80px} /* Recebido */
+th:nth-child(14),td:nth-child(14){width:80px} /* Boleto */
 
 </style>
 </head>
