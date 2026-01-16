@@ -12,47 +12,38 @@
 html,body{height:100%}
 body .main{margin-top:0!important}
 
-/* ===== CONTAINER ===== */
 .zincagem-wrapper{
-  padding:48px 24px 24px 24px;
+  padding:48px 24px 24px;
   min-height:100vh;
   background:radial-gradient(circle at top,#0b1224,#020617 70%);
   color:#e5e7eb;
   font-family:Segoe UI,Arial;
 }
 
-/* ===== TOPO ===== */
-.topo{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:14px;
-}
+/* TOPO */
+.topo{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
 .topo h1{color:#38bdf8;margin:0;font-size:26px}
 
-/* ===== BOTÕES ===== */
-.btn{
-  padding:7px 12px;
-  border:none;
-  border-radius:8px;
-  cursor:pointer;
-  font-weight:600;
-  font-size:13px;
-}
+/* BOTÕES */
+.btn{padding:7px 12px;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px}
 .btn-green{background:#22c55e;color:#022c22}
 .btn-blue{background:#38bdf8;color:#022c22}
 .btn-red{background:#ef4444;color:white}
+
+/* botões status */
 .btn-status{
-  padding:5px 10px;
-  font-size:12px;
-  min-width:72px;
+  padding:4px 8px;
+  font-size:11.5px;
+  min-width:60px;
+  display:inline-flex;
+  justify-content:center;
   margin:0 2px;
 }
 
-/* ===== FILTROS ===== */
+/* FILTROS */
 .filtros{
   display:grid;
-  grid-template-columns:160px 200px 160px 120px;
+  grid-template-columns:140px 180px 160px 160px 160px 120px;
   gap:10px;
   margin-bottom:12px;
 }
@@ -65,7 +56,7 @@ body .main{margin-top:0!important}
   font-size:13px;
 }
 
-/* ===== TABELA ===== */
+/* TABELA */
 table{
   width:100%;
   border-collapse:collapse;
@@ -80,43 +71,29 @@ th,td{
 }
 th{color:#38bdf8;font-weight:600}
 
-/* ===== MODAL ===== */
-.modal-bg{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.75);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:999;
-}
-.modal{
-  background:#020b1a;
-  padding:24px;
-  border-radius:16px;
-  width:900px;
-  max-width:95vw;
-  border:2px solid #38bdf8;
-}
-.grid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:14px;
-}
-.field label{
-  font-size:12px;
+/* TOTAL */
+tfoot td{
+  font-weight:700;
   color:#38bdf8;
-  margin-bottom:4px;
-  display:block;
+  border-top:2px solid #38bdf8;
+  padding-top:8px;
 }
-.field input,.field select{
-  width:100%;
-  padding:8px;
-  border-radius:8px;
-  border:1px solid #38bdf8;
-  background:#020617;
-  color:#e5e7eb;
-}
+
+/* larguras */
+th:nth-child(1),td:nth-child(1){width:50px}
+th:nth-child(2),td:nth-child(2){width:80px}
+th:nth-child(3),td:nth-child(3){width:70px}
+th:nth-child(4),td:nth-child(4){width:50px}
+th:nth-child(5),td:nth-child(5){width:50px}
+th:nth-child(6),td:nth-child(6){width:80px}
+th:nth-child(7),td:nth-child(7){width:60px}
+th:nth-child(8),td:nth-child(8){width:70px}
+th:nth-child(9),td:nth-child(9){width:70px}
+th:nth-child(10),td:nth-child(10){width:50px}
+th:nth-child(11),td:nth-child(11){width:60px}
+th:nth-child(12),td:nth-child(12){width:70px}
+th:nth-child(13),td:nth-child(13){width:80px}
+th:nth-child(14),td:nth-child(14){width:80px}
 </style>
 </head>
 
@@ -130,10 +107,13 @@ th{color:#38bdf8;font-weight:600}
     <button class="btn btn-green" onclick="abrirModal()">+ Nova OP</button>
   </div>
 
+  <!-- FILTROS -->
   <div class="filtros">
     <select id="filtroOp"></select>
     <select id="filtroPeca"></select>
-    <input type="date" id="filtroData">
+    <select id="filtroAcab"></select>
+    <input type="date" id="dataIni">
+    <input type="date" id="dataFim">
     <button class="btn btn-blue" onclick="carregar()">Filtrar</button>
   </div>
 
@@ -146,138 +126,43 @@ th{color:#38bdf8;font-weight:600}
       </tr>
     </thead>
     <tbody id="lista"></tbody>
+    <tfoot>
+      <tr>
+        <td colspan="6">TOTAL</td>
+        <td id="tKg"></td>
+        <td id="tBruto"></td>
+        <td></td>
+        <td id="tQtd"></td>
+        <td></td>
+        <td id="tTotal"></td>
+        <td colspan="2"></td>
+      </tr>
+    </tfoot>
   </table>
 
-</div>
-
-<!-- ===== MODAL NOVA OP ===== -->
-<div class="modal-bg" id="modal">
-  <div class="modal">
-    <h2 style="color:#38bdf8">Nova OP</h2>
-
-    <div class="grid">
-      <div class="field"><label>OP</label><input id="op"></div>
-      <div class="field"><label>Data</label><input type="date" id="data"></div>
-      <div class="field"><label>Peça</label><select id="produto"></select></div>
-      <div class="field"><label>Kg Líquido</label><input id="kg"></div>
-
-      <div class="field"><label>Comprimento</label><input id="comp" readonly></div>
-      <div class="field"><label>Pç/Cx</label><input id="pcx" readonly></div>
-      <div class="field"><label>Acabamento</label><input id="acab" readonly></div>
-      <div class="field"><label>Peso Caixa</label><input id="pesoCx" readonly></div>
-
-      <div class="field"><label>Qtd</label><input id="qtd" readonly></div>
-      <div class="field"><label>Kg Bruto</label><input id="bruto" readonly></div>
-      <div class="field"><label>R$/Kg</label><input id="valorKg"></div>
-      <div class="field"><label>Total</label><input id="total" readonly></div>
-    </div>
-
-    <br>
-    <button class="btn btn-green" onclick="salvar()">Salvar</button>
-    <button class="btn btn-red" onclick="fecharModal()">Cancelar</button>
-  </div>
 </div>
 
 <script type="module">
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
-// ===== MODAL =====
-const modal = document.getElementById("modal");
-window.abrirModal = ()=> modal.style.display="flex";
-window.fecharModal = ()=> modal.style.display="none";
-
-// ===== UTIL =====
-function num(v){return parseFloat(String(v).replace(".","").replace(",","."))||0}
-function f2(n){return Number(n).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}
-function dataBR(d){return d.split("-").reverse().join("/")}
-
-// ===== ELEMENTOS =====
 const lista=document.getElementById("lista");
 const filtroOp=document.getElementById("filtroOp");
 const filtroPeca=document.getElementById("filtroPeca");
-const filtroData=document.getElementById("filtroData");
+const filtroAcab=document.getElementById("filtroAcab");
+const dataIni=document.getElementById("dataIni");
+const dataFim=document.getElementById("dataFim");
 
-const op=document.getElementById("op");
-const data=document.getElementById("data");
-const produto=document.getElementById("produto");
-const kg=document.getElementById("kg");
-const comp=document.getElementById("comp");
-const pcx=document.getElementById("pcx");
-const acab=document.getElementById("acab");
-const pesoCx=document.getElementById("pesoCx");
-const qtd=document.getElementById("qtd");
-const bruto=document.getElementById("bruto");
-const valorKg=document.getElementById("valorKg");
-const total=document.getElementById("total");
+const tKg=document.getElementById("tKg");
+const tBruto=document.getElementById("tBruto");
+const tQtd=document.getElementById("tQtd");
+const tTotal=document.getElementById("tTotal");
 
-let produtos=[];
+function f(n){return Number(n).toLocaleString("pt-BR",{minimumFractionDigits:2})}
+function dataBR(d){return d.split("-").reverse().join("/")}
 
-// ===== PRODUTOS =====
-async function carregarProdutos(){
-  const {data}=await supabase.from("produtos").select("*").order("codigo");
-  produtos=data;
-  produto.innerHTML="<option value=''>Selecione</option>";
-  filtroPeca.innerHTML="<option value=''>Todas as Peças</option>";
-  data.forEach(p=>{
-    produto.innerHTML+=`<option value="${p.id}">${p.codigo}</option>`;
-    filtroPeca.innerHTML+=`<option value="${p.id}">${p.codigo}</option>`;
-  });
-}
-
-produto.onchange=()=>{
-  const p=produtos.find(x=>x.id==produto.value);
-  if(!p) return;
-  comp.value=p.comprimento_mm;
-  pcx.value=p.pecas_por_caixa;
-  acab.value=p.acabamento;
-  pesoCx.value=f2(p.pecas_por_caixa*p.peso_liquido);
-  calcular();
-};
-
-kg.oninput=calcular;
-valorKg.oninput=calcular;
-
-function calcular(){
-  const p=produtos.find(x=>x.id==produto.value);
-  if(!p) return;
-  const kgL=num(kg.value);
-  const preco=num(valorKg.value);
-  if(!kgL) return;
-  const q=kgL/p.peso_liquido;
-  qtd.value=Math.round(q);
-  bruto.value=f2(q*p.peso_bruto);
-  total.value=f2(kgL*preco);
-}
-
-// ===== SALVAR =====
-window.salvar = async ()=>{
-  const p=produtos.find(x=>x.id==produto.value);
-  if(!p) return alert("Selecione a peça");
-  await supabase.from("zincagem_tratamento").insert({
-    op:op.value,
-    data:data.value,
-    produto_id:p.id,
-    codigo_peca:p.codigo,
-    comprimento_mm:p.comprimento_mm,
-    pecas_por_caixa:p.pecas_por_caixa,
-    acabamento:p.acabamento,
-    kg:num(kg.value),
-    quantidade:qtd.value,
-    kg_material_bruto:num(bruto.value),
-    peso_caixa:num(pesoCx.value),
-    valor_kg:num(valorKg.value),
-    valor_total:num(total.value),
-    recebido:false,
-    boleto:false
-  });
-  fecharModal();
-  carregar();
-};
-
-// ===== LISTAGEM =====
-window.toggle = async(id,campo,valor)=>{
+window.toggle=async(id,campo,valor)=>{
   await supabase.from("zincagem_tratamento")
     .update({[campo]:!valor}).eq("id",id);
   carregar();
@@ -285,16 +170,26 @@ window.toggle = async(id,campo,valor)=>{
 
 async function carregar(){
   let q=supabase.from("zincagem_tratamento").select("*").order("data",{ascending:false});
+
   if(filtroOp.value) q=q.eq("op",filtroOp.value);
   if(filtroPeca.value) q=q.eq("produto_id",filtroPeca.value);
-  if(filtroData.value) q=q.eq("data",filtroData.value);
+  if(filtroAcab.value) q=q.eq("acabamento",filtroAcab.value);
+  if(dataIni.value) q=q.gte("data",dataIni.value);
+  if(dataFim.value) q=q.lte("data",dataFim.value);
 
   const {data}=await q;
   lista.innerHTML="";
   filtroOp.innerHTML="<option value=''>Todas OPs</option>";
 
+  let sKg=0,sBruto=0,sQtd=0,sTotal=0;
+
   data.forEach(r=>{
     filtroOp.innerHTML+=`<option>${r.op}</option>`;
+    sKg+=Number(r.kg||0);
+    sBruto+=Number(r.kg_material_bruto||0);
+    sQtd+=Number(r.quantidade||0);
+    sTotal+=Number(r.valor_total||0);
+
     lista.innerHTML+=`
       <tr>
         <td>${r.op}</td>
@@ -303,12 +198,12 @@ async function carregar(){
         <td>${r.comprimento_mm}</td>
         <td>${r.pecas_por_caixa}</td>
         <td>${r.acabamento}</td>
-        <td>${f2(r.kg)}</td>
-        <td>${f2(r.kg_material_bruto)}</td>
-        <td>${f2(r.peso_caixa)}</td>
+        <td>${f(r.kg)}</td>
+        <td>${f(r.kg_material_bruto)}</td>
+        <td>${f(r.peso_caixa)}</td>
         <td>${r.quantidade}</td>
-        <td>${f2(r.valor_kg)}</td>
-        <td>${f2(r.valor_total)}</td>
+        <td>${f(r.valor_kg)}</td>
+        <td>${f(r.valor_total)}</td>
         <td>
           <button class="btn btn-status ${r.recebido?'btn-green':'btn-red'}"
             onclick="toggle(${r.id},'recebido',${r.recebido})">
@@ -321,12 +216,15 @@ async function carregar(){
             ${r.boleto?'OK':'Pendente'}
           </button>
         </td>
-      </tr>
-    `;
+      </tr>`;
   });
+
+  tKg.innerText=f(sKg);
+  tBruto.innerText=f(sBruto);
+  tQtd.innerText=sQtd;
+  tTotal.innerText=f(sTotal);
 }
 
-carregarProdutos();
 carregar();
 </script>
 
