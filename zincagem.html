@@ -9,41 +9,36 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-html,body{
-  height:100%;
-}
+html,body{height:100%}
 
-/* NEUTRALIZA O DASHBOARD.CSS */
-body .main{
-  margin-top: 0 !important;
-}
+/* neutraliza efeito do dashboard.css */
+body .main{margin-top:0!important}
 
-/* CONTAINER EXCLUSIVO DESTA TELA */
+/* ===== CONTAINER ===== */
 .zincagem-wrapper{
-  padding: 90px 24px 24px 24px; /* espaço REAL no topo */
-  min-height: 100vh;
-  background: radial-gradient(circle at top,#0b1224,#020617 70%);
+  padding: 48px 24px 24px 24px; /* TOPO AJUSTADO */
+  min-height:100vh;
+  background:radial-gradient(circle at top,#0b1224,#020617 70%);
   color:#e5e7eb;
   font-family:Segoe UI,Arial;
 }
 
-/* TOPO */
+/* ===== TOPO ===== */
 .topo{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin-bottom:18px;
+  margin-bottom:14px;
 }
-
 .topo h1{
   color:#38bdf8;
   margin:0;
   font-size:26px;
 }
 
-/* BOTÕES */
+/* ===== BOTÕES ===== */
 .btn{
-  padding:8px 14px;
+  padding:7px 12px;
   border:none;
   border-radius:8px;
   cursor:pointer;
@@ -54,12 +49,20 @@ body .main{
 .btn-blue{background:#38bdf8;color:#022c22}
 .btn-red{background:#ef4444;color:white}
 
-/* FILTROS */
+/* botões de status (menores) */
+.btn-status{
+  padding:5px 10px;
+  font-size:12px;
+  min-width:72px;
+  margin:0 2px; /* evita encostar */
+}
+
+/* ===== FILTROS ===== */
 .filtros{
   display:grid;
   grid-template-columns:160px 200px 160px 120px;
   gap:10px;
-  margin-bottom:14px;
+  margin-bottom:12px;
 }
 .filtros select,.filtros input{
   padding:8px;
@@ -70,7 +73,7 @@ body .main{
   font-size:13px;
 }
 
-/* TABELA */
+/* ===== TABELA ===== */
 table{
   width:100%;
   border-collapse:collapse;
@@ -88,7 +91,7 @@ th{
   font-weight:600;
 }
 
-/* LARGURAS */
+/* larguras ajustadas */
 th:nth-child(1),td:nth-child(1){width:50px}
 th:nth-child(2),td:nth-child(2){width:80px}
 th:nth-child(3),td:nth-child(3){width:70px}
@@ -96,7 +99,7 @@ th:nth-child(4),td:nth-child(4){width:50px}
 th:nth-child(5),td:nth-child(5){width:50px}
 th:nth-child(6),td:nth-child(6){width:80px}
 th:nth-child(7),td:nth-child(7){width:60px}
-th:nth-child(8),td:nth-child(8){width:70px}
+th:nth-child(8),td:nth-child(8){width:70px} /* Bruto */
 th:nth-child(9),td:nth-child(9){width:70px}
 th:nth-child(10),td:nth-child(10){width:50px}
 th:nth-child(11),td:nth-child(11){width:60px}
@@ -110,14 +113,12 @@ th:nth-child(14),td:nth-child(14){width:80px}
 
 <div class="zincagem-wrapper">
 
-  <!-- TOPO VISÍVEL -->
   <div class="topo">
     <button class="btn btn-blue" onclick="location.href='dashboard.html'">⬅ Voltar</button>
     <h1>Zincagem / Tratamento</h1>
     <button class="btn btn-green" onclick="abrirModal()">+ Nova OP</button>
   </div>
 
-  <!-- FILTROS -->
   <div class="filtros">
     <select id="filtroOp"></select>
     <select id="filtroPeca"></select>
@@ -125,7 +126,6 @@ th:nth-child(14),td:nth-child(14){width:80px}
     <button class="btn btn-blue" onclick="carregar()">Filtrar</button>
   </div>
 
-  <!-- TABELA -->
   <table>
     <thead>
       <tr>
@@ -160,7 +160,9 @@ const filtroPeca=document.getElementById("filtroPeca");
 const filtroData=document.getElementById("filtroData");
 const lista=document.getElementById("lista");
 
-function f(n){return Number(n).toLocaleString("pt-BR",{minimumFractionDigits:2})}
+function f2(n){
+  return Number(n).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+}
 function dataBR(d){return d.split("-").reverse().join("/")}
 
 window.toggle=async(id,campo,valor)=>{
@@ -190,20 +192,20 @@ async function carregar(){
         <td>${r.comprimento_mm}</td>
         <td>${r.pecas_por_caixa}</td>
         <td>${r.acabamento}</td>
-        <td>${f(r.kg)}</td>
-        <td>${f(r.kg_material_bruto)}</td>
-        <td>${f(r.peso_caixa)}</td>
+        <td>${f2(r.kg)}</td>
+        <td>${f2(r.kg_material_bruto)}</td>
+        <td>${f2(r.peso_caixa)}</td>
         <td>${r.quantidade}</td>
-        <td>${f(r.valor_kg)}</td>
-        <td>${f(r.valor_total)}</td>
+        <td>${f2(r.valor_kg)}</td>
+        <td>${f2(r.valor_total)}</td>
         <td>
-          <button class="btn ${r.recebido?'btn-green':'btn-red'}"
+          <button class="btn btn-status ${r.recebido?'btn-green':'btn-red'}"
             onclick="toggle(${r.id},'recebido',${r.recebido})">
             ${r.recebido?'OK':'Pendente'}
           </button>
         </td>
         <td>
-          <button class="btn ${r.boleto?'btn-green':'btn-red'}"
+          <button class="btn btn-status ${r.boleto?'btn-green':'btn-red'}"
             onclick="toggle(${r.id},'boleto',${r.boleto})">
             ${r.boleto?'OK':'Pendente'}
           </button>
