@@ -10,7 +10,6 @@
 
 <style>
 html{height:100%}
-
 body{
   margin:0;
   background:radial-gradient(circle at top,#0b1224,#020617 70%);
@@ -20,75 +19,39 @@ body{
   overflow-y:auto;
   overflow-x:hidden;
 }
-
 .main{
   padding:30px;
   min-height:100vh;
   margin-top:0 !important;
   padding-top:60px !important;
 }
-
-.topo{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:20px;
-}
-
+.topo{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
 h1{color:#38bdf8;margin:0}
-
-.btn{
-  padding:10px 16px;
-  border:none;
-  border-radius:8px;
-  cursor:pointer;
-  font-weight:600;
-}
+.btn{padding:10px 16px;border:none;border-radius:8px;cursor:pointer;font-weight:600}
 .btn-green{background:#22c55e;color:#022c22}
 .btn-blue{background:#38bdf8;color:#022c22}
 .btn-red{background:#ef4444;color:white}
 
-.filtros{
-  display:grid;
-  grid-template-columns:200px 200px 200px auto;
-  gap:12px;
-  margin-bottom:20px;
-}
-.filtros select,.filtros input{
-  padding:10px;
-  border-radius:8px;
-  border:1px solid #38bdf8;
-  background:#020617;
-  color:#e5e7eb;
-}
+.filtros{display:grid;grid-template-columns:200px 200px 200px auto;gap:12px;margin-bottom:20px}
+.filtros select,.filtros input{padding:10px;border-radius:8px;border:1px solid #38bdf8;background:#020617;color:#e5e7eb}
 
 table{width:100%;border-collapse:collapse}
 th,td{padding:10px;border-bottom:1px solid #1e293b}
 th{color:#38bdf8}
 
-.modal-bg{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.8);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:999;
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:999}
+.modal{background:#020b1a;padding:24px;border-radius:16px;width:950px;max-width:95vw;border:2px solid #38bdf8}
+
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+
+.field label{
+  font-size:12px;
+  color:#38bdf8;
+  margin-bottom:4px;
+  display:block;
 }
-.modal{
-  background:#020b1a;
-  padding:24px;
-  border-radius:16px;
-  width:900px;
-  max-width:95vw;
-  border:2px solid #38bdf8;
-}
-.grid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:12px;
-}
-.grid input,.grid select{
+.field input,.field select{
+  width:100%;
   padding:10px;
   border-radius:8px;
   border:1px solid #38bdf8;
@@ -102,54 +65,44 @@ th{color:#38bdf8}
 
 <div class="main">
 
-  <div class="topo">
-    <button class="btn btn-blue" onclick="location.href='dashboard.html'">⬅ Voltar</button>
-    <h1>Zincagem / Tratamento</h1>
-    <button class="btn btn-green" onclick="abrirModal()">+ Nova OP</button>
-  </div>
+<div class="topo">
+<button class="btn btn-blue" onclick="location.href='dashboard.html'">⬅ Voltar</button>
+<h1>Zincagem / Tratamento</h1>
+<button class="btn btn-green" onclick="abrirModal()">+ Nova OP</button>
+</div>
 
-  <div class="filtros">
-    <select id="filtroOp"></select>
-    <select id="filtroPeca"></select>
-    <input type="date" id="filtroData">
-    <button class="btn btn-blue" onclick="carregar()">Filtrar</button>
-  </div>
-
-  <table>
-    <thead>
-      <tr>
-        <th>OP</th><th>Data</th><th>Peça</th><th>Comp</th><th>Pç/Cx</th>
-        <th>Acabamento</th><th>Kg</th><th>Bruto</th><th>Peso Caixa</th><th>Qtd</th>
-        <th>R$/Kg</th><th>Total R$</th>
-        <th>Entregue</th><th>Boleto</th>
-      </tr>
-    </thead>
-    <tbody id="lista"></tbody>
-  </table>
+<table>
+<thead>
+<tr>
+<th>OP</th><th>Data</th><th>Peça</th><th>Comp</th><th>Pç/Cx</th><th>Acabamento</th><th>Kg</th><th>Bruto</th><th>Peso Caixa</th><th>Qtd</th><th>R$/Kg</th><th>Total</th><th>Entregue</th><th>Boleto</th>
+</tr>
+</thead>
+<tbody id="lista"></tbody>
+</table>
 
 </div>
 
-<!-- MODAL -->
 <div class="modal-bg" id="modal">
 <div class="modal">
 <h2 style="color:#38bdf8">Nova OP</h2>
 
 <div class="grid">
-<input id="op" placeholder="OP">
-<input type="date" id="data">
-<select id="produto"></select>
-<input id="kg" placeholder="Kg">
 
-<input id="comp" readonly placeholder="Comprimento">
-<input id="pcx" readonly placeholder="Pç/Cx">
-<input id="acab" readonly placeholder="Acabamento">
-<input id="pesoCx" readonly placeholder="Peso Caixa">
+<div class="field"><label>OP</label><input id="op"></div>
+<div class="field"><label>Data</label><input type="date" id="data"></div>
+<div class="field"><label>Peça</label><select id="produto"></select></div>
+<div class="field"><label>Kg Líquido</label><input id="kg"></div>
 
-<input id="qtd" readonly placeholder="Quantidade">
-<input id="bruto" readonly placeholder="Kg Bruto">
+<div class="field"><label>Comprimento (mm)</label><input id="comp" readonly></div>
+<div class="field"><label>Peças por Caixa</label><input id="pcx" readonly></div>
+<div class="field"><label>Acabamento</label><input id="acab" readonly></div>
+<div class="field"><label>Peso da Caixa (Kg)</label><input id="pesoCx" readonly></div>
 
-<input id="valorKg" placeholder="R$/Kg">
-<input id="total" readonly placeholder="Total R$">
+<div class="field"><label>Quantidade</label><input id="qtd" readonly></div>
+<div class="field"><label>Kg Bruto</label><input id="bruto" readonly></div>
+<div class="field"><label>R$ por Kg</label><input id="valorKg"></div>
+<div class="field"><label>Total (R$)</label><input id="total" readonly></div>
+
 </div>
 
 <br>
@@ -165,12 +118,9 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ===== DOM =====
+// DOM
 const modal = document.getElementById("modal");
 const produto = document.getElementById("produto");
-const filtroPeca = document.getElementById("filtroPeca");
-const filtroOp = document.getElementById("filtroOp");
-const filtroData = document.getElementById("filtroData");
 const op = document.getElementById("op");
 const data = document.getElementById("data");
 const kg = document.getElementById("kg");
@@ -186,119 +136,51 @@ const lista = document.getElementById("lista");
 
 let produtos=[];
 
-// ===== Modal =====
 window.abrirModal=()=>modal.style.display="flex";
 window.fecharModal=()=>modal.style.display="none";
+window.salvar=salvar;
 
-window.salvar = salvar;
-window.carregar = carregar;
+function formatar(n){return Number(n).toLocaleString("pt-BR",{minimumFractionDigits:2})}
 
-function formatar(n){ return Number(n).toLocaleString("pt-BR",{minimumFractionDigits:2}) }
-function dataBR(d){ return d.split("-").reverse().join("/") }
-
-// ===== Produtos =====
 async function carregarProdutos(){
  const {data}=await supabase.from("produtos").select("*").order("codigo");
  produtos=data;
  produto.innerHTML="<option value=''>Selecione</option>";
- filtroPeca.innerHTML="<option value=''>Todas as Peças</option>";
- data.forEach(p=>{
-  produto.innerHTML+=`<option value="${p.id}">${p.codigo}</option>`;
-  filtroPeca.innerHTML+=`<option value="${p.id}">${p.codigo}</option>`;
- });
+ data.forEach(p=>produto.innerHTML+=`<option value="${p.id}">${p.codigo}</option>`);
 }
 
 produto.onchange=()=>{
  const p=produtos.find(x=>x.id==produto.value);
- if(!p) return;
  comp.value=p.comprimento_mm;
  pcx.value=p.pecas_por_caixa;
  acab.value=p.acabamento;
- pesoCx.value=formatar(p.pecas_por_caixa * p.peso_liquido);
+ pesoCx.value=formatar(p.pecas_por_caixa*p.peso_liquido);
  calcular();
 }
-
 kg.oninput=calcular;
-valorKg.oninput=calcularTotal;
+valorKg.oninput=()=>total.value=formatar(kg.value*valorKg.value);
 
 function calcular(){
  const p=produtos.find(x=>x.id==produto.value);
- if(!p || !kg.value) return;
- const q = kg.value / p.peso_liquido;
+ const q=kg.value/p.peso_liquido;
  qtd.value=Math.round(q);
- bruto.value=formatar(q * p.peso_bruto);
- calcularTotal();
+ bruto.value=formatar(q*p.peso_bruto);
+ total.value=formatar(kg.value*valorKg.value);
 }
 
-function calcularTotal(){
- if(!valorKg.value || !kg.value) return;
- total.value = formatar(valorKg.value * kg.value);
-}
-
-// ===== Salvar =====
 async function salvar(){
  const p=produtos.find(x=>x.id==produto.value);
  await supabase.from("zincagem_tratamento").insert({
-  op:op.value,
-  data:data.value,
-  produto_id:p.id,
-  codigo_peca:p.codigo,
-  comprimento_mm:p.comprimento_mm,
-  pecas_por_caixa:p.pecas_por_caixa,
-  acabamento:p.acabamento,
-  kg:kg.value,
-  quantidade:qtd.value,
-  kg_material_bruto:bruto.value.replace(".","").replace(",","."), 
-  peso_caixa:pesoCx.value.replace(".","").replace(",","."), 
-  valor_kg:valorKg.value.replace(",","."), 
-  valor_total:total.value.replace(".","").replace(",","."), 
-  entregue:false,
-  boleto:false
+  op:op.value,data:data.value,produto_id:p.id,codigo_peca:p.codigo,
+  comprimento_mm:p.comprimento_mm,pecas_por_caixa:p.pecas_por_caixa,
+  acabamento:p.acabamento,kg:kg.value,quantidade:qtd.value,
+  kg_material_bruto:bruto.value.replace(",","."),peso_caixa:pesoCx.value.replace(",","."),
+  valor_kg:valorKg.value.replace(",","."),valor_total:total.value.replace(",","."),
+  entregue:false,boleto:false
  });
  fecharModal();
- carregar();
 }
-
-// ===== Listar =====
-async function carregar(){
- let q=supabase.from("zincagem_tratamento").select("*");
- if(filtroOp.value) q=q.eq("op",filtroOp.value);
- if(filtroPeca.value) q=q.eq("produto_id",filtroPeca.value);
- if(filtroData.value) q=q.eq("data",filtroData.value);
-
- const {data}=await q;
- lista.innerHTML="";
- filtroOp.innerHTML="<option value=''>Todas OPs</option>";
-
- data.forEach(r=>{
-  filtroOp.innerHTML+=`<option>${r.op}</option>`;
-  lista.innerHTML+=`
-  <tr>
-   <td>${r.op}</td>
-   <td>${dataBR(r.data)}</td>
-   <td>${r.codigo_peca}</td>
-   <td>${r.comprimento_mm}</td>
-   <td>${r.pecas_por_caixa}</td>
-   <td>${r.acabamento}</td>
-   <td>${formatar(r.kg)}</td>
-   <td>${formatar(r.kg_material_bruto)}</td>
-   <td>${formatar(r.peso_caixa)}</td>
-   <td>${r.quantidade}</td>
-   <td>${formatar(r.valor_kg)}</td>
-   <td>${formatar(r.valor_total)}</td>
-   <td><button class="btn ${r.entregue?'btn-green':'btn-red'}" onclick="toggle(${r.id},'entregue',${r.entregue})">${r.entregue?'OK':'Pendente'}</button></td>
-   <td><button class="btn ${r.boleto?'btn-green':'btn-red'}" onclick="toggle(${r.id},'boleto',${r.boleto})">${r.boleto?'OK':'Pendente'}</button></td>
-  </tr>`;
- });
-}
-
-window.toggle=async(id,campo,valor)=>{
- await supabase.from("zincagem_tratamento").update({[campo]:!valor}).eq("id",id);
- carregar();
-}
-
 carregarProdutos();
-carregar();
 </script>
 
 </body>
