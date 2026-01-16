@@ -20,12 +20,11 @@ body{
   padding:50px 24px 24px;
 }
 
-/* TOPO */
 .topo{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin-bottom:16px;
+  margin-bottom:14px;
 }
 .topo h1{
   color:#38bdf8;
@@ -33,7 +32,6 @@ body{
   font-size:26px;
 }
 
-/* BOTÕES */
 .btn{
   padding:7px 12px;
   border:none;
@@ -46,7 +44,6 @@ body{
 .btn-green{background:#22c55e;color:#022c22}
 .btn-red{background:#ef4444;color:white}
 
-/* BOTÕES STATUS */
 .btn-status{
   padding:4px 8px;
   font-size:11.5px;
@@ -54,12 +51,11 @@ body{
   margin:0 2px;
 }
 
-/* FILTROS */
 .filtros{
   display:grid;
   grid-template-columns:140px 180px 160px 160px 160px 120px;
   gap:10px;
-  margin-bottom:12px;
+  margin-bottom:10px;
 }
 .filtros select,.filtros input{
   padding:8px;
@@ -70,7 +66,6 @@ body{
   font-size:13px;
 }
 
-/* TABELA */
 table{
   width:100%;
   border-collapse:collapse;
@@ -88,7 +83,6 @@ th{
   font-weight:600;
 }
 
-/* TOTAL */
 tfoot td{
   font-weight:700;
   color:#38bdf8;
@@ -102,7 +96,6 @@ tfoot td{
 
 <div class="zincagem-wrapper">
 
-  <!-- TOPO -->
   <div class="topo">
     <button class="btn btn-blue" onclick="location.href='dashboard.html'">⬅ Voltar</button>
     <h1>Zincagem / Tratamento</h1>
@@ -121,6 +114,8 @@ tfoot td{
 
     <select id="filtroAcab">
       <option value="">Todos Acabamentos</option>
+      <option value="Zincado">Zincado</option>
+      <option value="Tratado">Tratado</option>
     </select>
 
     <input type="date" id="dataIni">
@@ -171,7 +166,6 @@ tfoot td{
 <div class="modal-bg" id="modal" style="display:none">
   <div class="modal">
     <h2 style="color:#38bdf8">Nova OP</h2>
-    <!-- seu modal completo continua aqui -->
     <button class="btn btn-red" onclick="fecharModal()">Fechar</button>
   </div>
 </div>
@@ -182,7 +176,6 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* ELEMENTOS */
 const lista = document.getElementById("lista");
 const filtroOp = document.getElementById("filtroOp");
 const filtroPeca = document.getElementById("filtroPeca");
@@ -197,33 +190,21 @@ const tTotal = document.getElementById("tTotal");
 
 const modal = document.getElementById("modal");
 
-/* BOTÕES */
 document.getElementById("btnNovaOp").onclick = () => modal.style.display = "flex";
 document.getElementById("btnFiltrar").onclick = carregar;
 window.fecharModal = () => modal.style.display = "none";
 
-/* FORMATADORES */
-function f(n){
-  return Number(n || 0).toLocaleString("pt-BR",{minimumFractionDigits:2});
-}
-function dataBR(d){
-  return d.split("-").reverse().join("/");
-}
+function f(n){return Number(n||0).toLocaleString("pt-BR",{minimumFractionDigits:2});}
+function dataBR(d){return d.split("-").reverse().join("/");}
 
-/* TOGGLE STATUS */
 window.toggle = async (id,campo,valor)=>{
-  await supabase
-    .from("zincagem_tratamento")
-    .update({ [campo]: !valor })
+  await supabase.from("zincagem_tratamento")
+    .update({[campo]:!valor})
     .eq("id",id);
-
   carregar();
 };
 
-/* FILTROS (PEÇAS + ACABAMENTOS) */
 async function carregarFiltros(){
-
-  // PEÇAS
   const { data: pecas } = await supabase
     .from("produtos")
     .select("id,codigo")
@@ -233,51 +214,36 @@ async function carregarFiltros(){
   pecas?.forEach(p=>{
     filtroPeca.innerHTML += `<option value="${p.id}">${p.codigo}</option>`;
   });
-
-  // ACABAMENTOS
-  const { data: acabamentos } = await supabase
-    .from("zincagem_tratamento")
-    .select("acabamento");
-
-  const unicos = [...new Set(acabamentos.map(a=>a.acabamento))];
-
-  filtroAcab.innerHTML = `<option value="">Todos Acabamentos</option>`;
-  unicos.forEach(a=>{
-    if(a){
-      filtroAcab.innerHTML += `<option value="${a}">${a}</option>`;
-    }
-  });
 }
 
-/* CARREGAR TABELA */
 async function carregar(){
   let q = supabase
     .from("zincagem_tratamento")
     .select("*")
     .order("data",{ascending:false});
 
-  if(filtroOp.value) q = q.eq("op",filtroOp.value);
-  if(filtroPeca.value) q = q.eq("produto_id",filtroPeca.value);
-  if(filtroAcab.value) q = q.eq("acabamento",filtroAcab.value);
-  if(dataIni.value) q = q.gte("data",dataIni.value);
-  if(dataFim.value) q = q.lte("data",dataFim.value);
+  if(filtroOp.value) q=q.eq("op",filtroOp.value);
+  if(filtroPeca.value) q=q.eq("produto_id",filtroPeca.value);
+  if(filtroAcab.value) q=q.eq("acabamento",filtroAcab.value);
+  if(dataIni.value) q=q.gte("data",dataIni.value);
+  if(dataFim.value) q=q.lte("data",dataFim.value);
 
   const { data } = await q;
 
-  lista.innerHTML = "";
-  filtroOp.innerHTML = `<option value="">Todas OPs</option>`;
+  lista.innerHTML="";
+  filtroOp.innerHTML=`<option value="">Todas OPs</option>`;
 
-  let sKg=0, sBruto=0, sQtd=0, sTotal=0;
+  let sKg=0,sBruto=0,sQtd=0,sTotal=0;
 
   data.forEach(r=>{
-    filtroOp.innerHTML += `<option>${r.op}</option>`;
+    filtroOp.innerHTML+=`<option>${r.op}</option>`;
 
-    sKg += +r.kg || 0;
-    sBruto += +r.kg_material_bruto || 0;
-    sQtd += +r.quantidade || 0;
-    sTotal += +r.valor_total || 0;
+    sKg+=+r.kg||0;
+    sBruto+=+r.kg_material_bruto||0;
+    sQtd+=+r.quantidade||0;
+    sTotal+=+r.valor_total||0;
 
-    lista.innerHTML += `
+    lista.innerHTML+=`
       <tr>
         <td>${r.op}</td>
         <td>${dataBR(r.data)}</td>
@@ -306,13 +272,12 @@ async function carregar(){
       </tr>`;
   });
 
-  tKg.innerText = f(sKg);
-  tBruto.innerText = f(sBruto);
-  tQtd.innerText = sQtd;
-  tTotal.innerText = f(sTotal);
+  tKg.innerText=f(sKg);
+  tBruto.innerText=f(sBruto);
+  tQtd.innerText=sQtd;
+  tTotal.innerText=f(sTotal);
 }
 
-/* INIT */
 await carregarFiltros();
 carregar();
 </script>
