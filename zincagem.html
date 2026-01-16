@@ -51,7 +51,7 @@ body{
   padding:4px 8px;
   font-size:11.5px;
   min-width:64px;
-  margin:0 3px;
+  margin:0 2px;
 }
 
 /* FILTROS */
@@ -111,9 +111,18 @@ tfoot td{
 
   <!-- FILTROS -->
   <div class="filtros">
-    <select id="filtroOp"></select>
-    <select id="filtroPeca"></select>
-    <select id="filtroAcab"></select>
+    <select id="filtroOp">
+      <option value="">Todas OPs</option>
+    </select>
+
+    <select id="filtroPeca">
+      <option value="">Todas as Peças</option>
+    </select>
+
+    <select id="filtroAcab">
+      <option value="">Todos Acabamentos</option>
+    </select>
+
     <input type="date" id="dataIni">
     <input type="date" id="dataFim">
     <button class="btn btn-blue" id="btnFiltrar">Filtrar</button>
@@ -123,12 +132,25 @@ tfoot td{
   <table>
     <thead>
       <tr>
-        <th>OP</th><th>Data</th><th>Peça</th><th>Comp</th><th>Pç/Cx</th>
-        <th>Acabamento</th><th>Kg</th><th>Bruto</th><th>Peso Caixa</th>
-        <th>Qtd</th><th>R$/Kg</th><th>Total</th><th>Recebido</th><th>Boleto</th>
+        <th>OP</th>
+        <th>Data</th>
+        <th>Peça</th>
+        <th>Comp</th>
+        <th>Pç/Cx</th>
+        <th>Acabamento</th>
+        <th>Kg</th>
+        <th>Bruto</th>
+        <th>Peso Caixa</th>
+        <th>Qtd</th>
+        <th>R$/Kg</th>
+        <th>Total</th>
+        <th>Recebido</th>
+        <th>Boleto</th>
       </tr>
     </thead>
+
     <tbody id="lista"></tbody>
+
     <tfoot>
       <tr>
         <td colspan="6">TOTAL</td>
@@ -149,7 +171,7 @@ tfoot td{
 <div class="modal-bg" id="modal" style="display:none">
   <div class="modal">
     <h2 style="color:#38bdf8">Nova OP</h2>
-    <!-- mantém seu modal existente -->
+    <!-- seu modal completo continua aqui -->
     <button class="btn btn-red" onclick="fecharModal()">Fechar</button>
   </div>
 </div>
@@ -157,63 +179,105 @@ tfoot td{
 <script type="module">
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./js/config.js";
-const supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* ELEMENTOS */
-const lista=document.getElementById("lista");
-const filtroOp=document.getElementById("filtroOp");
-const filtroPeca=document.getElementById("filtroPeca");
-const filtroAcab=document.getElementById("filtroAcab");
-const dataIni=document.getElementById("dataIni");
-const dataFim=document.getElementById("dataFim");
+const lista = document.getElementById("lista");
+const filtroOp = document.getElementById("filtroOp");
+const filtroPeca = document.getElementById("filtroPeca");
+const filtroAcab = document.getElementById("filtroAcab");
+const dataIni = document.getElementById("dataIni");
+const dataFim = document.getElementById("dataFim");
 
-const tKg=document.getElementById("tKg");
-const tBruto=document.getElementById("tBruto");
-const tQtd=document.getElementById("tQtd");
-const tTotal=document.getElementById("tTotal");
+const tKg = document.getElementById("tKg");
+const tBruto = document.getElementById("tBruto");
+const tQtd = document.getElementById("tQtd");
+const tTotal = document.getElementById("tTotal");
 
-const modal=document.getElementById("modal");
-document.getElementById("btnNovaOp").onclick=()=>modal.style.display="flex";
-document.getElementById("btnFiltrar").onclick=carregar;
+const modal = document.getElementById("modal");
 
-window.fecharModal=()=>modal.style.display="none";
+/* BOTÕES */
+document.getElementById("btnNovaOp").onclick = () => modal.style.display = "flex";
+document.getElementById("btnFiltrar").onclick = carregar;
+window.fecharModal = () => modal.style.display = "none";
 
-function f(n){return Number(n||0).toLocaleString("pt-BR",{minimumFractionDigits:2})}
-function dataBR(d){return d.split("-").reverse().join("/")}
+/* FORMATADORES */
+function f(n){
+  return Number(n || 0).toLocaleString("pt-BR",{minimumFractionDigits:2});
+}
+function dataBR(d){
+  return d.split("-").reverse().join("/");
+}
 
-/* TOGGLE */
-window.toggle=async(id,campo,valor)=>{
-  await supabase.from("zincagem_tratamento")
-    .update({[campo]:!valor})
+/* TOGGLE STATUS */
+window.toggle = async (id,campo,valor)=>{
+  await supabase
+    .from("zincagem_tratamento")
+    .update({ [campo]: !valor })
     .eq("id",id);
+
   carregar();
 };
 
-/* CARREGAR */
+/* FILTROS (PEÇAS + ACABAMENTOS) */
+async function carregarFiltros(){
+
+  // PEÇAS
+  const { data: pecas } = await supabase
+    .from("produtos")
+    .select("id,codigo")
+    .order("codigo");
+
+  filtroPeca.innerHTML = `<option value="">Todas as Peças</option>`;
+  pecas?.forEach(p=>{
+    filtroPeca.innerHTML += `<option value="${p.id}">${p.codigo}</option>`;
+  });
+
+  // ACABAMENTOS
+  const { data: acabamentos } = await supabase
+    .from("zincagem_tratamento")
+    .select("acabamento");
+
+  const unicos = [...new Set(acabamentos.map(a=>a.acabamento))];
+
+  filtroAcab.innerHTML = `<option value="">Todos Acabamentos</option>`;
+  unicos.forEach(a=>{
+    if(a){
+      filtroAcab.innerHTML += `<option value="${a}">${a}</option>`;
+    }
+  });
+}
+
+/* CARREGAR TABELA */
 async function carregar(){
-  let q=supabase.from("zincagem_tratamento").select("*").order("data",{ascending:false});
+  let q = supabase
+    .from("zincagem_tratamento")
+    .select("*")
+    .order("data",{ascending:false});
 
-  if(filtroOp.value) q=q.eq("op",filtroOp.value);
-  if(filtroPeca.value) q=q.eq("produto_id",filtroPeca.value);
-  if(filtroAcab.value) q=q.eq("acabamento",filtroAcab.value);
-  if(dataIni.value) q=q.gte("data",dataIni.value);
-  if(dataFim.value) q=q.lte("data",dataFim.value);
+  if(filtroOp.value) q = q.eq("op",filtroOp.value);
+  if(filtroPeca.value) q = q.eq("produto_id",filtroPeca.value);
+  if(filtroAcab.value) q = q.eq("acabamento",filtroAcab.value);
+  if(dataIni.value) q = q.gte("data",dataIni.value);
+  if(dataFim.value) q = q.lte("data",dataFim.value);
 
-  const {data}=await q;
+  const { data } = await q;
 
-  lista.innerHTML="";
-  filtroOp.innerHTML="<option value=''>Todas OPs</option>";
+  lista.innerHTML = "";
+  filtroOp.innerHTML = `<option value="">Todas OPs</option>`;
 
-  let sKg=0,sBruto=0,sQtd=0,sTotal=0;
+  let sKg=0, sBruto=0, sQtd=0, sTotal=0;
 
   data.forEach(r=>{
-    filtroOp.innerHTML+=`<option>${r.op}</option>`;
-    sKg+=+r.kg||0;
-    sBruto+=+r.kg_material_bruto||0;
-    sQtd+=+r.quantidade||0;
-    sTotal+=+r.valor_total||0;
+    filtroOp.innerHTML += `<option>${r.op}</option>`;
 
-    lista.innerHTML+=`
+    sKg += +r.kg || 0;
+    sBruto += +r.kg_material_bruto || 0;
+    sQtd += +r.quantidade || 0;
+    sTotal += +r.valor_total || 0;
+
+    lista.innerHTML += `
       <tr>
         <td>${r.op}</td>
         <td>${dataBR(r.data)}</td>
@@ -242,12 +306,14 @@ async function carregar(){
       </tr>`;
   });
 
-  tKg.innerText=f(sKg);
-  tBruto.innerText=f(sBruto);
-  tQtd.innerText=sQtd;
-  tTotal.innerText=f(sTotal);
+  tKg.innerText = f(sKg);
+  tBruto.innerText = f(sBruto);
+  tQtd.innerText = sQtd;
+  tTotal.innerText = f(sTotal);
 }
 
+/* INIT */
+await carregarFiltros();
 carregar();
 </script>
 
