@@ -5,6 +5,7 @@
 <title>Zincagem / Tratamento</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- SUPABASE -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -158,7 +159,7 @@ th{color:#38bdf8}
       <input placeholder="Peso Caixa">
 
       <input placeholder="Quantidade">
-      <input placeholder="Kg Bruto">
+      <input placeholder="Kg Bruto" id="kgBruto">
       <input id="rsKg" placeholder="R$/Kg">
       <input id="total" placeholder="Total">
     </div>
@@ -171,11 +172,13 @@ th{color:#38bdf8}
 </div>
 
 <script>
-const supabase = supabaseJs.createClient(
+/* SUPABASE – CORRETO */
+const supabaseClient = supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
 );
 
+/* MODAL */
 function abrirModal(){
   document.getElementById("modal").style.display="flex";
 }
@@ -186,19 +189,32 @@ function fecharModal(){
 /* CALCULO TOTAL */
 document.getElementById("rsKg").addEventListener("input",()=>{
   let v = document.getElementById("rsKg").value.replace(",",".");
-  let kg =  document.querySelector("input[placeholder='Kg Bruto']").value.replace(",",".");
+  let kg = document.getElementById("kgBruto").value.replace(",",".");
   document.getElementById("total").value =
     (parseFloat(v||0)*parseFloat(kg||0)).toFixed(2).replace(".",",");
 });
 
-/* CARREGAR PEÇAS */
+/* CARREGAR PEÇAS (FILTRO + MODAL) */
 async function carregarPecas(){
-  const {data} = await supabase.from("produtos").select("codigo");
+  const { data, error } = await supabaseClient
+    .from("produtos")
+    .select("codigo")
+    .order("codigo");
+
+  if(error){
+    console.error("Erro ao carregar peças:", error);
+    return;
+  }
+
   let opts = `<option value="">Selecione</option>`;
-  data.forEach(p=>opts+=`<option>${p.codigo}</option>`);
-  document.getElementById("pecaSelect").innerHTML=opts;
-  document.getElementById("filtroPeca").innerHTML=opts;
+  data.forEach(p=>{
+    opts += `<option value="${p.codigo}">${p.codigo}</option>`;
+  });
+
+  document.getElementById("pecaSelect").innerHTML = opts;
+  document.getElementById("filtroPeca").innerHTML = opts;
 }
+
 carregarPecas();
 </script>
 
