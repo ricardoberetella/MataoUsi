@@ -5,99 +5,10 @@
 <title>Zincagem / Tratamento</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<link rel="stylesheet" href="css/dashboard.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-*{ box-sizing:border-box; }
-body{
-  margin:0;
-  min-height:100vh;
-  background:radial-gradient(circle at top,#0b1224,#020617 70%);
-  color:#e5e7eb;
-  font-family:Segoe UI,Arial;
-}
-
-/* HEADER */
-.header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:20px 30px;
-}
-h1{color:#38bdf8;margin:0}
-
-/* BOTÕES */
-.btn{
-  border:none;
-  border-radius:10px;
-  padding:10px 18px;
-  font-weight:700;
-  cursor:pointer;
-}
-.btn-azul{background:#38bdf8;color:#020617}
-.btn-verde{background:#22c55e;color:#020617}
-.btn-vermelho{background:#ef4444;color:#fff}
-
-/* FILTROS + TABELA */
-.wrap{
-  padding:0 30px 30px;
-}
-.filtros{
-  display:grid;
-  grid-template-columns: 1.1fr 1fr 1fr .9fr .9fr .8fr;
-  gap:12px;
-  margin-bottom:18px;
-}
-input,select{
-  background:#020b1a;
-  border:1px solid #38bdf8;
-  border-radius:12px;
-  padding:12px;
-  color:#e5e7eb;
-  font-size:14px;
-}
-table{
-  width:100%;
-  border-collapse:collapse;
-  overflow:hidden;
-  border-radius:14px;
-}
-thead th{
-  color:#38bdf8;
-  font-weight:800;
-  padding:14px 10px;
-  text-align:center;
-  border-bottom:1px solid rgba(255,255,255,.12);
-}
-tbody td{
-  padding:12px 10px;
-  text-align:center;
-  border-bottom:1px solid rgba(255,255,255,.08);
-}
-tbody tr:hover{ background:rgba(56,189,248,.06); }
-.msg{
-  padding:14px;
-  border:1px dashed rgba(56,189,248,.5);
-  border-radius:14px;
-  color:#9ee7ff;
-  text-align:center;
-  margin-top:14px;
-  opacity:.9;
-}
-
-/* STATUS */
-.status{
-  padding:6px 12px;
-  border-radius:999px;
-  font-weight:800;
-  cursor:pointer;
-  display:inline-block;
-  user-select:none;
-}
-.pendente{background:#ef4444;color:#fff}
-.ok{background:#22c55e;color:#071b12}
-
-/* MODAL */
 .modal-bg{
   position:fixed;
   inset:0;
@@ -108,492 +19,236 @@ tbody tr:hover{ background:rgba(56,189,248,.06); }
   z-index:9999;
 }
 .modal{
-  width:980px;
-  max-width:96vw;
-  background:#020b1a;
-  border-radius:22px;
+  width:1100px;
+  background:radial-gradient(circle at top,#0b1224,#020617 70%);
   border:2px solid #38bdf8;
+  border-radius:18px;
   padding:26px;
-  box-shadow:0 0 50px rgba(0,0,0,.85);
 }
-.modal h2{
-  color:#38bdf8;
-  margin:0 0 16px 0;
-  font-size:26px;
-}
+.modal h2{color:#38bdf8;margin:0 0 16px}
 .grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
   gap:14px;
 }
-.field{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
+label{font-size:13px;color:#7dd3fc}
+input,select{
+  width:100%;
+  padding:12px;
+  border-radius:12px;
+  border:1px solid #38bdf8;
+  background:#020b1a;
+  color:#e5e7eb;
 }
-.field label{
-  font-size:12px;
-  color:#38bdf8;
-  opacity:.95;
-  font-weight:800;
-}
+input[readonly]{opacity:.6}
 .actions{
   margin-top:18px;
   display:flex;
-  gap:12px;
+  gap:14px;
 }
-
-@media(max-width:1000px){
-  .filtros{ grid-template-columns:1fr 1fr; }
-  .grid{ grid-template-columns:1fr 1fr; }
-}
-@media(max-width:560px){
-  .grid{ grid-template-columns:1fr; }
-}
+.btn-green{background:#22c55e;color:#000;font-weight:bold;padding:12px 24px;border-radius:12px}
+.btn-red{background:#ef4444;color:#fff;font-weight:bold;padding:12px 24px;border-radius:12px}
 </style>
 </head>
 
 <body>
 
-<div class="header">
-  <button class="btn btn-azul" onclick="history.back()">← Voltar</button>
+<header>
+  <button class="btn-azul" onclick="history.back()">← Voltar</button>
   <h1>Zincagem / Tratamento</h1>
-  <button class="btn btn-verde" id="btnNova">+ Nova OP</button>
-</div>
+  <button class="btn-verde" onclick="abrirModal()">+ Nova OP</button>
+</header>
 
-<div class="wrap">
-
-  <!-- FILTROS -->
-  <div class="filtros">
-    <input id="fOp" placeholder="OP">
-    <select id="fPeca">
-      <option value="">Todos os pinos</option>
-    </select>
-    <select id="fAcab">
-      <option value="">Todos acabamentos</option>
-      <option value="Zincado">Zincado</option>
-      <option value="Tratado">Tratado</option>
-    </select>
-    <input id="fIni" type="date" placeholder="Início">
-    <input id="fFim" type="date" placeholder="Fim">
-    <button class="btn btn-azul" id="btnFiltrar">Filtrar</button>
-  </div>
-
-  <!-- TABELA -->
-  <table>
-    <thead>
-      <tr>
-        <th>OP</th>
-        <th>Data</th>
-        <th>Peça</th>
-        <th>Acab.</th>
-        <th>Kg</th>
-        <th>Qtd</th>
-        <th>Total</th>
-        <th>Recebido</th>
-        <th>Boleto</th>
-      </tr>
-    </thead>
-    <tbody id="lista"></tbody>
-  </table>
-
-  <div id="msg" class="msg" style="display:none;"></div>
-</div>
-
-<!-- MODAL -->
-<div class="modal-bg" id="modal">
+<div class="modal-bg" id="modalBg">
   <div class="modal">
     <h2>Nova OP</h2>
 
     <div class="grid">
-      <div class="field">
+      <div>
         <label>OP</label>
-        <input id="mOp" placeholder="Ex: 001">
+        <input id="op" value="001">
       </div>
 
-      <div class="field">
+      <div>
         <label>Data</label>
-        <input id="mData" type="date">
+        <input type="date" id="data">
       </div>
 
-      <div class="field">
+      <div>
         <label>Pino de Engate</label>
-        <select id="mPeca"></select>
+        <select id="peca"></select>
       </div>
 
-      <div class="field">
+      <div>
         <label>Kg Líquido</label>
-        <input id="mKgLiq" inputmode="decimal" placeholder="0,000">
+        <input id="kg_liquido">
       </div>
 
-      <div class="field">
+      <div>
         <label>Comprimento</label>
-        <input id="mCompr" inputmode="decimal" placeholder="0">
+        <input id="comprimento" readonly>
       </div>
 
-      <div class="field">
+      <div>
         <label>Pç / Caixa</label>
-        <input id="mPcx" inputmode="numeric" placeholder="0">
+        <input id="pc_caixa" readonly>
       </div>
 
-      <div class="field">
+      <div>
         <label>Acabamento</label>
-        <select id="mAcab">
-          <option value="Zincado">Zincado</option>
-          <option value="Tratado">Tratado</option>
+        <select id="acabamento">
+          <option>Zincado</option>
+          <option>Tratado</option>
         </select>
       </div>
 
-      <div class="field">
+      <div>
         <label>Peso Caixa</label>
-        <input id="mPesoCx" inputmode="decimal" placeholder="0,000">
+        <input id="peso_caixa" readonly>
       </div>
 
-      <div class="field">
+      <div>
         <label>Quantidade</label>
-        <input id="mQtd" inputmode="numeric" placeholder="0">
+        <input id="quantidade" readonly>
       </div>
 
-      <div class="field">
+      <div>
         <label>Kg Bruto</label>
-        <input id="mKgBr" inputmode="decimal" placeholder="0,000">
+        <input id="kg_bruto" readonly>
       </div>
 
-      <div class="field">
+      <div>
         <label>R$/Kg</label>
-        <input id="mRsKg" inputmode="decimal" placeholder="0,00">
+        <input id="rs_kg">
       </div>
 
-      <div class="field">
+      <div>
         <label>Total</label>
-        <input id="mTotal" inputmode="decimal" placeholder="0,00" readonly>
+        <input id="total" readonly>
       </div>
     </div>
 
     <div class="actions">
-      <button class="btn btn-verde" id="btnSalvar">Salvar</button>
-      <button class="btn btn-vermelho" id="btnCancelar">Cancelar</button>
+      <button class="btn-green" onclick="salvar()">Salvar</button>
+      <button class="btn-red" onclick="fecharModal()">Cancelar</button>
     </div>
   </div>
 </div>
 
 <script>
-/* =========================
-   SUPABASE
-========================= */
 const supabaseClient = supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
+  "SUA_ANON_KEY_AQUI"
 );
 
-/* =========================
-   HELPERS NÚMEROS (vírgula)
-========================= */
-function parseBR(v){
-  if(v === null || v === undefined) return null;
-  const s = String(v).trim();
-  if(!s) return null;
-  // remove milhar: 1.234,56 -> 1234.56
-  const n = s.replace(/\./g,"").replace(",",".");
-  const f = parseFloat(n);
-  return Number.isFinite(f) ? f : null;
+/* =============================
+   MODAL
+============================= */
+function abrirModal(){
+  document.getElementById("modalBg").style.display="flex";
 }
-function fmtBR(n, dec=2){
-  if(n === null || n === undefined || !Number.isFinite(Number(n))) return "";
-  return Number(n).toLocaleString("pt-BR", { minimumFractionDigits: dec, maximumFractionDigits: dec });
-}
-function setVal(el, n, dec){
-  el.value = (n === null || n === undefined) ? "" : fmtBR(Number(n), dec);
+function fecharModal(){
+  document.getElementById("modalBg").style.display="none";
 }
 
-/* =========================
-   ELEMENTOS
-========================= */
-const modal = document.getElementById("modal");
-const msg = document.getElementById("msg");
-const lista = document.getElementById("lista");
+/* =============================
+   FORMATADORES (vírgula)
+============================= */
+function n(v){ return Number(String(v).replace(",", ".")) || 0 }
+function f(v){ return v.toLocaleString("pt-BR",{minimumFractionDigits:2}) }
 
-// filtros
-const fOp = document.getElementById("fOp");
-const fPeca = document.getElementById("fPeca");
-const fAcab = document.getElementById("fAcab");
-const fIni = document.getElementById("fIni");
-const fFim = document.getElementById("fFim");
-
-// modal inputs
-const mOp = document.getElementById("mOp");
-const mData = document.getElementById("mData");
-const mPeca = document.getElementById("mPeca");
-const mKgLiq = document.getElementById("mKgLiq");
-const mCompr = document.getElementById("mCompr");
-const mPcx = document.getElementById("mPcx");
-const mAcab = document.getElementById("mAcab");
-const mPesoCx = document.getElementById("mPesoCx");
-const mQtd = document.getElementById("mQtd");
-const mKgBr = document.getElementById("mKgBr");
-const mRsKg = document.getElementById("mRsKg");
-const mTotal = document.getElementById("mTotal");
-
-/* =========================
-   MODAL OPEN/CLOSE
-========================= */
-document.getElementById("btnNova").onclick = () => {
-  modal.style.display = "flex";
-};
-document.getElementById("btnCancelar").onclick = () => {
-  modal.style.display = "none";
-};
-
-/* =========================
-   CARREGAR PINOS (produtos)
-========================= */
-let cacheProdutosByCodigo = new Map();
-
+/* =============================
+   CARREGAR PINOS
+============================= */
 async function carregarPinos(){
-  const { data, error } = await supabaseClient
+  const sel = document.getElementById("peca");
+  sel.innerHTML = `<option value="">Selecione</option>`;
+
+  const {data,error} = await supabaseClient
     .from("produtos")
-    .select("id,codigo,descricao,comprimento_mm,pcs_caixa,peso_caixa,kg_liquido,kg_bruto,valor_rs_kg,acabamento")
+    .select("codigo,descricao,comprimento,pc_caixa,peso_caixa")
     .ilike("descricao","%pino%")
     .order("codigo");
 
-  if(error){
-    console.error(error);
-    mostrarMsg("Erro ao carregar pinos. Ver console.");
-    return;
-  }
-
-  cacheProdutosByCodigo.clear();
-  data.forEach(p => cacheProdutosByCodigo.set(p.codigo, p));
-
-  // filtros
-  fPeca.innerHTML = `<option value="">Todos os pinos</option>`;
-  // modal
-  mPeca.innerHTML = `<option value="">Selecione o pino</option>`;
+  if(error){ alert("Erro ao carregar pinos"); console.error(error); return }
 
   data.forEach(p=>{
-    const label = `${p.codigo} – ${p.descricao}`;
-    const o1 = document.createElement("option");
-    o1.value = p.codigo;
-    o1.textContent = label;
-    fPeca.appendChild(o1);
-
-    const o2 = document.createElement("option");
-    o2.value = p.codigo;
-    o2.textContent = label;
-    mPeca.appendChild(o2);
+    const o=document.createElement("option");
+    o.value=p.codigo;
+    o.textContent=`${p.codigo} – ${p.descricao}`;
+    o.dataset.comp=p.comprimento;
+    o.dataset.pc=p.pc_caixa;
+    o.dataset.peso=p.peso_caixa;
+    sel.appendChild(o);
   });
-
-  console.log("Pinos carregados:", data.length);
 }
 
-function mostrarMsg(t){
-  msg.style.display = "block";
-  msg.textContent = t;
-}
-function esconderMsg(){
-  msg.style.display = "none";
-  msg.textContent = "";
-}
+/* =============================
+   AO SELECIONAR PINO
+============================= */
+document.getElementById("peca").addEventListener("change",e=>{
+  const o=e.target.selectedOptions[0];
+  if(!o) return;
 
-/* =========================
-   AUTO-PREENCHIMENTO
-========================= */
-function recalcularTotal(){
-  const kg = parseBR(mKgBr.value);
-  const rs = parseBR(mRsKg.value);
-  const total = (kg ?? 0) * (rs ?? 0);
-  setVal(mTotal, total, 2);
-}
+  comprimento.value=o.dataset.comp||0;
+  pc_caixa.value=o.dataset.pc||0;
+  peso_caixa.value=f(n(o.dataset.peso));
 
-function aplicarProdutoNoModal(prod){
-  // defaults: só preenche se existir (não força)
-  if(prod?.comprimento_mm != null) setVal(mCompr, prod.comprimento_mm, 0);
-  if(prod?.pcs_caixa != null) mPcx.value = String(prod.pcs_caixa);
-  if(prod?.peso_caixa != null) setVal(mPesoCx, prod.peso_caixa, 3);
-
-  // quantidade automática = pcs_caixa (padrão)
-  if(prod?.pcs_caixa != null) mQtd.value = String(prod.pcs_caixa);
-
-  if(prod?.kg_liquido != null) setVal(mKgLiq, prod.kg_liquido, 3);
-  if(prod?.kg_bruto != null) setVal(mKgBr, prod.kg_bruto, 3);
-  if(prod?.valor_rs_kg != null) setVal(mRsKg, prod.valor_rs_kg, 2);
-
-  // acabamento: se vier do produto, aplica; senão mantém seleção do usuário
-  if(prod?.acabamento){
-    const v = String(prod.acabamento);
-    if([..."Zincado Tratado".split(" ")].includes(v)) mAcab.value = v;
-  }
-
-  recalcularTotal();
-}
-
-// ao trocar peça: preenche automático
-mPeca.addEventListener("change", ()=>{
-  const cod = mPeca.value;
-  const prod = cacheProdutosByCodigo.get(cod);
-  if(prod) aplicarProdutoNoModal(prod);
+  calcular();
 });
 
-// formatar vírgula no blur (sem travar digitação)
-[mKgLiq,mPesoCx,mKgBr,mRsKg].forEach(el=>{
-  el.addEventListener("blur", ()=>{
-    const dec = (el===mRsKg || el===mTotal) ? 2 : 3;
-    const n = parseBR(el.value);
-    setVal(el, n ?? null, dec);
-    if(el===mKgBr || el===mRsKg) recalcularTotal();
-  });
+/* =============================
+   CÁLCULOS
+============================= */
+["kg_liquido","rs_kg"].forEach(id=>{
+  document.getElementById(id).addEventListener("input",calcular);
 });
 
-// recalcular total ao digitar
-mKgBr.addEventListener("input", recalcularTotal);
-mRsKg.addEventListener("input", recalcularTotal);
+function calcular(){
+  const kgL=n(kg_liquido.value);
+  const peso=n(peso_caixa.value);
+  const rs=n(rs_kg.value);
 
-/* =========================
-   LISTAR OPs (tabela zincagem_tratamento)
-   - sem quebrar se faltar coluna
-========================= */
-function soDataBR(iso){
-  if(!iso) return "";
-  // iso date yyyy-mm-dd
-  if(String(iso).includes("T")) iso = String(iso).slice(0,10);
-  const [y,m,d] = String(iso).split("-");
-  if(!y||!m||!d) return String(iso);
-  return `${d}/${m}/${y}`;
+  const qtd=peso?kgL/peso:0;
+  quantidade.value=Math.floor(qtd);
+
+  kg_bruto.value=f(kgL);
+  total.value=f(kgL*rs);
 }
 
-async function carregarLista(){
-  esconderMsg();
-  lista.innerHTML = "";
+/* =============================
+   SALVAR
+============================= */
+async function salvar(){
+  const payload={
+    op:op.value,
+    data:data.value,
+    peca:peca.value,
+    acabamento:acabamento.value,
+    kg_liquido:n(kg_liquido.value),
+    peso_caixa:n(peso_caixa.value),
+    quantidade:Number(quantidade.value),
+    kg_bruto:n(kg_bruto.value),
+    rs_kg:n(rs_kg.value),
+    total:n(total.value)
+  };
 
-  // pega tudo e filtra no client (pra não depender de nomes exatos/indices)
-  const { data, error } = await supabaseClient
+  const {error}=await supabaseClient
     .from("zincagem_tratamento")
-    .select("*")
-    .order("id", { ascending: false });
+    .insert(payload);
 
-  if(error){
-    console.error(error);
-    mostrarMsg("Erro ao carregar lista (zincagem_tratamento). Ver console.");
-    return;
-  }
+  if(error){ alert("Erro ao salvar"); console.error(error); return }
 
-  // aplica filtros localmente
-  const opF = fOp.value.trim();
-  const pecaF = fPeca.value.trim();
-  const acabF = fAcab.value.trim();
-  const iniF = fIni.value ? new Date(fIni.value) : null;
-  const fimF = fFim.value ? new Date(fFim.value) : null;
-
-  const rows = (data || []).filter(r=>{
-    const op = String(r.op ?? "");
-    const acab = String(r.acabamento ?? "");
-    const codigo = String(r.codigo ?? r.codigo_pino ?? r.peca ?? "");
-    const dt = r.data ? new Date(String(r.data).slice(0,10)) : null;
-
-    if(opF && !op.includes(opF)) return false;
-    if(pecaF && codigo !== pecaF) return false;
-    if(acabF && acab !== acabF) return false;
-    if(iniF && dt && dt < iniF) return false;
-    if(fimF && dt && dt > fimF) return false;
-    return true;
-  });
-
-  if(rows.length === 0){
-    mostrarMsg("Nenhum registro encontrado.");
-    return;
-  }
-
-  rows.forEach(r=>{
-    const tr = document.createElement("tr");
-
-    const op = r.op ?? "-";
-    const dataBR = soDataBR(r.data);
-    const codigo = r.codigo ?? r.codigo_pino ?? r.peca ?? "-";
-    const acab = r.acabamento ?? "-";
-
-    const kg = (r.kg_bruto ?? r.kg ?? null);
-    const qtd = (r.quantidade ?? r.qtd ?? null);
-    const total = (r.valor_total ?? r.total ?? null);
-
-    const recebido = (r.recebido === true) ? "OK" : "Pendente";
-    const boleto = (r.boleto === true) ? "OK" : "Pendente";
-
-    tr.innerHTML = `
-      <td>${op}</td>
-      <td>${dataBR}</td>
-      <td>${codigo}</td>
-      <td>${acab}</td>
-      <td>${kg==null ? "-" : fmtBR(Number(kg),3)}</td>
-      <td>${qtd==null ? "-" : String(qtd)}</td>
-      <td>${total==null ? "-" : fmtBR(Number(total),2)}</td>
-      <td><span class="status ${recebido==="OK" ? "ok":"pendente"}">${recebido}</span></td>
-      <td><span class="status ${boleto==="OK" ? "ok":"pendente"}">${boleto}</span></td>
-    `;
-    lista.appendChild(tr);
-  });
+  alert("Salvo com sucesso");
+  fecharModal();
 }
 
-document.getElementById("btnFiltrar").addEventListener("click", carregarLista);
-
-/* =========================
-   SALVAR (sem sumir tela)
-   * tenta salvar com colunas comuns
-========================= */
-document.getElementById("btnSalvar").addEventListener("click", async ()=>{
-  try{
-    const cod = mPeca.value;
-    if(!cod) return alert("Selecione o pino.");
-    const prod = cacheProdutosByCodigo.get(cod);
-    if(!prod) return alert("Produto não encontrado no cache.");
-
-    const payload = {
-      op: mOp.value.trim(),
-      data: mData.value || null,
-      produto_id: prod.id ?? null,
-      codigo: prod.codigo ?? cod,
-      acabamento: mAcab.value,
-      kg_liquido: parseBR(mKgLiq.value),
-      comprimento_mm: parseBR(mCompr.value),
-      pcs_caixa: parseInt(mPcx.value || "0",10) || null,
-      peso_caixa: parseBR(mPesoCx.value),
-      quantidade: parseInt(mQtd.value || "0",10) || null,
-      kg_bruto: parseBR(mKgBr.value),
-      valor_rs_kg: parseBR(mRsKg.value),
-      valor_total: parseBR(mTotal.value),
-      recebido: false,
-      boleto: false
-    };
-
-    if(!payload.op) return alert("Informe a OP.");
-    if(!payload.data) return alert("Informe a data.");
-
-    const { error } = await supabaseClient
-      .from("zincagem_tratamento")
-      .insert([payload]);
-
-    if(error){
-      console.error("ERRO INSERT:", error);
-      alert("Não salvou. Ver console (F12).");
-      return;
-    }
-
-    alert("Salvo com sucesso!");
-    modal.style.display = "none";
-    await carregarLista();
-
-  }catch(e){
-    console.error(e);
-    alert("Erro inesperado. Ver console.");
-  }
+/* =============================
+   INIT
+============================= */
+document.addEventListener("DOMContentLoaded",()=>{
+  carregarPinos();
 });
-
-/* =========================
-   START
-========================= */
-(async ()=>{
-  await carregarPinos();
-  await carregarLista();
-})();
 </script>
 
 </body>
