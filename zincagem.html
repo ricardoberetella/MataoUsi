@@ -5,6 +5,8 @@
 <title>Zincagem / Tratamento</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 body{
   margin:0;
@@ -99,7 +101,7 @@ th{color:#38bdf8}
 
 <!-- HEADER -->
 <div class="header">
-  <button class="btn btn-azul">← Voltar</button>
+  <button class="btn btn-azul" onclick="history.back()">← Voltar</button>
   <h1>Zincagem / Tratamento</h1>
   <button class="btn btn-verde" onclick="abrirModal()">+ Nova OP</button>
 </div>
@@ -107,8 +109,12 @@ th{color:#38bdf8}
 <!-- FILTROS -->
 <div class="filtros">
   <input placeholder="OP">
-  <select><option>Peça</option></select>
-  <select><option>Acabamento</option></select>
+  <select id="filtroPeca">
+    <option value="">Pino</option>
+  </select>
+  <select>
+    <option>Acabamento</option>
+  </select>
   <input type="date">
   <input type="date">
   <button class="btn btn-azul">Filtrar</button>
@@ -142,20 +148,29 @@ th{color:#38bdf8}
     <h2>Nova OP</h2>
 
     <div class="grid">
-      <div class="field"><label>OP</label><input></div>
-      <div class="field"><label>Data</label><input type="date"></div>
-      <div class="field"><label>Peça</label><select></select></div>
-      <div class="field"><label>Kg Líquido</label><input></div>
 
-      <div class="field"><label>Comprimento</label><input></div>
-      <div class="field"><label>Pç / Caixa</label><input></div>
-      <div class="field"><label>Acabamento</label><select></select></div>
-      <div class="field"><label>Peso Caixa</label><input></div>
+      <div class="field">
+        <label>OP</label>
+        <input>
+      </div>
 
-      <div class="field"><label>Quantidade</label><input></div>
-      <div class="field"><label>Kg Bruto</label><input></div>
-      <div class="field"><label>R$/Kg</label><input></div>
-      <div class="field"><label>Total</label><input></div>
+      <div class="field">
+        <label>Data</label>
+        <input type="date">
+      </div>
+
+      <div class="field">
+        <label>Pino de Engate</label>
+        <select id="pecaSelect">
+          <option>Carregando...</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Kg Líquido</label>
+        <input readonly>
+      </div>
+
     </div>
 
     <br>
@@ -165,12 +180,56 @@ th{color:#38bdf8}
 </div>
 
 <script>
+const supabaseClient = supabase.createClient(
+  "https://uxtgicfuggpuyjybwawa.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
+);
+
 function abrirModal(){
   document.getElementById("modal").style.display="flex";
 }
 function fecharModal(){
   document.getElementById("modal").style.display="none";
 }
+
+/* CARREGAR SOMENTE PINOS DE ENGATE */
+document.addEventListener("DOMContentLoaded", async ()=>{
+  try{
+    const { data, error } = await supabaseClient
+      .from("produtos")
+      .select("codigo, descricao")
+      .ilike("descricao", "%pino%")
+      .order("codigo");
+
+    if(error) throw error;
+
+    const modalSelect = document.getElementById("pecaSelect");
+    const filtroSelect = document.getElementById("filtroPeca");
+
+    modalSelect.innerHTML = `<option value="">Selecione o pino</option>`;
+    filtroSelect.innerHTML = `<option value="">Todos os pinos</option>`;
+
+    data.forEach(p=>{
+      const label = `${p.codigo} – ${p.descricao}`;
+
+      const opt1 = document.createElement("option");
+      opt1.value = p.codigo;
+      opt1.textContent = label;
+      modalSelect.appendChild(opt1);
+
+      const opt2 = document.createElement("option");
+      opt2.value = p.codigo;
+      opt2.textContent = label;
+      filtroSelect.appendChild(opt2);
+    });
+
+    console.log("Pinos carregados:", data.length);
+
+  }catch(err){
+    console.error("Erro ao carregar pinos:", err);
+    alert("Erro ao carregar pinos. Veja o console.");
+  }
+});
 </script>
 
 </body>
