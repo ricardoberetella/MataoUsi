@@ -5,8 +5,6 @@
 <title>Zincagem / Tratamento</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
 body{
   margin:0;
@@ -36,6 +34,34 @@ h1{color:#38bdf8;margin:0}
 .btn-azul{background:#38bdf8;color:#020617}
 .btn-verde{background:#22c55e;color:#020617}
 
+/* FILTROS */
+.filtros{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:12px;
+  padding:0 30px 20px;
+}
+input,select{
+  background:#020b1a;
+  border:1px solid #38bdf8;
+  border-radius:10px;
+  padding:10px;
+  color:#e5e7eb;
+}
+
+/* TABELA */
+table{
+  width:calc(100% - 60px);
+  margin:0 30px 30px;
+  border-collapse:collapse;
+}
+th,td{
+  padding:10px;
+  text-align:center;
+  border-bottom:1px solid rgba(255,255,255,.1);
+}
+th{color:#38bdf8}
+
 /* MODAL */
 .modal-bg{
   position:fixed;
@@ -52,7 +78,6 @@ h1{color:#38bdf8;margin:0}
   border:2px solid #38bdf8;
   padding:24px;
 }
-
 .grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
@@ -67,23 +92,49 @@ h1{color:#38bdf8;margin:0}
   font-size:12px;
   color:#38bdf8;
 }
-select,input{
-  background:#020b1a;
-  border:1px solid #38bdf8;
-  border-radius:10px;
-  padding:10px;
-  color:#e5e7eb;
-}
 </style>
 </head>
 
 <body>
 
+<!-- HEADER -->
 <div class="header">
-  <button class="btn btn-azul" onclick="history.back()">← Voltar</button>
+  <button class="btn btn-azul">← Voltar</button>
   <h1>Zincagem / Tratamento</h1>
   <button class="btn btn-verde" onclick="abrirModal()">+ Nova OP</button>
 </div>
+
+<!-- FILTROS -->
+<div class="filtros">
+  <input placeholder="OP">
+  <select><option>Peça</option></select>
+  <select><option>Acabamento</option></select>
+  <input type="date">
+  <input type="date">
+  <button class="btn btn-azul">Filtrar</button>
+</div>
+
+<!-- TABELA -->
+<table>
+<thead>
+<tr>
+  <th>OP</th>
+  <th>Data</th>
+  <th>Peça</th>
+  <th>Acab.</th>
+  <th>Kg</th>
+  <th>Qtd</th>
+  <th>Total</th>
+  <th>Recebido</th>
+  <th>Boleto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td colspan="9">Base visual carregada com sucesso</td>
+</tr>
+</tbody>
+</table>
 
 <!-- MODAL -->
 <div class="modal-bg" id="modal">
@@ -91,29 +142,20 @@ select,input{
     <h2>Nova OP</h2>
 
     <div class="grid">
+      <div class="field"><label>OP</label><input></div>
+      <div class="field"><label>Data</label><input type="date"></div>
+      <div class="field"><label>Peça</label><select></select></div>
+      <div class="field"><label>Kg Líquido</label><input></div>
 
-      <div class="field">
-        <label>OP</label>
-        <input>
-      </div>
+      <div class="field"><label>Comprimento</label><input></div>
+      <div class="field"><label>Pç / Caixa</label><input></div>
+      <div class="field"><label>Acabamento</label><select></select></div>
+      <div class="field"><label>Peso Caixa</label><input></div>
 
-      <div class="field">
-        <label>Data</label>
-        <input type="date">
-      </div>
-
-      <div class="field">
-        <label>Peça</label>
-        <select id="pecaSelect">
-          <option>Carregando...</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label>Kg Líquido</label>
-        <input>
-      </div>
-
+      <div class="field"><label>Quantidade</label><input></div>
+      <div class="field"><label>Kg Bruto</label><input></div>
+      <div class="field"><label>R$/Kg</label><input></div>
+      <div class="field"><label>Total</label><input></div>
     </div>
 
     <br>
@@ -123,46 +165,12 @@ select,input{
 </div>
 
 <script>
-/* SUPABASE */
-const supabaseClient = supabase.createClient(
-  "https://uxtgicfuggpuyjybwawa.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
-);
-
 function abrirModal(){
-  document.getElementById("modal").style.display = "flex";
+  document.getElementById("modal").style.display="flex";
 }
 function fecharModal(){
-  document.getElementById("modal").style.display = "none";
+  document.getElementById("modal").style.display="none";
 }
-
-/* PASSO 1 — CARREGAR PEÇAS */
-document.addEventListener("DOMContentLoaded", async ()=>{
-  try{
-    const { data, error } = await supabaseClient
-      .from("produtos")
-      .select("codigo")
-      .order("codigo");
-
-    if(error) throw error;
-
-    const select = document.getElementById("pecaSelect");
-    select.innerHTML = `<option value="">Selecione a peça</option>`;
-
-    data.forEach(p=>{
-      const opt = document.createElement("option");
-      opt.value = p.codigo;
-      opt.textContent = p.codigo;
-      select.appendChild(opt);
-    });
-
-    console.log("Peças carregadas:", data.length);
-
-  }catch(err){
-    console.error("Erro ao carregar peças:", err);
-    alert("Erro ao carregar peças. Veja o console.");
-  }
-});
 </script>
 
 </body>
