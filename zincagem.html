@@ -171,13 +171,17 @@ th{color:#38bdf8}
 </div>
 
 <script>
-/* SUPABASE */
+/* ================================
+   SUPABASE – OBRIGATÓRIO
+   ================================ */
 const supabaseClient = supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
-  "SUA_ANON_KEY"
+  "COLE_AQUI_SUA_ANON_PUBLIC_KEY_REAL"
 );
 
-/* MODAL */
+/* ================================
+   MODAL
+   ================================ */
 function abrirModal(){
   document.getElementById("modal").style.display="flex";
 }
@@ -185,20 +189,36 @@ function fecharModal(){
   document.getElementById("modal").style.display="none";
 }
 
-/* CALCULO TOTAL */
+/* ================================
+   CÁLCULO TOTAL
+   ================================ */
 document.getElementById("rsKg").addEventListener("input",()=>{
-  let v = document.getElementById("rsKg").value.replace(",",".");
+  let v  = document.getElementById("rsKg").value.replace(",",".");
   let kg = document.getElementById("kgBruto").value.replace(",",".");
   document.getElementById("total").value =
-    (parseFloat(v||0)*parseFloat(kg||0)).toFixed(2).replace(".",",");
+    (parseFloat(v||0)*parseFloat(kg||0))
+      .toFixed(2)
+      .replace(".",",");
 });
 
-/* CARREGAR PEÇAS */
+/* ================================
+   CARREGAR PEÇAS (SEGURO)
+   ================================ */
 async function carregarPecas(){
-  const { data } = await supabaseClient
+  const { data, error } = await supabaseClient
     .from("produtos")
     .select("codigo")
     .order("codigo");
+
+  if(error){
+    console.error("Erro ao carregar peças:", error);
+    return;
+  }
+
+  if(!data || data.length === 0){
+    console.warn("Nenhuma peça encontrada");
+    return;
+  }
 
   let opts = `<option value="">Todas Peças</option>`;
   data.forEach(p=>{
@@ -209,9 +229,11 @@ async function carregarPecas(){
   document.getElementById("pecaSelect").innerHTML = opts;
 }
 
-/* FILTRAR */
+/* ================================
+   FILTRAR
+   ================================ */
 async function filtrar(){
-  const op   = document.getElementById("filtroOP").value;
+  const op   = document.getElementById("filtroOP").value.trim();
   const peca = document.getElementById("filtroPeca").value;
   const acab = document.getElementById("filtroAcab").value;
   const ini  = document.getElementById("dataIni").value;
@@ -228,17 +250,26 @@ async function filtrar(){
   if(ini)  query = query.gte("data",ini);
   if(fim)  query = query.lte("data",fim);
 
-  const { data } = await query;
+  const { data, error } = await query;
+
+  if(error){
+    console.error("Erro ao filtrar:", error);
+    return;
+  }
+
   renderizarTabela(data);
 }
 
-/* RENDER */
+/* ================================
+   RENDER TABELA
+   ================================ */
 function renderizarTabela(lista){
   const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
 
   if(!lista || lista.length === 0){
-    tbody.innerHTML = `<tr><td colspan="9">Nenhum registro encontrado</td></tr>`;
+    tbody.innerHTML =
+      `<tr><td colspan="9">Nenhum registro encontrado</td></tr>`;
     return;
   }
 
@@ -264,7 +295,9 @@ function formatarData(d){
   return `${dd}/${m}/${a}`;
 }
 
-/* INIT */
+/* ================================
+   INIT
+   ================================ */
 carregarPecas();
 filtrar();
 </script>
