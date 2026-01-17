@@ -5,7 +5,6 @@
 <title>Zincagem / Tratamento</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- SUPABASE -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -15,8 +14,6 @@ body{
   color:#e5e7eb;
   font-family:Segoe UI,Arial;
 }
-
-/* HEADER */
 .header{
   display:flex;
   align-items:center;
@@ -24,8 +21,6 @@ body{
   padding:20px 30px;
 }
 h1{color:#38bdf8;margin:0}
-
-/* BOTÕES */
 .btn{
   border:none;
   border-radius:10px;
@@ -36,8 +31,6 @@ h1{color:#38bdf8;margin:0}
 .btn-azul{background:#38bdf8;color:#020617}
 .btn-verde{background:#22c55e;color:#020617}
 .btn-vermelho{background:#ef4444}
-
-/* FILTROS */
 .filtros{
   display:grid;
   grid-template-columns:repeat(6,1fr);
@@ -51,8 +44,6 @@ select,input{
   padding:10px;
   color:#e5e7eb;
 }
-
-/* TABELA */
 table{
   width:calc(100% - 60px);
   margin:0 30px;
@@ -64,17 +55,6 @@ th,td{
   border-bottom:1px solid rgba(255,255,255,.1);
 }
 th{color:#38bdf8}
-
-/* STATUS */
-.status{
-  padding:6px 12px;
-  border-radius:20px;
-  font-weight:600;
-}
-.pendente{background:#ef4444}
-.ok{background:#22c55e;color:#020617}
-
-/* MODAL */
 .modal-bg{
   position:fixed;
   inset:0;
@@ -90,14 +70,11 @@ th{color:#38bdf8}
   border:2px solid #38bdf8;
   padding:24px;
 }
-.modal h2{color:#38bdf8;margin-top:0}
-
 .grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
   gap:14px;
 }
-
 .actions{
   margin-top:20px;
   display:flex;
@@ -114,50 +91,31 @@ th{color:#38bdf8}
   <button class="btn btn-verde" onclick="abrirModal()">+ Nova OP</button>
 </div>
 
-<div class="filtros">
-  <input id="filtroOP" placeholder="OP">
-  <select id="filtroPeca"></select>
-  <select id="filtroAcab">
-    <option value="">Todos Acabamentos</option>
-    <option value="Zincado">Zincado</option>
-    <option value="Tratado">Tratado</option>
-  </select>
-  <input type="date" id="dataIni">
-  <input type="date" id="dataFim">
-  <button class="btn btn-azul" onclick="filtrar()">Filtrar</button>
-</div>
-
-<table>
-<thead>
-<tr>
-<th>OP</th><th>Data</th><th>Peça</th><th>Acab.</th>
-<th>Kg</th><th>Qtd</th><th>Total</th>
-<th>Recebido</th><th>Boleto</th>
-</tr>
-</thead>
-<tbody id="lista"></tbody>
-</table>
-
 <!-- MODAL -->
 <div class="modal-bg" id="modal">
   <div class="modal">
     <h2>Nova OP</h2>
 
     <div class="grid">
-      <input placeholder="OP">
-      <input type="date">
-      <select id="pecaSelect"></select>
-      <input placeholder="Kg Líquido">
+      <input id="op" placeholder="OP">
+      <input id="data" type="date">
 
-      <input placeholder="Comprimento">
-      <input placeholder="Pç/Cx">
-      <select>
+      <!-- PEÇA -->
+      <select id="pecaSelect"></select>
+
+      <input id="kgLiquido" placeholder="Kg Líquido">
+
+      <input id="comprimento" placeholder="Comprimento">
+      <input id="pcCx" placeholder="Pç/Cx">
+
+      <select id="acabamento">
         <option>Zincado</option>
         <option>Tratado</option>
       </select>
-      <input placeholder="Peso Caixa">
 
-      <input placeholder="Quantidade">
+      <input id="pesoCaixa" placeholder="Peso Caixa">
+
+      <input id="quantidade" placeholder="Quantidade">
       <input id="kgBruto" placeholder="Kg Bruto">
       <input id="rsKg" placeholder="R$/Kg">
       <input id="total" placeholder="Total">
@@ -171,135 +129,53 @@ th{color:#38bdf8}
 </div>
 
 <script>
-/* ================================
-   SUPABASE – OBRIGATÓRIO
-   ================================ */
 const supabaseClient = supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
 );
 
-/* ================================
-   MODAL
-   ================================ */
-function abrirModal(){
-  document.getElementById("modal").style.display="flex";
-}
-function fecharModal(){
-  document.getElementById("modal").style.display="none";
-}
+function abrirModal(){ modal.style.display="flex"; }
+function fecharModal(){ modal.style.display="none"; }
 
-/* ================================
-   CÁLCULO TOTAL
-   ================================ */
-document.getElementById("rsKg").addEventListener("input",()=>{
-  let v  = document.getElementById("rsKg").value.replace(",",".");
-  let kg = document.getElementById("kgBruto").value.replace(",",".");
-  document.getElementById("total").value =
-    (parseFloat(v||0)*parseFloat(kg||0))
-      .toFixed(2)
-      .replace(".",",");
-});
-
-/* ================================
-   CARREGAR PEÇAS (SEGURO)
-   ================================ */
+/* CARREGAR PEÇAS */
 async function carregarPecas(){
-  const { data, error } = await supabaseClient
+  const { data } = await supabaseClient
     .from("produtos")
     .select("codigo")
     .order("codigo");
 
-  if(error){
-    console.error("Erro ao carregar peças:", error);
-    return;
-  }
-
-  if(!data || data.length === 0){
-    console.warn("Nenhuma peça encontrada");
-    return;
-  }
-
-  let opts = `<option value="">Todas Peças</option>`;
-  data.forEach(p=>{
-    opts += `<option value="${p.codigo}">${p.codigo}</option>`;
-  });
-
-  document.getElementById("filtroPeca").innerHTML = opts;
-  document.getElementById("pecaSelect").innerHTML = opts;
+  let opts = `<option value="">Selecione a peça</option>`;
+  data.forEach(p=>opts+=`<option value="${p.codigo}">${p.codigo}</option>`);
+  pecaSelect.innerHTML = opts;
 }
 
-/* ================================
-   FILTRAR
-   ================================ */
-async function filtrar(){
-  const op   = document.getElementById("filtroOP").value.trim();
-  const peca = document.getElementById("filtroPeca").value;
-  const acab = document.getElementById("filtroAcab").value;
-  const ini  = document.getElementById("dataIni").value;
-  const fim  = document.getElementById("dataFim").value;
+/* AO ESCOLHER A PEÇA */
+pecaSelect.addEventListener("change", async ()=>{
+  if(!pecaSelect.value) return;
 
-  let query = supabaseClient
-    .from("zincagem")
+  const { data } = await supabaseClient
+    .from("produtos")
     .select("*")
-    .order("data",{ascending:false});
+    .eq("codigo", pecaSelect.value)
+    .single();
 
-  if(op)   query = query.ilike("op",`%${op}%`);
-  if(peca) query = query.eq("peca",peca);
-  if(acab) query = query.eq("acabamento",acab);
-  if(ini)  query = query.gte("data",ini);
-  if(fim)  query = query.lte("data",fim);
+  if(!data) return;
 
-  const { data, error } = await query;
+  comprimento.value = data.comprimento_mm || "";
+  pcCx.value        = data.pecas_por_caixa || "";
+  kgLiquido.value   = data.peso_liquido || "";
+  kgBruto.value     = data.peso_bruto || "";
+  pesoCaixa.value   = data.peso_caixa || "";
+});
 
-  if(error){
-    console.error("Erro ao filtrar:", error);
-    return;
-  }
+/* TOTAL */
+rsKg.addEventListener("input",()=>{
+  let v  = rsKg.value.replace(",",".");
+  let kg = kgBruto.value.replace(",",".");
+  total.value = (v*kg).toFixed(2).replace(".",",");
+});
 
-  renderizarTabela(data);
-}
-
-/* ================================
-   RENDER TABELA
-   ================================ */
-function renderizarTabela(lista){
-  const tbody = document.getElementById("lista");
-  tbody.innerHTML = "";
-
-  if(!lista || lista.length === 0){
-    tbody.innerHTML =
-      `<tr><td colspan="9">Nenhum registro encontrado</td></tr>`;
-    return;
-  }
-
-  lista.forEach(r=>{
-    tbody.innerHTML += `
-    <tr>
-      <td>${r.op}</td>
-      <td>${formatarData(r.data)}</td>
-      <td>${r.peca}</td>
-      <td>${r.acabamento}</td>
-      <td>${r.kg}</td>
-      <td>${r.quantidade}</td>
-      <td>R$ ${Number(r.total).toFixed(2).replace(".",",")}</td>
-      <td><span class="status ${r.recebido?"ok":"pendente"}">${r.recebido?"OK":"Pendente"}</span></td>
-      <td><span class="status ${r.boleto?"ok":"pendente"}">${r.boleto?"OK":"Pendente"}</span></td>
-    </tr>`;
-  });
-}
-
-function formatarData(d){
-  if(!d) return "";
-  const [a,m,dd] = d.split("-");
-  return `${dd}/${m}/${a}`;
-}
-
-/* ================================
-   INIT
-   ================================ */
 carregarPecas();
-filtrar();
 </script>
 
 </body>
