@@ -47,8 +47,19 @@ select,input{
   background:#020b1a;
   border:1px solid #38bdf8;
   border-radius:10px;
-  padding:10px;
+  padding:12px 10px;
   color:#e5e7eb;
+}
+
+/* LABEL FIXO */
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.field label{
+  font-size:12px;
+  color:#38bdf8;
 }
 
 /* TABELA */
@@ -63,15 +74,6 @@ th,td{
   border-bottom:1px solid rgba(255,255,255,.1);
 }
 th{color:#38bdf8}
-
-/* STATUS */
-.status{
-  padding:6px 12px;
-  border-radius:20px;
-  font-weight:600;
-}
-.pendente{background:#ef4444}
-.ok{background:#22c55e;color:#020617}
 
 /* MODAL */
 .modal-bg{
@@ -90,11 +92,13 @@ th{color:#38bdf8}
   padding:24px;
 }
 .modal h2{color:#38bdf8;margin-top:0}
+
 .grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
   gap:14px;
 }
+
 .actions{
   margin-top:20px;
   display:flex;
@@ -112,63 +116,76 @@ th{color:#38bdf8}
   <button class="btn btn-verde" onclick="abrirModal()">+ Nova OP</button>
 </div>
 
-<!-- FILTROS -->
-<div class="filtros">
-  <input id="filtroOP" placeholder="OP">
-  <select id="filtroPeca"></select>
-  <select id="filtroAcab">
-    <option value="">Todos Acabamentos</option>
-    <option value="Zincado">Zincado</option>
-    <option value="Tratado">Tratado</option>
-  </select>
-  <input type="date" id="dataIni">
-  <input type="date" id="dataFim">
-  <button class="btn btn-azul" onclick="filtrar()">Filtrar</button>
-</div>
-
-<!-- TABELA -->
-<table>
-<thead>
-<tr>
-<th>OP</th>
-<th>Data</th>
-<th>Peça</th>
-<th>Acab.</th>
-<th>Kg</th>
-<th>Qtd</th>
-<th>Total</th>
-<th>Recebido</th>
-<th>Boleto</th>
-</tr>
-</thead>
-<tbody id="lista">
-<tr><td colspan="9">Nenhum registro encontrado</td></tr>
-</tbody>
-</table>
-
 <!-- MODAL -->
 <div class="modal-bg" id="modal">
   <div class="modal">
     <h2>Nova OP</h2>
 
     <div class="grid">
-      <input id="op" placeholder="OP">
-      <input id="data" type="date">
-      <select id="pecaSelect"></select>
-      <input id="kgLiquido" placeholder="Kg Líquido">
 
-      <input id="comprimento" placeholder="Comprimento">
-      <input id="pcCx" placeholder="Pç/Cx">
-      <select id="acabamento">
-        <option>Zincado</option>
-        <option>Tratado</option>
-      </select>
-      <input id="pesoCaixa" placeholder="Peso Caixa">
+      <div class="field">
+        <label>OP</label>
+        <input id="op">
+      </div>
 
-      <input id="quantidade" placeholder="Quantidade">
-      <input id="kgBruto" placeholder="Kg Bruto">
-      <input id="rsKg" placeholder="R$/Kg">
-      <input id="total" placeholder="Total">
+      <div class="field">
+        <label>Data</label>
+        <input id="data" type="date">
+      </div>
+
+      <div class="field">
+        <label>Peça</label>
+        <select id="pecaSelect"></select>
+      </div>
+
+      <div class="field">
+        <label>Kg Líquido</label>
+        <input id="kgLiquido">
+      </div>
+
+      <div class="field">
+        <label>Comprimento</label>
+        <input id="comprimento">
+      </div>
+
+      <div class="field">
+        <label>Pç / Caixa</label>
+        <input id="pcCx">
+      </div>
+
+      <div class="field">
+        <label>Acabamento</label>
+        <select id="acabamento">
+          <option>Zincado</option>
+          <option>Tratado</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Peso Caixa</label>
+        <input id="pesoCaixa">
+      </div>
+
+      <div class="field">
+        <label>Quantidade</label>
+        <input id="quantidade">
+      </div>
+
+      <div class="field">
+        <label>Kg Bruto</label>
+        <input id="kgBruto">
+      </div>
+
+      <div class="field">
+        <label>R$/Kg</label>
+        <input id="rsKg">
+      </div>
+
+      <div class="field">
+        <label>Total</label>
+        <input id="total">
+      </div>
+
     </div>
 
     <div class="actions">
@@ -179,7 +196,6 @@ th{color:#38bdf8}
 </div>
 
 <script>
-/* SUPABASE */
 const supabaseClient = supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
@@ -197,22 +213,17 @@ async function carregarPecas(){
 
   let opts = `<option value="">Selecione</option>`;
   data.forEach(p=>opts+=`<option value="${p.codigo}">${p.codigo}</option>`);
-
-  filtroPeca.innerHTML = opts;
   pecaSelect.innerHTML = opts;
 }
 
-/* AUTO PREENCHER AO ESCOLHER PEÇA */
+/* AUTO PREENCHER */
 pecaSelect.addEventListener("change", async ()=>{
   if(!pecaSelect.value) return;
-
   const { data } = await supabaseClient
     .from("produtos")
     .select("*")
     .eq("codigo", pecaSelect.value)
     .single();
-
-  if(!data) return;
 
   comprimento.value = data.comprimento_mm || "";
   pcCx.value = data.pecas_por_caixa || "";
@@ -221,7 +232,6 @@ pecaSelect.addEventListener("change", async ()=>{
   pesoCaixa.value = data.peso_caixa || "";
 });
 
-/* TOTAL */
 rsKg.addEventListener("input",()=>{
   total.value = ((rsKg.value.replace(",",".")||0)*(kgBruto.value.replace(",",".")||0))
     .toFixed(2).replace(".",",");
