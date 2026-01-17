@@ -31,30 +31,7 @@ h1{color:#38bdf8;margin:0}
 }
 .btn-azul{background:#38bdf8;color:#020617}
 .btn-verde{background:#22c55e;color:#020617}
-.filtros{
-  display:grid;
-  grid-template-columns:repeat(6,1fr);
-  gap:12px;
-  padding:0 30px 20px;
-}
-input,select{
-  background:#020b1a;
-  border:1px solid #38bdf8;
-  border-radius:10px;
-  padding:10px;
-  color:#e5e7eb;
-}
-table{
-  width:calc(100% - 60px);
-  margin:0 30px 30px;
-  border-collapse:collapse;
-}
-th,td{
-  padding:10px;
-  text-align:center;
-  border-bottom:1px solid rgba(255,255,255,.1);
-}
-th{color:#38bdf8}
+
 .modal-bg{
   position:fixed;
   inset:0;
@@ -78,11 +55,18 @@ th{color:#38bdf8}
 .field{
   display:flex;
   flex-direction:column;
-  gap:4px;
 }
 .field label{
   font-size:12px;
   color:#38bdf8;
+  margin-bottom:4px;
+}
+input,select{
+  background:#020b1a;
+  border:1px solid #38bdf8;
+  border-radius:10px;
+  padding:10px;
+  color:#e5e7eb;
 }
 </style>
 </head>
@@ -92,10 +76,9 @@ th{color:#38bdf8}
 <div class="header">
   <button class="btn btn-azul" onclick="history.back()">← Voltar</button>
   <h1>Zincagem / Tratamento</h1>
-  <button class="btn btn-verde" onclick="abrirModal()">+ Nova OP</button>
+  <button class="btn btn-verde" id="btnNova">+ Nova OP</button>
 </div>
 
-<!-- MODAL -->
 <div class="modal-bg" id="modal">
   <div class="modal">
     <h2>Nova OP</h2>
@@ -123,71 +106,86 @@ th{color:#38bdf8}
     </div>
 
     <br>
-    <button class="btn btn-verde" onclick="salvar()">Salvar</button>
-    <button class="btn btn-azul" onclick="fecharModal()">Cancelar</button>
+    <button class="btn btn-verde" id="btnSalvar">Salvar</button>
+    <button class="btn btn-azul" id="btnCancelar">Cancelar</button>
   </div>
 </div>
 
 <script>
-const supabaseClient = supabase.createClient(
-  "https://uxtgicfuggpuyjybwawa.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
-);
+document.addEventListener("DOMContentLoaded", () => {
 
-function abrirModal(){ modal.style.display="flex"; }
-function fecharModal(){ modal.style.display="none"; }
+  const supabaseClient = supabase.createClient(
+    "https://uxtgicfuggpuyjybwawa.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
+  );
 
-/* === CONVERTE VIRGULA ↔ PONTO === */
-function brToFloat(v){
-  return parseFloat(v.replace(/\./g,"").replace(",","."));
-}
-function floatToBr(v){
-  return v.toString().replace(".",",");
-}
+  const modal = document.getElementById("modal");
+  const pecaSelect = document.getElementById("pecaSelect");
 
-/* CARREGAR PINOS */
-document.addEventListener("DOMContentLoaded", async ()=>{
-  const { data } = await supabaseClient
-    .from("produtos")
-    .select("codigo, descricao")
-    .ilike("descricao","%pino%")
-    .order("codigo");
+  document.getElementById("btnNova").onclick = () => modal.style.display="flex";
+  document.getElementById("btnCancelar").onclick = () => modal.style.display="none";
 
-  pecaSelect.innerHTML = `<option value="">Selecione</option>`;
-  data.forEach(p=>{
-    const opt = document.createElement("option");
-    opt.value = p.codigo;
-    opt.textContent = `${p.codigo} – ${p.descricao}`;
-    pecaSelect.appendChild(opt);
-  });
-});
+  function brToFloat(v){
+    if(!v) return 0;
+    return parseFloat(v.replace(/\./g,"").replace(",","."));
+  }
 
-/* SALVAR OP */
-async function salvar(){
-  const payload = {
-    op: op.value,
-    data: data.value,
-    codigo: pecaSelect.value,
-    kg_liquido: brToFloat(kgLiquido.value)
+  async function carregarPinos(){
+    try{
+      const { data, error } = await supabaseClient
+        .from("produtos")
+        .select("codigo, descricao")
+        .ilike("descricao","%pino%")
+        .order("codigo");
+
+      if(error) throw error;
+
+      pecaSelect.innerHTML = `<option value="">Selecione</option>`;
+      data.forEach(p=>{
+        const opt = document.createElement("option");
+        opt.value = p.codigo;
+        opt.textContent = `${p.codigo} – ${p.descricao}`;
+        pecaSelect.appendChild(opt);
+      });
+
+    }catch(e){
+      alert("Erro ao carregar pinos");
+      console.error(e);
+    }
+  }
+
+  carregarPinos();
+
+  document.getElementById("btnSalvar").onclick = async () => {
+    try{
+      const payload = {
+        op: document.getElementById("op").value,
+        data: document.getElementById("data").value,
+        codigo: pecaSelect.value,
+        kg_liquido: brToFloat(document.getElementById("kgLiquido").value)
+      };
+
+      if(!payload.op || !payload.data || !payload.codigo){
+        alert("Preencha todos os campos");
+        return;
+      }
+
+      const { error } = await supabaseClient
+        .from("zincagem")
+        .insert(payload);
+
+      if(error) throw error;
+
+      alert("Salvo com sucesso");
+      modal.style.display="none";
+
+    }catch(e){
+      alert("Erro ao salvar");
+      console.error(e);
+    }
   };
 
-  if(!payload.op || !payload.data || !payload.codigo){
-    alert("Preencha todos os campos");
-    return;
-  }
-
-  const { error } = await supabaseClient
-    .from("zincagem")
-    .insert(payload);
-
-  if(error){
-    console.error(error);
-    alert("Erro ao salvar");
-  }else{
-    alert("Salvo com sucesso");
-    fecharModal();
-  }
-}
+});
 </script>
 
 </body>
