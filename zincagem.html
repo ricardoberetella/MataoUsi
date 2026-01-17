@@ -79,6 +79,7 @@ input,select{
   <button class="btn btn-verde" id="btnNova">+ Nova OP</button>
 </div>
 
+<!-- MODAL -->
 <div class="modal-bg" id="modal">
   <div class="modal">
     <h2>Nova OP</h2>
@@ -106,8 +107,7 @@ input,select{
     </div>
 
     <br>
-    <button class="btn btn-verde" id="btnSalvar">Salvar</button>
-    <button class="btn btn-azul" id="btnCancelar">Cancelar</button>
+    <button class="btn btn-verde" id="btnCancelar">Fechar</button>
   </div>
 </div>
 
@@ -125,11 +125,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btnNova").onclick = () => modal.style.display="flex";
   document.getElementById("btnCancelar").onclick = () => modal.style.display="none";
 
-  function brToFloat(v){
-    if(!v) return 0;
-    return parseFloat(v.replace(/\./g,"").replace(",","."));
-  }
-
   async function carregarPinos(){
     try{
       const { data, error } = await supabaseClient
@@ -140,13 +135,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if(error) throw error;
 
-      pecaSelect.innerHTML = `<option value="">Selecione</option>`;
+      pecaSelect.innerHTML = `<option value="">Selecione o pino</option>`;
+
       data.forEach(p=>{
         const opt = document.createElement("option");
         opt.value = p.codigo;
         opt.textContent = `${p.codigo} – ${p.descricao}`;
         pecaSelect.appendChild(opt);
       });
+
+      console.log("Pinos carregados:", data.length);
 
     }catch(e){
       alert("Erro ao carregar pinos");
@@ -155,35 +153,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   carregarPinos();
-
-  document.getElementById("btnSalvar").onclick = async () => {
-    try{
-      const payload = {
-        op: document.getElementById("op").value,
-        data: document.getElementById("data").value,
-        codigo: pecaSelect.value,
-        kg_liquido: brToFloat(document.getElementById("kgLiquido").value)
-      };
-
-      if(!payload.op || !payload.data || !payload.codigo){
-        alert("Preencha todos os campos");
-        return;
-      }
-
-      const { error } = await supabaseClient
-        .from("zincagem")
-        .insert(payload);
-
-      if(error) throw error;
-
-      alert("Salvo com sucesso");
-      modal.style.display="none";
-
-    }catch(e){
-      alert("Erro ao salvar");
-      console.error(e);
-    }
-  };
 
 });
 </script>
