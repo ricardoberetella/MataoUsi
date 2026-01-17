@@ -7,48 +7,6 @@
 
 <link rel="stylesheet" href="css/dashboard.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<style>
-.modal-bg{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.75);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:9999;
-}
-.modal{
-  width:1100px;
-  background:radial-gradient(circle at top,#0b1224,#020617 70%);
-  border:2px solid #38bdf8;
-  border-radius:18px;
-  padding:26px;
-}
-.modal h2{color:#38bdf8;margin:0 0 16px}
-.grid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:14px;
-}
-label{font-size:13px;color:#7dd3fc}
-input,select{
-  width:100%;
-  padding:12px;
-  border-radius:12px;
-  border:1px solid #38bdf8;
-  background:#020b1a;
-  color:#e5e7eb;
-}
-input[readonly]{opacity:.6}
-.actions{
-  margin-top:18px;
-  display:flex;
-  gap:14px;
-}
-.btn-green{background:#22c55e;color:#000;font-weight:bold;padding:12px 24px;border-radius:12px}
-.btn-red{background:#ef4444;color:#fff;font-weight:bold;padding:12px 24px;border-radius:12px}
-</style>
 </head>
 
 <body>
@@ -64,35 +22,17 @@ input[readonly]{opacity:.6}
     <h2>Nova OP</h2>
 
     <div class="grid">
-      <div>
-        <label>OP</label>
-        <input id="op" value="001">
-      </div>
-
-      <div>
-        <label>Data</label>
-        <input type="date" id="data">
-      </div>
+      <div><label>OP</label><input id="op"></div>
+      <div><label>Data</label><input type="date" id="data"></div>
 
       <div>
         <label>Pino de Engate</label>
         <select id="peca"></select>
       </div>
 
-      <div>
-        <label>Kg Líquido</label>
-        <input id="kg_liquido">
-      </div>
-
-      <div>
-        <label>Comprimento</label>
-        <input id="comprimento" readonly>
-      </div>
-
-      <div>
-        <label>Pç / Caixa</label>
-        <input id="pc_caixa" readonly>
-      </div>
+      <div><label>Kg Líquido</label><input id="kg_liquido"></div>
+      <div><label>Comprimento</label><input id="comprimento" readonly></div>
+      <div><label>Pç / Caixa</label><input id="pc_caixa" readonly></div>
 
       <div>
         <label>Acabamento</label>
@@ -102,153 +42,133 @@ input[readonly]{opacity:.6}
         </select>
       </div>
 
-      <div>
-        <label>Peso Caixa</label>
-        <input id="peso_caixa" readonly>
-      </div>
-
-      <div>
-        <label>Quantidade</label>
-        <input id="quantidade" readonly>
-      </div>
-
-      <div>
-        <label>Kg Bruto</label>
-        <input id="kg_bruto" readonly>
-      </div>
-
-      <div>
-        <label>R$/Kg</label>
-        <input id="rs_kg">
-      </div>
-
-      <div>
-        <label>Total</label>
-        <input id="total" readonly>
-      </div>
+      <div><label>Peso Caixa</label><input id="peso_caixa" readonly></div>
+      <div><label>Quantidade</label><input id="quantidade" readonly></div>
+      <div><label>Kg Bruto</label><input id="kg_bruto" readonly></div>
+      <div><label>R$/Kg</label><input id="rs_kg"></div>
+      <div><label>Total</label><input id="total" readonly></div>
     </div>
 
     <div class="actions">
-      <button class="btn-green" onclick="salvar()">Salvar</button>
-      <button class="btn-red" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-verde" onclick="salvar()">Salvar</button>
+      <button class="btn-vermelho" onclick="fecharModal()">Cancelar</button>
     </div>
   </div>
 </div>
 
-<script>
-const supabaseClient = supabase.createClient(
-  "https://uxtgicfuggpuyjybwawa.supabase.co",
-  "SUA_ANON_KEY_AQUI"
-);
+<script type="module">
+import { supabase, verificarLogin } from "./js/auth.js";
+
+/* =============================
+   INIT
+============================= */
+document.addEventListener("DOMContentLoaded", async () => {
+  const user = await verificarLogin();
+  if (!user) return;
+  carregarPinos();
+});
 
 /* =============================
    MODAL
 ============================= */
-function abrirModal(){
-  document.getElementById("modalBg").style.display="flex";
-}
-function fecharModal(){
-  document.getElementById("modalBg").style.display="none";
-}
+window.abrirModal = () => modalBg.style.display = "flex";
+window.fecharModal = () => modalBg.style.display = "none";
 
 /* =============================
-   FORMATADORES (vírgula)
+   FORMATADORES
 ============================= */
-function n(v){ return Number(String(v).replace(",", ".")) || 0 }
-function f(v){ return v.toLocaleString("pt-BR",{minimumFractionDigits:2}) }
+const n = v => Number(String(v).replace(",", ".")) || 0;
+const f = v => v.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
 /* =============================
    CARREGAR PINOS
 ============================= */
-async function carregarPinos(){
-  const sel = document.getElementById("peca");
-  sel.innerHTML = `<option value="">Selecione</option>`;
+async function carregarPinos() {
+  peca.innerHTML = `<option value="">Selecione</option>`;
 
-  const {data,error} = await supabaseClient
+  const { data, error } = await supabase
     .from("produtos")
     .select("codigo,descricao,comprimento,pc_caixa,peso_caixa")
-    .ilike("descricao","%pino%")
+    .ilike("descricao", "%pino%")
     .order("codigo");
 
-  if(error){ alert("Erro ao carregar pinos"); console.error(error); return }
+  if (error) {
+    console.error(error);
+    alert("Erro ao carregar pinos");
+    return;
+  }
 
-  data.forEach(p=>{
-    const o=document.createElement("option");
-    o.value=p.codigo;
-    o.textContent=`${p.codigo} – ${p.descricao}`;
-    o.dataset.comp=p.comprimento;
-    o.dataset.pc=p.pc_caixa;
-    o.dataset.peso=p.peso_caixa;
-    sel.appendChild(o);
+  data.forEach(p => {
+    const o = document.createElement("option");
+    o.value = p.codigo;
+    o.textContent = `${p.codigo} – ${p.descricao}`;
+    o.dataset.comp = p.comprimento;
+    o.dataset.pc = p.pc_caixa;
+    o.dataset.peso = p.peso_caixa;
+    peca.appendChild(o);
   });
 }
 
 /* =============================
    AO SELECIONAR PINO
 ============================= */
-document.getElementById("peca").addEventListener("change",e=>{
-  const o=e.target.selectedOptions[0];
-  if(!o) return;
+peca.addEventListener("change", e => {
+  const o = e.target.selectedOptions[0];
+  if (!o) return;
 
-  comprimento.value=o.dataset.comp||0;
-  pc_caixa.value=o.dataset.pc||0;
-  peso_caixa.value=f(n(o.dataset.peso));
-
+  comprimento.value = o.dataset.comp || 0;
+  pc_caixa.value = o.dataset.pc || 0;
+  peso_caixa.value = f(n(o.dataset.peso));
   calcular();
 });
 
 /* =============================
    CÁLCULOS
 ============================= */
-["kg_liquido","rs_kg"].forEach(id=>{
-  document.getElementById(id).addEventListener("input",calcular);
-});
+["kg_liquido", "rs_kg"].forEach(id =>
+  document.getElementById(id).addEventListener("input", calcular)
+);
 
-function calcular(){
-  const kgL=n(kg_liquido.value);
-  const peso=n(peso_caixa.value);
-  const rs=n(rs_kg.value);
+function calcular() {
+  const kgL = n(kg_liquido.value);
+  const peso = n(peso_caixa.value);
+  const rs = n(rs_kg.value);
 
-  const qtd=peso?kgL/peso:0;
-  quantidade.value=Math.floor(qtd);
-
-  kg_bruto.value=f(kgL);
-  total.value=f(kgL*rs);
+  quantidade.value = peso ? Math.floor(kgL / peso) : 0;
+  kg_bruto.value = f(kgL);
+  total.value = f(kgL * rs);
 }
 
 /* =============================
    SALVAR
 ============================= */
-async function salvar(){
-  const payload={
-    op:op.value,
-    data:data.value,
-    peca:peca.value,
-    acabamento:acabamento.value,
-    kg_liquido:n(kg_liquido.value),
-    peso_caixa:n(peso_caixa.value),
-    quantidade:Number(quantidade.value),
-    kg_bruto:n(kg_bruto.value),
-    rs_kg:n(rs_kg.value),
-    total:n(total.value)
+async function salvar() {
+  const payload = {
+    op: op.value,
+    data: data.value,
+    peca: peca.value,
+    acabamento: acabamento.value,
+    kg_liquido: n(kg_liquido.value),
+    peso_caixa: n(peso_caixa.value),
+    quantidade: Number(quantidade.value),
+    kg_bruto: n(kg_bruto.value),
+    rs_kg: n(rs_kg.value),
+    total: n(total.value)
   };
 
-  const {error}=await supabaseClient
+  const { error } = await supabase
     .from("zincagem_tratamento")
     .insert(payload);
 
-  if(error){ alert("Erro ao salvar"); console.error(error); return }
+  if (error) {
+    console.error(error);
+    alert("Erro ao salvar");
+    return;
+  }
 
-  alert("Salvo com sucesso");
+  alert("OP salva com sucesso");
   fecharModal();
 }
-
-/* =============================
-   INIT
-============================= */
-document.addEventListener("DOMContentLoaded",()=>{
-  carregarPinos();
-});
 </script>
 
 </body>
