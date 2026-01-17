@@ -75,6 +75,15 @@ th,td{
 }
 th{color:#38bdf8}
 
+/* STATUS */
+.status{
+  padding:6px 12px;
+  border-radius:20px;
+  font-weight:600;
+}
+.ok{background:#22c55e;color:#020617}
+.pendente{background:#ef4444}
+
 /* MODAL */
 .modal-bg{
   position:fixed;
@@ -115,6 +124,40 @@ th{color:#38bdf8}
   <h1>Zincagem / Tratamento</h1>
   <button class="btn btn-verde" onclick="abrirModal()">+ Nova OP</button>
 </div>
+
+<!-- FILTROS -->
+<div class="filtros">
+  <input id="filtroOP" placeholder="OP">
+  <select id="filtroPeca"></select>
+  <select id="filtroAcab">
+    <option value="">Todos Acabamentos</option>
+    <option value="Zincado">Zincado</option>
+    <option value="Tratado">Tratado</option>
+  </select>
+  <input type="date" id="dataIni">
+  <input type="date" id="dataFim">
+  <button class="btn btn-azul" onclick="filtrar()">Filtrar</button>
+</div>
+
+<!-- TABELA -->
+<table>
+<thead>
+<tr>
+  <th>OP</th>
+  <th>Data</th>
+  <th>Peça</th>
+  <th>Acab.</th>
+  <th>Kg</th>
+  <th>Qtd</th>
+  <th>Total</th>
+  <th>Recebido</th>
+  <th>Boleto</th>
+</tr>
+</thead>
+<tbody id="lista">
+<tr><td colspan="9">Nenhum registro encontrado</td></tr>
+</tbody>
+</table>
 
 <!-- MODAL -->
 <div class="modal-bg" id="modal">
@@ -213,17 +256,22 @@ async function carregarPecas(){
 
   let opts = `<option value="">Selecione</option>`;
   data.forEach(p=>opts+=`<option value="${p.codigo}">${p.codigo}</option>`);
+
+  filtroPeca.innerHTML = opts;
   pecaSelect.innerHTML = opts;
 }
 
-/* AUTO PREENCHER */
+/* AUTO PREENCHER AO ESCOLHER PEÇA */
 pecaSelect.addEventListener("change", async ()=>{
   if(!pecaSelect.value) return;
+
   const { data } = await supabaseClient
     .from("produtos")
     .select("*")
     .eq("codigo", pecaSelect.value)
     .single();
+
+  if(!data) return;
 
   comprimento.value = data.comprimento_mm || "";
   pcCx.value = data.pecas_por_caixa || "";
@@ -232,8 +280,11 @@ pecaSelect.addEventListener("change", async ()=>{
   pesoCaixa.value = data.peso_caixa || "";
 });
 
+/* TOTAL */
 rsKg.addEventListener("input",()=>{
-  total.value = ((rsKg.value.replace(",",".")||0)*(kgBruto.value.replace(",",".")||0))
+  total.value =
+    ((rsKg.value.replace(",",".")||0) *
+     (kgBruto.value.replace(",",".")||0))
     .toFixed(2).replace(".",",");
 });
 
