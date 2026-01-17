@@ -15,8 +15,6 @@ body{
   color:#e5e7eb;
   font-family:Segoe UI,Arial;
 }
-
-/* HEADER */
 .header{
   display:flex;
   align-items:center;
@@ -24,8 +22,6 @@ body{
   padding:20px 30px;
 }
 h1{color:#38bdf8;margin:0}
-
-/* BOTÕES */
 .btn{
   border:none;
   border-radius:10px;
@@ -35,8 +31,6 @@ h1{color:#38bdf8;margin:0}
 }
 .btn-azul{background:#38bdf8;color:#020617}
 .btn-verde{background:#22c55e;color:#020617}
-
-/* FILTROS */
 .filtros{
   display:grid;
   grid-template-columns:repeat(6,1fr);
@@ -50,8 +44,6 @@ input,select{
   padding:10px;
   color:#e5e7eb;
 }
-
-/* TABELA */
 table{
   width:calc(100% - 60px);
   margin:0 30px 30px;
@@ -63,8 +55,6 @@ th,td{
   border-bottom:1px solid rgba(255,255,255,.1);
 }
 th{color:#38bdf8}
-
-/* MODAL */
 .modal-bg{
   position:fixed;
   inset:0;
@@ -99,48 +89,11 @@ th{color:#38bdf8}
 
 <body>
 
-<!-- HEADER -->
 <div class="header">
   <button class="btn btn-azul" onclick="history.back()">← Voltar</button>
   <h1>Zincagem / Tratamento</h1>
   <button class="btn btn-verde" onclick="abrirModal()">+ Nova OP</button>
 </div>
-
-<!-- FILTROS -->
-<div class="filtros">
-  <input placeholder="OP">
-  <select id="filtroPeca">
-    <option value="">Todos os pinos</option>
-  </select>
-  <select>
-    <option>Acabamento</option>
-  </select>
-  <input type="date">
-  <input type="date">
-  <button class="btn btn-azul">Filtrar</button>
-</div>
-
-<!-- TABELA -->
-<table>
-<thead>
-<tr>
-  <th>OP</th>
-  <th>Data</th>
-  <th>Peça</th>
-  <th>Acab.</th>
-  <th>Kg</th>
-  <th>Qtd</th>
-  <th>Total</th>
-  <th>Recebido</th>
-  <th>Boleto</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-  <td colspan="9">Base visual carregada com sucesso</td>
-</tr>
-</tbody>
-</table>
 
 <!-- MODAL -->
 <div class="modal-bg" id="modal">
@@ -148,7 +101,6 @@ th{color:#38bdf8}
     <h2>Nova OP</h2>
 
     <div class="grid">
-
       <div class="field">
         <label>OP</label>
         <input id="op">
@@ -161,20 +113,17 @@ th{color:#38bdf8}
 
       <div class="field">
         <label>Pino de Engate</label>
-        <select id="pecaSelect">
-          <option>Carregando...</option>
-        </select>
+        <select id="pecaSelect"></select>
       </div>
 
       <div class="field">
         <label>Kg Líquido</label>
-        <input id="kgLiquido">
+        <input id="kgLiquido" placeholder="0,000">
       </div>
-
     </div>
 
     <br>
-    <button class="btn btn-verde">Salvar</button>
+    <button class="btn btn-verde" onclick="salvar()">Salvar</button>
     <button class="btn btn-azul" onclick="fecharModal()">Cancelar</button>
   </div>
 </div>
@@ -185,56 +134,60 @@ const supabaseClient = supabase.createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
 );
 
-function abrirModal(){
-  document.getElementById("modal").style.display="flex";
+function abrirModal(){ modal.style.display="flex"; }
+function fecharModal(){ modal.style.display="none"; }
+
+/* === CONVERTE VIRGULA ↔ PONTO === */
+function brToFloat(v){
+  return parseFloat(v.replace(/\./g,"").replace(",","."));
 }
-function fecharModal(){
-  document.getElementById("modal").style.display="none";
+function floatToBr(v){
+  return v.toString().replace(".",",");
 }
 
-/* CARREGAR SOMENTE PINOS DE ENGATE */
+/* CARREGAR PINOS */
 document.addEventListener("DOMContentLoaded", async ()=>{
-  try{
-    const { data, error } = await supabaseClient
-      .from("produtos")
-      .select("codigo, descricao, peso_liquido")
-      .ilike("descricao", "%pino%")
-      .order("codigo");
+  const { data } = await supabaseClient
+    .from("produtos")
+    .select("codigo, descricao")
+    .ilike("descricao","%pino%")
+    .order("codigo");
 
-    if(error) throw error;
-
-    const modalSelect = document.getElementById("pecaSelect");
-    const filtroSelect = document.getElementById("filtroPeca");
-
-    modalSelect.innerHTML = `<option value="">Selecione o pino</option>`;
-    filtroSelect.innerHTML = `<option value="">Todos os pinos</option>`;
-
-    data.forEach(p=>{
-      const label = `${p.codigo} – ${p.descricao}`;
-
-      const opt1 = document.createElement("option");
-      opt1.value = p.codigo;
-      opt1.textContent = label;
-      opt1.dataset.kg = p.peso_liquido || "";
-      modalSelect.appendChild(opt1);
-
-      const opt2 = document.createElement("option");
-      opt2.value = p.codigo;
-      opt2.textContent = label;
-      filtroSelect.appendChild(opt2);
-    });
-
-    /* PREENCHE KG LÍQUIDO MAS PERMITE EDITAR */
-    modalSelect.addEventListener("change", ()=>{
-      const opt = modalSelect.selectedOptions[0];
-      document.getElementById("kgLiquido").value = opt?.dataset.kg || "";
-    });
-
-  }catch(err){
-    console.error("Erro ao carregar pinos:", err);
-    alert("Erro ao carregar pinos. Veja o console.");
-  }
+  pecaSelect.innerHTML = `<option value="">Selecione</option>`;
+  data.forEach(p=>{
+    const opt = document.createElement("option");
+    opt.value = p.codigo;
+    opt.textContent = `${p.codigo} – ${p.descricao}`;
+    pecaSelect.appendChild(opt);
+  });
 });
+
+/* SALVAR OP */
+async function salvar(){
+  const payload = {
+    op: op.value,
+    data: data.value,
+    codigo: pecaSelect.value,
+    kg_liquido: brToFloat(kgLiquido.value)
+  };
+
+  if(!payload.op || !payload.data || !payload.codigo){
+    alert("Preencha todos os campos");
+    return;
+  }
+
+  const { error } = await supabaseClient
+    .from("zincagem")
+    .insert(payload);
+
+  if(error){
+    console.error(error);
+    alert("Erro ao salvar");
+  }else{
+    alert("Salvo com sucesso");
+    fecharModal();
+  }
+}
 </script>
 
 </body>
