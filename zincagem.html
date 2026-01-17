@@ -38,6 +38,19 @@ h1{color:#38bdf8;margin:0}
 .btn-azul{background:#38bdf8;color:#020617}
 .btn-verde{background:#22c55e;color:#020617}
 
+/* CONTEÚDO */
+.container{
+  padding:30px;
+}
+.placeholder{
+  border:2px dashed #38bdf8;
+  border-radius:16px;
+  padding:40px;
+  text-align:center;
+  color:#38bdf8;
+  opacity:.8;
+}
+
 /* MODAL */
 .modal-bg{
   position:fixed;
@@ -46,9 +59,8 @@ h1{color:#38bdf8;margin:0}
   display:none;
   align-items:center;
   justify-content:center;
-  z-index:9999; /* <<< ESSENCIAL */
+  z-index:9999;
 }
-
 .modal{
   width:900px;
   max-width:95vw;
@@ -56,40 +68,30 @@ h1{color:#38bdf8;margin:0}
   border-radius:18px;
   border:2px solid #38bdf8;
   padding:24px;
-  box-shadow:0 0 40px rgba(0,0,0,.8);
 }
+.modal h2{margin-top:0;color:#38bdf8}
 
-.modal h2{
-  margin-top:0;
-  color:#38bdf8;
-}
-
-/* GRID */
+/* FORM */
 .grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
   gap:16px;
 }
-
-/* CAMPOS */
 .field{
   display:flex;
   flex-direction:column;
   gap:6px;
 }
-
 .field label{
   font-size:13px;
   color:#38bdf8;
 }
-
 input,select{
   background:#020b1a;
   border:1px solid #38bdf8;
   border-radius:10px;
   padding:12px;
   color:#e5e7eb;
-  font-size:14px;
 }
 
 /* RESPONSIVO */
@@ -104,10 +106,19 @@ input,select{
 
 <body>
 
+<!-- HEADER -->
 <div class="header">
   <button class="btn btn-azul" onclick="history.back()">← Voltar</button>
   <h1>Zincagem / Tratamento</h1>
   <button class="btn btn-verde" id="btnNova">+ Nova OP</button>
+</div>
+
+<!-- CONTEÚDO PRINCIPAL -->
+<div class="container">
+  <div class="placeholder">
+    Área principal carregada.<br>
+    Clique em <b>+ Nova OP</b> para continuar.
+  </div>
 </div>
 
 <!-- MODAL -->
@@ -138,7 +149,7 @@ input,select{
     </div>
 
     <br>
-    <button class="btn btn-verde" id="btnCancelar">Fechar</button>
+    <button class="btn btn-verde" id="btnFechar">Fechar</button>
   </div>
 </div>
 
@@ -153,8 +164,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const modal = document.getElementById("modal");
   const pecaSelect = document.getElementById("pecaSelect");
 
-  document.getElementById("btnNova").onclick = () => modal.style.display="flex";
-  document.getElementById("btnCancelar").onclick = () => modal.style.display="none";
+  document.getElementById("btnNova").onclick = () => {
+    modal.style.display = "flex";
+  };
+
+  document.getElementById("btnFechar").onclick = () => {
+    modal.style.display = "none";
+  };
 
   async function carregarPinos(){
     const { data, error } = await supabaseClient
