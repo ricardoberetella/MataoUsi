@@ -39,7 +39,6 @@
       <button class="btn-verde" onclick="abrirModal()">+ Nova OP</button>
     </header>
 
-    <!-- TABELA (mantida vazia por enquanto) -->
     <table class="tabela">
       <thead>
         <tr>
@@ -139,7 +138,6 @@
   </div>
 </div>
 
-<!-- SCRIPT -->
 <script type="module">
 import { verificarLogin, supabase } from "./js/auth.js";
 
@@ -156,8 +154,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 /* MODAL */
-window.abrirModal = () => modalBg.style.display = "flex";
-window.fecharModal = () => modalBg.style.display = "none";
+window.abrirModal = () => {
+  document.getElementById("modalBg").style.display = "flex";
+};
+
+window.fecharModal = () => {
+  document.getElementById("modalBg").style.display = "none";
+};
 
 /* FORMATADORES */
 const n = v => Number(String(v).replace(",", ".")) || 0;
@@ -192,13 +195,13 @@ async function carregarPinos() {
 }
 
 /* AUTO-PREENCHIMENTO */
-peca.addEventListener("change", e => {
+document.getElementById("peca").addEventListener("change", e => {
   const o = e.target.selectedOptions[0];
   if (!o) return;
 
-  comprimento.value = o.dataset.comp || 0;
-  pc_caixa.value = o.dataset.pc || 0;
-  peso_caixa.value = f(n(o.dataset.peso));
+  document.getElementById("comprimento").value = o.dataset.comp || 0;
+  document.getElementById("pc_caixa").value = o.dataset.pc || 0;
+  document.getElementById("peso_caixa").value = f(n(o.dataset.peso));
 });
 </script>
 
