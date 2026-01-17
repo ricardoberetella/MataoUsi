@@ -70,7 +70,6 @@ th{color:#38bdf8}
   padding:6px 12px;
   border-radius:20px;
   font-weight:600;
-  cursor:pointer;
 }
 .pendente{background:#ef4444}
 .ok{background:#22c55e;color:#020617}
@@ -116,16 +115,16 @@ th{color:#38bdf8}
 </div>
 
 <div class="filtros">
-  <input placeholder="OP">
+  <input id="filtroOP" placeholder="OP">
   <select id="filtroPeca"></select>
   <select id="filtroAcab">
     <option value="">Todos Acabamentos</option>
-    <option>Zincado</option>
-    <option>Tratado</option>
+    <option value="Zincado">Zincado</option>
+    <option value="Tratado">Tratado</option>
   </select>
-  <input type="date">
-  <input type="date">
-  <button class="btn btn-azul">Filtrar</button>
+  <input type="date" id="dataIni">
+  <input type="date" id="dataFim">
+  <button class="btn btn-azul" onclick="filtrar()">Filtrar</button>
 </div>
 
 <table>
@@ -159,7 +158,7 @@ th{color:#38bdf8}
       <input placeholder="Peso Caixa">
 
       <input placeholder="Quantidade">
-      <input placeholder="Kg Bruto" id="kgBruto">
+      <input id="kgBruto" placeholder="Kg Bruto">
       <input id="rsKg" placeholder="R$/Kg">
       <input id="total" placeholder="Total">
     </div>
@@ -172,10 +171,10 @@ th{color:#38bdf8}
 </div>
 
 <script>
-/* SUPABASE – CORRETO */
+/* SUPABASE */
 const supabaseClient = supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
+  "SUA_ANON_KEY"
 );
 
 /* MODAL */
@@ -194,28 +193,80 @@ document.getElementById("rsKg").addEventListener("input",()=>{
     (parseFloat(v||0)*parseFloat(kg||0)).toFixed(2).replace(".",",");
 });
 
-/* CARREGAR PEÇAS (FILTRO + MODAL) */
+/* CARREGAR PEÇAS */
 async function carregarPecas(){
-  const { data, error } = await supabaseClient
+  const { data } = await supabaseClient
     .from("produtos")
     .select("codigo")
     .order("codigo");
 
-  if(error){
-    console.error("Erro ao carregar peças:", error);
-    return;
-  }
-
-  let opts = `<option value="">Selecione</option>`;
+  let opts = `<option value="">Todas Peças</option>`;
   data.forEach(p=>{
     opts += `<option value="${p.codigo}">${p.codigo}</option>`;
   });
 
-  document.getElementById("pecaSelect").innerHTML = opts;
   document.getElementById("filtroPeca").innerHTML = opts;
+  document.getElementById("pecaSelect").innerHTML = opts;
 }
 
+/* FILTRAR */
+async function filtrar(){
+  const op   = document.getElementById("filtroOP").value;
+  const peca = document.getElementById("filtroPeca").value;
+  const acab = document.getElementById("filtroAcab").value;
+  const ini  = document.getElementById("dataIni").value;
+  const fim  = document.getElementById("dataFim").value;
+
+  let query = supabaseClient
+    .from("zincagem")
+    .select("*")
+    .order("data",{ascending:false});
+
+  if(op)   query = query.ilike("op",`%${op}%`);
+  if(peca) query = query.eq("peca",peca);
+  if(acab) query = query.eq("acabamento",acab);
+  if(ini)  query = query.gte("data",ini);
+  if(fim)  query = query.lte("data",fim);
+
+  const { data } = await query;
+  renderizarTabela(data);
+}
+
+/* RENDER */
+function renderizarTabela(lista){
+  const tbody = document.getElementById("lista");
+  tbody.innerHTML = "";
+
+  if(!lista || lista.length === 0){
+    tbody.innerHTML = `<tr><td colspan="9">Nenhum registro encontrado</td></tr>`;
+    return;
+  }
+
+  lista.forEach(r=>{
+    tbody.innerHTML += `
+    <tr>
+      <td>${r.op}</td>
+      <td>${formatarData(r.data)}</td>
+      <td>${r.peca}</td>
+      <td>${r.acabamento}</td>
+      <td>${r.kg}</td>
+      <td>${r.quantidade}</td>
+      <td>R$ ${Number(r.total).toFixed(2).replace(".",",")}</td>
+      <td><span class="status ${r.recebido?"ok":"pendente"}">${r.recebido?"OK":"Pendente"}</span></td>
+      <td><span class="status ${r.boleto?"ok":"pendente"}">${r.boleto?"OK":"Pendente"}</span></td>
+    </tr>`;
+  });
+}
+
+function formatarData(d){
+  if(!d) return "";
+  const [a,m,dd] = d.split("-");
+  return `${dd}/${m}/${a}`;
+}
+
+/* INIT */
 carregarPecas();
+filtrar();
 </script>
 
 </body>
