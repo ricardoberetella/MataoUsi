@@ -110,7 +110,7 @@ th{color:#38bdf8}
 <div class="filtros">
   <input placeholder="OP">
   <select id="filtroPeca">
-    <option value="">Pino</option>
+    <option value="">Todos os pinos</option>
   </select>
   <select>
     <option>Acabamento</option>
@@ -151,12 +151,12 @@ th{color:#38bdf8}
 
       <div class="field">
         <label>OP</label>
-        <input>
+        <input id="op">
       </div>
 
       <div class="field">
         <label>Data</label>
-        <input type="date">
+        <input type="date" id="data">
       </div>
 
       <div class="field">
@@ -168,7 +168,7 @@ th{color:#38bdf8}
 
       <div class="field">
         <label>Kg Líquido</label>
-        <input readonly>
+        <input id="kgLiquido">
       </div>
 
     </div>
@@ -197,7 +197,7 @@ document.addEventListener("DOMContentLoaded", async ()=>{
   try{
     const { data, error } = await supabaseClient
       .from("produtos")
-      .select("codigo, descricao")
+      .select("codigo, descricao, peso_liquido")
       .ilike("descricao", "%pino%")
       .order("codigo");
 
@@ -215,6 +215,7 @@ document.addEventListener("DOMContentLoaded", async ()=>{
       const opt1 = document.createElement("option");
       opt1.value = p.codigo;
       opt1.textContent = label;
+      opt1.dataset.kg = p.peso_liquido || "";
       modalSelect.appendChild(opt1);
 
       const opt2 = document.createElement("option");
@@ -223,7 +224,11 @@ document.addEventListener("DOMContentLoaded", async ()=>{
       filtroSelect.appendChild(opt2);
     });
 
-    console.log("Pinos carregados:", data.length);
+    /* PREENCHE KG LÍQUIDO MAS PERMITE EDITAR */
+    modalSelect.addEventListener("change", ()=>{
+      const opt = modalSelect.selectedOptions[0];
+      document.getElementById("kgLiquido").value = opt?.dataset.kg || "";
+    });
 
   }catch(err){
     console.error("Erro ao carregar pinos:", err);
