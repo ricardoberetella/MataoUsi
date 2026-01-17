@@ -14,6 +14,8 @@ body{
   color:#e5e7eb;
   font-family:Segoe UI,Arial;
 }
+
+/* HEADER */
 .header{
   display:flex;
   align-items:center;
@@ -21,6 +23,8 @@ body{
   padding:20px 30px;
 }
 h1{color:#38bdf8;margin:0}
+
+/* BOTÕES */
 .btn{
   border:none;
   border-radius:10px;
@@ -31,6 +35,8 @@ h1{color:#38bdf8;margin:0}
 .btn-azul{background:#38bdf8;color:#020617}
 .btn-verde{background:#22c55e;color:#020617}
 .btn-vermelho{background:#ef4444}
+
+/* FILTROS */
 .filtros{
   display:grid;
   grid-template-columns:repeat(6,1fr);
@@ -44,6 +50,8 @@ select,input{
   padding:10px;
   color:#e5e7eb;
 }
+
+/* TABELA */
 table{
   width:calc(100% - 60px);
   margin:0 30px;
@@ -55,6 +63,17 @@ th,td{
   border-bottom:1px solid rgba(255,255,255,.1);
 }
 th{color:#38bdf8}
+
+/* STATUS */
+.status{
+  padding:6px 12px;
+  border-radius:20px;
+  font-weight:600;
+}
+.pendente{background:#ef4444}
+.ok{background:#22c55e;color:#020617}
+
+/* MODAL */
 .modal-bg{
   position:fixed;
   inset:0;
@@ -70,6 +89,7 @@ th{color:#38bdf8}
   border:2px solid #38bdf8;
   padding:24px;
 }
+.modal h2{color:#38bdf8;margin-top:0}
 .grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
@@ -85,11 +105,46 @@ th{color:#38bdf8}
 
 <body>
 
+<!-- HEADER -->
 <div class="header">
   <button class="btn btn-azul" onclick="history.back()">← Voltar</button>
   <h1>Zincagem / Tratamento</h1>
   <button class="btn btn-verde" onclick="abrirModal()">+ Nova OP</button>
 </div>
+
+<!-- FILTROS -->
+<div class="filtros">
+  <input id="filtroOP" placeholder="OP">
+  <select id="filtroPeca"></select>
+  <select id="filtroAcab">
+    <option value="">Todos Acabamentos</option>
+    <option value="Zincado">Zincado</option>
+    <option value="Tratado">Tratado</option>
+  </select>
+  <input type="date" id="dataIni">
+  <input type="date" id="dataFim">
+  <button class="btn btn-azul" onclick="filtrar()">Filtrar</button>
+</div>
+
+<!-- TABELA -->
+<table>
+<thead>
+<tr>
+<th>OP</th>
+<th>Data</th>
+<th>Peça</th>
+<th>Acab.</th>
+<th>Kg</th>
+<th>Qtd</th>
+<th>Total</th>
+<th>Recebido</th>
+<th>Boleto</th>
+</tr>
+</thead>
+<tbody id="lista">
+<tr><td colspan="9">Nenhum registro encontrado</td></tr>
+</tbody>
+</table>
 
 <!-- MODAL -->
 <div class="modal-bg" id="modal">
@@ -99,20 +154,15 @@ th{color:#38bdf8}
     <div class="grid">
       <input id="op" placeholder="OP">
       <input id="data" type="date">
-
-      <!-- PEÇA -->
       <select id="pecaSelect"></select>
-
       <input id="kgLiquido" placeholder="Kg Líquido">
 
       <input id="comprimento" placeholder="Comprimento">
       <input id="pcCx" placeholder="Pç/Cx">
-
       <select id="acabamento">
         <option>Zincado</option>
         <option>Tratado</option>
       </select>
-
       <input id="pesoCaixa" placeholder="Peso Caixa">
 
       <input id="quantidade" placeholder="Quantidade">
@@ -129,6 +179,7 @@ th{color:#38bdf8}
 </div>
 
 <script>
+/* SUPABASE */
 const supabaseClient = supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
@@ -144,12 +195,14 @@ async function carregarPecas(){
     .select("codigo")
     .order("codigo");
 
-  let opts = `<option value="">Selecione a peça</option>`;
+  let opts = `<option value="">Selecione</option>`;
   data.forEach(p=>opts+=`<option value="${p.codigo}">${p.codigo}</option>`);
+
+  filtroPeca.innerHTML = opts;
   pecaSelect.innerHTML = opts;
 }
 
-/* AO ESCOLHER A PEÇA */
+/* AUTO PREENCHER AO ESCOLHER PEÇA */
 pecaSelect.addEventListener("change", async ()=>{
   if(!pecaSelect.value) return;
 
@@ -162,17 +215,16 @@ pecaSelect.addEventListener("change", async ()=>{
   if(!data) return;
 
   comprimento.value = data.comprimento_mm || "";
-  pcCx.value        = data.pecas_por_caixa || "";
-  kgLiquido.value   = data.peso_liquido || "";
-  kgBruto.value     = data.peso_bruto || "";
-  pesoCaixa.value   = data.peso_caixa || "";
+  pcCx.value = data.pecas_por_caixa || "";
+  kgLiquido.value = data.peso_liquido || "";
+  kgBruto.value = data.peso_bruto || "";
+  pesoCaixa.value = data.peso_caixa || "";
 });
 
 /* TOTAL */
 rsKg.addEventListener("input",()=>{
-  let v  = rsKg.value.replace(",",".");
-  let kg = kgBruto.value.replace(",",".");
-  total.value = (v*kg).toFixed(2).replace(".",",");
+  total.value = ((rsKg.value.replace(",",".")||0)*(kgBruto.value.replace(",",".")||0))
+    .toFixed(2).replace(".",",");
 });
 
 carregarPecas();
