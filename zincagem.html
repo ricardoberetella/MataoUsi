@@ -5,15 +5,16 @@
 <title>Zincagem / Tratamento</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
 body{
   margin:0;
+  min-height:100vh;
   background:radial-gradient(circle at top,#0b1224,#020617 70%);
   color:#e5e7eb;
   font-family:Segoe UI,Arial;
 }
+
+/* HEADER */
 .header{
   display:flex;
   align-items:center;
@@ -21,6 +22,8 @@ body{
   padding:20px 30px;
 }
 h1{color:#38bdf8;margin:0}
+
+/* BOTÕES */
 .btn{
   border:none;
   border-radius:10px;
@@ -30,33 +33,36 @@ h1{color:#38bdf8;margin:0}
 }
 .btn-azul{background:#38bdf8;color:#020617}
 .btn-verde{background:#22c55e;color:#020617}
-.btn-vermelho{background:#ef4444}
 
+/* FILTROS */
 .filtros{
   display:grid;
   grid-template-columns:repeat(6,1fr);
   gap:12px;
   padding:0 30px 20px;
 }
-
-select,input{
+input,select{
   background:#020b1a;
   border:1px solid #38bdf8;
   border-radius:10px;
-  padding:12px 10px;
+  padding:10px;
   color:#e5e7eb;
 }
 
-.field{
-  display:flex;
-  flex-direction:column;
-  gap:4px;
+/* TABELA */
+table{
+  width:calc(100% - 60px);
+  margin:0 30px 30px;
+  border-collapse:collapse;
 }
-.field label{
-  font-size:12px;
-  color:#38bdf8;
+th,td{
+  padding:10px;
+  text-align:center;
+  border-bottom:1px solid rgba(255,255,255,.1);
 }
+th{color:#38bdf8}
 
+/* MODAL */
 .modal-bg{
   position:fixed;
   inset:0;
@@ -77,21 +83,60 @@ select,input{
   grid-template-columns:repeat(4,1fr);
   gap:14px;
 }
-.actions{
-  margin-top:20px;
+.field{
   display:flex;
-  gap:12px;
+  flex-direction:column;
+  gap:4px;
+}
+.field label{
+  font-size:12px;
+  color:#38bdf8;
 }
 </style>
 </head>
 
 <body>
 
+<!-- HEADER -->
 <div class="header">
   <button class="btn btn-azul" onclick="history.back()">← Voltar</button>
   <h1>Zincagem / Tratamento</h1>
-  <button class="btn btn-verde" onclick="abrirModal()">+ Nova OP</button>
+  <button class="btn btn-verde" onclick="document.getElementById('modal').style.display='flex'">
+    + Nova OP
+  </button>
 </div>
+
+<!-- FILTROS (NUNCA SOMEM) -->
+<div class="filtros">
+  <input placeholder="OP">
+  <select><option>Peça</option></select>
+  <select><option>Acabamento</option></select>
+  <input type="date">
+  <input type="date">
+  <button class="btn btn-azul">Filtrar</button>
+</div>
+
+<!-- TABELA (NUNCA SOME) -->
+<table>
+<thead>
+<tr>
+  <th>OP</th>
+  <th>Data</th>
+  <th>Peça</th>
+  <th>Acab.</th>
+  <th>Kg</th>
+  <th>Qtd</th>
+  <th>Total</th>
+  <th>Recebido</th>
+  <th>Boleto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td colspan="9">Base estável carregada</td>
+</tr>
+</tbody>
+</table>
 
 <!-- MODAL -->
 <div class="modal-bg" id="modal">
@@ -99,155 +144,27 @@ select,input{
     <h2>Nova OP</h2>
 
     <div class="grid">
+      <div class="field"><label>OP</label><input></div>
+      <div class="field"><label>Data</label><input type="date"></div>
+      <div class="field"><label>Peça</label><select></select></div>
+      <div class="field"><label>Kg Líquido</label><input></div>
 
-      <div class="field">
-        <label>OP</label>
-        <input id="op">
-      </div>
+      <div class="field"><label>Comprimento</label><input></div>
+      <div class="field"><label>Pç / Caixa</label><input></div>
+      <div class="field"><label>Acabamento</label><select></select></div>
+      <div class="field"><label>Peso Caixa</label><input></div>
 
-      <div class="field">
-        <label>Data</label>
-        <input id="data" type="date">
-      </div>
-
-      <div class="field">
-        <label>Peça</label>
-        <select id="pecaSelect"></select>
-      </div>
-
-      <div class="field">
-        <label>Kg Líquido (por peça)</label>
-        <input id="kgLiquido" readonly>
-      </div>
-
-      <div class="field">
-        <label>Comprimento</label>
-        <input id="comprimento" readonly>
-      </div>
-
-      <div class="field">
-        <label>Pç / Caixa</label>
-        <input id="pcCx" readonly>
-      </div>
-
-      <div class="field">
-        <label>Acabamento</label>
-        <select id="acabamento">
-          <option>Zincado</option>
-          <option>Tratado</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label>Peso Caixa</label>
-        <input id="pesoCaixa" readonly>
-      </div>
-
-      <div class="field">
-        <label>Quantidade (calculada)</label>
-        <input id="quantidade" readonly>
-      </div>
-
-      <div class="field">
-        <label>Kg Bruto</label>
-        <input id="kgBruto">
-      </div>
-
-      <div class="field">
-        <label>R$/Kg</label>
-        <input id="rsKg">
-      </div>
-
-      <div class="field">
-        <label>Total</label>
-        <input id="total" readonly>
-      </div>
-
+      <div class="field"><label>Quantidade</label><input></div>
+      <div class="field"><label>Kg Bruto</label><input></div>
+      <div class="field"><label>R$/Kg</label><input></div>
+      <div class="field"><label>Total</label><input></div>
     </div>
 
-    <div class="actions">
-      <button class="btn btn-verde">Salvar</button>
-      <button class="btn btn-vermelho" onclick="fecharModal()">Cancelar</button>
-    </div>
+    <br>
+    <button class="btn btn-verde">Salvar</button>
+    <button class="btn btn-azul" onclick="modal.style.display='none'">Cancelar</button>
   </div>
 </div>
-
-<script>
-const supabaseClient = supabase.createClient(
-  "https://uxtgicfuggpuyjybwawa.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
-);
-
-function abrirModal(){ modal.style.display="flex"; }
-function fecharModal(){ modal.style.display="none"; }
-
-let kgLiquidoAtual = 0;
-
-/* CARREGAR PEÇAS */
-async function carregarPecas(){
-  const { data } = await supabaseClient
-    .from("produtos")
-    .select("codigo")
-    .order("codigo");
-
-  let opts = `<option value="">Selecione</option>`;
-  data.forEach(p=>opts+=`<option value="${p.codigo}">${p.codigo}</option>`);
-  pecaSelect.innerHTML = opts;
-}
-
-/* AO ESCOLHER A PEÇA */
-pecaSelect.addEventListener("change", async ()=>{
-  if(!pecaSelect.value) return;
-
-  const { data } = await supabaseClient
-    .from("produtos")
-    .select("*")
-    .eq("codigo", pecaSelect.value)
-    .single();
-
-  if(!data) return;
-
-  comprimento.value = data.comprimento_mm || "";
-  pcCx.value        = data.pecas_por_caixa || "";
-  kgLiquido.value   = data.peso_liquido || "";
-  kgBruto.value     = data.peso_bruto || "";
-  pesoCaixa.value   = data.peso_caixa || "";
-
-  kgLiquidoAtual = parseFloat(data.peso_liquido) || 0;
-
-  calcularQuantidade();
-  calcularTotal();
-});
-
-/* QUANTIDADE = KG BRUTO / KG LÍQUIDO */
-function calcularQuantidade(){
-  const bruto = parseFloat(kgBruto.value.replace(",","."));
-  if(bruto > 0 && kgLiquidoAtual > 0){
-    quantidade.value = Math.floor(bruto / kgLiquidoAtual);
-  } else {
-    quantidade.value = "";
-  }
-}
-
-/* TOTAL = KG BRUTO * R$/KG */
-function calcularTotal(){
-  const bruto = parseFloat(kgBruto.value.replace(",","."));
-  const valor = parseFloat(rsKg.value.replace(",","."));
-  if(bruto > 0 && valor > 0){
-    total.value = (bruto * valor).toFixed(2).replace(".",",");
-  } else {
-    total.value = "";
-  }
-}
-
-kgBruto.addEventListener("input", ()=>{
-  calcularQuantidade();
-  calcularTotal();
-});
-rsKg.addEventListener("input", calcularTotal);
-
-carregarPecas();
-</script>
 
 </body>
 </html>
