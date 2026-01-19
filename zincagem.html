@@ -18,28 +18,21 @@ body{
 /* HEADER */
 .header{
   padding:16px 24px;
-  border-bottom:1px solid rgba(56,189,248,.2);
   display:flex;
   justify-content:space-between;
   align-items:center;
+  border-bottom:1px solid rgba(56,189,248,.2);
 }
-.header h1{
-  margin:0;
-  color:#38bdf8;
-}
-.header .acoes{
-  display:flex;
-  gap:10px;
-}
+.header h1{ margin:0; color:#38bdf8; }
+.header .acoes{ display:flex; gap:10px; }
 
 /* FILTROS */
 .filtros{
-  display:flex;
-  gap:12px;
+  display:grid;
+  grid-template-columns: 120px 1fr 160px 150px 150px auto;
+  gap:10px;
   padding:14px 24px;
-  background:rgba(2,11,26,.7);
   border-bottom:1px solid rgba(56,189,248,.15);
-  flex-wrap:wrap;
 }
 .filtros input,.filtros select{
   padding:8px 10px;
@@ -51,25 +44,18 @@ body{
 
 /* TABELA */
 main{ padding:20px 24px; }
-
-table{
-  width:100%;
-  border-collapse:collapse;
-}
+table{ width:100%; border-collapse:collapse; }
 th,td{
   padding:10px;
   border-bottom:1px solid rgba(148,163,184,.15);
 }
-th{
-  color:#38bdf8;
-  text-align:left;
-}
+th{ color:#38bdf8; text-align:left; }
 
 /* MODAL */
 .modal-bg{
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,.6);
+  background:rgba(0,0,0,.65);
   display:none;
   justify-content:center;
   align-items:flex-start;
@@ -110,11 +96,11 @@ input,select{
   <h1>Zincagem / Tratamento</h1>
   <div class="acoes">
     <button class="btn-azul" onclick="location.href='dashboard.html'">← Voltar ao menu</button>
-    <button class="btn-verde" onclick="abrirModal()">+ Nova OP</button>
+    <button class="btn-verde" id="btnNovaOp">+ Nova OP</button>
   </div>
 </div>
 
-<!-- FILTROS -->
+<!-- FILTROS (LINHA ÚNICA) -->
 <div class="filtros">
   <input id="fOp" placeholder="OP">
   <select id="fPeca"><option value="">Peça</option></select>
@@ -125,7 +111,7 @@ input,select{
   </select>
   <input type="date" id="fIni">
   <input type="date" id="fFim">
-  <button class="btn-azul" onclick="carregarOps()">Filtrar</button>
+  <button class="btn-azul" id="btnFiltrar">Filtrar</button>
 </div>
 
 <main>
@@ -158,27 +144,32 @@ input,select{
       <div><label>Total</label><input id="total" readonly></div>
     </div>
     <div class="acoes-modal">
-      <button class="btn-verde" onclick="salvar()">Salvar</button>
-      <button class="btn-vermelho" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-verde" id="btnSalvar">Salvar</button>
+      <button class="btn-vermelho" id="btnCancelar">Cancelar</button>
     </div>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+/* === SUPABASE (UMA VEZ SÓ) === */
 const supabase = window.supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
 );
 
-const n=v=>Number(String(v).replace(",","."))||0;
+const $=id=>document.getElementById(id);
+const n=v=>Number(String(v||"").replace(",","."))||0;
 const f2=v=>n(v).toLocaleString("pt-BR",{minimumFractionDigits:2});
 
-function abrirModal(){ modalBg.style.display="flex"; carregarProdutos(); }
-function fecharModal(){ modalBg.style.display="none"; }
+/* EVENTOS */
+btnNovaOp.onclick=()=>modalBg.style.display="flex";
+btnCancelar.onclick=()=>modalBg.style.display="none";
+btnFiltrar.onclick=carregarOps;
 
+/* PRODUTOS */
 async function carregarProdutos(){
-  const { data } = await supabase.from("produtos").select("id,codigo,descricao");
+  const { data }=await supabase.from("produtos").select("id,codigo,descricao");
   peca.innerHTML='<option value="">Selecione</option>';
   fPeca.innerHTML='<option value="">Peça</option>';
   data.forEach(p=>{
@@ -187,6 +178,7 @@ async function carregarProdutos(){
   });
 }
 
+/* OPS */
 async function carregarOps(){
   let q=supabase.from("zincagem_tratamento").select("*");
   if(fOp.value) q=q.eq("op",fOp.value);
@@ -205,19 +197,22 @@ async function carregarOps(){
     </tr>`).join(""):`<tr><td colspan="9">Nenhum registro</td></tr>`;
 }
 
-async function salvar(){
+/* SALVAR */
+btnSalvar.onclick=async()=>{
   const kg=n(kg_liq.value), r=n(rs_kg.value);
-  const qtd=Math.floor(kg/1);
-  const bruto=qtd*1;
+  const qtd=Math.floor(kg);
+  const bruto=qtd;
   await supabase.from("zincagem_tratamento").insert({
     op:op.value,data:data.value,produto_id:peca.value,
     codigo_peca_text:peca.selectedOptions[0].text,
     acabamento:acabamento.value,kg_liquido:kg,
     quantidade:qtd,kg_bruto:bruto,rs_kg:r,total:bruto*r
   });
-  fecharModal(); carregarOps();
-}
+  modalBg.style.display="none";
+  carregarOps();
+};
 
+carregarProdutos();
 carregarOps();
 </script>
 
