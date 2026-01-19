@@ -8,10 +8,6 @@
 <link rel="stylesheet" href="css/dashboard.css">
 
 <style>
-/* =============================
-   AJUSTES ESPECÍFICOS ZINCAGEM
-============================= */
-
 .modal-bg{
   position:fixed;
   inset:0;
@@ -63,7 +59,6 @@
 }
 
 .grid-4 input[readonly]{
-  background:#020617;
   opacity:.7;
 }
 
@@ -74,16 +69,11 @@
   gap:12px;
 }
 
-/* Responsivo */
 @media(max-width:1000px){
-  .grid-4{
-    grid-template-columns:repeat(2,1fr);
-  }
+  .grid-4{ grid-template-columns:repeat(2,1fr); }
 }
 @media(max-width:600px){
-  .grid-4{
-    grid-template-columns:1fr;
-  }
+  .grid-4{ grid-template-columns:1fr; }
 }
 </style>
 </head>
@@ -234,7 +224,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.location.href = "index.html";
   };
 
-  setTimeout(carregarPinos, 0);
+  carregarPinos();
 });
 
 /* MODAL */
@@ -246,7 +236,7 @@ const n = v => Number(String(v).replace(",", ".")) || 0;
 const f3 = v => v.toLocaleString("pt-BR", { minimumFractionDigits: 3 });
 const f2 = v => v.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
-/* CARREGAR PINOS */
+/* CARREGAR PRODUTOS (SEM FILTRO) */
 async function carregarPinos() {
   const select = document.getElementById("peca");
   if (!select) return;
@@ -256,18 +246,20 @@ async function carregarPinos() {
   const { data, error } = await supabase
     .from("produtos")
     .select("codigo, descricao, comprimento, pc_caixa, peso_caixa")
-    .ilike("descricao", "%pino%")
     .order("codigo");
 
-  if (error || !data) return;
+  if (error) {
+    console.error("Erro ao carregar produtos:", error);
+    return;
+  }
 
   data.forEach(p => {
     const o = document.createElement("option");
     o.value = p.codigo;
     o.textContent = `${p.codigo} – ${p.descricao}`;
-    o.dataset.comp = p.comprimento;
-    o.dataset.pc = p.pc_caixa;
-    o.dataset.peso = p.peso_caixa;
+    o.dataset.comp = p.comprimento ?? 0;
+    o.dataset.pc = p.pc_caixa ?? 0;
+    o.dataset.peso = p.peso_caixa ?? 0;
     select.appendChild(o);
   });
 }
@@ -277,8 +269,8 @@ document.getElementById("peca").addEventListener("change", e => {
   const o = e.target.selectedOptions[0];
   if (!o) return;
 
-  comprimento.value = o.dataset.comp || 0;
-  pc_caixa.value = o.dataset.pc || 0;
+  comprimento.value = o.dataset.comp;
+  pc_caixa.value = o.dataset.pc;
   peso_caixa.value = f3(n(o.dataset.peso));
 });
 
