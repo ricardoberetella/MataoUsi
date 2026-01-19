@@ -18,14 +18,13 @@ const n = v => Number(String(v).replace(",", ".")) || 0;
 const f2 = v => v.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 const f3 = v => v.toLocaleString("pt-BR", { minimumFractionDigits: 3 });
 
-/* CARREGAR PRODUTOS */
+/* CARREGAR PRODUTOS — SEM ORDER */
 async function carregarProdutos(){
   peca.innerHTML = `<option value="">Selecione</option>`;
 
   const { data, error } = await supabase
     .from("produtos")
-    .select("codigo, descricao, comprimento_mm, quantidade_caixa, peso_caixa")
-    .order("codigo");
+    .select("codigo, descricao, comprimento_mm, quantidade_caixa, peso_caixa");
 
   if (error) {
     alert(error.message);
@@ -33,15 +32,18 @@ async function carregarProdutos(){
     return;
   }
 
-  data.forEach(p => {
-    const o = document.createElement("option");
-    o.value = p.codigo;
-    o.textContent = `${p.codigo} - ${p.descricao}`;
-    o.dataset.comp = p.comprimento_mm;
-    o.dataset.pc = p.quantidade_caixa;
-    o.dataset.peso = p.peso_caixa;
-    peca.appendChild(o);
-  });
+  /* ordena no frontend (seguro) */
+  data
+    .sort((a,b) => String(a.codigo).localeCompare(String(b.codigo)))
+    .forEach(p => {
+      const o = document.createElement("option");
+      o.value = p.codigo;
+      o.textContent = `${p.codigo} - ${p.descricao}`;
+      o.dataset.comp = p.comprimento_mm;
+      o.dataset.pc = p.quantidade_caixa;
+      o.dataset.peso = p.peso_caixa;
+      peca.appendChild(o);
+    });
 }
 
 /* AUTO-PREENCHIMENTO */
