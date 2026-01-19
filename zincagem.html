@@ -8,9 +8,8 @@
 <link rel="stylesheet" href="css/dashboard.css">
 
 <style>
-/* ===== AJUSTES MÍNIMOS E NECESSÁRIOS ===== */
 .main{
-  padding-top:20px; /* margem superior que estava faltando */
+  padding-top:20px;
 }
 
 .modal-bg{
@@ -20,7 +19,7 @@
   display:flex;
   justify-content:center;
   align-items:flex-start;
-  padding-top:60px; /* respiro superior */
+  padding-top:60px;
   z-index:999;
 }
 
@@ -149,11 +148,6 @@
       </div>
 
       <div>
-        <label>Comprimento</label>
-        <input id="comprimento" readonly>
-      </div>
-
-      <div>
         <label>Pç / Caixa</label>
         <input id="pc_caixa" readonly>
       </div>
@@ -229,11 +223,11 @@ async function carregarProdutos(){
 
   const { data, error } = await supabase
     .from("produtos")
-    .select("codigo, descricao, comprimento, pc_caixa, peso_caixa")
+    .select("codigo, descricao, pc_caixa, peso_caixa")
     .order("codigo");
 
   if (error) {
-    alert("ERRO AO CARREGAR PRODUTOS (RLS?): " + error.message);
+    alert("Erro ao carregar produtos: " + error.message);
     console.error(error);
     return;
   }
@@ -242,7 +236,6 @@ async function carregarProdutos(){
     const o = document.createElement("option");
     o.value = p.codigo;
     o.textContent = `${p.codigo} - ${p.descricao}`;
-    o.dataset.comp = p.comprimento || 0;
     o.dataset.pc = p.pc_caixa || 0;
     o.dataset.peso = p.peso_caixa || 0;
     select.appendChild(o);
@@ -253,7 +246,6 @@ peca.addEventListener("change", e => {
   const o = e.target.selectedOptions[0];
   if (!o) return;
 
-  comprimento.value = o.dataset.comp;
   pc_caixa.value = o.dataset.pc;
   peso_caixa.value = f3(n(o.dataset.peso));
 });
