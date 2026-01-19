@@ -1,34 +1,196 @@
-import { supabase, verificarLogin } from "./auth.js";
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zincagem / Tratamento</title>
 
-/* LOGIN */
+<link rel="stylesheet" href="css/dashboard.css">
+
+<style>
+.main{
+  padding-top:20px;
+}
+
+.modal-bg{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  padding-top:60px;
+  z-index:999;
+}
+
+.modal{
+  background:#020b1a;
+  padding:20px;
+  border-radius:12px;
+  width:95%;
+  max-width:720px;
+}
+
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
+}
+
+.form-grid label{
+  font-size:13px;
+  display:block;
+  margin-bottom:4px;
+}
+
+.form-grid input,
+.form-grid select{
+  width:100%;
+  padding:8px;
+}
+
+.acoes{
+  margin-top:20px;
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+}
+
+@media(max-width:720px){
+  .form-grid{ grid-template-columns:1fr; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="logo-sistema">MATÃO USINAGEM</div>
+
+    <nav class="menu">
+      <div class="menu-titulo">Módulos</div>
+      <a href="clientes.html" class="menu-item">Clientes</a>
+      <a href="pedidos_lista.html" class="menu-item">Pedidos</a>
+      <a href="pedidos_abertos.html" class="menu-item">Pedidos em Aberto</a>
+      <a href="produtos_lista.html" class="menu-item">Produtos</a>
+      <a href="notas_lista.html" class="menu-item">Notas Fiscais</a>
+      <a href="contas_receber.html" class="menu-item">Contas a Receber</a>
+      <a href="zincagem.html" class="menu-item ativo">Zincagem / Tratamento</a>
+    </nav>
+
+    <button id="btnLogout" class="menu-item botao-sair">Sair</button>
+  </aside>
+
+  <main class="main">
+
+    <header class="topo-pagina">
+      <button class="btn-azul" onclick="location.href='dashboard.html'">← Voltar</button>
+      <h1>Zincagem / Tratamento</h1>
+      <button class="btn-verde" id="btnNovaOp">+ Nova OP</button>
+    </header>
+
+  </main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modalBg" style="display:none">
+  <div class="modal">
+
+    <h2>Nova OP</h2>
+
+    <div class="form-grid">
+
+      <div>
+        <label>Peça</label>
+        <select id="peca">
+          <option value="">Selecione</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Comprimento (mm)</label>
+        <input id="comprimento" readonly>
+      </div>
+
+      <div>
+        <label>Pç / Caixa</label>
+        <input id="pc_caixa" readonly>
+      </div>
+
+      <div>
+        <label>Peso Caixa</label>
+        <input id="peso_caixa" readonly>
+      </div>
+
+      <div>
+        <label>Kg Líquido</label>
+        <input id="kg_liquido">
+      </div>
+
+      <div>
+        <label>Quantidade</label>
+        <input id="quantidade" readonly>
+      </div>
+
+      <div>
+        <label>Kg Bruto</label>
+        <input id="kg_bruto" readonly>
+      </div>
+
+      <div>
+        <label>R$/Kg</label>
+        <input id="rs_kg">
+      </div>
+
+      <div>
+        <label>Total</label>
+        <input id="total" readonly>
+      </div>
+
+    </div>
+
+    <div class="acoes">
+      <button class="btn-verde">Salvar</button>
+      <button class="btn-vermelho" id="btnCancelar">Cancelar</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- SCRIPT ÚNICO -->
+<script type="module">
+import { supabase, verificarLogin } from "./js/auth.js";
+
+/* ========= LOGIN ========= */
 document.addEventListener("DOMContentLoaded", async () => {
   const user = await verificarLogin();
   if (!user) return;
 
-  document.getElementById("btnLogout").onclick = async () => {
+  btnLogout.onclick = async () => {
     await supabase.auth.signOut();
     location.href = "index.html";
   };
 
-  document.getElementById("btnNovaOp").onclick = () => {
+  btnNovaOp.onclick = () => {
     modalBg.style.display = "flex";
     carregarProdutos();
   };
 
-  document.getElementById("btnCancelar").onclick = () => {
+  btnCancelar.onclick = () => {
     modalBg.style.display = "none";
   };
 });
 
-/* UTIL */
+/* ========= UTIL ========= */
 const n = v => Number(String(v).replace(",", ".")) || 0;
 const f2 = v => v.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 const f3 = v => v.toLocaleString("pt-BR", { minimumFractionDigits: 3 });
 
-/* CARREGAR PRODUTOS */
-async function carregarProdutos() {
-  const select = document.getElementById("peca");
-  select.innerHTML = `<option value="">Selecione</option>`;
+/* ========= CARREGAR PRODUTOS ========= */
+async function carregarProdutos(){
+  peca.innerHTML = `<option value="">Selecione</option>`;
 
   const { data, error } = await supabase
     .from("produtos")
@@ -48,13 +210,13 @@ async function carregarProdutos() {
     o.dataset.comp = p.comprimento_mm;
     o.dataset.pc = p.quantidade_caixa;
     o.dataset.peso = p.peso_caixa;
-    select.appendChild(o);
+    peca.appendChild(o);
   });
 }
 
-/* AUTO-PREENCHIMENTO */
-peca.addEventListener("change", e => {
-  const o = e.target.selectedOptions[0];
+/* ========= AUTO-PREENCHIMENTO ========= */
+peca.addEventListener("change", () => {
+  const o = peca.selectedOptions[0];
   if (!o) return;
 
   comprimento.value = o.dataset.comp;
@@ -62,13 +224,17 @@ peca.addEventListener("change", e => {
   peso_caixa.value = f3(n(o.dataset.peso));
 });
 
-/* CÁLCULOS */
+/* ========= CÁLCULOS ========= */
 rs_kg.addEventListener("input", calcular);
 kg_liquido.addEventListener("input", calcular);
 
-function calcular() {
+function calcular(){
   const qtd = Math.floor(n(kg_liquido.value) / n(peso_caixa.value || 1));
   quantidade.value = qtd;
   kg_bruto.value = f3(qtd * n(peso_caixa.value));
   total.value = f2(n(rs_kg.value) * n(kg_bruto.value));
 }
+</script>
+
+</body>
+</html>
