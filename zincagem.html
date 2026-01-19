@@ -14,21 +14,35 @@ body{
   color:#e5e7eb;
   font-family:Segoe UI,Arial;
 }
-.header{
+header{
   display:flex;
   justify-content:space-between;
   align-items:center;
   padding:16px 24px;
-  border-bottom:1px solid rgba(56,189,248,.2);
+  border-bottom:1px solid rgba(56,189,248,.25);
 }
-.header h1{margin:0;color:#38bdf8;}
-.header .acoes{display:flex;gap:10px;}
+header h1{margin:0;color:#38bdf8;}
+header .acoes{display:flex;gap:10px;}
+
 main{padding:20px 24px;}
-table{width:100%;border-collapse:collapse;}
-th,td{padding:10px;border-bottom:1px solid rgba(148,163,184,.15);}
-th{color:#38bdf8;text-align:left;}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+th,td{
+  padding:10px;
+  border-bottom:1px solid rgba(148,163,184,.15);
+}
+th{
+  color:#38bdf8;
+  text-align:left;
+}
+
+/* MODAL */
 .modal-bg{
-  position:fixed; inset:0;
+  position:fixed;
+  inset:0;
   background:rgba(0,0,0,.65);
   display:none;
   justify-content:center;
@@ -37,18 +51,24 @@ th{color:#38bdf8;text-align:left;}
 }
 .modal{
   background:linear-gradient(180deg,#020b1a,#020617);
-  padding:22px;
   border-radius:16px;
   width:900px;
-  border:1px solid rgba(56,189,248,.2);
+  padding:22px;
+  border:1px solid rgba(56,189,248,.25);
 }
-.modal h2{margin-top:0;color:#38bdf8;}
+.modal h2{
+  margin-top:0;
+  color:#38bdf8;
+}
 .grid{
   display:grid;
   grid-template-columns:repeat(2,1fr);
   gap:14px;
 }
-label{font-size:13px;color:#cbd5f5;}
+label{
+  font-size:13px;
+  color:#cbd5f5;
+}
 input,select{
   width:100%;
   padding:10px;
@@ -57,7 +77,10 @@ input,select{
   background:#020617;
   color:#e5e7eb;
 }
-input[readonly]{background:#020b1a;color:#9ca3af;}
+input[readonly]{
+  background:#020b1a;
+  color:#9ca3af;
+}
 .acoes-modal{
   display:flex;
   justify-content:flex-end;
@@ -69,13 +92,13 @@ input[readonly]{background:#020b1a;color:#9ca3af;}
 
 <body>
 
-<div class="header">
+<header>
   <h1>Zincagem / Tratamento</h1>
   <div class="acoes">
-    <button class="btn-azul" onclick="location.href='dashboard.html'">← Voltar ao menu</button>
-    <button class="btn-verde" id="btnNovaOp">+ Nova OP</button>
+    <button onclick="location.href='dashboard.html'">← Voltar ao menu</button>
+    <button id="btnNovaOp">+ Nova OP</button>
   </div>
-</div>
+</header>
 
 <main>
 <table>
@@ -110,7 +133,7 @@ input[readonly]{background:#020b1a;color:#9ca3af;}
       <div>
         <label>Peça</label>
         <select id="peca">
-          <option value="">Carregando…</option>
+          <option>Carregando…</option>
         </select>
       </div>
 
@@ -149,15 +172,16 @@ input[readonly]{background:#020b1a;color:#9ca3af;}
     </div>
 
     <div class="acoes-modal">
-      <button class="btn-verde" id="btnSalvar">Salvar</button>
-      <button class="btn-vermelho" id="btnCancelar">Cancelar</button>
+      <button id="btnSalvar">Salvar</button>
+      <button id="btnCancelar">Cancelar</button>
     </div>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
-/* ===== SUPABASE (ÚNICA INSTÂNCIA) ===== */
+/* ===== SUPABASE (UMA ÚNICA VEZ) ===== */
 const supabase = window.supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
@@ -168,21 +192,17 @@ const n = v => Number(String(v||"").replace(",", ".")) || 0;
 const f2 = v => n(v).toLocaleString("pt-BR",{minimumFractionDigits:2});
 const f3 = v => n(v).toLocaleString("pt-BR",{minimumFractionDigits:3});
 
-/* ===== EVENTOS ===== */
+/* ===== MODAL ===== */
 $("btnNovaOp").onclick = async () => {
-  $("modalBg").style.display="flex";
-  await carregarProdutos(); // 🔒 SEMPRE recarrega
+  $("modalBg").style.display = "flex";
+  await carregarProdutos();
 };
+$("btnCancelar").onclick = () => $("modalBg").style.display = "none";
 
-$("btnCancelar").onclick = () => $("modalBg").style.display="none";
-$("kg_liq").oninput = calcular;
-$("rs_kg").oninput = calcular;
-$("peca").onchange = calcular;
-
-/* ===== CARREGAR PRODUTOS (ROBUSTO) ===== */
+/* ===== PRODUTOS ===== */
 async function carregarProdutos(){
   const select = $("peca");
-  select.innerHTML = '<option value="">Carregando…</option>';
+  select.innerHTML = "<option>Carregando…</option>";
 
   const { data, error } = await supabase
     .from("produtos")
@@ -190,23 +210,27 @@ async function carregarProdutos(){
     .order("codigo");
 
   if(error){
-    select.innerHTML = '<option value="">Erro ao carregar</option>';
     console.error(error);
+    select.innerHTML = "<option>Erro ao carregar</option>";
     return;
   }
 
-  select.innerHTML = '<option value="">Selecione</option>';
+  select.innerHTML = "<option value=''>Selecione</option>";
 
   data.forEach(p=>{
-    const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = `${p.codigo} - ${p.descricao}`;
-    opt.dataset.peso = p.peso_caixa || 0;
-    opt.dataset.qtd = p.quantidade_caixa || 0;
-    opt.dataset.acab = p.acabamento || "Zincado";
-    select.appendChild(opt);
+    const o = document.createElement("option");
+    o.value = p.id;
+    o.textContent = `${p.codigo} - ${p.descricao}`;
+    o.dataset.peso = p.peso_caixa || 0;
+    o.dataset.qtd = p.quantidade_caixa || 0;
+    o.dataset.acab = p.acabamento || "Zincado";
+    select.appendChild(o);
   });
 }
+
+$("peca").onchange = calcular;
+$("kg_liq").oninput = calcular;
+$("rs_kg").oninput = calcular;
 
 /* ===== CÁLCULOS ===== */
 function calcular(){
@@ -215,14 +239,14 @@ function calcular(){
 
   $("acabamento").value = opt.dataset.acab;
 
-  const pesoCaixa = n(opt.dataset.peso);
-  const kgLiquido = n($("kg_liq").value);
+  const peso = n(opt.dataset.peso);
+  const kgLiq = n($("kg_liq").value);
   const rsKg = n($("rs_kg").value);
 
-  if(!pesoCaixa || !kgLiquido) return;
+  if(!peso || !kgLiq) return;
 
-  const qtd = Math.floor(kgLiquido / pesoCaixa);
-  const kgBruto = qtd * pesoCaixa;
+  const qtd = Math.floor(kgLiq / peso);
+  const kgBruto = qtd * peso;
   const total = kgBruto * rsKg;
 
   $("qtd").value = qtd;
