@@ -8,18 +8,19 @@
 <link rel="stylesheet" href="css/dashboard.css">
 
 <style>
-.main{ padding-top:20px; }
-
-.top-actions{
-  display:flex;
-  gap:10px;
+body{
+  margin:0;
 }
 
-.card{
-  background:#020b1a;
-  border-radius:14px;
-  padding:20px;
-  margin-top:20px;
+.main{
+  padding:24px;
+}
+
+.topo{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px;
 }
 
 .modal-bg{
@@ -30,15 +31,15 @@
   justify-content:center;
   align-items:flex-start;
   padding-top:60px;
-  z-index:999;
+  z-index:9999;
 }
 
 .modal{
   background:#020b1a;
-  border-radius:14px;
   padding:20px;
-  max-width:900px;
+  border-radius:12px;
   width:95%;
+  max-width:900px;
 }
 
 .grid-2{
@@ -65,74 +66,63 @@
   gap:10px;
 }
 
-@media(max-width:700px){
-  .grid-2{ grid-template-columns:1fr; }
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+th, td{
+  padding:10px;
+  border-bottom:1px solid #1f2937;
+  text-align:left;
 }
 </style>
 </head>
 
 <body>
 
-<div class="layout">
+<main class="main">
 
-  <!-- MENU -->
-  <aside class="sidebar">
-    <div class="logo-sistema">MATÃO USINAGEM</div>
-    <nav class="menu">
-      <a href="dashboard.html" class="menu-item">Dashboard</a>
-      <a href="clientes.html" class="menu-item">Clientes</a>
-      <a href="pedidos_lista.html" class="menu-item">Pedidos</a>
-      <a href="produtos_lista.html" class="menu-item">Produtos</a>
-      <a href="contas_receber.html" class="menu-item">Contas a Receber</a>
-      <a href="zincagem.html" class="menu-item ativo">Zincagem / Tratamento</a>
-    </nav>
-    <button id="btnLogout" class="menu-item botao-sair">Sair</button>
-  </aside>
+  <div class="topo">
+    <h1>Zincagem / Tratamento</h1>
+    <div>
+      <button class="btn-azul">Filtros</button>
+      <button class="btn-verde" id="btnNovaOp">+ Nova OP</button>
+    </div>
+  </div>
 
-  <!-- CONTEÚDO -->
-  <main class="main">
+  <table>
+    <thead>
+      <tr>
+        <th>OP</th>
+        <th>Data</th>
+        <th>Peça</th>
+        <th>Acab.</th>
+        <th>Kg Líq.</th>
+        <th>Qtd</th>
+        <th>Kg Bruto</th>
+        <th>R$/Kg</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody id="listaOps"></tbody>
+  </table>
 
-    <header class="topo-pagina">
-      <button class="btn-azul" onclick="location.href='dashboard.html'">← Voltar</button>
-      <h1>Zincagem / Tratamento</h1>
-      <div class="top-actions">
-        <button class="btn-azul" disabled>Filtros</button>
-        <button class="btn-verde" id="btnNovaOp">+ Nova OP</button>
-      </div>
-    </header>
+</main>
 
-    <!-- TABELA -->
-    <table class="tabela">
-      <thead>
-        <tr>
-          <th>OP</th>
-          <th>Data</th>
-          <th>Peça</th>
-          <th>Acab.</th>
-          <th>Kg Líq.</th>
-          <th>Qtd</th>
-          <th>Kg Bruto</th>
-          <th>R$/Kg</th>
-          <th>Total</th>
-        </tr>
-      </thead>
-      <tbody id="listaOps"></tbody>
-    </table>
-
-  </main>
-</div>
-
-<!-- MODAL NOVA OP -->
+<!-- MODAL -->
 <div class="modal-bg" id="modalBg">
   <div class="modal">
     <h2>Nova OP</h2>
 
     <div class="grid-2">
+
       <div><label>OP</label><input id="op"></div>
       <div><label>Data</label><input type="date" id="data"></div>
 
       <div><label>Peça</label><select id="peca"></select></div>
-      <div><label>Acabamento</label>
+      <div>
+        <label>Acabamento</label>
         <select id="acabamento">
           <option>Zincado</option>
           <option>Tratado</option>
@@ -159,29 +149,27 @@
   </div>
 </div>
 
-<!-- JS EMBUTIDO -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const supabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+/* 🔴 COLE SUAS CHAVES AQUI */
+const SUPABASE_URL = "SUA_SUPABASE_URL";
+const SUPABASE_ANON_KEY = "SUA_SUPABASE_ANON_KEY";
+
+const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* UTIL */
 const n = v => Number(String(v).replace(",", ".")) || 0;
 const f2 = v => v.toLocaleString("pt-BR",{minimumFractionDigits:2});
 const f3 = v => v.toLocaleString("pt-BR",{minimumFractionDigits:3});
 
-/* INIT */
-document.addEventListener("DOMContentLoaded", () => {
-  btnNovaOp.onclick = () => {
-    modalBg.style.display = "flex";
-    carregarProdutos();
-  };
-  btnCancelar.onclick = () => modalBg.style.display = "none";
-  btnSalvar.onclick = salvarOP;
-  carregarOps();
-});
+/* EVENTOS */
+btnNovaOp.onclick = () => {
+  modalBg.style.display = "flex";
+  carregarProdutos();
+};
+
+btnCancelar.onclick = () => modalBg.style.display = "none";
+btnSalvar.onclick = salvarOP;
 
 /* LISTAR OPS */
 async function carregarOps(){
@@ -209,12 +197,17 @@ async function carregarOps(){
 
 /* PRODUTOS */
 async function carregarProdutos(){
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("produtos")
     .select("id,codigo,descricao,comprimento_mm,quantidade_caixa,peso_caixa");
 
+  if(error){
+    alert(error.message);
+    return;
+  }
+
   peca.innerHTML = `<option value="">Selecione</option>`;
-  data?.forEach(p=>{
+  data.forEach(p=>{
     const o=document.createElement("option");
     o.value=p.id;
     o.textContent=`${p.codigo} - ${p.descricao}`;
@@ -243,6 +236,7 @@ kg_liquido.oninput = rs_kg.oninput = ()=>{
 /* SALVAR */
 async function salvarOP(){
   const o=peca.selectedOptions[0];
+
   await supabase.from("zincagem_tratamento").insert({
     op:op.value,
     data:data.value,
@@ -258,9 +252,12 @@ async function salvarOP(){
     rs_kg:n(rs_kg.value),
     total:n(total.value)
   });
+
   modalBg.style.display="none";
   carregarOps();
 }
+
+carregarOps();
 </script>
 
 </body>
