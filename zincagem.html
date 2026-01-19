@@ -1,227 +1,31 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Zincagem / Tratamento</title>
+import { supabase, verificarLogin } from "./auth.js";
 
-<link rel="stylesheet" href="css/dashboard.css">
-
-<style>
-.main{
-  padding-top:20px;
-}
-
-.modal-bg{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.6);
-  display:flex;
-  justify-content:center;
-  align-items:flex-start;
-  padding-top:60px;
-  z-index:999;
-}
-
-.modal{
-  background:#020b1a;
-  border-radius:12px;
-  padding:20px;
-  width:95%;
-  max-width:1000px;
-}
-
-.modal h2{
-  margin:0 0 16px 0;
-  color:#38bdf8;
-}
-
-.grid-4{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:14px;
-}
-
-.grid-4 label{
-  font-size:13px;
-  margin-bottom:4px;
-  display:block;
-}
-
-.grid-4 input,
-.grid-4 select{
-  width:100%;
-  padding:8px;
-}
-
-.acoes{
-  margin-top:20px;
-  display:flex;
-  justify-content:flex-end;
-  gap:10px;
-}
-
-@media(max-width:900px){
-  .grid-4{ grid-template-columns:repeat(2,1fr); }
-}
-@media(max-width:600px){
-  .grid-4{ grid-template-columns:1fr; }
-}
-</style>
-</head>
-
-<body>
-
-<div class="layout">
-
-  <aside class="sidebar">
-    <div class="logo-sistema">MATÃO USINAGEM</div>
-
-    <nav class="menu">
-      <div class="menu-titulo">Módulos</div>
-      <a href="clientes.html" class="menu-item">Clientes</a>
-      <a href="pedidos_lista.html" class="menu-item">Pedidos</a>
-      <a href="pedidos_abertos.html" class="menu-item">Pedidos em Aberto</a>
-      <a href="produtos_lista.html" class="menu-item">Produtos</a>
-      <a href="notas_lista.html" class="menu-item">Notas Fiscais</a>
-      <a href="contas_receber.html" class="menu-item">Contas a Receber</a>
-      <a href="zincagem.html" class="menu-item ativo">Zincagem / Tratamento</a>
-    </nav>
-
-    <button id="btnLogout" class="menu-item botao-sair">Sair</button>
-  </aside>
-
-  <main class="main">
-
-    <header class="topo-pagina">
-      <button class="btn-azul" onclick="location.href='dashboard.html'">← Voltar</button>
-      <h1>Zincagem / Tratamento</h1>
-      <button class="btn-verde" onclick="abrirModal()">+ Nova OP</button>
-    </header>
-
-    <table class="tabela">
-      <thead>
-        <tr>
-          <th>OP</th>
-          <th>Data</th>
-          <th>Peça</th>
-          <th>Acab.</th>
-          <th>Kg</th>
-          <th>Qtd</th>
-          <th>Total</th>
-        </tr>
-      </thead>
-      <tbody id="lista"></tbody>
-    </table>
-
-  </main>
-</div>
-
-<!-- MODAL -->
-<div class="modal-bg" id="modalBg" style="display:none">
-  <div class="modal">
-
-    <h2>Nova OP</h2>
-
-    <div class="grid-4">
-
-      <div>
-        <label>OP</label>
-        <input id="op">
-      </div>
-
-      <div>
-        <label>Data</label>
-        <input type="date" id="data">
-      </div>
-
-      <div>
-        <label>Peça</label>
-        <select id="peca">
-          <option value="">Selecione</option>
-        </select>
-      </div>
-
-      <div>
-        <label>Kg Líquido</label>
-        <input id="kg_liquido">
-      </div>
-
-      <div>
-        <label>Comprimento (mm)</label>
-        <input id="comprimento" readonly>
-      </div>
-
-      <div>
-        <label>Pç / Caixa</label>
-        <input id="pc_caixa" readonly>
-      </div>
-
-      <div>
-        <label>Acabamento</label>
-        <select id="acabamento">
-          <option>Zincado</option>
-          <option>Tratado</option>
-        </select>
-      </div>
-
-      <div>
-        <label>Peso Caixa</label>
-        <input id="peso_caixa" readonly>
-      </div>
-
-      <div>
-        <label>Quantidade</label>
-        <input id="quantidade" readonly>
-      </div>
-
-      <div>
-        <label>Kg Bruto</label>
-        <input id="kg_bruto" readonly>
-      </div>
-
-      <div>
-        <label>R$/Kg</label>
-        <input id="rs_kg">
-      </div>
-
-      <div>
-        <label>Total</label>
-        <input id="total" readonly>
-      </div>
-
-    </div>
-
-    <div class="acoes">
-      <button class="btn-verde">Salvar</button>
-      <button class="btn-vermelho" onclick="fecharModal()">Cancelar</button>
-    </div>
-
-  </div>
-</div>
-
-<script type="module">
-import { verificarLogin, supabase } from "./js/auth.js";
-
+/* ========= LOGIN ========= */
 document.addEventListener("DOMContentLoaded", async () => {
   const user = await verificarLogin();
   if (!user) return;
 
-  btnLogout.onclick = async () => {
+  document.getElementById("btnLogout").onclick = async () => {
     await supabase.auth.signOut();
     location.href = "index.html";
   };
 
-  await carregarProdutos();
+  document.getElementById("btnNovaOp").onclick = () => {
+    modalBg.style.display = "flex";
+    carregarProdutos();
+  };
+
+  document.getElementById("btnCancelar").onclick = () => {
+    modalBg.style.display = "none";
+  };
 });
 
-window.abrirModal = () => modalBg.style.display = "flex";
-window.fecharModal = () => modalBg.style.display = "none";
-
+/* ========= UTIL ========= */
 const n = v => Number(String(v).replace(",", ".")) || 0;
-const f3 = v => v.toLocaleString("pt-BR", { minimumFractionDigits: 3 });
 const f2 = v => v.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+const f3 = v => v.toLocaleString("pt-BR", { minimumFractionDigits: 3 });
 
+/* ========= CARREGAR PRODUTOS ========= */
 async function carregarProdutos(){
   const select = document.getElementById("peca");
   select.innerHTML = `<option value="">Selecione</option>`;
@@ -232,7 +36,7 @@ async function carregarProdutos(){
     .order("codigo");
 
   if (error) {
-    alert("Erro ao carregar produtos: " + error.message);
+    alert(error.message);
     console.error(error);
     return;
   }
@@ -241,13 +45,14 @@ async function carregarProdutos(){
     const o = document.createElement("option");
     o.value = p.codigo;
     o.textContent = `${p.codigo} - ${p.descricao}`;
-    o.dataset.comp = p.comprimento_mm || 0;
-    o.dataset.pc = p.quantidade_caixa || 0;
-    o.dataset.peso = p.peso_caixa || 0;
+    o.dataset.comp = p.comprimento_mm;
+    o.dataset.pc = p.quantidade_caixa;
+    o.dataset.peso = p.peso_caixa;
     select.appendChild(o);
   });
 }
 
+/* ========= AUTO-PREENCHIMENTO ========= */
 peca.addEventListener("change", e => {
   const o = e.target.selectedOptions[0];
   if (!o) return;
@@ -257,13 +62,13 @@ peca.addEventListener("change", e => {
   peso_caixa.value = f3(n(o.dataset.peso));
 });
 
-rs_kg.addEventListener("input", () => {
+/* ========= CÁLCULOS ========= */
+rs_kg.addEventListener("input", calcular);
+kg_liquido.addEventListener("input", calcular);
+
+function calcular(){
   const qtd = Math.floor(n(kg_liquido.value) / n(peso_caixa.value || 1));
   quantidade.value = qtd;
   kg_bruto.value = f3(qtd * n(peso_caixa.value));
   total.value = f2(n(rs_kg.value) * n(kg_bruto.value));
-});
-</script>
-
-</body>
-</html>
+}
