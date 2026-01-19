@@ -1,113 +1,68 @@
 import { supabase, verificarLogin } from "./auth.js";
 
-let produtos = [];
-let produtoSelecionado = null;
-
+/* LOGIN */
 document.addEventListener("DOMContentLoaded", async () => {
   const user = await verificarLogin();
   if (!user) return;
 
-  await carregarProdutos();
-  configurarEventos();
-});
-
-// =============================
-// Carregar produtos (SEM FILTRO NA API)
-// =============================
-async function carregarProdutos(){
-  const { data, error } = await supabase
-    .from("produtos")
-    .select("id, codigo, comprimento, acabamento, peso_liquido, peso_bruto, pecas_por_caixa, usar_em_acabamento")
-    .order("codigo");
-
-  if(error){
-    alert("Erro ao carregar produtos");
-    console.error(error);
-    return;
-  }
-
-  // Filtra no JS, não no Supabase
-  produtos = data.filter(p => p.usar_em_acabamento === true);
-
-  const select = document.getElementById("produtoSelect");
-  select.innerHTML = `<option value="">Selecione</option>`;
-
-  produtos.forEach(p=>{
-    const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = p.codigo;
-    select.appendChild(opt);
-  });
-}
-
-// =============================
-// Eventos
-// =============================
-function configurarEventos(){
-  document.getElementById("produtoSelect").addEventListener("change", e=>{
-    produtoSelecionado = produtos.find(p=>p.id == e.target.value);
-    if(!produtoSelecionado) return;
-
-    document.getElementById("comp").value = produtoSelecionado.comprimento || "";
-    document.getElementById("servico").value = produtoSelecionado.acabamento || "";
-    document.getElementById("ppc").value = produtoSelecionado.pecas_por_caixa || "";
-
-    recalcular();
-  });
-
-  document.getElementById("kg").addEventListener("input", recalcular);
-  document.getElementById("btnSalvar").addEventListener("click", salvar);
-}
-
-// =============================
-// Cálculos
-// =============================
-function recalcular(){
-  if(!produtoSelecionado) return;
-
-  const kg = parseFloat(document.getElementById("kg").value || 0);
-
-  const quantidade = kg / (produtoSelecionado.peso_liquido || 1);
-  const kgBruto = quantidade * (produtoSelecionado.peso_bruto || 0);
-
-  document.getElementById("quantidade").value = quantidade.toFixed(0);
-  document.getElementById("kgBruto").value = kgBruto.toFixed(2);
-}
-
-// =============================
-// Salvar
-// =============================
-async function salvar(){
-  if(!produtoSelecionado){
-    alert("Selecione o produto");
-    return;
-  }
-
-  const payload = {
-    op: document.getElementById("op").value,
-    data: document.getElementById("data").value,
-    produto_id: produtoSelecionado.id,
-    codigo_peca: produtoSelecionado.codigo,
-    comp: produtoSelecionado.comprimento,
-    pecas_por_caixa: produtoSelecionado.pecas_por_caixa,
-    servico: produtoSelecionado.acabamento,
-    kg: parseFloat(document.getElementById("kg").value),
-    quantidade: parseFloat(document.getElementById("quantidade").value),
-    kg_material_bruto: parseFloat(document.getElementById("kgBruto").value),
-    peso_caixa: produtoSelecionado.peso_bruto,
-    entregue: document.getElementById("entregue").value === "true",
-    boleto: document.getElementById("boleto").value === "true"
+  btnLogout.onclick = async () => {
+    await supabase.auth.signOut();
+    location.href = "index.html";
   };
 
-  const { error } = await supabase
-    .from("zincagem_tratamento")
-    .insert(payload);
+  carregarProdutos();
+});
 
-  if(error){
-    alert("Erro ao salvar");
+/* UTIL */
+const n = v => Number(String(v).replace(",", ".")) || 0;
+const f2 = v => v.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+const f3 = v => v.toLocaleString("pt-BR", { minimumFractionDigits: 3 });
+
+/* CARREGAR PRODUTOS */
+async function carregarProdutos(){
+  peca.innerHTML = `<option value="">Selecione</option>`;
+
+  const { data, error } = await supabase
+    .from("produtos")
+    .select("codigo, descricao, comprimento_mm, quantidade_caixa, peso_caixa")
+    .order("codigo");
+
+  if (error) {
+    alert(error.message);
     console.error(error);
-  } else {
-    alert("Registro salvo");
-    window.location.reload();
+    return;
   }
+
+  data.forEach(p => {
+    const o = document.createElement("option");
+    o.value = p.codigo;
+    o.textContent = `${p.codigo} - ${p.descricao}`;
+    o.dataset.comp = p.comprimento_mm;
+    o.dataset.pc = p.quantidade_caixa;
+    o.dataset.peso = p.peso_caixa;
+    peca.appendChild(o);
+  });
+}
+
+/* AUTO-PREENCHIMENTO */
+peca.addEventListener("change", () => {
+  const o = peca.selectedOptions[0];
+  if (!o) return;
+
+  comprimento.value = o.dataset.comp;
+  pc_caixa.value = o.dataset.pc;
+  peso_caixa.value = f3(n(o.dataset.peso));
+
+  calcular();
+});
+
+/* CÁLCULOS */
+kg_liquido.addEventListener("input", calcular);
+rs_kg.addEventListener("input", calcular);
+
+function calcular(){
+  const qtd = Math.floor(n(kg_liquido.value) / n(peso_caixa.value || 1));
+  quantidade.value = qtd;
+  kg_bruto.value = f3(qtd * n(peso_caixa.value));
+  total.value = f2(n(rs_kg.value) * n(kg_bruto.value));
 }
