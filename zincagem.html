@@ -14,8 +14,6 @@ body{
   color:#e5e7eb;
   font-family:Segoe UI,Arial;
 }
-
-/* HEADER */
 .header{
   display:flex;
   justify-content:space-between;
@@ -25,33 +23,12 @@ body{
 }
 .header h1{margin:0;color:#38bdf8;}
 .header .acoes{display:flex;gap:10px;}
-
-/* FILTROS */
-.filtros{
-  display:grid;
-  grid-template-columns:120px 1fr 160px 150px 150px auto;
-  gap:10px;
-  padding:14px 24px;
-  border-bottom:1px solid rgba(56,189,248,.15);
-}
-.filtros input,.filtros select{
-  padding:8px 10px;
-  border-radius:8px;
-  border:1px solid rgba(148,163,184,.3);
-  background:#020617;
-  color:#e5e7eb;
-}
-
-/* TABELA */
 main{padding:20px 24px;}
 table{width:100%;border-collapse:collapse;}
 th,td{padding:10px;border-bottom:1px solid rgba(148,163,184,.15);}
 th{color:#38bdf8;text-align:left;}
-
-/* MODAL */
 .modal-bg{
-  position:fixed;
-  inset:0;
+  position:fixed; inset:0;
   background:rgba(0,0,0,.65);
   display:none;
   justify-content:center;
@@ -65,10 +42,7 @@ th{color:#38bdf8;text-align:left;}
   width:900px;
   border:1px solid rgba(56,189,248,.2);
 }
-.modal h2{
-  margin-top:0;
-  color:#38bdf8;
-}
+.modal h2{margin-top:0;color:#38bdf8;}
 .grid{
   display:grid;
   grid-template-columns:repeat(2,1fr);
@@ -83,10 +57,7 @@ input,select{
   background:#020617;
   color:#e5e7eb;
 }
-input[readonly]{
-  background:#020b1a;
-  color:#9ca3af;
-}
+input[readonly]{background:#020b1a;color:#9ca3af;}
 .acoes-modal{
   display:flex;
   justify-content:flex-end;
@@ -104,19 +75,6 @@ input[readonly]{
     <button class="btn-azul" onclick="location.href='dashboard.html'">← Voltar ao menu</button>
     <button class="btn-verde" id="btnNovaOp">+ Nova OP</button>
   </div>
-</div>
-
-<div class="filtros">
-  <input id="fOp" placeholder="OP">
-  <select id="fPeca"><option value="">Peça</option></select>
-  <select id="fAcab">
-    <option value="">Acabamento</option>
-    <option>Zincado</option>
-    <option>Tratado</option>
-  </select>
-  <input type="date" id="fIni">
-  <input type="date" id="fFim">
-  <button class="btn-azul" id="btnFiltrar">Filtrar</button>
 </div>
 
 <main>
@@ -151,7 +109,9 @@ input[readonly]{
 
       <div>
         <label>Peça</label>
-        <select id="peca"></select>
+        <select id="peca">
+          <option value="">Carregando…</option>
+        </select>
       </div>
 
       <div>
@@ -197,60 +157,63 @@ input[readonly]{
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-/* SUPABASE – reaproveita instância global */
-if (!window._supabaseClient) {
-  window._supabaseClient = window.supabase.createClient(
-    "https://uxtgicfuggpuyjybwawa.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
-  );
-}
-const supabaseClient = window._supabaseClient;
+/* ===== SUPABASE (ÚNICA INSTÂNCIA) ===== */
+const supabase = window.supabase.createClient(
+  "https://uxtgicfuggpuyjybwawa.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
+);
 
 const $ = id => document.getElementById(id);
 const n = v => Number(String(v||"").replace(",", ".")) || 0;
 const f2 = v => n(v).toLocaleString("pt-BR",{minimumFractionDigits:2});
 const f3 = v => n(v).toLocaleString("pt-BR",{minimumFractionDigits:3});
 
-/* EVENTOS */
-$("btnNovaOp").onclick = () => {
+/* ===== EVENTOS ===== */
+$("btnNovaOp").onclick = async () => {
   $("modalBg").style.display="flex";
-  carregarProdutos();
+  await carregarProdutos(); // 🔒 SEMPRE recarrega
 };
-$("btnCancelar").onclick = () => $("modalBg").style.display="none";
-$("btnFiltrar").onclick = carregarOps;
-$("btnSalvar").onclick = salvarOP;
 
+$("btnCancelar").onclick = () => $("modalBg").style.display="none";
 $("kg_liq").oninput = calcular;
 $("rs_kg").oninput = calcular;
 $("peca").onchange = calcular;
 
-/* PRODUTOS */
+/* ===== CARREGAR PRODUTOS (ROBUSTO) ===== */
 async function carregarProdutos(){
-  const { data } = await supabaseClient
-    .from("produtos")
-    .select("id,codigo,descricao,peso_caixa,quantidade_caixa,acabamento");
+  const select = $("peca");
+  select.innerHTML = '<option value="">Carregando…</option>';
 
-  $("peca").innerHTML = '<option value="">Selecione</option>';
-  $("fPeca").innerHTML = '<option value="">Peça</option>';
+  const { data, error } = await supabase
+    .from("produtos")
+    .select("id,codigo,descricao,peso_caixa,quantidade_caixa,acabamento")
+    .order("codigo");
+
+  if(error){
+    select.innerHTML = '<option value="">Erro ao carregar</option>';
+    console.error(error);
+    return;
+  }
+
+  select.innerHTML = '<option value="">Selecione</option>';
 
   data.forEach(p=>{
-    $("peca").innerHTML += `
-      <option value="${p.id}"
-        data-peso="${p.peso_caixa}"
-        data-qtd="${p.quantidade_caixa}"
-        data-acab="${p.acabamento || 'Zincado'}">
-        ${p.codigo} - ${p.descricao}
-      </option>`;
-    $("fPeca").innerHTML += `<option value="${p.codigo}">${p.codigo}</option>`;
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = `${p.codigo} - ${p.descricao}`;
+    opt.dataset.peso = p.peso_caixa || 0;
+    opt.dataset.qtd = p.quantidade_caixa || 0;
+    opt.dataset.acab = p.acabamento || "Zincado";
+    select.appendChild(opt);
   });
 }
 
-/* CÁLCULOS AUTOMÁTICOS */
+/* ===== CÁLCULOS ===== */
 function calcular(){
   const opt = $("peca").selectedOptions[0];
-  if(!opt) return;
+  if(!opt || !opt.value) return;
 
-  $("acabamento").value = opt.dataset.acab || "Zincado";
+  $("acabamento").value = opt.dataset.acab;
 
   const pesoCaixa = n(opt.dataset.peso);
   const kgLiquido = n($("kg_liq").value);
@@ -266,51 +229,6 @@ function calcular(){
   $("kg_bruto").value = f3(kgBruto);
   $("total").value = f2(total);
 }
-
-/* LISTAR OPS */
-async function carregarOps(){
-  const { data } = await supabaseClient
-    .from("zincagem_tratamento")
-    .select("*")
-    .order("created_at",{ascending:false});
-
-  $("lista").innerHTML = data.length
-    ? data.map(o=>`
-      <tr>
-        <td>${o.op}</td>
-        <td>${o.data}</td>
-        <td>${o.codigo_peca_text}</td>
-        <td>${o.acabamento}</td>
-        <td>${f3(o.kg_liquido)}</td>
-        <td>${o.quantidade}</td>
-        <td>${f3(o.kg_bruto)}</td>
-        <td>${f2(o.rs_kg)}</td>
-        <td>${f2(o.total)}</td>
-      </tr>`).join("")
-    : `<tr><td colspan="9">Nenhum registro</td></tr>`;
-}
-
-/* SALVAR */
-async function salvarOP(){
-  const opt = $("peca").selectedOptions[0];
-  await supabaseClient.from("zincagem_tratamento").insert({
-    op:$("op").value,
-    data:$("data").value,
-    produto_id:$("peca").value,
-    codigo_peca_text:opt.text,
-    acabamento:$("acabamento").value,
-    kg_liquido:n($("kg_liq").value),
-    quantidade:n($("qtd").value),
-    kg_bruto:n($("kg_bruto").value),
-    rs_kg:n($("rs_kg").value),
-    total:n($("total").value)
-  });
-  $("modalBg").style.display="none";
-  carregarOps();
-}
-
-/* INIT */
-carregarOps();
 </script>
 
 </body>
