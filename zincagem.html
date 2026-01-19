@@ -8,68 +8,61 @@
 <link rel="stylesheet" href="css/dashboard.css">
 
 <style>
+/* ===== AJUSTES MÍNIMOS E NECESSÁRIOS ===== */
+.main{
+  padding-top:20px; /* margem superior que estava faltando */
+}
+
 .modal-bg{
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,.75);
+  background:rgba(0,0,0,.6);
   display:flex;
-  align-items:center;
   justify-content:center;
+  align-items:flex-start;
+  padding-top:60px; /* respiro superior */
   z-index:999;
 }
 
 .modal{
   background:#020b1a;
-  border-radius:16px;
-  padding:24px;
-  width:100%;
-  max-width:1100px;
-  box-shadow:0 0 40px rgba(0,0,0,.7);
+  border-radius:12px;
+  padding:20px;
+  width:95%;
+  max-width:1000px;
 }
 
 .modal h2{
-  margin-top:0;
+  margin:0 0 16px 0;
   color:#38bdf8;
 }
 
 .grid-4{
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  gap:16px;
-}
-
-.grid-4 > div{
-  display:flex;
-  flex-direction:column;
+  gap:14px;
 }
 
 .grid-4 label{
   font-size:13px;
-  color:#94a3b8;
   margin-bottom:4px;
+  display:block;
 }
 
 .grid-4 input,
 .grid-4 select{
-  padding:10px;
-  border-radius:8px;
-  border:1px solid #1e293b;
-  background:#020617;
-  color:#e5e7eb;
-}
-
-.grid-4 input[readonly]{
-  opacity:.7;
+  width:100%;
+  padding:8px;
 }
 
 .acoes{
-  margin-top:24px;
+  margin-top:20px;
   display:flex;
   justify-content:flex-end;
-  gap:12px;
+  gap:10px;
 }
 
-@media(max-width:1000px){
+@media(max-width:900px){
   .grid-4{ grid-template-columns:repeat(2,1fr); }
 }
 @media(max-width:600px){
@@ -82,30 +75,27 @@
 
 <div class="layout">
 
-  <!-- MENU LATERAL -->
   <aside class="sidebar">
     <div class="logo-sistema">MATÃO USINAGEM</div>
 
     <nav class="menu">
       <div class="menu-titulo">Módulos</div>
-
-      <a href="clientes.html" class="menu-item">👤 Clientes</a>
-      <a href="pedidos_lista.html" class="menu-item">📑 Pedidos</a>
-      <a href="pedidos_abertos.html" class="menu-item">📌 Pedidos em Aberto</a>
-      <a href="produtos_lista.html" class="menu-item">📦 Produtos</a>
-      <a href="notas_lista.html" class="menu-item">🧾 Notas Fiscais</a>
-      <a href="contas_receber.html" class="menu-item">💰 Contas a Receber</a>
-      <a href="zincagem.html" class="menu-item ativo">⚙️ Zincagem / Tratamento</a>
+      <a href="clientes.html" class="menu-item">Clientes</a>
+      <a href="pedidos_lista.html" class="menu-item">Pedidos</a>
+      <a href="pedidos_abertos.html" class="menu-item">Pedidos em Aberto</a>
+      <a href="produtos_lista.html" class="menu-item">Produtos</a>
+      <a href="notas_lista.html" class="menu-item">Notas Fiscais</a>
+      <a href="contas_receber.html" class="menu-item">Contas a Receber</a>
+      <a href="zincagem.html" class="menu-item ativo">Zincagem / Tratamento</a>
     </nav>
 
-    <button id="btnLogout" class="menu-item botao-sair">🚪 Sair</button>
+    <button id="btnLogout" class="menu-item botao-sair">Sair</button>
   </aside>
 
-  <!-- CONTEÚDO -->
   <main class="main">
 
     <header class="topo-pagina">
-      <button class="btn-azul" onclick="window.location.href='dashboard.html'">← Voltar</button>
+      <button class="btn-azul" onclick="location.href='dashboard.html'">← Voltar</button>
       <h1>Zincagem / Tratamento</h1>
       <button class="btn-verde" onclick="abrirModal()">+ Nova OP</button>
     </header>
@@ -147,7 +137,7 @@
       </div>
 
       <div>
-        <label>Pino de Engate</label>
+        <label>Peça</label>
         <select id="peca">
           <option value="">Selecione</option>
         </select>
@@ -214,33 +204,27 @@
 <script type="module">
 import { verificarLogin, supabase } from "./js/auth.js";
 
-/* LOGIN */
 document.addEventListener("DOMContentLoaded", async () => {
   const user = await verificarLogin();
   if (!user) return;
 
-  document.getElementById("btnLogout").onclick = async () => {
+  btnLogout.onclick = async () => {
     await supabase.auth.signOut();
-    window.location.href = "index.html";
+    location.href = "index.html";
   };
 
-  carregarPinos();
+  await carregarProdutos();
 });
 
-/* MODAL */
 window.abrirModal = () => modalBg.style.display = "flex";
 window.fecharModal = () => modalBg.style.display = "none";
 
-/* FORMATADORES */
 const n = v => Number(String(v).replace(",", ".")) || 0;
 const f3 = v => v.toLocaleString("pt-BR", { minimumFractionDigits: 3 });
 const f2 = v => v.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
-/* CARREGAR PRODUTOS (SEM FILTRO) */
-async function carregarPinos() {
+async function carregarProdutos(){
   const select = document.getElementById("peca");
-  if (!select) return;
-
   select.innerHTML = `<option value="">Selecione</option>`;
 
   const { data, error } = await supabase
@@ -249,23 +233,23 @@ async function carregarPinos() {
     .order("codigo");
 
   if (error) {
-    console.error("Erro ao carregar produtos:", error);
+    alert("ERRO AO CARREGAR PRODUTOS (RLS?): " + error.message);
+    console.error(error);
     return;
   }
 
   data.forEach(p => {
     const o = document.createElement("option");
     o.value = p.codigo;
-    o.textContent = `${p.codigo} – ${p.descricao}`;
-    o.dataset.comp = p.comprimento ?? 0;
-    o.dataset.pc = p.pc_caixa ?? 0;
-    o.dataset.peso = p.peso_caixa ?? 0;
+    o.textContent = `${p.codigo} - ${p.descricao}`;
+    o.dataset.comp = p.comprimento || 0;
+    o.dataset.pc = p.pc_caixa || 0;
+    o.dataset.peso = p.peso_caixa || 0;
     select.appendChild(o);
   });
 }
 
-/* AUTO-PREENCHIMENTO */
-document.getElementById("peca").addEventListener("change", e => {
+peca.addEventListener("change", e => {
   const o = e.target.selectedOptions[0];
   if (!o) return;
 
