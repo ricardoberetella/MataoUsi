@@ -55,35 +55,43 @@ th{color:#38bdf8;text-align:left;}
   background:rgba(0,0,0,.65);
   display:none;
   justify-content:center;
-  align-items:flex-start;
-  padding-top:80px;
+  align-items:center;
   z-index:9999;
 }
 .modal{
-  background:#020b1a;
-  padding:20px;
-  border-radius:14px;
+  background:linear-gradient(180deg,#020b1a,#020617);
+  padding:22px;
+  border-radius:16px;
   width:900px;
+  border:1px solid rgba(56,189,248,.2);
+}
+.modal h2{
+  margin-top:0;
+  color:#38bdf8;
 }
 .grid{
   display:grid;
   grid-template-columns:repeat(2,1fr);
-  gap:12px;
+  gap:14px;
 }
-label{font-size:13px;}
+label{font-size:13px;color:#cbd5f5;}
 input,select{
   width:100%;
-  padding:9px;
-  border-radius:8px;
+  padding:10px;
+  border-radius:10px;
   border:1px solid rgba(148,163,184,.3);
   background:#020617;
   color:#e5e7eb;
+}
+input[readonly]{
+  background:#020b1a;
+  color:#9ca3af;
 }
 .acoes-modal{
   display:flex;
   justify-content:flex-end;
   gap:10px;
-  margin-top:16px;
+  margin-top:18px;
 }
 </style>
 </head>
@@ -98,7 +106,6 @@ input,select{
   </div>
 </div>
 
-<!-- FILTROS -->
 <div class="filtros">
   <input id="fOp" placeholder="OP">
   <select id="fPeca"><option value="">Peça</option></select>
@@ -132,20 +139,53 @@ input,select{
     <h2>Nova OP</h2>
 
     <div class="grid">
-      <div><label>OP</label><input id="op"></div>
-      <div><label>Data</label><input type="date" id="data"></div>
-      <div><label>Peça</label><select id="peca"></select></div>
-      <div><label>Acabamento</label>
+      <div>
+        <label>OP</label>
+        <input id="op">
+      </div>
+
+      <div>
+        <label>Data</label>
+        <input type="date" id="data">
+      </div>
+
+      <div>
+        <label>Peça</label>
+        <select id="peca"></select>
+      </div>
+
+      <div>
+        <label>Acabamento</label>
         <select id="acabamento">
           <option>Zincado</option>
           <option>Tratado</option>
         </select>
       </div>
-      <div><label>Kg Líquido</label><input id="kg_liq"></div>
-      <div><label>R$/Kg</label><input id="rs_kg"></div>
-      <div><label>Quantidade</label><input id="qtd" readonly></div>
-      <div><label>Kg Bruto</label><input id="kg_bruto" readonly></div>
-      <div><label>Total</label><input id="total" readonly></div>
+
+      <div>
+        <label>Kg Líquido</label>
+        <input id="kg_liq">
+      </div>
+
+      <div>
+        <label>R$/Kg</label>
+        <input id="rs_kg">
+      </div>
+
+      <div>
+        <label>Quantidade</label>
+        <input id="qtd" readonly>
+      </div>
+
+      <div>
+        <label>Kg Bruto</label>
+        <input id="kg_bruto" readonly>
+      </div>
+
+      <div>
+        <label>Total (R$)</label>
+        <input id="total" readonly>
+      </div>
     </div>
 
     <div class="acoes-modal">
@@ -157,7 +197,7 @@ input,select{
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-/* ========= SUPABASE GLOBAL (ANTI DUPLICAÇÃO) ========= */
+/* SUPABASE – reaproveita instância global */
 if (!window._supabaseClient) {
   window._supabaseClient = window.supabase.createClient(
     "https://uxtgicfuggpuyjybwawa.supabase.co",
@@ -166,46 +206,73 @@ if (!window._supabaseClient) {
 }
 const supabaseClient = window._supabaseClient;
 
-/* HELPERS */
 const $ = id => document.getElementById(id);
 const n = v => Number(String(v||"").replace(",", ".")) || 0;
 const f2 = v => n(v).toLocaleString("pt-BR",{minimumFractionDigits:2});
+const f3 = v => n(v).toLocaleString("pt-BR",{minimumFractionDigits:3});
 
-/* BOTÕES */
+/* EVENTOS */
 $("btnNovaOp").onclick = () => {
-  $("modalBg").style.display = "flex";
+  $("modalBg").style.display="flex";
   carregarProdutos();
 };
-$("btnCancelar").onclick = () => $("modalBg").style.display = "none";
+$("btnCancelar").onclick = () => $("modalBg").style.display="none";
 $("btnFiltrar").onclick = carregarOps;
 $("btnSalvar").onclick = salvarOP;
+
+$("kg_liq").oninput = calcular;
+$("rs_kg").oninput = calcular;
+$("peca").onchange = calcular;
 
 /* PRODUTOS */
 async function carregarProdutos(){
   const { data } = await supabaseClient
     .from("produtos")
-    .select("id,codigo,descricao");
+    .select("id,codigo,descricao,peso_caixa,quantidade_caixa,acabamento");
 
   $("peca").innerHTML = '<option value="">Selecione</option>';
   $("fPeca").innerHTML = '<option value="">Peça</option>';
 
   data.forEach(p=>{
-    $("peca").innerHTML += `<option value="${p.id}">${p.codigo} - ${p.descricao}</option>`;
+    $("peca").innerHTML += `
+      <option value="${p.id}"
+        data-peso="${p.peso_caixa}"
+        data-qtd="${p.quantidade_caixa}"
+        data-acab="${p.acabamento || 'Zincado'}">
+        ${p.codigo} - ${p.descricao}
+      </option>`;
     $("fPeca").innerHTML += `<option value="${p.codigo}">${p.codigo}</option>`;
   });
 }
 
-/* OPS */
+/* CÁLCULOS AUTOMÁTICOS */
+function calcular(){
+  const opt = $("peca").selectedOptions[0];
+  if(!opt) return;
+
+  $("acabamento").value = opt.dataset.acab || "Zincado";
+
+  const pesoCaixa = n(opt.dataset.peso);
+  const kgLiquido = n($("kg_liq").value);
+  const rsKg = n($("rs_kg").value);
+
+  if(!pesoCaixa || !kgLiquido) return;
+
+  const qtd = Math.floor(kgLiquido / pesoCaixa);
+  const kgBruto = qtd * pesoCaixa;
+  const total = kgBruto * rsKg;
+
+  $("qtd").value = qtd;
+  $("kg_bruto").value = f3(kgBruto);
+  $("total").value = f2(total);
+}
+
+/* LISTAR OPS */
 async function carregarOps(){
-  let q = supabaseClient.from("zincagem_tratamento").select("*");
-
-  if($("fOp").value) q = q.eq("op", $("fOp").value);
-  if($("fAcab").value) q = q.eq("acabamento", $("fAcab").value);
-  if($("fPeca").value) q = q.eq("codigo_peca_text", $("fPeca").value);
-  if($("fIni").value) q = q.gte("data", $("fIni").value);
-  if($("fFim").value) q = q.lte("data", $("fFim").value);
-
-  const { data } = await q.order("created_at",{ascending:false});
+  const { data } = await supabaseClient
+    .from("zincagem_tratamento")
+    .select("*")
+    .order("created_at",{ascending:false});
 
   $("lista").innerHTML = data.length
     ? data.map(o=>`
@@ -214,36 +281,30 @@ async function carregarOps(){
         <td>${o.data}</td>
         <td>${o.codigo_peca_text}</td>
         <td>${o.acabamento}</td>
-        <td>${o.kg_liquido}</td>
+        <td>${f3(o.kg_liquido)}</td>
         <td>${o.quantidade}</td>
-        <td>${o.kg_bruto}</td>
+        <td>${f3(o.kg_bruto)}</td>
         <td>${f2(o.rs_kg)}</td>
         <td>${f2(o.total)}</td>
-      </tr>
-    `).join("")
+      </tr>`).join("")
     : `<tr><td colspan="9">Nenhum registro</td></tr>`;
 }
 
 /* SALVAR */
 async function salvarOP(){
-  const kg = n($("kg_liq").value);
-  const rs = n($("rs_kg").value);
-  const qtd = Math.floor(kg);
-  const bruto = qtd;
-
+  const opt = $("peca").selectedOptions[0];
   await supabaseClient.from("zincagem_tratamento").insert({
     op:$("op").value,
     data:$("data").value,
     produto_id:$("peca").value,
-    codigo_peca_text:$("peca").selectedOptions[0].text,
+    codigo_peca_text:opt.text,
     acabamento:$("acabamento").value,
-    kg_liquido:kg,
-    quantidade:qtd,
-    kg_bruto:bruto,
-    rs_kg:rs,
-    total:bruto*rs
+    kg_liquido:n($("kg_liq").value),
+    quantidade:n($("qtd").value),
+    kg_bruto:n($("kg_bruto").value),
+    rs_kg:n($("rs_kg").value),
+    total:n($("total").value)
   });
-
   $("modalBg").style.display="none";
   carregarOps();
 }
