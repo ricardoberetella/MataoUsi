@@ -15,21 +15,27 @@ body{
   font-family:Segoe UI,Arial;
 }
 
-/* HEADER */
+/* ===== HEADER ===== */
 .header{
-  padding:16px 24px;
   display:flex;
   justify-content:space-between;
   align-items:center;
+  padding:16px 24px;
   border-bottom:1px solid rgba(56,189,248,.2);
 }
-.header h1{ margin:0; color:#38bdf8; }
-.header .acoes{ display:flex; gap:10px; }
+.header h1{
+  margin:0;
+  color:#38bdf8;
+}
+.header .acoes{
+  display:flex;
+  gap:10px;
+}
 
-/* FILTROS */
+/* ===== FILTROS ===== */
 .filtros{
   display:grid;
-  grid-template-columns: 120px 1fr 160px 150px 150px auto;
+  grid-template-columns:120px 1fr 160px 150px 150px auto;
   gap:10px;
   padding:14px 24px;
   border-bottom:1px solid rgba(56,189,248,.15);
@@ -42,16 +48,19 @@ body{
   color:#e5e7eb;
 }
 
-/* TABELA */
+/* ===== TABELA ===== */
 main{ padding:20px 24px; }
 table{ width:100%; border-collapse:collapse; }
 th,td{
   padding:10px;
   border-bottom:1px solid rgba(148,163,184,.15);
 }
-th{ color:#38bdf8; text-align:left; }
+th{
+  color:#38bdf8;
+  text-align:left;
+}
 
-/* MODAL */
+/* ===== MODAL ===== */
 .modal-bg{
   position:fixed;
   inset:0;
@@ -60,6 +69,7 @@ th{ color:#38bdf8; text-align:left; }
   justify-content:center;
   align-items:flex-start;
   padding-top:80px;
+  z-index:1000;
 }
 .modal{
   background:#020b1a;
@@ -92,6 +102,7 @@ input,select{
 
 <body>
 
+<!-- ===== HEADER ===== -->
 <div class="header">
   <h1>Zincagem / Tratamento</h1>
   <div class="acoes">
@@ -100,7 +111,7 @@ input,select{
   </div>
 </div>
 
-<!-- FILTROS (LINHA ÚNICA) -->
+<!-- ===== FILTROS (LINHA ÚNICA) ===== -->
 <div class="filtros">
   <input id="fOp" placeholder="OP">
   <select id="fPeca"><option value="">Peça</option></select>
@@ -114,35 +125,83 @@ input,select{
   <button class="btn-azul" id="btnFiltrar">Filtrar</button>
 </div>
 
+<!-- ===== TABELA ===== -->
 <main>
 <table>
 <thead>
 <tr>
-<th>OP</th><th>Data</th><th>Peça</th><th>Acab.</th>
-<th>Kg Líq.</th><th>Qtd</th><th>Kg Bruto</th><th>R$/Kg</th><th>Total</th>
+<th>OP</th>
+<th>Data</th>
+<th>Peça</th>
+<th>Acab.</th>
+<th>Kg Líq.</th>
+<th>Qtd</th>
+<th>Kg Bruto</th>
+<th>R$/Kg</th>
+<th>Total</th>
 </tr>
 </thead>
-<tbody id="lista"><tr><td colspan="9">Carregando…</td></tr></tbody>
+<tbody id="lista">
+<tr><td colspan="9">Carregando…</td></tr>
+</tbody>
 </table>
 </main>
 
-<!-- MODAL -->
+<!-- ===== MODAL NOVA OP ===== -->
 <div class="modal-bg" id="modalBg">
   <div class="modal">
     <h2>Nova OP</h2>
+
     <div class="grid">
-      <div><label>OP</label><input id="op"></div>
-      <div><label>Data</label><input type="date" id="data"></div>
-      <div><label>Peça</label><select id="peca"></select></div>
-      <div><label>Acabamento</label>
-        <select id="acabamento"><option>Zincado</option><option>Tratado</option></select>
+      <div>
+        <label>OP</label>
+        <input id="op">
       </div>
-      <div><label>Kg Líquido</label><input id="kg_liq"></div>
-      <div><label>R$/Kg</label><input id="rs_kg"></div>
-      <div><label>Quantidade</label><input id="qtd" readonly></div>
-      <div><label>Kg Bruto</label><input id="kg_bruto" readonly></div>
-      <div><label>Total</label><input id="total" readonly></div>
+
+      <div>
+        <label>Data</label>
+        <input type="date" id="data">
+      </div>
+
+      <div>
+        <label>Peça</label>
+        <select id="peca"></select>
+      </div>
+
+      <div>
+        <label>Acabamento</label>
+        <select id="acabamento">
+          <option>Zincado</option>
+          <option>Tratado</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Kg Líquido</label>
+        <input id="kg_liq">
+      </div>
+
+      <div>
+        <label>R$/Kg</label>
+        <input id="rs_kg">
+      </div>
+
+      <div>
+        <label>Quantidade</label>
+        <input id="qtd" readonly>
+      </div>
+
+      <div>
+        <label>Kg Bruto</label>
+        <input id="kg_bruto" readonly>
+      </div>
+
+      <div>
+        <label>Total</label>
+        <input id="total" readonly>
+      </div>
     </div>
+
     <div class="acoes-modal">
       <button class="btn-verde" id="btnSalvar">Salvar</button>
       <button class="btn-vermelho" id="btnCancelar">Cancelar</button>
@@ -150,68 +209,104 @@ input,select{
   </div>
 </div>
 
+<!-- ===== JS ===== -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-/* === SUPABASE (UMA VEZ SÓ) === */
+/* SUPABASE – UMA ÚNICA VEZ */
 const supabase = window.supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
 );
 
-const $=id=>document.getElementById(id);
-const n=v=>Number(String(v||"").replace(",","."))||0;
-const f2=v=>n(v).toLocaleString("pt-BR",{minimumFractionDigits:2});
+const $ = id => document.getElementById(id);
+const n = v => Number(String(v||"").replace(",", ".")) || 0;
+const f2 = v => n(v).toLocaleString("pt-BR",{minimumFractionDigits:2});
 
-/* EVENTOS */
-btnNovaOp.onclick=()=>modalBg.style.display="flex";
-btnCancelar.onclick=()=>modalBg.style.display="none";
-btnFiltrar.onclick=carregarOps;
+/* ===== EVENTOS ===== */
+$("btnNovaOp").onclick = () => $("modalBg").style.display = "flex";
+$("btnCancelar").onclick = () => $("modalBg").style.display = "none";
+$("btnFiltrar").onclick = carregarOps;
+$("btnSalvar").onclick = salvarOP;
 
-/* PRODUTOS */
+/* ===== PRODUTOS ===== */
 async function carregarProdutos(){
-  const { data }=await supabase.from("produtos").select("id,codigo,descricao");
-  peca.innerHTML='<option value="">Selecione</option>';
-  fPeca.innerHTML='<option value="">Peça</option>';
+  const { data, error } = await supabase
+    .from("produtos")
+    .select("id,codigo,descricao");
+
+  if(error){
+    console.error(error);
+    return;
+  }
+
+  $("peca").innerHTML = '<option value="">Selecione</option>';
+  $("fPeca").innerHTML = '<option value="">Peça</option>';
+
   data.forEach(p=>{
-    peca.innerHTML+=`<option value="${p.id}">${p.codigo} - ${p.descricao}</option>`;
-    fPeca.innerHTML+=`<option value="${p.codigo}">${p.codigo}</option>`;
+    $("peca").innerHTML += `<option value="${p.id}">${p.codigo} - ${p.descricao}</option>`;
+    $("fPeca").innerHTML += `<option value="${p.codigo}">${p.codigo}</option>`;
   });
 }
 
-/* OPS */
+/* ===== LISTAR OPS ===== */
 async function carregarOps(){
-  let q=supabase.from("zincagem_tratamento").select("*");
-  if(fOp.value) q=q.eq("op",fOp.value);
-  if(fAcab.value) q=q.eq("acabamento",fAcab.value);
-  if(fPeca.value) q=q.eq("codigo_peca_text",fPeca.value);
-  if(fIni.value) q=q.gte("data",fIni.value);
-  if(fFim.value) q=q.lte("data",fFim.value);
+  let q = supabase.from("zincagem_tratamento").select("*");
 
-  const { data }=await q.order("created_at",{ascending:false});
-  lista.innerHTML=data.length?data.map(o=>`
-    <tr>
-      <td>${o.op}</td><td>${o.data}</td><td>${o.codigo_peca_text}</td>
-      <td>${o.acabamento}</td><td>${o.kg_liquido}</td>
-      <td>${o.quantidade}</td><td>${o.kg_bruto}</td>
-      <td>${f2(o.rs_kg)}</td><td>${f2(o.total)}</td>
-    </tr>`).join(""):`<tr><td colspan="9">Nenhum registro</td></tr>`;
+  if($("fOp").value) q = q.eq("op", $("fOp").value);
+  if($("fAcab").value) q = q.eq("acabamento", $("fAcab").value);
+  if($("fPeca").value) q = q.eq("codigo_peca_text", $("fPeca").value);
+  if($("fIni").value) q = q.gte("data", $("fIni").value);
+  if($("fFim").value) q = q.lte("data", $("fFim").value);
+
+  const { data, error } = await q.order("created_at",{ascending:false});
+
+  if(error){
+    console.error(error);
+    return;
+  }
+
+  $("lista").innerHTML = data.length
+    ? data.map(o=>`
+      <tr>
+        <td>${o.op}</td>
+        <td>${o.data}</td>
+        <td>${o.codigo_peca_text}</td>
+        <td>${o.acabamento}</td>
+        <td>${o.kg_liquido}</td>
+        <td>${o.quantidade}</td>
+        <td>${o.kg_bruto}</td>
+        <td>${f2(o.rs_kg)}</td>
+        <td>${f2(o.total)}</td>
+      </tr>
+    `).join("")
+    : `<tr><td colspan="9">Nenhum registro</td></tr>`;
 }
 
-/* SALVAR */
-btnSalvar.onclick=async()=>{
-  const kg=n(kg_liq.value), r=n(rs_kg.value);
-  const qtd=Math.floor(kg);
-  const bruto=qtd;
-  await supabase.from("zincagem_tratamento").insert({
-    op:op.value,data:data.value,produto_id:peca.value,
-    codigo_peca_text:peca.selectedOptions[0].text,
-    acabamento:acabamento.value,kg_liquido:kg,
-    quantidade:qtd,kg_bruto:bruto,rs_kg:r,total:bruto*r
-  });
-  modalBg.style.display="none";
-  carregarOps();
-};
+/* ===== SALVAR OP ===== */
+async function salvarOP(){
+  const kg = n($("kg_liq").value);
+  const rs = n($("rs_kg").value);
+  const qtd = Math.floor(kg);
+  const bruto = qtd;
 
+  await supabase.from("zincagem_tratamento").insert({
+    op: $("op").value,
+    data: $("data").value,
+    produto_id: $("peca").value,
+    codigo_peca_text: $("peca").selectedOptions[0].text,
+    acabamento: $("acabamento").value,
+    kg_liquido: kg,
+    quantidade: qtd,
+    kg_bruto: bruto,
+    rs_kg: rs,
+    total: bruto * rs
+  });
+
+  $("modalBg").style.display = "none";
+  carregarOps();
+}
+
+/* INIT */
 carregarProdutos();
 carregarOps();
 </script>
