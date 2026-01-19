@@ -6,66 +6,13 @@
 <title>Zincagem / Tratamento</title>
 
 <link rel="stylesheet" href="css/dashboard.css">
-
-<style>
-.main{
-  padding-top:20px;
-}
-
-.modal-bg{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.6);
-  display:flex;
-  justify-content:center;
-  align-items:flex-start;
-  padding-top:60px;
-  z-index:999;
-}
-
-.modal{
-  background:#020b1a;
-  padding:20px;
-  border-radius:12px;
-  width:95%;
-  max-width:720px;
-}
-
-.form-grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:14px;
-}
-
-.form-grid label{
-  font-size:13px;
-  display:block;
-  margin-bottom:4px;
-}
-
-.form-grid input,
-.form-grid select{
-  width:100%;
-  padding:8px;
-}
-
-.acoes{
-  margin-top:20px;
-  display:flex;
-  justify-content:flex-end;
-  gap:10px;
-}
-
-@media(max-width:720px){
-  .form-grid{ grid-template-columns:1fr; }
-}
-</style>
 </head>
 
 <body>
 
 <div class="layout">
 
+  <!-- MENU -->
   <aside class="sidebar">
     <div class="logo-sistema">MATÃO USINAGEM</div>
 
@@ -83,158 +30,117 @@
     <button id="btnLogout" class="menu-item botao-sair">Sair</button>
   </aside>
 
+  <!-- CONTEÚDO -->
   <main class="main">
 
     <header class="topo-pagina">
       <button class="btn-azul" onclick="location.href='dashboard.html'">← Voltar</button>
       <h1>Zincagem / Tratamento</h1>
-      <button class="btn-verde" id="btnNovaOp">+ Nova OP</button>
     </header>
+
+    <!-- CARD -->
+    <div class="card">
+
+      <h2>Nova OP</h2>
+
+      <div class="form-grid-2">
+
+        <div>
+          <label>Peça</label>
+          <select id="peca">
+            <option value="">Selecione</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Comprimento (mm)</label>
+          <input id="comprimento" readonly>
+        </div>
+
+        <div>
+          <label>Pç / Caixa</label>
+          <input id="pc_caixa" readonly>
+        </div>
+
+        <div>
+          <label>Peso Caixa</label>
+          <input id="peso_caixa" readonly>
+        </div>
+
+        <div>
+          <label>Kg Líquido</label>
+          <input id="kg_liquido">
+        </div>
+
+        <div>
+          <label>Quantidade</label>
+          <input id="quantidade" readonly>
+        </div>
+
+        <div>
+          <label>Kg Bruto</label>
+          <input id="kg_bruto" readonly>
+        </div>
+
+        <div>
+          <label>R$/Kg</label>
+          <input id="rs_kg">
+        </div>
+
+        <div>
+          <label>Total</label>
+          <input id="total" readonly>
+        </div>
+
+      </div>
+
+      <div class="acoes">
+        <button class="btn-verde">Salvar</button>
+      </div>
+
+    </div>
 
   </main>
 </div>
 
-<!-- MODAL -->
-<div class="modal-bg" id="modalBg" style="display:none">
-  <div class="modal">
+<script type="module" src="js/zincagem.js"></script>
 
-    <h2>Nova OP</h2>
+<style>
+.card{
+  background:#020b1a;
+  padding:24px;
+  border-radius:12px;
+  max-width:900px;
+}
 
-    <div class="form-grid">
+.form-grid-2{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:16px;
+}
 
-      <div>
-        <label>Peça</label>
-        <select id="peca">
-          <option value="">Selecione</option>
-        </select>
-      </div>
+.form-grid-2 label{
+  display:block;
+  margin-bottom:6px;
+}
 
-      <div>
-        <label>Comprimento (mm)</label>
-        <input id="comprimento" readonly>
-      </div>
+.form-grid-2 input,
+.form-grid-2 select{
+  width:100%;
+  padding:10px;
+}
 
-      <div>
-        <label>Pç / Caixa</label>
-        <input id="pc_caixa" readonly>
-      </div>
+.acoes{
+  margin-top:20px;
+  text-align:right;
+}
 
-      <div>
-        <label>Peso Caixa</label>
-        <input id="peso_caixa" readonly>
-      </div>
-
-      <div>
-        <label>Kg Líquido</label>
-        <input id="kg_liquido">
-      </div>
-
-      <div>
-        <label>Quantidade</label>
-        <input id="quantidade" readonly>
-      </div>
-
-      <div>
-        <label>Kg Bruto</label>
-        <input id="kg_bruto" readonly>
-      </div>
-
-      <div>
-        <label>R$/Kg</label>
-        <input id="rs_kg">
-      </div>
-
-      <div>
-        <label>Total</label>
-        <input id="total" readonly>
-      </div>
-
-    </div>
-
-    <div class="acoes">
-      <button class="btn-verde">Salvar</button>
-      <button class="btn-vermelho" id="btnCancelar">Cancelar</button>
-    </div>
-
-  </div>
-</div>
-
-<!-- SCRIPT ÚNICO -->
-<script type="module">
-import { supabase, verificarLogin } from "./js/auth.js";
-
-/* ========= LOGIN ========= */
-document.addEventListener("DOMContentLoaded", async () => {
-  const user = await verificarLogin();
-  if (!user) return;
-
-  btnLogout.onclick = async () => {
-    await supabase.auth.signOut();
-    location.href = "index.html";
-  };
-
-  btnNovaOp.onclick = () => {
-    modalBg.style.display = "flex";
-    carregarProdutos();
-  };
-
-  btnCancelar.onclick = () => {
-    modalBg.style.display = "none";
-  };
-});
-
-/* ========= UTIL ========= */
-const n = v => Number(String(v).replace(",", ".")) || 0;
-const f2 = v => v.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
-const f3 = v => v.toLocaleString("pt-BR", { minimumFractionDigits: 3 });
-
-/* ========= CARREGAR PRODUTOS ========= */
-async function carregarProdutos(){
-  peca.innerHTML = `<option value="">Selecione</option>`;
-
-  const { data, error } = await supabase
-    .from("produtos")
-    .select("codigo, descricao, comprimento_mm, quantidade_caixa, peso_caixa")
-    .order("codigo");
-
-  if (error) {
-    alert(error.message);
-    console.error(error);
-    return;
+@media(max-width:700px){
+  .form-grid-2{
+    grid-template-columns:1fr;
   }
-
-  data.forEach(p => {
-    const o = document.createElement("option");
-    o.value = p.codigo;
-    o.textContent = `${p.codigo} - ${p.descricao}`;
-    o.dataset.comp = p.comprimento_mm;
-    o.dataset.pc = p.quantidade_caixa;
-    o.dataset.peso = p.peso_caixa;
-    peca.appendChild(o);
-  });
 }
-
-/* ========= AUTO-PREENCHIMENTO ========= */
-peca.addEventListener("change", () => {
-  const o = peca.selectedOptions[0];
-  if (!o) return;
-
-  comprimento.value = o.dataset.comp;
-  pc_caixa.value = o.dataset.pc;
-  peso_caixa.value = f3(n(o.dataset.peso));
-});
-
-/* ========= CÁLCULOS ========= */
-rs_kg.addEventListener("input", calcular);
-kg_liquido.addEventListener("input", calcular);
-
-function calcular(){
-  const qtd = Math.floor(n(kg_liquido.value) / n(peso_caixa.value || 1));
-  quantidade.value = qtd;
-  kg_bruto.value = f3(qtd * n(peso_caixa.value));
-  total.value = f2(n(rs_kg.value) * n(kg_bruto.value));
-}
-</script>
+</style>
 
 </body>
 </html>
