@@ -8,6 +8,40 @@
 <link rel="stylesheet" href="css/dashboard.css">
 
 <style>
+.main{
+  padding:24px;
+}
+
+.topo-pagina{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px;
+}
+
+.topo-pagina h1{
+  color:#38bdf8;
+  margin:0;
+}
+
+.tabela{
+  width:100%;
+  border-collapse:collapse;
+}
+
+.tabela th{
+  text-align:left;
+  padding:10px;
+  color:#38bdf8;
+  border-bottom:1px solid rgba(56,189,248,.3);
+}
+
+.tabela td{
+  padding:10px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+
+/* MODAL */
 .modal-bg{
   position:fixed;
   inset:0;
@@ -15,8 +49,9 @@
   display:none;
   align-items:center;
   justify-content:center;
-  z-index:1000;
+  z-index:999;
 }
+
 .modal{
   background:#020b1a;
   border:2px solid #38bdf8;
@@ -25,19 +60,23 @@
   width:95%;
   max-width:1100px;
 }
+
 .modal h2{
   color:#38bdf8;
   margin-top:0;
 }
+
 .grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
   gap:16px;
 }
+
 label{
   font-size:13px;
   color:#cbd5e1;
 }
+
 input,select{
   width:100%;
   padding:10px;
@@ -46,6 +85,7 @@ input,select{
   color:#fff;
   border:1px solid rgba(56,189,248,.3);
 }
+
 .acoes{
   margin-top:20px;
   display:flex;
@@ -61,6 +101,7 @@ input,select{
   <!-- MENU -->
   <aside class="sidebar">
     <div class="logo-sistema">MATÃO USINAGEM</div>
+
     <nav class="menu">
       <div class="menu-titulo">Módulos</div>
       <a href="clientes.html" class="menu-item">👤 Clientes</a>
@@ -71,16 +112,17 @@ input,select{
       <a href="contas_receber.html" class="menu-item">💰 Contas a Receber</a>
       <a href="zincagem.html" class="menu-item ativo">⚙️ Zincagem / Tratamento</a>
     </nav>
+
     <button id="btnLogout" class="menu-item botao-sair">🚪 Sair</button>
   </aside>
 
   <!-- CONTEÚDO -->
   <main class="main">
 
-    <header class="topo-pagina">
+    <div class="topo-pagina">
       <h1>Zincagem / Tratamento</h1>
       <button class="btn-verde" onclick="abrirModal()">+ Nova OP</button>
-    </header>
+    </div>
 
     <table class="tabela">
       <thead>
@@ -94,7 +136,9 @@ input,select{
           <th>Total</th>
         </tr>
       </thead>
-      <tbody id="lista"></tbody>
+      <tbody id="lista">
+        <!-- registros -->
+      </tbody>
     </table>
 
   </main>
@@ -198,30 +242,21 @@ document.addEventListener("DOMContentLoaded", async ()=>{
   carregarPinos();
 });
 
-/* MODAL */
 window.abrirModal = ()=> modalBg.style.display="flex";
 window.fecharModal = ()=> modalBg.style.display="none";
 
-/* UTIL */
 const num = v => Number(String(v).replace(",", ".")) || 0;
 const fmt = v => v.toLocaleString("pt-BR",{minimumFractionDigits:3});
 
-/* CARREGAR PINOS */
 async function carregarPinos(){
   const sel = document.getElementById("peca");
   sel.innerHTML = `<option value="">Selecione</option>`;
 
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("produtos")
     .select("codigo,descricao,comprimento,pc_caixa,peso_caixa")
     .ilike("descricao","%pino%")
     .order("codigo");
-
-  if(error){
-    console.error(error);
-    sel.innerHTML = `<option>Erro</option>`;
-    return;
-  }
 
   data.forEach(p=>{
     const o=document.createElement("option");
@@ -234,11 +269,9 @@ async function carregarPinos(){
   });
 }
 
-/* AUTO */
 peca.onchange = e=>{
   const o=e.target.selectedOptions[0];
   if(!o) return;
-
   comprimento.value=o.dataset.comp||0;
   pc_caixa.value=o.dataset.pc||0;
   peso_caixa.value=fmt(num(o.dataset.peso));
