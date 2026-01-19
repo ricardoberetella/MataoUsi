@@ -148,6 +148,11 @@
       </div>
 
       <div>
+        <label>Comprimento (mm)</label>
+        <input id="comprimento" readonly>
+      </div>
+
+      <div>
         <label>Pç / Caixa</label>
         <input id="pc_caixa" readonly>
       </div>
@@ -223,7 +228,7 @@ async function carregarProdutos(){
 
   const { data, error } = await supabase
     .from("produtos")
-    .select("codigo, descricao, pc_caixa, peso_caixa")
+    .select("codigo, descricao, comprimento_mm, pc_caixa, peso_caixa")
     .order("codigo");
 
   if (error) {
@@ -236,6 +241,7 @@ async function carregarProdutos(){
     const o = document.createElement("option");
     o.value = p.codigo;
     o.textContent = `${p.codigo} - ${p.descricao}`;
+    o.dataset.comp = p.comprimento_mm || 0;
     o.dataset.pc = p.pc_caixa || 0;
     o.dataset.peso = p.peso_caixa || 0;
     select.appendChild(o);
@@ -246,6 +252,7 @@ peca.addEventListener("change", e => {
   const o = e.target.selectedOptions[0];
   if (!o) return;
 
+  comprimento.value = o.dataset.comp;
   pc_caixa.value = o.dataset.pc;
   peso_caixa.value = f3(n(o.dataset.peso));
 });
