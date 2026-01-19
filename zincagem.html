@@ -6,19 +6,63 @@
 <title>Zincagem / Tratamento</title>
 
 <link rel="stylesheet" href="css/dashboard.css">
+
+<style>
+.modal-bg{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.65);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:1000;
+}
+.modal{
+  background:#020b1a;
+  border:2px solid #38bdf8;
+  border-radius:18px;
+  padding:26px;
+  width:95%;
+  max-width:1100px;
+}
+.modal h2{
+  color:#38bdf8;
+  margin-top:0;
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:16px;
+}
+label{
+  font-size:13px;
+  color:#cbd5e1;
+}
+input,select{
+  width:100%;
+  padding:10px;
+  border-radius:10px;
+  background:#020617;
+  color:#fff;
+  border:1px solid rgba(56,189,248,.3);
+}
+.acoes{
+  margin-top:20px;
+  display:flex;
+  gap:12px;
+}
+</style>
 </head>
 
 <body>
 
 <div class="layout">
 
-  <!-- MENU LATERAL -->
+  <!-- MENU -->
   <aside class="sidebar">
     <div class="logo-sistema">MATÃO USINAGEM</div>
-
     <nav class="menu">
       <div class="menu-titulo">Módulos</div>
-
       <a href="clientes.html" class="menu-item">👤 Clientes</a>
       <a href="pedidos_lista.html" class="menu-item">📑 Pedidos</a>
       <a href="pedidos_abertos.html" class="menu-item">📌 Pedidos em Aberto</a>
@@ -27,7 +71,6 @@
       <a href="contas_receber.html" class="menu-item">💰 Contas a Receber</a>
       <a href="zincagem.html" class="menu-item ativo">⚙️ Zincagem / Tratamento</a>
     </nav>
-
     <button id="btnLogout" class="menu-item botao-sair">🚪 Sair</button>
   </aside>
 
@@ -58,12 +101,13 @@
 </div>
 
 <!-- MODAL -->
-<div class="modal-bg" id="modalBg" style="display:none">
+<div class="modal-bg" id="modalBg">
   <div class="modal">
 
     <h2>Nova OP</h2>
 
-    <div class="grid-4">
+    <div class="grid">
+
       <div>
         <label>OP</label>
         <input id="op">
@@ -128,6 +172,7 @@
         <label>Total</label>
         <input id="total" readonly>
       </div>
+
     </div>
 
     <div class="acoes">
@@ -141,11 +186,11 @@
 <script type="module">
 import { verificarLogin, supabase } from "./js/auth.js";
 
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", async ()=>{
   const user = await verificarLogin();
-  if (!user) return;
+  if(!user) return;
 
-  document.getElementById("btnLogout").onclick = async () => {
+  document.getElementById("btnLogout").onclick = async ()=>{
     await supabase.auth.signOut();
     window.location.href = "index.html";
   };
@@ -154,55 +199,50 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 /* MODAL */
-window.abrirModal = () => {
-  document.getElementById("modalBg").style.display = "flex";
-};
+window.abrirModal = ()=> modalBg.style.display="flex";
+window.fecharModal = ()=> modalBg.style.display="none";
 
-window.fecharModal = () => {
-  document.getElementById("modalBg").style.display = "none";
-};
-
-/* FORMATADORES */
-const n = v => Number(String(v).replace(",", ".")) || 0;
-const f = v => v.toLocaleString("pt-BR", { minimumFractionDigits: 3 });
+/* UTIL */
+const num = v => Number(String(v).replace(",", ".")) || 0;
+const fmt = v => v.toLocaleString("pt-BR",{minimumFractionDigits:3});
 
 /* CARREGAR PINOS */
-async function carregarPinos() {
-  const select = document.getElementById("peca");
-  select.innerHTML = `<option value="">Selecione</option>`;
+async function carregarPinos(){
+  const sel = document.getElementById("peca");
+  sel.innerHTML = `<option value="">Selecione</option>`;
 
   const { data, error } = await supabase
     .from("produtos")
-    .select("codigo, descricao, comprimento, pc_caixa, peso_caixa")
-    .ilike("descricao", "%pino%")
+    .select("codigo,descricao,comprimento,pc_caixa,peso_caixa")
+    .ilike("descricao","%pino%")
     .order("codigo");
 
-  if (error) {
+  if(error){
     console.error(error);
-    select.innerHTML = `<option>Erro ao carregar</option>`;
+    sel.innerHTML = `<option>Erro</option>`;
     return;
   }
 
-  data.forEach(p => {
-    const o = document.createElement("option");
-    o.value = p.codigo;
-    o.textContent = `${p.codigo} – ${p.descricao}`;
-    o.dataset.comp = p.comprimento;
-    o.dataset.pc = p.pc_caixa;
-    o.dataset.peso = p.peso_caixa;
-    select.appendChild(o);
+  data.forEach(p=>{
+    const o=document.createElement("option");
+    o.value=p.codigo;
+    o.textContent=`${p.codigo} – ${p.descricao}`;
+    o.dataset.comp=p.comprimento;
+    o.dataset.pc=p.pc_caixa;
+    o.dataset.peso=p.peso_caixa;
+    sel.appendChild(o);
   });
 }
 
-/* AUTO-PREENCHIMENTO */
-document.getElementById("peca").addEventListener("change", e => {
-  const o = e.target.selectedOptions[0];
-  if (!o) return;
+/* AUTO */
+peca.onchange = e=>{
+  const o=e.target.selectedOptions[0];
+  if(!o) return;
 
-  document.getElementById("comprimento").value = o.dataset.comp || 0;
-  document.getElementById("pc_caixa").value = o.dataset.pc || 0;
-  document.getElementById("peso_caixa").value = f(n(o.dataset.peso));
-});
+  comprimento.value=o.dataset.comp||0;
+  pc_caixa.value=o.dataset.pc||0;
+  peso_caixa.value=fmt(num(o.dataset.peso));
+};
 </script>
 
 </body>
