@@ -30,22 +30,32 @@ button{
 }
 .btn-azul{background:#38bdf8;color:#000}
 .btn-branco{background:#fff;color:#000}
+
 .container{padding:0 30px 30px}
 
 table{width:100%;border-collapse:collapse}
 th,td{padding:10px;border-bottom:1px solid #1e293b}
-th{color:#38bdf8;text-align:left;white-space:nowrap}
+th{color:#38bdf8}
 
-.btn-status{
-  min-width:80px;
-  text-align:center;
-  font-weight:600;
-}
+.btn-status{min-width:80px;font-weight:600}
 .pendente{background:#ef4444;color:#fff}
 .ok{background:#22c55e;color:#000}
-
-.btn-acao{background:#334155;color:#e5e7eb}
+.btn-editar{background:#334155;color:#fff}
 .btn-excluir{background:#7f1d1d;color:#fff}
+
+.modal-bg{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.7);
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+.modal{
+  background:#020b1a;
+  padding:20px;
+  border-radius:12px;
+  width:600px;
+}
 </style>
 </head>
 
@@ -53,125 +63,119 @@ th{color:#38bdf8;text-align:left;white-space:nowrap}
 
 <header>
   <h1>Zincagem / Tratamento</h1>
-  <button class="btn-branco" onclick="location.href='menu.html'">← Voltar ao menu</button>
-  <button class="btn-azul">+ Nova OP</button>
+  <button class="btn-branco" id="btnVoltar">← Voltar</button>
+  <button class="btn-azul" id="btnNovaOp">+ Nova OP</button>
 </header>
 
 <div class="container">
 <table>
 <thead>
 <tr>
-  <th>OP</th>
-  <th>Data</th>
-  <th>Peça</th>
-  <th>Acab.</th>
-  <th>Kg</th>
-  <th>Qtd</th>
-  <th>Kg Bruto</th>
-  <th>R$/Kg</th>
-  <th>Total</th>
-  <th>Ações</th>
+  <th>OP</th><th>Data</th><th>Peça</th><th>Acab.</th>
+  <th>Kg</th><th>Qtd</th><th>Kg Bruto</th>
+  <th>R$/Kg</th><th>Total</th><th>Ações</th>
 </tr>
 </thead>
-<tbody id="lista">
-<tr><td colspan="10">Carregando...</td></tr>
-</tbody>
+<tbody id="lista"></tbody>
 </table>
 </div>
 
+<!-- MODAL -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3>Nova OP</h3>
+    <input id="op" placeholder="OP"><br><br>
+    <input type="date" id="data"><br><br>
+    <input id="codigo_peca" placeholder="Código da peça"><br><br>
+    <button id="btnSalvar">Salvar</button>
+    <button id="btnCancelar">Cancelar</button>
+  </div>
+</div>
+
 <script>
-/* =========================
-   SUPABASE
-========================= */
-const sb = window.supabase.createClient(
-  "https://uxtgicfuggpuyjybwawa.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
-);
+document.addEventListener("DOMContentLoaded", async () => {
 
-function fmt(v){ return Number(v).toFixed(2).replace(".", ","); }
-function formatarDataBR(dataISO){
-  if(!dataISO) return "";
-  const [ano, mes, dia] = dataISO.split("-");
-  return `${dia}/${mes}/${ano}`;
-}
+  /* ========= SUPABASE ========= */
+  const sb = supabase.createClient(
+    "https://uxtgicfuggpuyjybwawa.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
+  );
 
-/* =========================
-   LISTAGEM
-========================= */
-async function carregarLista(){
-  const { data, error } = await sb
-    .from("zincagem_tratamento")
-    .select("*")
-    .order("data",{ascending:false});
+  const lista = document.getElementById("lista");
+  const modalBg = document.getElementById("modalBg");
 
-  if(error){
-    alert(error.message);
-    return;
+  /* ========= LISTAR ========= */
+  async function carregarLista(){
+    const { data } = await sb.from("zincagem_tratamento").select("*").order("data");
+    lista.innerHTML="";
+    data.forEach(r=>{
+      const tr=document.createElement("tr");
+      tr.innerHTML=`
+        <td>${r.op}</td>
+        <td>${r.data}</td>
+        <td>${r.codigo_peca}</td>
+        <td>${r.acabamento}</td>
+        <td>${r.kg}</td>
+        <td>${r.quantidade}</td>
+        <td>${r.kg_bruto}</td>
+        <td>${r.valor_kg}</td>
+        <td>${r.valor_total}</td>
+        <td>
+          <button class="btn-status ${r.entregue?"ok":"pendente"}" data-id="${r.id}" data-campo="entregue">${r.entregue?"OK":"Entregue"}</button>
+          <button class="btn-status ${r.boleto?"ok":"pendente"}" data-id="${r.id}" data-campo="boleto">${r.boleto?"OK":"Boleto"}</button>
+          <button class="btn-editar" data-id="${r.id}">Editar</button>
+          <button class="btn-excluir" data-id="${r.id}">Excluir</button>
+        </td>`;
+      lista.appendChild(tr);
+    });
   }
 
-  const tbody = document.getElementById("lista");
-  tbody.innerHTML = "";
+  /* ========= DELEGAÇÃO DE CLIQUE ========= */
+  lista.addEventListener("click", async e=>{
+    const btn=e.target;
+    const id=btn.dataset.id;
 
-  data.forEach(r => {
-    tbody.innerHTML += `
-    <tr>
-      <td>${r.op}</td>
-      <td>${formatarDataBR(r.data)}</td>
-      <td>${r.codigo_peca}</td>
-      <td>${r.acabamento}</td>
-      <td>${fmt(r.kg)}</td>
-      <td>${r.quantidade}</td>
-      <td>${fmt(r.kg_bruto)}</td>
-      <td>${fmt(r.valor_kg)}</td>
-      <td>${fmt(r.valor_total)}</td>
-      <td>
-        <button class="btn-status ${r.entregue ? "ok" : "pendente"}"
-          onclick="toggleStatus(${r.id}, 'entregue', ${r.entregue})">
-          ${r.entregue ? "OK" : "Entregue"}
-        </button>
+    if(btn.dataset.campo){
+      const campo=btn.dataset.campo;
+      await sb.from("zincagem_tratamento").update({[campo]:btn.textContent!=="OK"}).eq("id",id);
+      carregarLista();
+    }
 
-        <button class="btn-status ${r.boleto ? "ok" : "pendente"}"
-          onclick="toggleStatus(${r.id}, 'boleto', ${r.boleto})">
-          ${r.boleto ? "OK" : "Boleto"}
-        </button>
+    if(btn.classList.contains("btn-excluir")){
+      if(confirm("Excluir OP?")){
+        await sb.from("zincagem_tratamento").delete().eq("id",id);
+        carregarLista();
+      }
+    }
 
-        <button class="btn-acao" onclick="editar(${r.id})">Editar</button>
-        <button class="btn-excluir" onclick="excluir(${r.id})">Excluir</button>
-      </td>
-    </tr>`;
+    if(btn.classList.contains("btn-editar")){
+      alert("Editar OP "+id);
+    }
   });
-}
 
-/* =========================
-   AÇÕES (EXPOSTAS GLOBAL)
-========================= */
-window.toggleStatus = async function(id, campo, valorAtual){
-  const { error } = await sb
-    .from("zincagem_tratamento")
-    .update({ [campo]: !valorAtual })
-    .eq("id", id);
+  /* ========= NOVA OP ========= */
+  document.getElementById("btnNovaOp").addEventListener("click",()=>{
+    modalBg.style.display="flex";
+  });
 
-  if(error) alert(error.message);
-  else carregarLista();
-};
+  document.getElementById("btnCancelar").addEventListener("click",()=>{
+    modalBg.style.display="none";
+  });
 
-window.editar = function(id){
-  alert("Editar OP ID " + id + " (modal será implementado)");
-};
+  document.getElementById("btnSalvar").addEventListener("click", async ()=>{
+    await sb.from("zincagem_tratamento").insert({
+      op:op.value,
+      data:data.value,
+      codigo_peca:codigo_peca.value,
+      entregue:false,
+      boleto:false
+    });
+    modalBg.style.display="none";
+    carregarLista();
+  });
 
-window.excluir = async function(id){
-  if(!confirm("Deseja excluir esta OP?")) return;
-
-  const { error } = await sb
-    .from("zincagem_tratamento")
-    .delete()
-    .eq("id", id);
-
-  if(error) alert(error.message);
-  else carregarLista();
-};
-
-carregarLista();
+  carregarLista();
+});
 </script>
 
 </body>
