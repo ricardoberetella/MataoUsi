@@ -131,8 +131,8 @@ input[readonly]{
       <div class="campo">
         <label>Acabamento</label>
         <select id="acabamento">
-          <option>Zincado</option>
-          <option>Tratado</option>
+          <option value="Zincado">Zincado</option>
+          <option value="Tratado">Tratado</option>
         </select>
       </div>
 
@@ -171,46 +171,109 @@ input[readonly]{
 </div>
 
 <script>
-/* 🔒 CLIENTE SUPABASE (SEM CONFLITO) */
 const sb = window.supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
+  "SUA_ANON_KEY_AQUI"
 );
 
 const modalBg = document.getElementById("modalBg");
 const btnNovaOp = document.getElementById("btnNovaOp");
 const btnCancelar = document.getElementById("btnCancelar");
+const btnSalvar = document.getElementById("btnSalvar");
 
-btnNovaOp.addEventListener("click", async () => {
+const pecaSel = document.getElementById("peca");
+const kgInp = document.getElementById("kg");
+const qtdInp = document.getElementById("quantidade");
+const kgBrutoInp = document.getElementById("kg_material_bruto");
+const valorKgInp = document.getElementById("valor_kg");
+const totalInp = document.getElementById("valor_total");
+
+let pesoLiquido = 0;
+let pesoBruto = 0;
+
+btnNovaOp.onclick = async () => {
   modalBg.style.display = "flex";
   await carregarPecas();
-});
+};
 
-btnCancelar.addEventListener("click", () => {
-  modalBg.style.display = "none";
-});
+btnCancelar.onclick = () => modalBg.style.display = "none";
 
 async function carregarPecas(){
-  const peca = document.getElementById("peca");
-  peca.innerHTML = "<option>Carregando...</option>";
+  pecaSel.innerHTML = "<option>Carregando...</option>";
 
   const { data, error } = await sb
     .from("produtos")
-    .select("codigo");
+    .select("codigo, peso_liquido, peso_bruto");
 
   if(error){
     alert(error.message);
     return;
   }
 
-  peca.innerHTML = "<option value=''>Selecione</option>";
+  pecaSel.innerHTML = "<option value=''>Selecione</option>";
   data.forEach(p=>{
     const o = document.createElement("option");
     o.value = p.codigo;
     o.textContent = p.codigo;
-    peca.appendChild(o);
+    o.dataset.pl = p.peso_liquido;
+    o.dataset.pb = p.peso_bruto;
+    pecaSel.appendChild(o);
   });
 }
+
+function calcular(){
+  const kg = Number(kgInp.value.replace(",", ".")) || 0;
+  const valorKg = Number(valorKgInp.value.replace(",", ".")) || 0;
+
+  if(!pesoLiquido || kg <= 0){
+    qtdInp.value = "";
+    kgBrutoInp.value = "";
+    totalInp.value = "";
+    return;
+  }
+
+  const quantidade = kg / pesoLiquido;
+  const kgBruto = quantidade * pesoBruto;
+  const total = kg * valorKg;
+
+  qtdInp.value = Math.floor(quantidade);
+  kgBrutoInp.value = kgBruto.toLocaleString("pt-BR",{minimumFractionDigits:2});
+  totalInp.value = total.toLocaleString("pt-BR",{minimumFractionDigits:2});
+}
+
+pecaSel.onchange = () => {
+  const o = pecaSel.selectedOptions[0];
+  pesoLiquido = Number(o.dataset.pl);
+  pesoBruto = Number(o.dataset.pb);
+  calcular();
+};
+
+kgInp.oninput = calcular;
+valorKgInp.oninput = calcular;
+
+btnSalvar.onclick = async () => {
+  const payload = {
+    codigo_peca: pecaSel.value,
+    acabamento: document.getElementById("acabamento").value,
+    kg: Number(kgInp.value.replace(",", ".")),
+    quantidade: Number(qtdInp.value),
+    kg_material_bruto: Number(kgBrutoInp.value.replace(",", ".")),
+    valor_kg: Number(valorKgInp.value.replace(",", ".")),
+    valor_total: Number(totalInp.value.replace(",", ".")),
+    entregue: false,
+    boleto: false
+  };
+
+  const { error } = await sb
+    .from("zincagem_tratamento")
+    .insert(payload);
+
+  if(error){
+    alert("Erro ao salvar: " + error.message);
+  }else{
+    location.reload();
+  }
+};
 </script>
 
 </body>
