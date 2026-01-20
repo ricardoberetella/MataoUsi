@@ -23,9 +23,10 @@ header{
 h1{margin:0;color:#38bdf8}
 button{
   border:none;
-  padding:8px 14px;
-  border-radius:8px;
+  padding:6px 10px;
+  border-radius:6px;
   cursor:pointer;
+  font-size:13px;
 }
 .btn-azul{background:#38bdf8;color:#000}
 .btn-branco{background:#fff;color:#000}
@@ -33,44 +34,19 @@ button{
 
 table{width:100%;border-collapse:collapse}
 th,td{padding:10px;border-bottom:1px solid #1e293b}
-th{color:#38bdf8;text-align:left}
+th{color:#38bdf8;text-align:left;white-space:nowrap}
 
-.modal-bg{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.7);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:999;
+.btn-status{
+  min-width:80px;
+  text-align:center;
+  font-weight:600;
 }
-.modal{
-  width:1000px;
-  background:linear-gradient(180deg,#020b1a,#020617);
-  border-radius:16px;
-  padding:24px;
-}
-.grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:16px;
-}
-.campo{display:flex;flex-direction:column}
-.campo label{font-size:13px;margin-bottom:4px;color:#cbd5f5}
-input,select{
-  padding:10px;
-  border-radius:8px;
-  border:1px solid #1e293b;
-  background:#020617;
-  color:#e5e7eb;
-}
-input[readonly]{background:#020b1a;color:#9ca3af}
-.footer{
-  margin-top:20px;
-  display:flex;
-  justify-content:flex-end;
-  gap:10px;
-}
+.pendente{background:#ef4444;color:#fff}
+.ok{background:#22c55e;color:#000}
+
+.btn-acao{background:#334155;color:#e5e7eb}
+.btn-excluir{background:#7f1d1d;color:#fff}
+
 </style>
 </head>
 
@@ -95,10 +71,11 @@ input[readonly]{background:#020b1a;color:#9ca3af}
   <th>Kg Bruto</th>
   <th>R$/Kg</th>
   <th>Total</th>
+  <th>Ações</th>
 </tr>
 </thead>
 <tbody id="lista">
-<tr><td colspan="9">Carregando...</td></tr>
+<tr><td colspan="10">Carregando...</td></tr>
 </tbody>
 </table>
 </div>
@@ -138,8 +115,48 @@ async function carregarLista(){
       <td>${fmt(r.kg_bruto)}</td>
       <td>${fmt(r.valor_kg)}</td>
       <td>${fmt(r.valor_total)}</td>
+      <td>
+        <button class="btn-status ${r.entregue ? "ok" : "pendente"}"
+          onclick="toggleStatus(${r.id}, 'entregue', ${r.entregue})">
+          ${r.entregue ? "OK" : "Entregue"}
+        </button>
+
+        <button class="btn-status ${r.boleto ? "ok" : "pendente"}"
+          onclick="toggleStatus(${r.id}, 'boleto', ${r.boleto})">
+          ${r.boleto ? "OK" : "Boleto"}
+        </button>
+
+        <button class="btn-acao" onclick="editar(${r.id})">Editar</button>
+        <button class="btn-excluir" onclick="excluir(${r.id})">Excluir</button>
+      </td>
     </tr>`;
   });
+}
+
+async function toggleStatus(id, campo, valorAtual){
+  const { error } = await sb
+    .from("zincagem_tratamento")
+    .update({ [campo]: !valorAtual })
+    .eq("id", id);
+
+  if(error) alert(error.message);
+  else carregarLista();
+}
+
+function editar(id){
+  alert("Editar OP ID " + id + " (estrutura pronta)");
+}
+
+async function excluir(id){
+  if(!confirm("Deseja excluir esta OP?")) return;
+
+  const { error } = await sb
+    .from("zincagem_tratamento")
+    .delete()
+    .eq("id", id);
+
+  if(error) alert(error.message);
+  else carregarLista();
 }
 
 carregarLista();
