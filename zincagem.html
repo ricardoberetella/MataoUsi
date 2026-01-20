@@ -5,6 +5,7 @@
 <title>Zincagem / Tratamento</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- SUPABASE (UMA ÚNICA VEZ) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -45,7 +46,7 @@ th{color:#38bdf8;text-align:left}
   z-index:999;
 }
 .modal{
-  width:1000px;
+  width:900px;
   background:linear-gradient(180deg,#020b1a,#020617);
   border-radius:16px;
   padding:24px;
@@ -64,7 +65,6 @@ input,select{
   background:#020617;
   color:#e5e7eb;
 }
-input[readonly]{background:#020b1a;color:#9ca3af}
 .footer{
   margin-top:20px;
   display:flex;
@@ -111,28 +111,49 @@ input[readonly]{background:#020b1a;color:#9ca3af}
 <h2>Nova OP</h2>
 
 <div class="grid">
-<div class="campo"><label>OP</label><input id="op"></div>
-<div class="campo"><label>Data</label><input type="date" id="data"></div>
-
-<div class="campo"><label>Peça</label><select id="peca"></select></div>
-<div class="campo"><label>Acabamento</label>
-<select id="acabamento">
-  <option>Zincado</option>
-  <option>Tratado</option>
-</select>
+<div class="campo">
+  <label>OP</label>
+  <input id="op">
 </div>
 
-<div class="campo"><label>Kg enviado</label><input id="kg"></div>
-<div class="campo"><label>Quantidade (peças)</label><input id="quantidade" readonly></div>
+<div class="campo">
+  <label>Data</label>
+  <input type="date" id="data">
+</div>
 
-<div class="campo"><label>Kg material bruto</label><input id="kg_bruto" readonly></div>
-<div class="campo"><label>R$/Kg</label><input id="valor_kg"></div>
+<div class="campo">
+  <label>Peça</label>
+  <select id="produto_id"></select>
+</div>
 
-<div class="campo"><label>Peso caixa</label><input id="peso_caixa" readonly></div>
-<div class="campo"><label>Comprimento (mm)</label><input id="comprimento" readonly></div>
+<div class="campo">
+  <label>Acabamento</label>
+  <input id="acabamento">
+</div>
+
+<div class="campo">
+  <label>Kg</label>
+  <input id="kg">
+</div>
+
+<div class="campo">
+  <label>Quantidade</label>
+  <input id="quantidade">
+</div>
+
+<div class="campo">
+  <label>Kg Bruto</label>
+  <input id="kg_bruto">
+</div>
+
+<div class="campo">
+  <label>R$/Kg</label>
+  <input id="preco_kg">
+</div>
 
 <div class="campo" style="grid-column:1/3">
-<label>Total (R$)</label><input id="total" readonly>
+  <label>Total</label>
+  <input id="valor_total">
 </div>
 </div>
 
@@ -145,80 +166,58 @@ input[readonly]{background:#020b1a;color:#9ca3af}
 </div>
 
 <script>
+/* ==========================
+   SUPABASE (UMA VEZ)
+========================== */
 const supabase = window.supabase.createClient(
  "https://uxtgicfuggpuyjybwawa.supabase.co",
- "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
+ "SUA_ANON_KEY"
 );
 
+/* ==========================
+   MODAL
+========================== */
 const modal = document.getElementById("modalBg");
-document.getElementById("btnNovaOp").onclick = abrirModal;
-
-let produtoSelecionado = null;
-let pesoLiquido=0, pesoBruto=0, pecasCaixa=0, comprimento=0;
-
-function abrirModal(){
- modal.style.display="flex";
- carregarPecas();
+document.getElementById("btnNovaOp").onclick = () => {
+  modal.style.display = "flex";
+  carregarProdutos();
+};
+function fecharModal(){
+  modal.style.display="none";
 }
-function fecharModal(){ modal.style.display="none"; }
 
-async function carregarPecas(){
- const sel=document.getElementById("peca");
+/* ==========================
+   PRODUTOS
+========================== */
+async function carregarProdutos(){
+ const sel = document.getElementById("produto_id");
  const { data } = await supabase
    .from("produtos")
-   .select("id,codigo,descricao,peso_liquido,peso_bruto,pecas_por_caixa,comprimento_mm");
+   .select("id, descricao");
 
  sel.innerHTML="<option value=''>Selecione</option>";
  data.forEach(p=>{
-  const o=document.createElement("option");
-  o.value=p.id;
-  o.textContent=`${p.codigo} - ${p.descricao}`;
-  o.dataset.pl=p.peso_liquido;
-  o.dataset.pb=p.peso_bruto;
-  o.dataset.ppc=p.pecas_por_caixa;
-  o.dataset.comp=p.comprimento_mm;
-  sel.appendChild(o);
+   const o=document.createElement("option");
+   o.value=p.id;
+   o.textContent=p.descricao;
+   sel.appendChild(o);
  });
-
- sel.onchange=()=>{
-  const o=sel.selectedOptions[0];
-  if(!o) return;
-  produtoSelecionado = sel.value;
-  pesoLiquido=+o.dataset.pl;
-  pesoBruto=+o.dataset.pb;
-  pecasCaixa=+o.dataset.ppc;
-  comprimento=+o.dataset.comp;
-  calcular();
- };
 }
 
-["kg","valor_kg"].forEach(id=>{
- document.getElementById(id).oninput=calcular;
-});
-
-function calcular(){
- const kg=+document.getElementById("kg").value||0;
- const valorKg=+document.getElementById("valor_kg").value||0;
- const qtd=Math.floor(kg/pesoLiquido||0);
-
- quantidade.value=qtd;
- kg_bruto.value=(qtd*pesoBruto).toFixed(2);
- peso_caixa.value=(pesoLiquido*pecasCaixa).toFixed(2);
- comprimento.value=comprimento;
- total.value=(kg*valorKg).toFixed(2);
-}
-
+/* ==========================
+   SALVAR OP
+========================== */
 async function salvar(){
- const payload={
-  op:op.value,
-  data:data.value,
-  produto_id:produtoSelecionado,
-  acabamento:acabamento.value,
-  kg:+kg.value,
-  quantidade:+quantidade.value,
-  kg_bruto:+kg_bruto.value,
-  preco_kg:+valor_kg.value,
-  valor_total:+total.value
+ const payload = {
+  op: op.value,
+  data: data.value,
+  produto_id: produto_id.value,
+  acabamento: acabamento.value,
+  kg: +kg.value,
+  quantidade: +quantidade.value,
+  kg_bruto: +kg_bruto.value,
+  preco_kg: +preco_kg.value,
+  valor_total: +valor_total.value
  };
 
  const { error } = await supabase
@@ -232,6 +231,9 @@ async function salvar(){
  }
 }
 
+/* ==========================
+   LISTAGEM
+========================== */
 async function carregarLista(){
  const { data, error } = await supabase
   .from("zincagem_tratamento")
@@ -248,16 +250,16 @@ async function carregarLista(){
   `)
   .order("data",{ascending:false});
 
- const tbody=document.getElementById("lista");
+ const tbody = document.getElementById("lista");
  tbody.innerHTML="";
 
  if(error){
-   tbody.innerHTML="<tr><td colspan='9'>Erro ao carregar</td></tr>";
+   tbody.innerHTML="<tr><td colspan='9'>Erro</td></tr>";
    return;
  }
 
  data.forEach(r=>{
-  tbody.innerHTML+=`
+  tbody.innerHTML += `
   <tr>
     <td>${r.op}</td>
     <td>${r.data}</td>
