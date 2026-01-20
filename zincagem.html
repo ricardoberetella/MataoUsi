@@ -21,13 +21,31 @@ header{
   padding:16px 24px;
   border-bottom:1px solid rgba(56,189,248,.25);
 }
-header h1{margin:0;color:#38bdf8;}
-header .acoes{display:flex;gap:10px;}
-main{padding:20px 24px;}
-table{width:100%;border-collapse:collapse;}
-th,td{padding:10px;border-bottom:1px solid rgba(148,163,184,.15);}
-th{color:#38bdf8;text-align:left;}
+header h1{
+  margin:0;
+  color:#38bdf8;
+}
+header .acoes{
+  display:flex;
+  gap:10px;
+}
 
+main{ padding:20px 24px; }
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+th,td{
+  padding:10px;
+  border-bottom:1px solid rgba(148,163,184,.15);
+}
+th{
+  color:#38bdf8;
+  text-align:left;
+}
+
+/* MODAL */
 .modal-bg{
   position:fixed;
   inset:0;
@@ -44,12 +62,19 @@ th{color:#38bdf8;text-align:left;}
   padding:22px;
   border:1px solid rgba(56,189,248,.25);
 }
+.modal h2{
+  margin-top:0;
+  color:#38bdf8;
+}
 .grid{
   display:grid;
   grid-template-columns:repeat(2,1fr);
   gap:14px;
 }
-label{font-size:13px;color:#cbd5f5;}
+label{
+  font-size:13px;
+  color:#cbd5f5;
+}
 input,select{
   width:100%;
   padding:10px;
@@ -58,7 +83,10 @@ input,select{
   background:#020617;
   color:#e5e7eb;
 }
-input[readonly]{background:#020b1a;color:#9ca3af;}
+input[readonly]{
+  background:#020b1a;
+  color:#9ca3af;
+}
 .acoes-modal{
   display:flex;
   justify-content:flex-end;
@@ -82,8 +110,15 @@ input[readonly]{background:#020b1a;color:#9ca3af;}
 <table>
 <thead>
 <tr>
-<th>OP</th><th>Data</th><th>Peça</th><th>Acab.</th>
-<th>Kg Líq.</th><th>Qtd</th><th>Kg Bruto</th><th>R$/Kg</th><th>Total</th>
+  <th>OP</th>
+  <th>Data</th>
+  <th>Peça</th>
+  <th>Acab.</th>
+  <th>Kg Líq.</th>
+  <th>Qtd</th>
+  <th>Kg Bruto</th>
+  <th>R$/Kg</th>
+  <th>Total</th>
 </tr>
 </thead>
 <tbody id="lista">
@@ -92,17 +127,27 @@ input[readonly]{background:#020b1a;color:#9ca3af;}
 </table>
 </main>
 
+<!-- MODAL NOVA OP -->
 <div class="modal-bg" id="modalBg">
   <div class="modal">
     <h2>Nova OP</h2>
 
     <div class="grid">
-      <div><label>OP</label><input id="op"></div>
-      <div><label>Data</label><input type="date" id="data"></div>
+      <div>
+        <label>OP</label>
+        <input id="op">
+      </div>
+
+      <div>
+        <label>Data</label>
+        <input type="date" id="data">
+      </div>
 
       <div>
         <label>Peça</label>
-        <select id="peca"></select>
+        <select id="peca">
+          <option>Carregando…</option>
+        </select>
       </div>
 
       <div>
@@ -110,13 +155,30 @@ input[readonly]{background:#020b1a;color:#9ca3af;}
         <input id="acabamento" readonly>
       </div>
 
-      <div><label>Kg Líquido</label><input id="kg_liq"></div>
-      <div><label>R$/Kg</label><input id="rs_kg"></div>
+      <div>
+        <label>Kg Líquido</label>
+        <input id="kg_liq">
+      </div>
 
-      <div><label>Quantidade</label><input id="qtd" readonly></div>
-      <div><label>Kg Bruto</label><input id="kg_bruto" readonly></div>
+      <div>
+        <label>R$/Kg</label>
+        <input id="rs_kg">
+      </div>
 
-      <div><label>Total (R$)</label><input id="total" readonly></div>
+      <div>
+        <label>Quantidade</label>
+        <input id="qtd" readonly>
+      </div>
+
+      <div>
+        <label>Kg Bruto</label>
+        <input id="kg_bruto" readonly>
+      </div>
+
+      <div>
+        <label>Total (R$)</label>
+        <input id="total" readonly>
+      </div>
     </div>
 
     <div class="acoes-modal">
@@ -126,8 +188,11 @@ input[readonly]{background:#020b1a;color:#9ca3af;}
   </div>
 </div>
 
+<!-- SUPABASE CDN -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="zincagem.js"></script>
+
+<!-- JS DA TELA -->
+<script src="./zincagem.js"></script>
 
 </body>
 </html>
