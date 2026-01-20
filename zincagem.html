@@ -162,11 +162,12 @@ input,select{
 </div>
 </div>
 
-<!-- SCRIPT MODULE (USA auth.js) -->
+<!-- SCRIPT MODULE -->
 <script type="module">
-import { supabase, protegerPagina } from "./auth.js";
+import { supabase, verificarLogin } from "./js/auth.js";
 
-await protegerPagina();
+/* garante login (mesmo padrão das outras telas) */
+await verificarLogin();
 
 /* ==========================
    MODAL
@@ -214,11 +215,11 @@ async function salvar(){
     data: data.value,
     produto_id: produto_id.value,
     acabamento: acabamento.value,
-    kg: +kg.value,
-    quantidade: +quantidade.value,
-    kg_bruto: +kg_bruto.value,
-    preco_kg: +preco_kg.value,
-    valor_total: +valor_total.value
+    kg: Number(kg.value),
+    quantidade: Number(quantidade.value),
+    kg_bruto: Number(kg_bruto.value),
+    preco_kg: Number(preco_kg.value),
+    valor_total: Number(valor_total.value)
   };
 
   const { error } = await supabase
@@ -278,7 +279,7 @@ async function carregarLista(){
 
 carregarLista();
 
-/* expor para HTML */
+/* expor funções usadas no HTML */
 window.fecharModal = fecharModal;
 window.salvar = salvar;
 </script>
