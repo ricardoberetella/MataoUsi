@@ -118,6 +118,7 @@ input[readonly]{
   </table>
 </div>
 
+<!-- MODAL -->
 <div class="modal-bg" id="modalBg">
   <div class="modal">
     <h2>Nova OP</h2>
@@ -180,7 +181,7 @@ input[readonly]{
 </div>
 
 <script>
-/* ========= SUPABASE (UMA ÚNICA VEZ) ========= */
+/* ===== SUPABASE (UMA ÚNICA VEZ) ===== */
 const supabase = window.supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
@@ -189,6 +190,7 @@ const supabase = window.supabase.createClient(
 let pesoLiquido = 0;
 let pesoBruto = 0;
 
+/* ===== MODAL ===== */
 function abrirModal(){
   document.getElementById("modalBg").style.display = "flex";
   document.getElementById("data").value = new Date().toISOString().slice(0,10);
@@ -197,6 +199,7 @@ function fecharModal(){
   document.getElementById("modalBg").style.display = "none";
 }
 
+/* ===== PRODUTOS ===== */
 async function carregarPecas(){
   const { data } = await supabase
     .from("produtos")
@@ -221,6 +224,7 @@ document.getElementById("peca").onchange = e=>{
   calcular();
 };
 
+/* ===== CÁLCULOS ===== */
 function calcular(){
   const kg = Number(document.getElementById("kg").value.replace(",", ".")) || 0;
   const valorKg = Number(document.getElementById("valor_kg").value.replace(",", ".")) || 0;
@@ -239,6 +243,7 @@ function calcular(){
 document.getElementById("kg").oninput = calcular;
 document.getElementById("valor_kg").oninput = calcular;
 
+/* ===== SALVAR ===== */
 async function salvar(){
   const payload = {
     op: document.getElementById("op").value,
@@ -263,6 +268,7 @@ async function salvar(){
   }
 }
 
+/* ===== LISTA ===== */
 async function carregarLista(){
   const { data } = await supabase
     .from("zincagem_tratamento")
@@ -294,6 +300,7 @@ async function carregarLista(){
   });
 }
 
+/* ===== INIT ===== */
 carregarPecas();
 carregarLista();
 </script>
