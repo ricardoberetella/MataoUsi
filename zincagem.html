@@ -45,7 +45,7 @@ th{color:#38bdf8;text-align:left}
   z-index:999;
 }
 .modal{
-  width:950px;
+  width:900px;
   background:linear-gradient(180deg,#020b1a,#020617);
   border-radius:16px;
   padding:24px;
@@ -93,7 +93,7 @@ input[readonly]{
   <h1>Zincagem / Tratamento</h1>
   <div>
     <button class="btn-branco" onclick="location.href='menu.html'">← Voltar ao menu</button>
-    <button class="btn-azul" id="btnNovaOp">+ Nova OP</button>
+    <button class="btn-azul" onclick="abrirModal()">+ Nova OP</button>
   </div>
 </header>
 
@@ -118,7 +118,6 @@ input[readonly]{
   </table>
 </div>
 
-<!-- MODAL -->
 <div class="modal-bg" id="modalBg">
   <div class="modal">
     <h2>Nova OP</h2>
@@ -159,7 +158,7 @@ input[readonly]{
 
       <div class="campo">
         <label>Kg material bruto</label>
-        <input id="kg_material_bruto" readonly>
+        <input id="kg_bruto" readonly>
       </div>
 
       <div class="campo">
@@ -169,7 +168,7 @@ input[readonly]{
 
       <div class="campo" style="grid-column:1/3">
         <label>Total (R$)</label>
-        <input id="valor_total" readonly>
+        <input id="total" readonly>
       </div>
     </div>
 
@@ -181,17 +180,15 @@ input[readonly]{
 </div>
 
 <script>
-/* ================= SUPABASE (UMA ÚNICA VEZ) ================= */
+/* ========= SUPABASE (UMA ÚNICA VEZ) ========= */
 const supabase = window.supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
 );
 
-/* ================= VARIÁVEIS ================= */
 let pesoLiquido = 0;
 let pesoBruto = 0;
 
-/* ================= MODAL ================= */
 function abrirModal(){
   document.getElementById("modalBg").style.display = "flex";
   document.getElementById("data").value = new Date().toISOString().slice(0,10);
@@ -200,10 +197,6 @@ function fecharModal(){
   document.getElementById("modalBg").style.display = "none";
 }
 
-/* ================= EVENTOS ================= */
-document.getElementById("btnNovaOp").onclick = abrirModal;
-
-/* ================= PEÇAS ================= */
 async function carregarPecas(){
   const { data } = await supabase
     .from("produtos")
@@ -224,11 +217,10 @@ async function carregarPecas(){
 
 document.getElementById("peca").onchange = e=>{
   pesoLiquido = Number(e.target.selectedOptions[0].dataset.pl);
-  pesoBruto   = Number(e.target.selectedOptions[0].dataset.pb);
+  pesoBruto = Number(e.target.selectedOptions[0].dataset.pb);
   calcular();
 };
 
-/* ================= CÁLCULOS ================= */
 function calcular(){
   const kg = Number(document.getElementById("kg").value.replace(",", ".")) || 0;
   const valorKg = Number(document.getElementById("valor_kg").value.replace(",", ".")) || 0;
@@ -240,14 +232,13 @@ function calcular(){
   const total = kg * valorKg;
 
   document.getElementById("quantidade").value = qtd;
-  document.getElementById("kg_material_bruto").value = kgBruto.toLocaleString("pt-BR",{minimumFractionDigits:2});
-  document.getElementById("valor_total").value = total.toLocaleString("pt-BR",{minimumFractionDigits:2});
+  document.getElementById("kg_bruto").value = kgBruto.toFixed(2).replace(".", ",");
+  document.getElementById("total").value = total.toFixed(2).replace(".", ",");
 }
 
 document.getElementById("kg").oninput = calcular;
 document.getElementById("valor_kg").oninput = calcular;
 
-/* ================= SALVAR ================= */
 async function salvar(){
   const payload = {
     op: document.getElementById("op").value,
@@ -256,9 +247,9 @@ async function salvar(){
     acabamento: document.getElementById("acabamento").value,
     kg: Number(document.getElementById("kg").value.replace(",", ".")),
     quantidade: Number(document.getElementById("quantidade").value),
-    kg_material_bruto: Number(document.getElementById("kg_material_bruto").value.replace(",", ".")),
+    kg_material_bruto: Number(document.getElementById("kg_bruto").value.replace(",", ".")),
     valor_kg: Number(document.getElementById("valor_kg").value.replace(",", ".")),
-    valor_total: Number(document.getElementById("valor_total").value.replace(",", "."))
+    valor_total: Number(document.getElementById("total").value.replace(",", "."))
   };
 
   const { error } = await supabase
@@ -272,7 +263,6 @@ async function salvar(){
   }
 }
 
-/* ================= LISTA ================= */
 async function carregarLista(){
   const { data } = await supabase
     .from("zincagem_tratamento")
