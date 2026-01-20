@@ -158,7 +158,7 @@ input[readonly]{
       </div>
 
       <div class="campo">
-        <label>Quantidade (caixas)</label>
+        <label>Quantidade</label>
         <input id="quantidade" readonly>
       </div>
 
@@ -199,6 +199,9 @@ input[readonly]{
   const kgBruto = document.getElementById("kg_bruto");
   const total = document.getElementById("total");
 
+  let pesoLiquidoProduto = 0;
+  let pesoBrutoProduto = 0;
+
   btnNovaOp.onclick = async () => {
     modalBg.style.display = "flex";
     await carregarPecas();
@@ -210,7 +213,7 @@ input[readonly]{
     peca.innerHTML = "<option>Carregando...</option>";
     const { data, error } = await supabase
       .from("produtos")
-      .select("id,codigo,descricao,peso_liquido,pecas_por_caixa")
+      .select("id,codigo,descricao,peso_liquido,peso_bruto")
       .order("codigo");
 
     if(error){ alert(error.message); return; }
@@ -220,8 +223,8 @@ input[readonly]{
       const o = document.createElement("option");
       o.value = p.id;
       o.textContent = `${p.codigo} - ${p.descricao}`;
-      o.dataset.peso = p.peso_liquido;
-      o.dataset.caixa = p.pecas_por_caixa;
+      o.dataset.peso_liquido = p.peso_liquido;
+      o.dataset.peso_bruto = p.peso_bruto;
       peca.appendChild(o);
     });
   }
@@ -231,17 +234,13 @@ input[readonly]{
   }
 
   function calcular(){
-    const opt = peca.selectedOptions[0];
-    if(!opt) return;
+    if(!pesoLiquidoProduto || !pesoBrutoProduto) return;
 
-    const pesoUnit = Number(opt.dataset.peso)||0;
-    const porCaixa = Number(opt.dataset.caixa)||1;
-    const kg = Number(kgLiquido.value.replace(",", "."))||0;
-    const rs = Number(rsKg.value.replace(",", "."))||0;
+    const kg = Number(kgLiquido.value.replace(",", ".")) || 0;
+    const rs = Number(rsKg.value.replace(",", ".")) || 0;
 
-    const pesoCaixa = pesoUnit * porCaixa;
-    const quantidade = pesoCaixa ? kg / pesoCaixa : 0;
-    const bruto = quantidade * pesoCaixa;
+    const quantidade = pesoLiquidoProduto ? kg / pesoLiquidoProduto : 0;
+    const bruto = quantidade * pesoBrutoProduto;
     const totalCalc = bruto * rs;
 
     qtd.value = formatar(quantidade);
@@ -249,7 +248,13 @@ input[readonly]{
     total.value = formatar(totalCalc);
   }
 
-  peca.onchange = calcular;
+  peca.onchange = () => {
+    const opt = peca.selectedOptions[0];
+    pesoLiquidoProduto = Number(opt.dataset.peso_liquido) || 0;
+    pesoBrutoProduto = Number(opt.dataset.peso_bruto) || 0;
+    calcular();
+  };
+
   kgLiquido.oninput = calcular;
   rsKg.oninput = calcular;
 
