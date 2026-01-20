@@ -92,7 +92,7 @@ input[readonly]{
 <header>
   <h1>Zincagem / Tratamento</h1>
   <div>
-    <button class="btn-branco" onclick="window.location.href='menu.html'">← Voltar ao menu</button>
+    <button class="btn-branco" onclick="location.href='menu.html'">← Voltar ao menu</button>
     <button class="btn-azul" id="btnNovaOp">+ Nova OP</button>
   </div>
 </header>
@@ -101,19 +101,17 @@ input[readonly]{
   <table>
     <thead>
       <tr>
-        <th>OP</th>
-        <th>Data</th>
         <th>Peça</th>
         <th>Acab.</th>
-        <th>Kg Enviado</th>
-        <th>Qtd (peças)</th>
-        <th>Peso Bruto</th>
+        <th>Kg</th>
+        <th>Qtd</th>
+        <th>Kg Bruto</th>
         <th>R$/Kg</th>
         <th>Total</th>
       </tr>
     </thead>
     <tbody id="lista">
-      <tr><td colspan="9">Nenhum registro</td></tr>
+      <tr><td colspan="7">Nenhum registro</td></tr>
     </tbody>
   </table>
 </div>
@@ -124,15 +122,6 @@ input[readonly]{
     <h2>Nova OP</h2>
 
     <div class="grid">
-      <div class="campo">
-        <label>OP</label>
-        <input id="op">
-      </div>
-
-      <div class="campo">
-        <label>Data</label>
-        <input type="date" id="data">
-      </div>
 
       <div class="campo">
         <label>Peça</label>
@@ -149,28 +138,29 @@ input[readonly]{
 
       <div class="campo">
         <label>Kg enviado</label>
-        <input id="kg_enviado">
+        <input id="kg">
       </div>
 
-      <div class="campo">
+      <div classha="campo">
         <label>Quantidade (peças)</label>
         <input id="quantidade" readonly>
       </div>
 
       <div class="campo">
-        <label>Peso Bruto</label>
-        <input id="peso_bruto" readonly>
+        <label>Kg material bruto</label>
+        <input id="kg_material_bruto" readonly>
       </div>
 
       <div class="campo">
         <label>R$/Kg</label>
-        <input id="rs_kg">
+        <input id="valor_kg">
       </div>
 
       <div class="campo" style="grid-column:1/3">
         <label>Total (R$)</label>
-        <input id="total" readonly>
+        <input id="valor_total" readonly>
       </div>
+
     </div>
 
     <div class="footer">
@@ -181,7 +171,7 @@ input[readonly]{
 </div>
 
 <script>
-const supabaseClient = window.supabase.createClient(
+const supabase = window.supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
 );
@@ -191,15 +181,17 @@ const btnNovaOp = document.getElementById("btnNovaOp");
 const btnCancelar = document.getElementById("btnCancelar");
 const btnSalvar = document.getElementById("btnSalvar");
 
-const peca = document.getElementById("peca");
-const kgEnviado = document.getElementById("kg_enviado");
-const qtd = document.getElementById("quantidade");
-const pesoBruto = document.getElementById("peso_bruto");
-const rsKg = document.getElementById("rs_kg");
-const total = document.getElementById("total");
+const pecaSel = document.getElementById("peca");
+const kgInp = document.getElementById("kg");
+const qtdInp = document.getElementById("quantidade");
+const kgBrutoInp = document.getElementById("kg_material_bruto");
+const valorKgInp = document.getElementById("valor_kg");
+const totalInp = document.getElementById("valor_total");
 
-let pesoLiquidoProduto = 0;
-let pesoBrutoUnitario = 0;
+let pesoLiquido = 0;
+let pesoBruto = 0;
+let pecasPorCaixa = 0;
+let comprimento = 0;
 
 btnNovaOp.onclick = async () => {
   modalBg.style.display = "flex";
@@ -209,67 +201,75 @@ btnNovaOp.onclick = async () => {
 btnCancelar.onclick = () => modalBg.style.display = "none";
 
 async function carregarPecas(){
-  peca.innerHTML = "<option>Carregando...</option>";
-  const { data, error } = await supabaseClient
+  pecaSel.innerHTML = "<option>Carregando...</option>";
+  const { data, error } = await supabase
     .from("produtos")
-    .select("id,codigo,descricao,peso_liquido,peso_bruto")
-    .order("codigo");
+    .select("codigo,peso_liquido,peso_bruto,pecas_por_caixa,comprimento_mm");
 
   if(error){ alert(error.message); return; }
 
-  peca.innerHTML = "<option value=''>Selecione</option>";
+  pecaSel.innerHTML = "<option value=''>Selecione</option>";
   data.forEach(p=>{
     const o = document.createElement("option");
-    o.value = p.id;
-    o.textContent = `${p.codigo} - ${p.descricao}`;
-    o.dataset.peso_liquido = p.peso_liquido;
-    o.dataset.peso_bruto = p.peso_bruto;
-    peca.appendChild(o);
+    o.value = p.codigo;
+    o.textContent = p.codigo;
+    o.dataset.pl = p.peso_liquido;
+    o.dataset.pb = p.peso_bruto;
+    o.dataset.ppc = p.pecas_por_caixa;
+    o.dataset.comp = p.comprimento_mm;
+    pecaSel.appendChild(o);
   });
 }
 
-function calcular(){
-  const kg = Number(kgEnviado.value.replace(",", ".")) || 0;
-  const preco = Number(rsKg.value.replace(",", ".")) || 0;
+function calc(){
+  const kg = Number(kgInp.value.replace(",", ".")) || 0;
+  const valorKg = Number(valorKgInp.value.replace(",", ".")) || 0;
 
-  const quantidade = pesoLiquidoProduto ? Math.floor(kg / pesoLiquidoProduto) : 0;
-  const bruto = quantidade * pesoBrutoUnitario;
-  const totalCalc = kg * preco;
+  if(!pesoLiquido) return;
 
-  qtd.value = quantidade;
-  pesoBruto.value = bruto.toFixed(2).replace(".", ",");
-  total.value = totalCalc.toFixed(2).replace(".", ",");
+  const qtd = Math.floor(kg / pesoLiquido);
+  const kgBruto = qtd * pesoBruto;
+  const total = kg * valorKg;
+
+  qtdInp.value = qtd;
+  kgBrutoInp.value = kgBruto.toLocaleString("pt-BR",{minimumFractionDigits:2});
+  totalInp.value = total.toLocaleString("pt-BR",{minimumFractionDigits:2});
 }
 
-peca.onchange = () => {
-  const opt = peca.selectedOptions[0];
-  pesoLiquidoProduto = Number(opt.dataset.peso_liquido) || 0;
-  pesoBrutoUnitario = Number(opt.dataset.peso_bruto) || 0;
-  calcular();
+pecaSel.onchange = ()=>{
+  const o = pecaSel.selectedOptions[0];
+  pesoLiquido = Number(o.dataset.pl);
+  pesoBruto = Number(o.dataset.pb);
+  pecasPorCaixa = Number(o.dataset.ppc);
+  comprimento = Number(o.dataset.comp);
+  calc();
 };
 
-kgEnviado.oninput = calcular;
-rsKg.oninput = calcular;
+kgInp.oninput = calc;
+valorKgInp.oninput = calc;
 
 btnSalvar.onclick = async () => {
-  const { error } = await supabaseClient
+  const payload = {
+    codigo_peca: pecaSel.value,
+    acabamento: document.getElementById("acabamento").value,
+    kg: Number(kgInp.value.replace(",", ".")),
+    quantidade: Number(qtdInp.value),
+    kg_material_bruto: Number(kgBrutoInp.value.replace(",", ".")),
+    peso_caixa: pesoLiquido * pecasPorCaixa,
+    valor_kg: Number(valorKgInp.value.replace(",", ".")),
+    valor_total: Number(totalInp.value.replace(",", ".")),
+    comprimento_mm: comprimento,
+    entregue: false,
+    boleto: false
+  };
+
+  const { error } = await supabase
     .from("zincagem_tratamento")
-    .insert({
-      op: document.getElementById("op").value,
-      data: document.getElementById("data").value,
-      produto_id: peca.value,
-      acabamento: document.getElementById("acabamento").value,
-      kg_enviado: Number(kgEnviado.value.replace(",", ".")),
-      quantidade: Number(qtd.value),
-      peso_bruto: Number(pesoBruto.value.replace(",", ".")),
-      rs_kg: Number(rsKg.value.replace(",", ".")),
-      total: Number(total.value.replace(",", "."))
-    });
+    .insert(payload);
 
   if(error){
     alert("Erro ao salvar: " + error.message);
   }else{
-    modalBg.style.display = "none";
     location.reload();
   }
 };
