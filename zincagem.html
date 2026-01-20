@@ -107,13 +107,12 @@ input[readonly]{
         <th>Acab.</th>
         <th>Kg Líq.</th>
         <th>Qtd</th>
-        <th>Kg Bruto</th>
         <th>R$/Kg</th>
         <th>Total</th>
       </tr>
     </thead>
-    <tbody id="lista">
-      <tr><td colspan="9">Nenhum registro</td></tr>
+    <tbody>
+      <tr><td colspan="8">Nenhum registro</td></tr>
     </tbody>
   </table>
 </div>
@@ -162,11 +161,6 @@ input[readonly]{
         <input id="quantidade" readonly>
       </div>
 
-      <div class="campo">
-        <label>Kg Bruto</label>
-        <input id="kg_bruto" readonly>
-      </div>
-
       <div class="campo" style="grid-column:1/3">
         <label>Total (R$)</label>
         <input id="total" readonly>
@@ -189,33 +183,24 @@ const supabase = window.supabase.createClient(
 );
 
 const modalBg = document.getElementById("modalBg");
-const btnNovaOp = document.getElementById("btnNovaOp");
-const btnCancelar = document.getElementById("btnCancelar");
-const btnSalvar = document.getElementById("btnSalvar");
+document.getElementById("btnNovaOp").onclick = async () => {
+  modalBg.style.display = "flex";
+  await carregarPecas();
+};
+document.getElementById("btnCancelar").onclick = () => modalBg.style.display = "none";
 
 const peca = document.getElementById("peca");
 const kgLiquido = document.getElementById("kg_liquido");
 const rsKg = document.getElementById("rs_kg");
 const qtd = document.getElementById("quantidade");
-const kgBruto = document.getElementById("kg_bruto");
 const total = document.getElementById("total");
-const acabamento = document.getElementById("acabamento");
 
 let pesoLiquidoProduto = 0;
-let pesoBrutoProduto = 0;
-
-btnNovaOp.onclick = async () => {
-  modalBg.style.display = "flex";
-  await carregarPecas();
-};
-
-btnCancelar.onclick = () => modalBg.style.display = "none";
 
 async function carregarPecas(){
-  peca.innerHTML = "<option>Carregando...</option>";
   const { data, error } = await supabase
     .from("produtos")
-    .select("id,codigo,descricao,peso_liquido,peso_bruto")
+    .select("id,codigo,descricao,peso_liquido")
     .order("codigo");
 
   if(error){ alert(error.message); return; }
@@ -225,67 +210,51 @@ async function carregarPecas(){
     const o = document.createElement("option");
     o.value = p.id;
     o.textContent = `${p.codigo} - ${p.descricao}`;
-    o.dataset.pl = p.peso_liquido;
-    o.dataset.pb = p.peso_bruto;
+    o.dataset.peso = p.peso_liquido;
     peca.appendChild(o);
   });
 }
 
-function num(v){
-  return Number(String(v).replace(",", ".")) || 0;
-}
-
-function fmt(v){
-  return v.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
-}
+function num(v){ return Number(v.replace(",", ".")) || 0; }
+function br(v){ return v.toLocaleString("pt-BR",{minimumFractionDigits:2}); }
 
 function calcular(){
-  if(!pesoLiquidoProduto || !pesoBrutoProduto) return;
-
+  if(!pesoLiquidoProduto) return;
   const kg = num(kgLiquido.value);
   const rs = num(rsKg.value);
 
   const quantidade = Math.floor(kg / pesoLiquidoProduto);
-  const bruto = quantidade * pesoBrutoProduto;
-  const totalCalc = bruto * rs;
+  const totalCalc = kg * rs;
 
   qtd.value = quantidade;
-  kgBruto.value = fmt(bruto);
-  total.value = fmt(totalCalc);
+  total.value = br(totalCalc);
 }
 
 peca.onchange = () => {
-  const opt = peca.selectedOptions[0];
-  pesoLiquidoProduto = num(opt.dataset.pl);
-  pesoBrutoProduto = num(opt.dataset.pb);
+  pesoLiquidoProduto = Number(peca.selectedOptions[0]?.dataset.peso) || 0;
   calcular();
 };
 
 kgLiquido.oninput = calcular;
 rsKg.oninput = calcular;
 
-btnSalvar.onclick = async () => {
-  const { error } = await supabase
-    .from("zincagem_tratamento")
-    .insert({
-      op: document.getElementById("op").value,
-      data: document.getElementById("data").value,
-      produto_id: peca.value,
-      acabamento: acabamento.value,
-      kg_liquido: num(kgLiquido.value),
-      quantidade: Number(qtd.value),
-      kg_bruto: num(kgBruto.value),
-      valor_kg: num(rsKg.value),
-      total: num(total.value)
-    });
+document.getElementById("btnSalvar").onclick = async () => {
+  const payload = {
+    op: document.getElementById("op").value,
+    data: document.getElementById("data").value,
+    produto_id: peca.value,
+    acabamento: document.getElementById("acabamento").value,
+    kg_liquido: num(kgLiquido.value),
+    quantidade: Number(qtd.value),
+    rs_kg: num(rsKg.value),
+    total: num(total.value)
+  };
 
-  if(error){
-    alert("Erro ao salvar: " + error.message);
-    return;
-  }
+  const { error } = await supabase.from("zincagem_tratamento").insert(payload);
+  if(error){ alert("Erro ao salvar: " + error.message); return; }
 
+  alert("Salvo com sucesso!");
   modalBg.style.display = "none";
-  location.reload();
 };
 
 })();
