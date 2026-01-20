@@ -105,12 +105,15 @@ input[readonly]{
         <th>Data</th>
         <th>Peça</th>
         <th>Acab.</th>
-        <th>Kg</th>
+        <th>Kg Enviado</th>
         <th>Qtd (peças)</th>
+        <th>Peso Bruto</th>
+        <th>R$/Kg</th>
+        <th>Total</th>
       </tr>
     </thead>
     <tbody id="lista">
-      <tr><td colspan="6">Nenhum registro</td></tr>
+      <tr><td colspan="9">Nenhum registro</td></tr>
     </tbody>
   </table>
 </div>
@@ -139,19 +142,34 @@ input[readonly]{
       <div class="campo">
         <label>Acabamento</label>
         <select id="acabamento">
-          <option value="Zincado">Zincado</option>
-          <option value="Tratado">Tratado</option>
+          <option>Zincado</option>
+          <option>Tratado</option>
         </select>
       </div>
 
       <div class="campo">
         <label>Kg enviado</label>
-        <input id="kg">
+        <input id="kg_enviado">
       </div>
 
       <div class="campo">
         <label>Quantidade (peças)</label>
         <input id="quantidade" readonly>
+      </div>
+
+      <div class="campo">
+        <label>Peso Bruto</label>
+        <input id="peso_bruto" readonly>
+      </div>
+
+      <div class="campo">
+        <label>R$/Kg</label>
+        <input id="rs_kg">
+      </div>
+
+      <div class="campo" style="grid-column:1/3">
+        <label>Total (R$)</label>
+        <input id="total" readonly>
       </div>
     </div>
 
@@ -163,103 +181,97 @@ input[readonly]{
 </div>
 
 <script>
-/* ==================================================
-   SUPABASE — UMA ÚNICA INSTÂNCIA (SEM ERRO)
-================================================== */
 const supabaseClient = window.supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
+  "SUA_ANON_KEY_AQUI"
 );
 
-/* ==================================================
-   ELEMENTOS
-================================================== */
 const modalBg = document.getElementById("modalBg");
 const btnNovaOp = document.getElementById("btnNovaOp");
 const btnCancelar = document.getElementById("btnCancelar");
 const btnSalvar = document.getElementById("btnSalvar");
 
 const peca = document.getElementById("peca");
-const kgInput = document.getElementById("kg");
-const qtdInput = document.getElementById("quantidade");
+const kgEnviado = document.getElementById("kg_enviado");
+const qtd = document.getElementById("quantidade");
+const pesoBruto = document.getElementById("peso_bruto");
+const rsKg = document.getElementById("rs_kg");
+const total = document.getElementById("total");
 
 let pesoLiquidoProduto = 0;
+let pesoBrutoUnitario = 0;
 
-/* ==================================================
-   EVENTOS
-================================================== */
 btnNovaOp.onclick = async () => {
   modalBg.style.display = "flex";
   await carregarPecas();
 };
 
-btnCancelar.onclick = () => {
-  modalBg.style.display = "none";
-};
+btnCancelar.onclick = () => modalBg.style.display = "none";
 
-/* ==================================================
-   FUNÇÕES
-================================================== */
 async function carregarPecas(){
   peca.innerHTML = "<option>Carregando...</option>";
-
   const { data, error } = await supabaseClient
     .from("produtos")
-    .select("id,codigo,descricao,peso_liquido")
+    .select("id,codigo,descricao,peso_liquido,peso_bruto")
     .order("codigo");
 
-  if(error){
-    alert(error.message);
-    return;
-  }
+  if(error){ alert(error.message); return; }
 
   peca.innerHTML = "<option value=''>Selecione</option>";
   data.forEach(p=>{
-    const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = `${p.codigo} - ${p.descricao}`;
-    opt.dataset.peso = p.peso_liquido;
-    peca.appendChild(opt);
+    const o = document.createElement("option");
+    o.value = p.id;
+    o.textContent = `${p.codigo} - ${p.descricao}`;
+    o.dataset.peso_liquido = p.peso_liquido;
+    o.dataset.peso_bruto = p.peso_bruto;
+    peca.appendChild(o);
   });
 }
 
-function calcularQuantidade(){
-  const kg = Number(kgInput.value.replace(",", ".")) || 0;
-  const qtd = pesoLiquidoProduto ? Math.floor(kg / pesoLiquidoProduto) : 0;
-  qtdInput.value = qtd;
+function calcular(){
+  const kg = Number(kgEnviado.value.replace(",", ".")) || 0;
+  const preco = Number(rsKg.value.replace(",", ".")) || 0;
+
+  const quantidade = pesoLiquidoProduto ? Math.floor(kg / pesoLiquidoProduto) : 0;
+  const bruto = quantidade * pesoBrutoUnitario;
+  const totalCalc = kg * preco;
+
+  qtd.value = quantidade;
+  pesoBruto.value = bruto.toFixed(2).replace(".", ",");
+  total.value = totalCalc.toFixed(2).replace(".", ",");
 }
 
 peca.onchange = () => {
-  pesoLiquidoProduto = Number(peca.selectedOptions[0]?.dataset.peso) || 0;
-  calcularQuantidade();
+  const opt = peca.selectedOptions[0];
+  pesoLiquidoProduto = Number(opt.dataset.peso_liquido) || 0;
+  pesoBrutoUnitario = Number(opt.dataset.peso_bruto) || 0;
+  calcular();
 };
 
-kgInput.oninput = calcularQuantidade;
+kgEnviado.oninput = calcular;
+rsKg.oninput = calcular;
 
-/* ==================================================
-   SALVAR
-================================================== */
 btnSalvar.onclick = async () => {
-  const payload = {
-    op: document.getElementById("op").value,
-    data: document.getElementById("data").value,
-    produto_id: peca.value,
-    acabamento: document.getElementById("acabamento").value,
-    kg: Number(kgInput.value.replace(",", ".")),
-    quantidade: Number(qtdInput.value)
-  };
-
   const { error } = await supabaseClient
     .from("zincagem_tratamento")
-    .insert(payload);
+    .insert({
+      op: document.getElementById("op").value,
+      data: document.getElementById("data").value,
+      produto_id: peca.value,
+      acabamento: document.getElementById("acabamento").value,
+      kg_enviado: Number(kgEnviado.value.replace(",", ".")),
+      quantidade: Number(qtd.value),
+      peso_bruto: Number(pesoBruto.value.replace(",", ".")),
+      rs_kg: Number(rsKg.value.replace(",", ".")),
+      total: Number(total.value.replace(",", "."))
+    });
 
   if(error){
     alert("Erro ao salvar: " + error.message);
-    return;
+  }else{
+    modalBg.style.display = "none";
+    location.reload();
   }
-
-  alert("OP salva com sucesso");
-  modalBg.style.display = "none";
 };
 </script>
 
