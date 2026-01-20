@@ -18,7 +18,7 @@ header{
   padding:20px 30px;
   display:flex;
   align-items:center;
-  gap:20px;
+  gap:16px;
 }
 h1{margin:0;color:#38bdf8}
 button{
@@ -112,8 +112,13 @@ input[readonly]{background:#020b1a;color:#9ca3af}
   <div class="campo"><label>OP</label><input id="op"></div>
   <div class="campo"><label>Data</label><input type="date" id="data"></div>
 
-  <div class="campo"><label>Peça</label><select id="produto_id"></select></div>
-  <div class="campo"><label>Acabamento</label><input id="acabamento"></div>
+  <div class="campo"><label>Peça</label>
+    <select id="peca"></select>
+  </div>
+
+  <div class="campo"><label>Acabamento</label>
+    <input id="acabamento" readonly>
+  </div>
 
   <div class="campo"><label>Kg</label><input id="kg"></div>
   <div class="campo"><label>Quantidade</label><input id="quantidade" readonly></div>
@@ -134,101 +139,108 @@ input[readonly]{background:#020b1a;color:#9ca3af}
 </div>
 
 <script>
-(() => {
-  const sb = window.supabase.createClient(
-    "https://uxtgicfuggpuyjybwawa.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
-  );
+const sb = window.supabase.createClient(
+  "https://uxtgicfuggpuyjybwawa.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
+);
 
-  const el = id => document.getElementById(id);
-  let pesoLiquido = 0;
-  let pesoBruto = 0;
+const el = id => document.getElementById(id);
+let pesoLiquido = 0;
+let pesoBruto = 0;
 
-  window.abrirModal = async () => {
-    el("modalBg").style.display = "flex";
-    await carregarProdutos();
+function br(v){
+  return Number(String(v).replace(",", ".")) || 0;
+}
+function fmt(v){
+  return v.toFixed(2).replace(".", ",");
+}
+
+window.abrirModal = async () => {
+  el("modalBg").style.display = "flex";
+  await carregarProdutos();
+};
+window.fecharModal = () => el("modalBg").style.display = "none";
+
+async function carregarProdutos(){
+  const sel = el("peca");
+  const { data } = await sb
+    .from("produtos")
+    .select("descricao, acabamento, peso_liquido, peso_bruto");
+
+  sel.innerHTML = "<option></option>";
+  data.forEach(p => {
+    const o = document.createElement("option");
+    o.value = p.descricao;
+    o.textContent = p.descricao;
+    o.dataset.acab = p.acabamento;
+    o.dataset.pl = p.peso_liquido;
+    o.dataset.pb = p.peso_bruto;
+    sel.appendChild(o);
+  });
+
+  sel.onchange = () => {
+    const o = sel.selectedOptions[0];
+    el("acabamento").value = o.dataset.acab;
+    pesoLiquido = br(o.dataset.pl);
+    pesoBruto = br(o.dataset.pb);
+    calcular();
   };
-  window.fecharModal = () => el("modalBg").style.display = "none";
+}
 
-  async function carregarProdutos(){
-    const sel = el("produto_id");
-    const { data } = await sb
-      .from("produtos")
-      .select("id, descricao, peso_liquido, peso_bruto");
+["kg","valor_kg"].forEach(id => el(id).addEventListener("input", calcular));
 
-    sel.innerHTML = "<option></option>";
-    data.forEach(p => {
-      const o = document.createElement("option");
-      o.value = p.id;
-      o.textContent = p.descricao;
-      o.dataset.pl = p.peso_liquido;
-      o.dataset.pb = p.peso_bruto;
-      sel.appendChild(o);
-    });
+function calcular(){
+  const kg = br(el("kg").value);
+  const valorKg = br(el("valor_kg").value);
+  const qtd = pesoLiquido > 0 ? Math.floor(kg / pesoLiquido) : 0;
 
-    sel.onchange = () => {
-      const o = sel.selectedOptions[0];
-      pesoLiquido = Number(o.dataset.pl) || 0;
-      pesoBruto = Number(o.dataset.pb) || 0;
-      calcular();
-    };
-  }
+  el("quantidade").value = qtd || "";
+  el("kg_bruto").value = qtd ? fmt(qtd * pesoBruto) : "";
+  el("valor_total").value = fmt(kg * valorKg);
+}
 
-  ["kg","valor_kg"].forEach(id => el(id).addEventListener("input", calcular));
-
-  function calcular(){
-    const kg = Number(el("kg").value) || 0;
-    const valorKg = Number(el("valor_kg").value) || 0;
-    const qtd = pesoLiquido > 0 ? Math.floor(kg / pesoLiquido) : 0;
-
-    el("quantidade").value = qtd || "";
-    el("kg_bruto").value = qtd ? (qtd * pesoBruto).toFixed(2) : "";
-    el("valor_total").value = (kg * valorKg).toFixed(2);
-  }
-
-  window.salvar = async () => {
-    const payload = {
-      op: el("op").value,
-      data: el("data").value,
-      produto_id: el("produto_id").value,
-      acabamento: el("acabamento").value,
-      kg: Number(el("kg").value),
-      quantidade: Number(el("quantidade").value),
-      kg_bruto: Number(el("kg_bruto").value),
-      valor_kg: Number(el("valor_kg").value),
-      valor_total: Number(el("valor_total").value)
-    };
-
-    const { error } = await sb.from("zincagem_tratamento").insert(payload);
-    if(error) alert(error.message);
-    else location.reload();
+window.salvar = async () => {
+  const payload = {
+    op: el("op").value,
+    data: el("data").value,
+    peca: el("peca").value,
+    acabamento: el("acabamento").value,
+    kg: br(el("kg").value),
+    quantidade: br(el("quantidade").value),
+    kg_bruto: br(el("kg_bruto").value),
+    valor_kg: br(el("valor_kg").value),
+    valor_total: br(el("valor_total").value)
   };
 
-  async function carregarLista(){
-    const { data } = await sb
-      .from("zincagem_tratamento")
-      .select(`op,data,acabamento,kg,quantidade,kg_bruto,valor_kg,valor_total,produtos(descricao)`)
-      .order("data",{ascending:false});
+  const { error } = await sb.from("zincagem_tratamento").insert(payload);
+  if(error) alert(error.message);
+  else location.reload();
+};
 
-    el("lista").innerHTML = "";
-    data.forEach(r => {
-      el("lista").innerHTML += `
-      <tr>
-        <td>${r.op}</td>
-        <td>${r.data}</td>
-        <td>${r.produtos?.descricao || "-"}</td>
-        <td>${r.acabamento}</td>
-        <td>${r.kg}</td>
-        <td>${r.quantidade}</td>
-        <td>${r.kg_bruto}</td>
-        <td>${r.valor_kg}</td>
-        <td>${r.valor_total}</td>
-      </tr>`;
-    });
-  }
+async function carregarLista(){
+  const { data } = await sb
+    .from("zincagem_tratamento")
+    .select("*")
+    .order("data",{ascending:false});
 
-  carregarLista();
-})();
+  el("lista").innerHTML = "";
+  data.forEach(r => {
+    el("lista").innerHTML += `
+    <tr>
+      <td>${r.op}</td>
+      <td>${r.data}</td>
+      <td>${r.peca}</td>
+      <td>${r.acabamento}</td>
+      <td>${fmt(r.kg)}</td>
+      <td>${r.quantidade}</td>
+      <td>${fmt(r.kg_bruto)}</td>
+      <td>${fmt(r.valor_kg)}</td>
+      <td>${fmt(r.valor_total)}</td>
+    </tr>`;
+  });
+}
+
+carregarLista();
 </script>
 
 </body>
