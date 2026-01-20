@@ -106,12 +106,11 @@ input[readonly]{
         <th>Peça</th>
         <th>Acab.</th>
         <th>Qtd</th>
-        <th>R$/Kg</th>
         <th>Total</th>
       </tr>
     </thead>
     <tbody>
-      <tr><td colspan="7">Nenhum registro</td></tr>
+      <tr><td colspan="6">Nenhum registro</td></tr>
     </tbody>
   </table>
 </div>
@@ -151,7 +150,7 @@ input[readonly]{
       </div>
 
       <div class="campo">
-        <label>R$/Kg</label>
+        <label>R$/Kg (cálculo)</label>
         <input id="rs_kg">
       </div>
 
@@ -243,7 +242,6 @@ document.getElementById("btnSalvar").onclick = async () => {
     produto_id: peca.value,
     acabamento: document.getElementById("acabamento").value,
     quantidade: Number(qtd.value),
-    rs_kg: n(rsKg.value),
     total: n(total.value)
   };
 
