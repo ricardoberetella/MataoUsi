@@ -103,117 +103,19 @@ input[readonly]{background:#020b1a;color:#9ca3af}
 </table>
 </div>
 
-<!-- MODAL -->
-<div class="modal-bg" id="modalBg">
-<div class="modal">
-<h2>Nova OP</h2>
-
-<div class="grid">
-  <div class="campo"><label>OP</label><input id="op"></div>
-  <div class="campo"><label>Data</label><input type="date" id="data"></div>
-
-  <div class="campo">
-    <label>Peça (código)</label>
-    <select id="codigo_peca"></select>
-  </div>
-
-  <div class="campo">
-    <label>Acabamento</label>
-    <input id="acabamento" readonly>
-  </div>
-
-  <div class="campo"><label>Kg</label><input id="kg"></div>
-  <div class="campo"><label>Quantidade</label><input id="quantidade" readonly></div>
-
-  <div class="campo"><label>Kg Bruto</label><input id="kg_bruto" readonly></div>
-  <div class="campo"><label>R$/Kg</label><input id="valor_kg"></div>
-
-  <div class="campo" style="grid-column:1/3">
-    <label>Total</label><input id="valor_total" readonly>
-  </div>
-</div>
-
-<div class="footer">
-  <button class="btn-branco" onclick="fecharModal()">Cancelar</button>
-  <button class="btn-azul" onclick="salvar()">Salvar</button>
-</div>
-</div>
-</div>
-
 <script>
 const sb = window.supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
 );
 
-const el = id => document.getElementById(id);
-let pesoLiquido = 0;
-let pesoBruto = 0;
+function fmt(v){ return Number(v).toFixed(2).replace(".", ","); }
 
-function br(v){ return Number(String(v).replace(",", ".")) || 0; }
-function fmt(v){ return v.toFixed(2).replace(".", ","); }
-
-window.abrirModal = async () => {
-  el("modalBg").style.display = "flex";
-  await carregarProdutos();
-};
-window.fecharModal = () => el("modalBg").style.display = "none";
-
-async function carregarProdutos(){
-  const sel = el("codigo_peca");
-  const { data } = await sb
-    .from("produtos")
-    .select("codigo, acabamento, peso_liquido, peso_bruto");
-
-  sel.innerHTML = "<option></option>";
-  data.forEach(p => {
-    const o = document.createElement("option");
-    o.value = p.codigo;
-    o.textContent = p.codigo;
-    o.dataset.acab = p.acabamento;
-    o.dataset.pl = p.peso_liquido;
-    o.dataset.pb = p.peso_bruto;
-    sel.appendChild(o);
-  });
-
-  sel.onchange = () => {
-    const o = sel.selectedOptions[0];
-    el("acabamento").value = o.dataset.acab;
-    pesoLiquido = br(o.dataset.pl);
-    pesoBruto = br(o.dataset.pb);
-    calcular();
-  };
+function formatarDataBR(dataISO){
+  if(!dataISO) return "";
+  const [ano, mes, dia] = dataISO.split("-");
+  return `${dia}/${mes}/${ano}`;
 }
-
-["kg","valor_kg"].forEach(id => el(id).addEventListener("input", calcular));
-
-function calcular(){
-  const kg = br(el("kg").value);
-  const valorKg = br(el("valor_kg").value);
-  const qtd = pesoLiquido > 0 ? Math.floor(kg / pesoLiquido) : 0;
-
-  el("quantidade").value = qtd || "";
-  el("kg_bruto").value = qtd ? fmt(qtd * pesoBruto) : "";
-  el("valor_total").value = fmt(kg * valorKg);
-}
-
-window.salvar = async () => {
-  const payload = {
-    op: el("op").value,
-    data: el("data").value,
-    codigo_peca: el("codigo_peca").value,
-    acabamento: el("acabamento").value,
-    kg: br(el("kg").value),
-    quantidade: br(el("quantidade").value),
-    kg_bruto: br(el("kg_bruto").value),
-    valor_kg: br(el("valor_kg").value),
-    valor_total: br(el("valor_total").value)
-  };
-
-  const { error } = await sb.from("zincagem_tratamento").insert(payload);
-  if(error) alert(error.message);
-  else location.reload();
-};
 
 async function carregarLista(){
   const { data } = await sb
@@ -221,12 +123,14 @@ async function carregarLista(){
     .select("*")
     .order("data",{ascending:false});
 
-  el("lista").innerHTML = "";
+  const tbody = document.getElementById("lista");
+  tbody.innerHTML = "";
+
   data.forEach(r => {
-    el("lista").innerHTML += `
+    tbody.innerHTML += `
     <tr>
       <td>${r.op}</td>
-      <td>${r.data}</td>
+      <td>${formatarDataBR(r.data)}</td>
       <td>${r.codigo_peca}</td>
       <td>${r.acabamento}</td>
       <td>${fmt(r.kg)}</td>
