@@ -101,6 +101,7 @@ input[readonly]{
   <table>
     <thead>
       <tr>
+        <th>OP</th>
         <th>Peça</th>
         <th>Acab.</th>
         <th>Kg</th>
@@ -111,7 +112,7 @@ input[readonly]{
       </tr>
     </thead>
     <tbody>
-      <tr><td colspan="7">Nenhum registro</td></tr>
+      <tr><td colspan="8">Nenhum registro</td></tr>
     </tbody>
   </table>
 </div>
@@ -122,6 +123,11 @@ input[readonly]{
     <h2>Nova OP</h2>
 
     <div class="grid">
+
+      <div class="campo">
+        <label>OP</label>
+        <input id="op">
+      </div>
 
       <div class="campo">
         <label>Peça</label>
@@ -173,13 +179,18 @@ input[readonly]{
 <script>
 const sb = window.supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
+  "SUA_ANON_KEY_AQUI"
 );
 
 const modalBg = document.getElementById("modalBg");
-const btnNovaOp = document.getElementById("btnNovaOp");
-const btnCancelar = document.getElementById("btnCancelar");
-const btnSalvar = document.getElementById("btnSalvar");
+
+document.getElementById("btnNovaOp").onclick = async () => {
+  modalBg.style.display = "flex";
+  await carregarPecas();
+};
+
+document.getElementById("btnCancelar").onclick = () =>
+  modalBg.style.display = "none";
 
 const pecaSel = document.getElementById("peca");
 const kgInp = document.getElementById("kg");
@@ -191,24 +202,10 @@ const totalInp = document.getElementById("valor_total");
 let pesoLiquido = 0;
 let pesoBruto = 0;
 
-btnNovaOp.onclick = async () => {
-  modalBg.style.display = "flex";
-  await carregarPecas();
-};
-
-btnCancelar.onclick = () => modalBg.style.display = "none";
-
 async function carregarPecas(){
-  pecaSel.innerHTML = "<option>Carregando...</option>";
-
-  const { data, error } = await sb
+  const { data } = await sb
     .from("produtos")
-    .select("codigo, peso_liquido, peso_bruto");
-
-  if(error){
-    alert(error.message);
-    return;
-  }
+    .select("codigo,peso_liquido,peso_bruto");
 
   pecaSel.innerHTML = "<option value=''>Selecione</option>";
   data.forEach(p=>{
@@ -225,18 +222,13 @@ function calcular(){
   const kg = Number(kgInp.value.replace(",", ".")) || 0;
   const valorKg = Number(valorKgInp.value.replace(",", ".")) || 0;
 
-  if(!pesoLiquido || kg <= 0){
-    qtdInp.value = "";
-    kgBrutoInp.value = "";
-    totalInp.value = "";
-    return;
-  }
+  if(!pesoLiquido) return;
 
-  const quantidade = kg / pesoLiquido;
-  const kgBruto = quantidade * pesoBruto;
+  const qtd = Math.floor(kg / pesoLiquido);
+  const kgBruto = qtd * pesoBruto;
   const total = kg * valorKg;
 
-  qtdInp.value = Math.floor(quantidade);
+  qtdInp.value = qtd;
   kgBrutoInp.value = kgBruto.toLocaleString("pt-BR",{minimumFractionDigits:2});
   totalInp.value = total.toLocaleString("pt-BR",{minimumFractionDigits:2});
 }
@@ -251,8 +243,9 @@ pecaSel.onchange = () => {
 kgInp.oninput = calcular;
 valorKgInp.oninput = calcular;
 
-btnSalvar.onclick = async () => {
+document.getElementById("btnSalvar").onclick = async () => {
   const payload = {
+    op: document.getElementById("op").value,
     codigo_peca: pecaSel.value,
     acabamento: document.getElementById("acabamento").value,
     kg: Number(kgInp.value.replace(",", ".")),
