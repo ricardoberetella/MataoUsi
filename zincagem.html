@@ -110,7 +110,7 @@ input[readonly]{
         <th>Total</th>
       </tr>
     </thead>
-    <tbody id="lista">
+    <tbody>
       <tr><td colspan="7">Nenhum registro</td></tr>
     </tbody>
   </table>
@@ -141,7 +141,7 @@ input[readonly]{
         <input id="kg">
       </div>
 
-      <div classha="campo">
+      <div class="campo">
         <label>Quantidade (peças)</label>
         <input id="quantidade" readonly>
       </div>
@@ -171,7 +171,8 @@ input[readonly]{
 </div>
 
 <script>
-const supabase = window.supabase.createClient(
+/* 🔒 CLIENTE SUPABASE (SEM CONFLITO) */
+const sb = window.supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
 );
@@ -179,100 +180,37 @@ const supabase = window.supabase.createClient(
 const modalBg = document.getElementById("modalBg");
 const btnNovaOp = document.getElementById("btnNovaOp");
 const btnCancelar = document.getElementById("btnCancelar");
-const btnSalvar = document.getElementById("btnSalvar");
 
-const pecaSel = document.getElementById("peca");
-const kgInp = document.getElementById("kg");
-const qtdInp = document.getElementById("quantidade");
-const kgBrutoInp = document.getElementById("kg_material_bruto");
-const valorKgInp = document.getElementById("valor_kg");
-const totalInp = document.getElementById("valor_total");
-
-let pesoLiquido = 0;
-let pesoBruto = 0;
-let pecasPorCaixa = 0;
-let comprimento = 0;
-
-btnNovaOp.onclick = async () => {
+btnNovaOp.addEventListener("click", async () => {
   modalBg.style.display = "flex";
   await carregarPecas();
-};
+});
 
-btnCancelar.onclick = () => modalBg.style.display = "none";
+btnCancelar.addEventListener("click", () => {
+  modalBg.style.display = "none";
+});
 
 async function carregarPecas(){
-  pecaSel.innerHTML = "<option>Carregando...</option>";
-  const { data, error } = await supabase
+  const peca = document.getElementById("peca");
+  peca.innerHTML = "<option>Carregando...</option>";
+
+  const { data, error } = await sb
     .from("produtos")
-    .select("codigo,peso_liquido,peso_bruto,pecas_por_caixa,comprimento_mm");
+    .select("codigo");
 
-  if(error){ alert(error.message); return; }
+  if(error){
+    alert(error.message);
+    return;
+  }
 
-  pecaSel.innerHTML = "<option value=''>Selecione</option>";
+  peca.innerHTML = "<option value=''>Selecione</option>";
   data.forEach(p=>{
     const o = document.createElement("option");
     o.value = p.codigo;
     o.textContent = p.codigo;
-    o.dataset.pl = p.peso_liquido;
-    o.dataset.pb = p.peso_bruto;
-    o.dataset.ppc = p.pecas_por_caixa;
-    o.dataset.comp = p.comprimento_mm;
-    pecaSel.appendChild(o);
+    peca.appendChild(o);
   });
 }
-
-function calc(){
-  const kg = Number(kgInp.value.replace(",", ".")) || 0;
-  const valorKg = Number(valorKgInp.value.replace(",", ".")) || 0;
-
-  if(!pesoLiquido) return;
-
-  const qtd = Math.floor(kg / pesoLiquido);
-  const kgBruto = qtd * pesoBruto;
-  const total = kg * valorKg;
-
-  qtdInp.value = qtd;
-  kgBrutoInp.value = kgBruto.toLocaleString("pt-BR",{minimumFractionDigits:2});
-  totalInp.value = total.toLocaleString("pt-BR",{minimumFractionDigits:2});
-}
-
-pecaSel.onchange = ()=>{
-  const o = pecaSel.selectedOptions[0];
-  pesoLiquido = Number(o.dataset.pl);
-  pesoBruto = Number(o.dataset.pb);
-  pecasPorCaixa = Number(o.dataset.ppc);
-  comprimento = Number(o.dataset.comp);
-  calc();
-};
-
-kgInp.oninput = calc;
-valorKgInp.oninput = calc;
-
-btnSalvar.onclick = async () => {
-  const payload = {
-    codigo_peca: pecaSel.value,
-    acabamento: document.getElementById("acabamento").value,
-    kg: Number(kgInp.value.replace(",", ".")),
-    quantidade: Number(qtdInp.value),
-    kg_material_bruto: Number(kgBrutoInp.value.replace(",", ".")),
-    peso_caixa: pesoLiquido * pecasPorCaixa,
-    valor_kg: Number(valorKgInp.value.replace(",", ".")),
-    valor_total: Number(totalInp.value.replace(",", ".")),
-    comprimento_mm: comprimento,
-    entregue: false,
-    boleto: false
-  };
-
-  const { error } = await supabase
-    .from("zincagem_tratamento")
-    .insert(payload);
-
-  if(error){
-    alert("Erro ao salvar: " + error.message);
-  }else{
-    location.reload();
-  }
-};
 </script>
 
 </body>
