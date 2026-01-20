@@ -109,12 +109,13 @@ input[readonly]{
         <th>Qtd (peças)</th>
       </tr>
     </thead>
-    <tbody>
+    <tbody id="lista">
       <tr><td colspan="6">Nenhum registro</td></tr>
     </tbody>
   </table>
 </div>
 
+<!-- MODAL -->
 <div class="modal-bg" id="modalBg">
   <div class="modal">
     <h2>Nova OP</h2>
@@ -162,11 +163,17 @@ input[readonly]{
 </div>
 
 <script>
-const supabase = window.supabase.createClient(
+/* ==================================================
+   SUPABASE — UMA ÚNICA INSTÂNCIA (SEM ERRO)
+================================================== */
+const supabaseClient = window.supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
+  "SUA_ANON_KEY_AQUI"
 );
 
+/* ==================================================
+   ELEMENTOS
+================================================== */
 const modalBg = document.getElementById("modalBg");
 const btnNovaOp = document.getElementById("btnNovaOp");
 const btnCancelar = document.getElementById("btnCancelar");
@@ -178,29 +185,41 @@ const qtdInput = document.getElementById("quantidade");
 
 let pesoLiquidoProduto = 0;
 
+/* ==================================================
+   EVENTOS
+================================================== */
 btnNovaOp.onclick = async () => {
   modalBg.style.display = "flex";
   await carregarPecas();
 };
 
-btnCancelar.onclick = () => modalBg.style.display = "none";
+btnCancelar.onclick = () => {
+  modalBg.style.display = "none";
+};
 
+/* ==================================================
+   FUNÇÕES
+================================================== */
 async function carregarPecas(){
   peca.innerHTML = "<option>Carregando...</option>";
-  const { data, error } = await supabase
+
+  const { data, error } = await supabaseClient
     .from("produtos")
     .select("id,codigo,descricao,peso_liquido")
     .order("codigo");
 
-  if(error){ alert(error.message); return; }
+  if(error){
+    alert(error.message);
+    return;
+  }
 
   peca.innerHTML = "<option value=''>Selecione</option>";
   data.forEach(p=>{
-    const o = document.createElement("option");
-    o.value = p.id;
-    o.textContent = `${p.codigo} - ${p.descricao}`;
-    o.dataset.peso = p.peso_liquido;
-    peca.appendChild(o);
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = `${p.codigo} - ${p.descricao}`;
+    opt.dataset.peso = p.peso_liquido;
+    peca.appendChild(opt);
   });
 }
 
@@ -217,6 +236,9 @@ peca.onchange = () => {
 
 kgInput.oninput = calcularQuantidade;
 
+/* ==================================================
+   SALVAR
+================================================== */
 btnSalvar.onclick = async () => {
   const payload = {
     op: document.getElementById("op").value,
@@ -227,7 +249,7 @@ btnSalvar.onclick = async () => {
     quantidade: Number(qtdInput.value)
   };
 
-  const { error } = await supabase
+  const { error } = await supabaseClient
     .from("zincagem_tratamento")
     .insert(payload);
 
