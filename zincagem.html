@@ -5,7 +5,7 @@
 <title>Zincagem / Tratamento</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- SUPABASE (APENAS UMA VEZ) -->
+<!-- SUPABASE CDN (PODE EXISTIR MAIS DE UMA VEZ SEM QUEBRAR) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -125,47 +125,57 @@ input,select{
 </div>
 
 <script>
-/* ===== SUPABASE (ÚNICO) ===== */
-const supabase = window.supabase.createClient(
-  "https://uxtgicfuggpuyjybwawa.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
-);
+/* ========= SUPABASE BLINDADO ========= */
+(function(){
 
-/* ===== MODAL ===== */
-const modalBg = document.getElementById("modalBg");
-btnNovaOp.onclick = async ()=>{
-  modalBg.style.display="flex";
-  await carregarPecas();
-};
-btnCancelar.onclick = ()=> modalBg.style.display="none";
+  if(!window._supabaseClient){
+    window._supabaseClient = window.supabase.createClient(
+      "https://uxtgicfuggpuyjybwawa.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
+    );
+  }
 
-/* ===== PEÇAS ===== */
-async function carregarPecas(){
-  peca.innerHTML="<option>Carregando...</option>";
-  const {data,error} = await supabase
-    .from("produtos")
-    .select("id,codigo,descricao,quantidade_caixa,peso_caixa")
-    .order("codigo");
-  if(error){ alert(error.message); return; }
-  peca.innerHTML="<option value=''>Selecione</option>";
-  data.forEach(p=>{
-    const o=document.createElement("option");
-    o.value=p.id;
-    o.textContent=`${p.codigo} - ${p.descricao}`;
-    o.dataset.peso=p.peso_caixa;
-    peca.appendChild(o);
-  });
-}
+  const supabase = window._supabaseClient;
 
-/* ===== CÁLCULO ===== */
-function calc(){
-  const qtd=+quantidade.value||0;
-  const peso=+peca.selectedOptions[0]?.dataset.peso||0;
-  const rs=+rs_kg.value.replace(",",".")||0;
-  kg_bruto.value=(qtd*peso).toFixed(3);
-  total.value=(kg_bruto.value*rs).toFixed(2).replace(".",",");
-}
-quantidade.oninput = rs_kg.oninput = calc;
+  const modalBg = document.getElementById("modalBg");
+  const btnNovaOp = document.getElementById("btnNovaOp");
+  const btnCancelar = document.getElementById("btnCancelar");
+  const peca = document.getElementById("peca");
+
+  btnNovaOp.onclick = async ()=>{
+    modalBg.style.display="flex";
+    await carregarPecas();
+  };
+  btnCancelar.onclick = ()=> modalBg.style.display="none";
+
+  async function carregarPecas(){
+    peca.innerHTML="<option>Carregando...</option>";
+    const {data,error} = await supabase
+      .from("produtos")
+      .select("id,codigo,descricao,peso_caixa")
+      .order("codigo");
+    if(error){ alert(error.message); return; }
+    peca.innerHTML="<option value=''>Selecione</option>";
+    data.forEach(p=>{
+      const o=document.createElement("option");
+      o.value=p.id;
+      o.textContent=`${p.codigo} - ${p.descricao}`;
+      o.dataset.peso=p.peso_caixa;
+      peca.appendChild(o);
+    });
+  }
+
+  function calc(){
+    const qtd=+quantidade.value||0;
+    const peso=+peca.selectedOptions[0]?.dataset.peso||0;
+    const rs=+rs_kg.value.replace(",",".")||0;
+    kg_bruto.value=(qtd*peso).toFixed(3);
+    total.value=(kg_bruto.value*rs).toFixed(2).replace(".",",");
+  }
+
+  quantidade.oninput = rs_kg.oninput = calc;
+
+})();
 </script>
 
 </body>
