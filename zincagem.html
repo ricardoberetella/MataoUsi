@@ -116,7 +116,10 @@ input[readonly]{background:#020b1a;color:#9ca3af}
 
 <div class="campo"><label>Peça</label><select id="peca"></select></div>
 <div class="campo"><label>Acabamento</label>
-<select id="acabamento"><option>Zincado</option><option>Tratado</option></select>
+<select id="acabamento">
+  <option>Zincado</option>
+  <option>Tratado</option>
+</select>
 </div>
 
 <div class="campo"><label>Kg enviado</label><input id="kg"></div>
@@ -150,6 +153,7 @@ const supabase = window.supabase.createClient(
 const modal = document.getElementById("modalBg");
 document.getElementById("btnNovaOp").onclick = abrirModal;
 
+let produtoSelecionado = null;
 let pesoLiquido=0, pesoBruto=0, pecasCaixa=0, comprimento=0;
 
 function abrirModal(){
@@ -160,21 +164,26 @@ function fecharModal(){ modal.style.display="none"; }
 
 async function carregarPecas(){
  const sel=document.getElementById("peca");
- const {data}=await supabase.from("produtos")
- .select("codigo,peso_liquido,peso_bruto,pecas_por_caixa,comprimento_mm");
- sel.innerHTML="<option></option>";
+ const { data } = await supabase
+   .from("produtos")
+   .select("id,codigo,descricao,peso_liquido,peso_bruto,pecas_por_caixa,comprimento_mm");
+
+ sel.innerHTML="<option value=''>Selecione</option>";
  data.forEach(p=>{
   const o=document.createElement("option");
-  o.value=p.codigo;
-  o.textContent=p.codigo;
+  o.value=p.id;
+  o.textContent=`${p.codigo} - ${p.descricao}`;
   o.dataset.pl=p.peso_liquido;
   o.dataset.pb=p.peso_bruto;
   o.dataset.ppc=p.pecas_por_caixa;
   o.dataset.comp=p.comprimento_mm;
   sel.appendChild(o);
  });
+
  sel.onchange=()=>{
   const o=sel.selectedOptions[0];
+  if(!o) return;
+  produtoSelecionado = sel.value;
   pesoLiquido=+o.dataset.pl;
   pesoBruto=+o.dataset.pb;
   pecasCaixa=+o.dataset.ppc;
@@ -191,54 +200,78 @@ function calcular(){
  const kg=+document.getElementById("kg").value||0;
  const valorKg=+document.getElementById("valor_kg").value||0;
  const qtd=Math.floor(kg/pesoLiquido||0);
- document.getElementById("quantidade").value=qtd;
- document.getElementById("kg_bruto").value=(qtd*pesoBruto).toFixed(2);
- document.getElementById("peso_caixa").value=(pesoLiquido*pecasCaixa).toFixed(2);
- document.getElementById("comprimento").value=comprimento;
- document.getElementById("total").value=(kg*valorKg).toFixed(2);
+
+ quantidade.value=qtd;
+ kg_bruto.value=(qtd*pesoBruto).toFixed(2);
+ peso_caixa.value=(pesoLiquido*pecasCaixa).toFixed(2);
+ comprimento.value=comprimento;
+ total.value=(kg*valorKg).toFixed(2);
 }
 
 async function salvar(){
  const payload={
   op:op.value,
   data:data.value,
-  codigo_peca:peca.value,
-  pecas_por_caixa:pecasCaixa,
+  produto_id:produtoSelecionado,
+  acabamento:acabamento.value,
   kg:+kg.value,
   quantidade:+quantidade.value,
-  kg_material_bruto:+kg_bruto.value,
-  peso_caixa:+peso_caixa.value,
-  acabamento:acabamento.value,
-  comprimento_mm:+comprimento.value,
-  valor_kg:+valor_kg.value,
-  valor_total:+total.value,
-  entregue:false,
-  boleto:false
+  kg_bruto:+kg_bruto.value,
+  preco_kg:+valor_kg.value,
+  valor_total:+total.value
  };
- const {error}=await supabase.from("zincagem_tratamento").insert(payload);
- if(error) alert(error.message);
- else location.reload();
+
+ const { error } = await supabase
+   .from("zincagem_tratamento")
+   .insert(payload);
+
+ if(error){
+   alert(error.message);
+ }else{
+   location.reload();
+ }
 }
 
 async function carregarLista(){
- const {data}=await supabase.from("zincagem_tratamento").select("*").order("data",{ascending:false});
+ const { data, error } = await supabase
+  .from("zincagem_tratamento")
+  .select(`
+    op,
+    data,
+    acabamento,
+    kg,
+    quantidade,
+    kg_bruto,
+    preco_kg,
+    valor_total,
+    produtos ( descricao )
+  `)
+  .order("data",{ascending:false});
+
  const tbody=document.getElementById("lista");
  tbody.innerHTML="";
+
+ if(error){
+   tbody.innerHTML="<tr><td colspan='9'>Erro ao carregar</td></tr>";
+   return;
+ }
+
  data.forEach(r=>{
   tbody.innerHTML+=`
   <tr>
-  <td>${r.op}</td>
-  <td>${r.data}</td>
-  <td>${r.codigo_peca}</td>
-  <td>${r.acabamento}</td>
-  <td>${r.kg}</td>
-  <td>${r.quantidade}</td>
-  <td>${r.kg_material_bruto}</td>
-  <td>${r.valor_kg}</td>
-  <td>${r.valor_total}</td>
+    <td>${r.op}</td>
+    <td>${r.data}</td>
+    <td>${r.produtos?.descricao || "-"}</td>
+    <td>${r.acabamento}</td>
+    <td>${r.kg}</td>
+    <td>${r.quantidade}</td>
+    <td>${r.kg_bruto}</td>
+    <td>${r.preco_kg}</td>
+    <td>${r.valor_total}</td>
   </tr>`;
  });
 }
+
 carregarLista();
 </script>
 
