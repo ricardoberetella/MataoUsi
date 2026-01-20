@@ -105,14 +105,13 @@ input[readonly]{
         <th>Data</th>
         <th>Peça</th>
         <th>Acab.</th>
-        <th>Kg Líq.</th>
         <th>Qtd</th>
         <th>R$/Kg</th>
         <th>Total</th>
       </tr>
     </thead>
     <tbody>
-      <tr><td colspan="8">Nenhum registro</td></tr>
+      <tr><td colspan="7">Nenhum registro</td></tr>
     </tbody>
   </table>
 </div>
@@ -147,8 +146,8 @@ input[readonly]{
       </div>
 
       <div class="campo">
-        <label>Kg Líquido</label>
-        <input id="kg_liquido">
+        <label>Kg enviado</label>
+        <input id="kg_enviado">
       </div>
 
       <div class="campo">
@@ -190,7 +189,7 @@ document.getElementById("btnNovaOp").onclick = async () => {
 document.getElementById("btnCancelar").onclick = () => modalBg.style.display = "none";
 
 const peca = document.getElementById("peca");
-const kgLiquido = document.getElementById("kg_liquido");
+const kgEnviado = document.getElementById("kg_enviado");
 const rsKg = document.getElementById("rs_kg");
 const qtd = document.getElementById("quantidade");
 const total = document.getElementById("total");
@@ -215,13 +214,13 @@ async function carregarPecas(){
   });
 }
 
-function num(v){ return Number(v.replace(",", ".")) || 0; }
+function n(v){ return Number(v.replace(",", ".")) || 0; }
 function br(v){ return v.toLocaleString("pt-BR",{minimumFractionDigits:2}); }
 
 function calcular(){
   if(!pesoLiquidoProduto) return;
-  const kg = num(kgLiquido.value);
-  const rs = num(rsKg.value);
+  const kg = n(kgEnviado.value);
+  const rs = n(rsKg.value);
 
   const quantidade = Math.floor(kg / pesoLiquidoProduto);
   const totalCalc = kg * rs;
@@ -234,8 +233,7 @@ peca.onchange = () => {
   pesoLiquidoProduto = Number(peca.selectedOptions[0]?.dataset.peso) || 0;
   calcular();
 };
-
-kgLiquido.oninput = calcular;
+kgEnviado.oninput = calcular;
 rsKg.oninput = calcular;
 
 document.getElementById("btnSalvar").onclick = async () => {
@@ -244,10 +242,9 @@ document.getElementById("btnSalvar").onclick = async () => {
     data: document.getElementById("data").value,
     produto_id: peca.value,
     acabamento: document.getElementById("acabamento").value,
-    kg_liquido: num(kgLiquido.value),
     quantidade: Number(qtd.value),
-    rs_kg: num(rsKg.value),
-    total: num(total.value)
+    rs_kg: n(rsKg.value),
+    total: n(total.value)
   };
 
   const { error } = await supabase.from("zincagem_tratamento").insert(payload);
