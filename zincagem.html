@@ -158,7 +158,7 @@ input[readonly]{
       </div>
 
       <div class="campo">
-        <label>Quantidade</label>
+        <label>Quantidade (peças)</label>
         <input id="quantidade" readonly>
       </div>
 
@@ -239,13 +239,14 @@ input[readonly]{
     const kg = Number(kgLiquido.value.replace(",", ".")) || 0;
     const rs = Number(rsKg.value.replace(",", ".")) || 0;
 
-    const quantidade = pesoLiquidoProduto ? kg / pesoLiquidoProduto : 0;
+    // 🔴 AQUI A CORREÇÃO
+    const quantidade = Math.floor(kg / pesoLiquidoProduto); // INTEIRO
     const bruto = quantidade * pesoBrutoProduto;
     const totalCalc = bruto * rs;
 
-    qtd.value = formatar(quantidade);
-    kgBruto.value = formatar(bruto);
-    total.value = formatar(totalCalc);
+    qtd.value = quantidade;             // SEM casas decimais
+    kgBruto.value = formatar(bruto);    // 2 casas
+    total.value = formatar(totalCalc);  // 2 casas
   }
 
   peca.onchange = () => {
