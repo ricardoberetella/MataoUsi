@@ -5,9 +5,6 @@
 <title>Zincagem / Tratamento</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- SUPABASE (UMA ÚNICA VEZ) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
 *{box-sizing:border-box;font-family:Segoe UI,Arial}
 body{
@@ -88,15 +85,15 @@ input,select{
 <table>
 <thead>
 <tr>
-<th>OP</th>
-<th>Data</th>
-<th>Peça</th>
-<th>Acab.</th>
-<th>Kg</th>
-<th>Qtd</th>
-<th>Kg Bruto</th>
-<th>R$/Kg</th>
-<th>Total</th>
+  <th>OP</th>
+  <th>Data</th>
+  <th>Peça</th>
+  <th>Acab.</th>
+  <th>Kg</th>
+  <th>Qtd</th>
+  <th>Kg Bruto</th>
+  <th>R$/Kg</th>
+  <th>Total</th>
 </tr>
 </thead>
 <tbody id="lista">
@@ -111,68 +108,65 @@ input,select{
 <h2>Nova OP</h2>
 
 <div class="grid">
-<div class="campo">
-  <label>OP</label>
-  <input id="op">
-</div>
+  <div class="campo">
+    <label>OP</label>
+    <input id="op">
+  </div>
 
-<div class="campo">
-  <label>Data</label>
-  <input type="date" id="data">
-</div>
+  <div class="campo">
+    <label>Data</label>
+    <input type="date" id="data">
+  </div>
 
-<div class="campo">
-  <label>Peça</label>
-  <select id="produto_id"></select>
-</div>
+  <div class="campo">
+    <label>Peça</label>
+    <select id="produto_id"></select>
+  </div>
 
-<div class="campo">
-  <label>Acabamento</label>
-  <input id="acabamento">
-</div>
+  <div class="campo">
+    <label>Acabamento</label>
+    <input id="acabamento">
+  </div>
 
-<div class="campo">
-  <label>Kg</label>
-  <input id="kg">
-</div>
+  <div class="campo">
+    <label>Kg</label>
+    <input id="kg">
+  </div>
 
-<div class="campo">
-  <label>Quantidade</label>
-  <input id="quantidade">
-</div>
+  <div class="campo">
+    <label>Quantidade</label>
+    <input id="quantidade">
+  </div>
 
-<div class="campo">
-  <label>Kg Bruto</label>
-  <input id="kg_bruto">
-</div>
+  <div class="campo">
+    <label>Kg Bruto</label>
+    <input id="kg_bruto">
+  </div>
 
-<div class="campo">
-  <label>R$/Kg</label>
-  <input id="preco_kg">
-</div>
+  <div class="campo">
+    <label>R$/Kg</label>
+    <input id="preco_kg">
+  </div>
 
-<div class="campo" style="grid-column:1/3">
-  <label>Total</label>
-  <input id="valor_total">
-</div>
+  <div class="campo" style="grid-column:1/3">
+    <label>Total</label>
+    <input id="valor_total">
+  </div>
 </div>
 
 <div class="footer">
-<button class="btn-branco" onclick="fecharModal()">Cancelar</button>
-<button class="btn-azul" onclick="salvar()">Salvar</button>
+  <button class="btn-branco" onclick="fecharModal()">Cancelar</button>
+  <button class="btn-azul" onclick="salvar()">Salvar</button>
 </div>
 
 </div>
 </div>
 
-<script>
-/* ==========================
-   SUPABASE (UMA VEZ)
-========================== */
-const supabase = window.supabase.createClient(
- "https://uxtgicfuggpuyjybwawa.supabase.co",
- "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
-);
+<!-- SCRIPT MODULE (USA auth.js) -->
+<script type="module">
+import { supabase, protegerPagina } from "./auth.js";
+
+await protegerPagina();
 
 /* ==========================
    MODAL
@@ -182,99 +176,111 @@ document.getElementById("btnNovaOp").onclick = () => {
   modal.style.display = "flex";
   carregarProdutos();
 };
+
 function fecharModal(){
-  modal.style.display="none";
+  modal.style.display = "none";
 }
 
 /* ==========================
    PRODUTOS
 ========================== */
 async function carregarProdutos(){
- const sel = document.getElementById("produto_id");
- const { data } = await supabase
-   .from("produtos")
-   .select("id, descricao");
+  const sel = document.getElementById("produto_id");
 
- sel.innerHTML="<option value=''>Selecione</option>";
- data.forEach(p=>{
-   const o=document.createElement("option");
-   o.value=p.id;
-   o.textContent=p.descricao;
-   sel.appendChild(o);
- });
+  const { data, error } = await supabase
+    .from("produtos")
+    .select("id, descricao");
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  sel.innerHTML = "<option value=''>Selecione</option>";
+  data.forEach(p => {
+    const o = document.createElement("option");
+    o.value = p.id;
+    o.textContent = p.descricao;
+    sel.appendChild(o);
+  });
 }
 
 /* ==========================
    SALVAR OP
 ========================== */
 async function salvar(){
- const payload = {
-  op: op.value,
-  data: data.value,
-  produto_id: produto_id.value,
-  acabamento: acabamento.value,
-  kg: +kg.value,
-  quantidade: +quantidade.value,
-  kg_bruto: +kg_bruto.value,
-  preco_kg: +preco_kg.value,
-  valor_total: +valor_total.value
- };
+  const payload = {
+    op: op.value,
+    data: data.value,
+    produto_id: produto_id.value,
+    acabamento: acabamento.value,
+    kg: +kg.value,
+    quantidade: +quantidade.value,
+    kg_bruto: +kg_bruto.value,
+    preco_kg: +preco_kg.value,
+    valor_total: +valor_total.value
+  };
 
- const { error } = await supabase
-   .from("zincagem_tratamento")
-   .insert(payload);
+  const { error } = await supabase
+    .from("zincagem_tratamento")
+    .insert(payload);
 
- if(error){
-   alert(error.message);
- }else{
-   location.reload();
- }
+  if(error){
+    alert(error.message);
+  }else{
+    location.reload();
+  }
 }
 
 /* ==========================
    LISTAGEM
 ========================== */
 async function carregarLista(){
- const { data, error } = await supabase
-  .from("zincagem_tratamento")
-  .select(`
-    op,
-    data,
-    acabamento,
-    kg,
-    quantidade,
-    kg_bruto,
-    preco_kg,
-    valor_total,
-    produtos ( descricao )
-  `)
-  .order("data",{ascending:false});
+  const { data, error } = await supabase
+    .from("zincagem_tratamento")
+    .select(`
+      op,
+      data,
+      acabamento,
+      kg,
+      quantidade,
+      kg_bruto,
+      preco_kg,
+      valor_total,
+      produtos ( descricao )
+    `)
+    .order("data", { ascending:false });
 
- const tbody = document.getElementById("lista");
- tbody.innerHTML="";
+  const tbody = document.getElementById("lista");
+  tbody.innerHTML = "";
 
- if(error){
-   tbody.innerHTML="<tr><td colspan='9'>Erro</td></tr>";
-   return;
- }
+  if(error){
+    tbody.innerHTML = "<tr><td colspan='9'>Erro ao carregar</td></tr>";
+    return;
+  }
 
- data.forEach(r=>{
-  tbody.innerHTML += `
-  <tr>
-    <td>${r.op}</td>
-    <td>${r.data}</td>
-    <td>${r.produtos?.descricao || "-"}</td>
-    <td>${r.acabamento}</td>
-    <td>${r.kg}</td>
-    <td>${r.quantidade}</td>
-    <td>${r.kg_bruto}</td>
-    <td>${r.preco_kg}</td>
-    <td>${r.valor_total}</td>
-  </tr>`;
- });
+  data.forEach(r => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${r.op}</td>
+        <td>${r.data}</td>
+        <td>${r.produtos?.descricao || "-"}</td>
+        <td>${r.acabamento}</td>
+        <td>${r.kg}</td>
+        <td>${r.quantidade}</td>
+        <td>${r.kg_bruto}</td>
+        <td>${r.preco_kg}</td>
+        <td>${r.valor_total}</td>
+      </tr>
+    `;
+  });
 }
 
 carregarLista();
+
+/* expor para HTML */
+window.fecharModal = fecharModal;
+window.salvar = salvar;
 </script>
 
 </body>
