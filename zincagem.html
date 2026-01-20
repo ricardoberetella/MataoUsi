@@ -33,7 +33,7 @@ button{
 
 table{width:100%;border-collapse:collapse}
 th,td{padding:10px;border-bottom:1px solid #1e293b}
-th{color:#38bdf8;text-align:left; white-space:nowrap}
+th{color:#38bdf8;text-align:left;white-space:nowrap}
 
 .acoes{
   display:flex;
@@ -133,7 +133,7 @@ input[readonly]{background:#020b1a;color:#9ca3af}
       <div class="campo"><label>Data</label><input type="date" id="data"></div>
 
       <div class="campo"><label>Peça (código)</label>
-        <select id="codigo_peca"></select>
+        <select id="codigo_peca_toggle"></select>
       </div>
       <div class="campo"><label>Acabamento</label>
         <input id="acabamento" readonly>
@@ -165,7 +165,23 @@ const sb = window.supabase.createClient(
 
 const el = (id)=>document.getElementById(id);
 
-function br(v){ return Number(String(v ?? "").replace(/\./g,"").replace(",", ".")) || 0; }
+/* =========================================
+   CONVERSÃO CORRETA (NÃO QUEBRA 0.056!)
+   - Se tiver vírgula: pt-BR (1.234,56)
+   - Se não tiver vírgula: ponto é decimal (0.056)
+========================================= */
+function num(v){
+  if (v === null || v === undefined) return 0;
+  if (typeof v === "number") return v;
+  let s = String(v).trim();
+  if (!s) return 0;
+
+  if (s.includes(",")) {
+    s = s.replace(/\./g, "").replace(",", ".");
+  }
+  return Number(s) || 0;
+}
+
 function fmt(v){ return Number(v||0).toFixed(2).replace(".", ","); }
 
 function formatarDataBR(dataISO){
@@ -181,6 +197,7 @@ let editId = null; // null = novo / number = editar
 function abrirModal(){
   editId = null;
   el("tituloModal").textContent = "Nova OP";
+
   el("op").value = "";
   el("data").value = "";
   el("kg").value = "";
@@ -189,6 +206,7 @@ function abrirModal(){
   el("kg_bruto").value = "";
   el("valor_total").value = "";
   el("acabamento").value = "";
+
   pesoLiquido = 0;
   pesoBruto = 0;
 
@@ -202,6 +220,10 @@ function fecharModal(){
 
 async function carregarProdutos(){
   const sel = el("codigo_peca");
+  // compatibilidade com id antigo:
+  // (o select no HTML está "codigo_peca_toggle"; vou apontar ambos)
+  const select = el("codigo_peca_toggle");
+
   const { data, error } = await sb
     .from("produtos")
     .select("codigo, acabamento, peso_liquido, peso_bruto")
@@ -212,7 +234,7 @@ async function carregarProdutos(){
     return;
   }
 
-  sel.innerHTML = "<option value=''></option>";
+  select.innerHTML = "<option value=''></option>";
   data.forEach(p => {
     const o = document.createElement("option");
     o.value = p.codigo;
@@ -220,22 +242,19 @@ async function carregarProdutos(){
     o.dataset.acab = p.acabamento ?? "";
     o.dataset.pl = p.peso_liquido ?? 0;
     o.dataset.pb = p.peso_bruto ?? 0;
-    sel.appendChild(o);
+    select.appendChild(o);
   });
 
-  sel.onchange = () => {
-    const o = sel.selectedOptions[0];
+  select.onchange = () => {
+    const o = select.selectedOptions[0];
     if(!o) return;
     el("acabamento").value = o.dataset.acab || "";
-    pesoLiquido = br(o.dataset.pl);
-    pesoBruto = br(o.dataset.pb);
+    pesoLiquido = num(o.dataset.pl);
+    pesoBruto = num(o.dataset.pb);
     calcular();
   };
 
-  // Se estiver editando e já tem codigo_peca setado, não sobrescrever
-  if(editId !== null && sel.value){
-    sel.dispatchEvent(new Event("change"));
-  }
+  // Se estiver editando, depois que carrega a lista, o editarOp seta o value e dispara change
 }
 
 ["kg","valor_kg"].forEach(id=>{
@@ -243,9 +262,10 @@ async function carregarProdutos(){
 });
 
 function calcular(){
-  const kg = br(el("kg").value);
-  const valorKg = br(el("valor_kg").value);
-  const qtd = pesoLiquido > 0 ? Math.floor(kg / pesoLiquido) : 0;
+  const kg = num(el("kg").value);
+  const valorKg = num(el("valor_kg").value);
+
+  const qtd = (pesoLiquido > 0) ? Math.floor(kg / pesoLiquido) : 0;
 
   el("quantidade").value = qtd ? String(qtd) : "";
   el("kg_bruto").value = qtd ? fmt(qtd * pesoBruto) : "";
@@ -256,13 +276,13 @@ async function salvar(){
   const payload = {
     op: el("op").value.trim(),
     data: el("data").value,
-    codigo_peca: el("codigo_peca").value,
+    codigo_peca: el("codigo_peca_toggle").value,
     acabamento: el("acabamento").value,
-    kg: br(el("kg").value),
-    quantidade: br(el("quantidade").value),
-    kg_bruto: br(el("kg_bruto").value),
-    valor_kg: br(el("valor_kg").value),
-    valor_total: br(el("valor_total").value)
+    kg: num(el("kg").value),
+    quantidade: num(el("quantidade").value),
+    kg_bruto: num(el("kg_bruto").value),
+    valor_kg: num(el("valor_kg").value),
+    valor_total: num(el("valor_total").value)
   };
 
   if(!payload.op || !payload.data || !payload.codigo_peca){
@@ -280,7 +300,7 @@ async function salvar(){
   }
 
   if(resp.error){
-    alert(resp.error.message);
+    alert("Erro ao salvar: " + resp.error.message);
     return;
   }
 
@@ -321,18 +341,18 @@ async function editarOp(id){
 
   editId = id;
   el("tituloModal").textContent = "Editar OP";
-
   el("modalBg").style.display = "flex";
 
-  // carregar produtos e depois setar o select (para puxar acabamento/pesos)
   await carregarProdutos();
 
   el("op").value = data.op ?? "";
   el("data").value = data.data ?? "";
-  el("codigo_peca").value = data.codigo_peca ?? "";
-  el("codigo_peca").dispatchEvent(new Event("change"));
+  el("codigo_peca_toggle").value = data.codigo_peca ?? "";
 
-  // valores com vírgula no input
+  // dispara para puxar acabamento/pesos corretos e recalcular
+  el("codigo_peca_toggle").dispatchEvent(new Event("change"));
+
+  // inputs em pt-BR
   el("kg").value = fmt(data.kg ?? 0);
   el("valor_kg").value = fmt(data.valor_kg ?? 0);
 
@@ -346,12 +366,13 @@ async function carregarLista(){
     .select("*")
     .order("data",{ascending:false});
 
+  const tbody = el("lista");
+
   if(error){
-    el("lista").innerHTML = `<tr><td colspan="10">Erro: ${error.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10">Erro: ${error.message}</td></tr>`;
     return;
   }
 
-  const tbody = el("lista");
   tbody.innerHTML = "";
 
   data.forEach(r => {
