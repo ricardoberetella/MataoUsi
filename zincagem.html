@@ -5,7 +5,7 @@
 <title>Zincagem / Tratamento</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- SUPABASE -->
+<!-- SUPABASE (CDN) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -23,14 +23,16 @@ header{
   justify-content:space-between;
   align-items:center;
   padding:24px 32px;
+  gap:16px;
 }
 h1{color:#38bdf8;margin:0}
 
 button{
   border:none;
   padding:10px 16px;
-  border-radius:8px;
+  border-radius:10px;
   cursor:pointer;
+  font-weight:600;
 }
 .btn-azul{background:#38bdf8;color:#000}
 .btn-branco{background:#fff;color:#000}
@@ -45,43 +47,66 @@ th{color:#38bdf8;text-align:left}
 .modal-bg{
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,.6);
+  background:rgba(0,0,0,.65);
   display:none;
   justify-content:center;
   align-items:center;
   z-index:999;
 }
 .modal{
-  width:920px;
+  width:min(980px, calc(100vw - 48px));
   background:linear-gradient(180deg,#020b1a,#020617);
-  border-radius:16px;
+  border-radius:18px;
   padding:24px;
+  border:1px solid rgba(56,189,248,.18);
+  box-shadow:0 18px 60px rgba(0,0,0,.65);
 }
-.modal h2{color:#38bdf8;margin-top:0}
+.modal h2{
+  color:#38bdf8;
+  margin:0 0 14px 0;
+  font-size:26px;
+}
 
 .form-grid{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:16px;
+  gap:16px 18px;
 }
 
-label{font-size:13px;color:#9ca3af}
+label{
+  display:block;
+  font-size:13px;
+  color:#9ca3af;
+  margin:0 0 6px 2px;
+}
+
 input,select{
   width:100%;
-  padding:10px;
-  border-radius:8px;
-  border:1px solid rgba(255,255,255,.15);
+  padding:11px 12px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.14);
   background:#020617;
   color:#fff;
+  outline:none;
+}
+input:focus, select:focus{
+  border-color:rgba(56,189,248,.55);
+  box-shadow:0 0 0 3px rgba(56,189,248,.12);
 }
 
-input[readonly]{opacity:.7}
+input[readonly]{opacity:.75}
 
 .footer{
   display:flex;
   justify-content:flex-end;
   gap:12px;
-  margin-top:20px;
+  margin-top:18px;
+}
+
+@media (max-width: 820px){
+  header{flex-direction:column; align-items:flex-start}
+  .form-grid{grid-template-columns:1fr}
+  .span2{grid-column:auto!important}
 }
 </style>
 </head>
@@ -90,7 +115,7 @@ input[readonly]{opacity:.7}
 
 <header>
   <h1>Zincagem / Tratamento</h1>
-  <div>
+  <div style="display:flex; gap:12px; flex-wrap:wrap;">
     <button class="btn-branco" onclick="location.href='menu.html'">← Voltar ao menu</button>
     <button class="btn-azul" id="btnNovaOP">+ Nova OP</button>
   </div>
@@ -135,30 +160,32 @@ input[readonly]{opacity:.7}
 
       <div>
         <label>Peça</label>
-        <select id="peca"></select>
+        <select id="peca">
+          <option value="">Carregando...</option>
+        </select>
       </div>
 
       <div>
         <label>Acabamento</label>
         <select id="acabamento">
-          <option>Zincado</option>
-          <option>Tratado</option>
+          <option value="Zincado">Zincado</option>
+          <option value="Tratado">Tratado</option>
         </select>
       </div>
 
       <div>
         <label>Kg Líquido</label>
-        <input id="kgLiquido">
+        <input id="kgLiquido" inputmode="decimal" placeholder="0,00">
       </div>
 
       <div>
         <label>R$/Kg</label>
-        <input id="rsKg">
+        <input id="rsKg" inputmode="decimal" placeholder="0,00">
       </div>
 
       <div>
         <label>Quantidade (peças)</label>
-        <input id="quantidade" readonly>
+        <input id="quantidadePecas" readonly>
       </div>
 
       <div>
@@ -166,90 +193,148 @@ input[readonly]{opacity:.7}
         <input id="kgBruto" readonly>
       </div>
 
-      <div style="grid-column:1/3">
+      <div class="span2" style="grid-column:1/3">
         <label>Total (R$)</label>
         <input id="total" readonly>
       </div>
     </div>
 
     <div class="footer">
-      <button onclick="fecharModal()">Cancelar</button>
-      <button class="btn-azul">Salvar</button>
+      <button class="btn-branco" id="btnCancelar">Cancelar</button>
+      <button class="btn-azul" id="btnSalvar">Salvar</button>
     </div>
   </div>
 </div>
 
 <script>
-/* ===== SUPABASE (1x APENAS) ===== */
-const supabase = window.supabase.createClient(
-  "https://uxtgicfuggpuyjybwawa.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
-);
+/* =========================================================
+   IMPORTANTE:
+   - O CDN cria window.supabase (global).
+   - NÃO declare "const supabase = ..." senão dá conflito.
+   - Aqui usamos "sb" como cliente.
+========================================================= */
 
+const SB_URL  = "https://uxtgicfuggpuyjybwawa.supabase.co";
+const SB_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg";
+
+/* Cliente Supabase */
+const sb = window.supabase.createClient(SB_URL, SB_KEY);
+
+/* ELEMENTOS */
 const modalBg = document.getElementById("modalBg");
 const btnNovaOP = document.getElementById("btnNovaOP");
-const peca = document.getElementById("peca");
-const kgLiquido = document.getElementById("kgLiquido");
-const rsKg = document.getElementById("rsKg");
-const quantidade = document.getElementById("quantidade");
-const kgBruto = document.getElementById("kgBruto");
-const total = document.getElementById("total");
+const btnCancelar = document.getElementById("btnCancelar");
 
-let pesoLiquido = 0;
-let pesoBruto = 0;
+const selPeca = document.getElementById("peca");
+const inpData = document.getElementById("data");
+const inpKgLiquido = document.getElementById("kgLiquido");
+const inpRsKg = document.getElementById("rsKg");
+const inpQtdPecas = document.getElementById("quantidadePecas");
+const inpKgBruto = document.getElementById("kgBruto");
+const inpTotal = document.getElementById("total");
 
-btnNovaOP.onclick = async () => {
+/* PESOS DA PEÇA SELECIONADA */
+let peso_liquido = 0;  // por peça
+let peso_bruto = 0;    // por peça
+
+/* ====== UTIL ====== */
+function hojeISO(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function n(v){
+  if(v === null || v === undefined) return 0;
+  return Number(String(v).replace(/\./g,'').replace(',','.')) || 0;
+}
+function f2(v){
+  return Number(v || 0).toLocaleString("pt-BR",{minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+/* ====== MODAL ====== */
+function abrirModal(){
   modalBg.style.display = "flex";
-  await carregarPecas();
-};
-
+}
 function fecharModal(){
   modalBg.style.display = "none";
 }
 
-function f2(v){
-  return Number(v || 0).toLocaleString("pt-BR",{minimumFractionDigits:2});
-}
-
+/* ====== CARREGAR PEÇAS ======
+   Usa somente colunas que EXISTEM na sua tabela:
+   - descricao
+   - peso_liquido
+   - peso_bruto
+*/
 async function carregarPecas(){
-  peca.innerHTML = "<option value=''>Selecione</option>";
+  selPeca.innerHTML = "<option value=''>Carregando...</option>";
 
-  const { data } = await supabase
+  const { data, error } = await sb
     .from("produtos")
-    .select("id,descricao,peso_liquido,peso_bruto");
+    .select("id, descricao, peso_liquido, peso_bruto")
+    .order("descricao", { ascending: true });
 
+  if(error){
+    alert(error.message);
+    console.error(error);
+    selPeca.innerHTML = "<option value=''>Erro ao carregar</option>";
+    return;
+  }
+
+  selPeca.innerHTML = "<option value=''>Selecione</option>";
   data.forEach(p=>{
     const o = document.createElement("option");
     o.value = p.id;
-    o.textContent = p.descricao;
-    o.dataset.pl = p.peso_liquido;
-    o.dataset.pb = p.peso_bruto;
-    peca.appendChild(o);
+    o.textContent = p.descricao || ("Produto " + p.id);
+    o.dataset.pl = p.peso_liquido ?? 0;
+    o.dataset.pb = p.peso_bruto ?? 0;
+    selPeca.appendChild(o);
   });
 }
 
-peca.onchange = ()=>{
-  const o = peca.selectedOptions[0];
-  pesoLiquido = Number(o.dataset.pl || 0);
-  pesoBruto = Number(o.dataset.pb || 0);
-  calcular();
-};
-
-kgLiquido.oninput = calcular;
-rsKg.oninput = calcular;
-
+/* ====== CÁLCULO ======
+   - Quantidade (peças) = KgLíquido / peso_liquido (inteiro, sem casas)
+   - KgBruto = Quantidade * peso_bruto (2 casas)
+   - Total = KgBruto * (R$/Kg) (2 casas)
+*/
 function calcular(){
-  const kg = Number(kgLiquido.value.replace(",","."));
-  const preco = Number(rsKg.value.replace(",","."));
+  const kgL = n(inpKgLiquido.value);
+  const rs = n(inpRsKg.value);
 
-  const qtd = pesoLiquido ? Math.floor(kg / pesoLiquido) : 0;
-  const bruto = qtd * pesoBruto;
-  const tot = bruto * preco;
+  const qtdP = (peso_liquido > 0) ? Math.floor(kgL / peso_liquido) : 0;
+  const kgB = qtdP * (peso_bruto || 0);
+  const tot = kgB * rs;
 
-  quantidade.value = qtd;
-  kgBruto.value = f2(bruto);
-  total.value = f2(tot);
+  inpQtdPecas.value = String(qtdP);     // SEM casas
+  inpKgBruto.value  = f2(kgB);          // 2 casas
+  inpTotal.value    = f2(tot);          // 2 casas
 }
+
+/* ====== EVENTOS ====== */
+document.addEventListener("DOMContentLoaded", async ()=>{
+  inpData.value = hojeISO();
+
+  btnNovaOP.addEventListener("click", async ()=>{
+    abrirModal();
+    await carregarPecas();              // CARREGA AO ABRIR
+  });
+
+  btnCancelar.addEventListener("click", fecharModal);
+  modalBg.addEventListener("click", (e)=>{
+    if(e.target === modalBg) fecharModal();
+  });
+
+  selPeca.addEventListener("change", ()=>{
+    const o = selPeca.selectedOptions[0];
+    peso_liquido = n(o?.dataset?.pl);
+    peso_bruto   = n(o?.dataset?.pb);
+    calcular();
+  });
+
+  inpKgLiquido.addEventListener("input", calcular);
+  inpRsKg.addEventListener("input", calcular);
+});
 </script>
 
 </body>
