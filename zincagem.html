@@ -23,8 +23,8 @@ header{
 h1{margin:0;color:#38bdf8}
 button{
   border:none;
-  padding:10px 16px;
-  border-radius:10px;
+  padding:8px 14px;
+  border-radius:8px;
   cursor:pointer;
 }
 .btn-azul{background:#38bdf8;color:#000}
@@ -32,7 +32,7 @@ button{
 .container{padding:0 30px 30px}
 
 table{width:100%;border-collapse:collapse}
-th,td{padding:12px;border-bottom:1px solid #1e293b}
+th,td{padding:10px;border-bottom:1px solid #1e293b}
 th{color:#38bdf8;text-align:left}
 
 .modal-bg{
@@ -45,41 +45,31 @@ th{color:#38bdf8;text-align:left}
   z-index:999;
 }
 .modal{
-  width:900px;
+  width:1000px;
   background:linear-gradient(180deg,#020b1a,#020617);
-  border-radius:18px;
-  padding:26px;
+  border-radius:16px;
+  padding:24px;
 }
-.modal h2{margin-top:0;color:#38bdf8}
-
 .grid{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:18px;
+  gap:16px;
 }
 .campo{display:flex;flex-direction:column}
-.campo label{
-  font-size:13px;
-  margin-bottom:6px;
-  color:#cbd5f5;
-}
+.campo label{font-size:13px;margin-bottom:4px;color:#cbd5f5}
 input,select{
-  width:100%;
-  padding:12px;
-  border-radius:10px;
+  padding:10px;
+  border-radius:8px;
   border:1px solid #1e293b;
   background:#020617;
   color:#e5e7eb;
 }
-input[readonly]{
-  background:#020b1a;
-  color:#9ca3af;
-}
+input[readonly]{background:#020b1a;color:#9ca3af}
 .footer{
-  margin-top:24px;
+  margin-top:20px;
   display:flex;
   justify-content:flex-end;
-  gap:12px;
+  gap:10px;
 }
 </style>
 </head>
@@ -95,208 +85,160 @@ input[readonly]{
 </header>
 
 <div class="container">
-  <table>
-    <thead>
-      <tr>
-        <th>OP</th>
-        <th>Data</th>
-        <th>Peça</th>
-        <th>Acab.</th>
-        <th>Kg</th>
-        <th>Qtd</th>
-        <th>Kg Bruto</th>
-        <th>R$/Kg</th>
-        <th>Total</th>
-      </tr>
-    </thead>
-    <tbody id="lista">
-      <tr><td colspan="9">Carregando...</td></tr>
-    </tbody>
-  </table>
+<table>
+<thead>
+<tr>
+<th>OP</th>
+<th>Data</th>
+<th>Peça</th>
+<th>Acab.</th>
+<th>Kg</th>
+<th>Qtd</th>
+<th>Kg Bruto</th>
+<th>R$/Kg</th>
+<th>Total</th>
+</tr>
+</thead>
+<tbody id="lista">
+<tr><td colspan="9">Carregando...</td></tr>
+</tbody>
+</table>
 </div>
 
 <!-- MODAL -->
 <div class="modal-bg" id="modalBg">
-  <div class="modal">
-    <h2>Nova OP</h2>
+<div class="modal">
+<h2>Nova OP</h2>
 
-    <div class="grid">
+<div class="grid">
+<div class="campo"><label>OP</label><input id="op"></div>
+<div class="campo"><label>Data</label><input type="date" id="data"></div>
 
-      <div class="campo">
-        <label>OP</label>
-        <input id="op">
-      </div>
+<div class="campo"><label>Peça</label><select id="peca"></select></div>
+<div class="campo"><label>Acabamento</label>
+<select id="acabamento"><option>Zincado</option><option>Tratado</option></select>
+</div>
 
-      <div class="campo">
-        <label>Data</label>
-        <input type="date" id="data">
-      </div>
+<div class="campo"><label>Kg enviado</label><input id="kg"></div>
+<div class="campo"><label>Quantidade (peças)</label><input id="quantidade" readonly></div>
 
-      <div class="campo">
-        <label>Peça</label>
-        <select id="peca"></select>
-      </div>
+<div class="campo"><label>Kg material bruto</label><input id="kg_bruto" readonly></div>
+<div class="campo"><label>R$/Kg</label><input id="valor_kg"></div>
 
-      <div class="campo">
-        <label>Acabamento</label>
-        <select id="acabamento">
-          <option>Zincado</option>
-          <option>Tratado</option>
-        </select>
-      </div>
+<div class="campo"><label>Peso caixa</label><input id="peso_caixa" readonly></div>
+<div class="campo"><label>Comprimento (mm)</label><input id="comprimento" readonly></div>
 
-      <div class="campo">
-        <label>Kg enviado</label>
-        <input id="kg">
-      </div>
+<div class="campo" style="grid-column:1/3">
+<label>Total (R$)</label><input id="total" readonly>
+</div>
+</div>
 
-      <div class="campo">
-        <label>Quantidade (peças)</label>
-        <input id="quantidade" readonly>
-      </div>
+<div class="footer">
+<button class="btn-branco" onclick="fecharModal()">Cancelar</button>
+<button class="btn-azul" onclick="salvar()">Salvar</button>
+</div>
 
-      <div class="campo">
-        <label>Kg material bruto</label>
-        <input id="kg_bruto" readonly>
-      </div>
-
-      <div class="campo">
-        <label>R$/Kg</label>
-        <input id="valor_kg">
-      </div>
-
-      <div class="campo" style="grid-column:1/3">
-        <label>Total (R$)</label>
-        <input id="valor_total" readonly>
-      </div>
-
-    </div>
-
-    <div class="footer">
-      <button class="btn-branco" id="btnCancelar">Cancelar</button>
-      <button class="btn-azul" id="btnSalvar">Salvar</button>
-    </div>
-  </div>
+</div>
 </div>
 
 <script>
 const supabase = window.supabase.createClient(
-  "https://uxtgicfuggpuyjybwawa.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
+ "https://uxtgicfuggpuyjybwawa.supabase.co",
+ "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
 );
 
-const lista = document.getElementById("lista");
-const modalBg = document.getElementById("modalBg");
+const modal = document.getElementById("modalBg");
+document.getElementById("btnNovaOp").onclick = abrirModal;
 
-const opInp = document.getElementById("op");
-const dataInp = document.getElementById("data");
-const pecaSel = document.getElementById("peca");
-const kgInp = document.getElementById("kg");
-const qtdInp = document.getElementById("quantidade");
-const kgBrutoInp = document.getElementById("kg_bruto");
-const valorKgInp = document.getElementById("valor_kg");
-const totalInp = document.getElementById("valor_total");
+let pesoLiquido=0, pesoBruto=0, pecasCaixa=0, comprimento=0;
 
-let pesoLiquido = 0;
-let pesoBruto = 0;
-
-document.getElementById("btnNovaOp").onclick = async ()=>{
-  modalBg.style.display="flex";
-  await carregarPecas();
-};
-
-document.getElementById("btnCancelar").onclick = ()=>{
-  modalBg.style.display="none";
-};
+function abrirModal(){
+ modal.style.display="flex";
+ carregarPecas();
+}
+function fecharModal(){ modal.style.display="none"; }
 
 async function carregarPecas(){
-  pecaSel.innerHTML = "<option>Carregando...</option>";
-  const { data } = await supabase
-    .from("produtos")
-    .select("codigo,peso_liquido,peso_bruto");
-
-  pecaSel.innerHTML = "<option value=''>Selecione</option>";
-  data.forEach(p=>{
-    const o=document.createElement("option");
-    o.value=p.codigo;
-    o.textContent=p.codigo;
-    o.dataset.pl=p.peso_liquido;
-    o.dataset.pb=p.peso_bruto;
-    pecaSel.appendChild(o);
-  });
+ const sel=document.getElementById("peca");
+ const {data}=await supabase.from("produtos")
+ .select("codigo,peso_liquido,peso_bruto,pecas_por_caixa,comprimento_mm");
+ sel.innerHTML="<option></option>";
+ data.forEach(p=>{
+  const o=document.createElement("option");
+  o.value=p.codigo;
+  o.textContent=p.codigo;
+  o.dataset.pl=p.peso_liquido;
+  o.dataset.pb=p.peso_bruto;
+  o.dataset.ppc=p.pecas_por_caixa;
+  o.dataset.comp=p.comprimento_mm;
+  sel.appendChild(o);
+ });
+ sel.onchange=()=>{
+  const o=sel.selectedOptions[0];
+  pesoLiquido=+o.dataset.pl;
+  pesoBruto=+o.dataset.pb;
+  pecasCaixa=+o.dataset.ppc;
+  comprimento=+o.dataset.comp;
+  calcular();
+ };
 }
+
+["kg","valor_kg"].forEach(id=>{
+ document.getElementById(id).oninput=calcular;
+});
 
 function calcular(){
-  const kg = Number(kgInp.value.replace(",","."))||0;
-  const valorKg = Number(valorKgInp.value.replace(",","."))||0;
-  if(!pesoLiquido) return;
-
-  const qtd = Math.floor(kg/pesoLiquido);
-  const kgBruto = qtd*pesoBruto;
-  const total = kg*valorKg;
-
-  qtdInp.value=qtd;
-  kgBrutoInp.value=kgBruto.toLocaleString("pt-BR",{minimumFractionDigits:2});
-  totalInp.value=total.toLocaleString("pt-BR",{minimumFractionDigits:2});
+ const kg=+document.getElementById("kg").value||0;
+ const valorKg=+document.getElementById("valor_kg").value||0;
+ const qtd=Math.floor(kg/pesoLiquido||0);
+ document.getElementById("quantidade").value=qtd;
+ document.getElementById("kg_bruto").value=(qtd*pesoBruto).toFixed(2);
+ document.getElementById("peso_caixa").value=(pesoLiquido*pecasCaixa).toFixed(2);
+ document.getElementById("comprimento").value=comprimento;
+ document.getElementById("total").value=(kg*valorKg).toFixed(2);
 }
 
-pecaSel.onchange=()=>{
-  const o=pecaSel.selectedOptions[0];
-  pesoLiquido=Number(o.dataset.pl)||0;
-  pesoBruto=Number(o.dataset.pb)||0;
-  calcular();
-};
-kgInp.oninput=calcular;
-valorKgInp.oninput=calcular;
-
-document.getElementById("btnSalvar").onclick = async ()=>{
-  const payload={
-    op:opInp.value,
-    data:dataInp.value,
-    codigo_peca:pecaSel.value,
-    acabamento:document.getElementById("acabamento").value,
-    kg:Number(kgInp.value.replace(",",".")),
-    quantidade:Number(qtdInp.value),
-    kg_material_bruto:Number(kgBrutoInp.value.replace(",",".")),
-    valor_kg:Number(valorKgInp.value.replace(",",".")),
-    valor_total:Number(totalInp.value.replace(",",".")),
-    entregue:false,
-    boleto:false
-  };
-
-  const { error } = await supabase.from("zincagem_tratamento").insert(payload);
-  if(error) alert(error.message);
-  else location.reload();
-};
+async function salvar(){
+ const payload={
+  op:op.value,
+  data:data.value,
+  codigo_peca:peca.value,
+  pecas_por_caixa:pecasCaixa,
+  kg:+kg.value,
+  quantidade:+quantidade.value,
+  kg_material_bruto:+kg_bruto.value,
+  peso_caixa:+peso_caixa.value,
+  acabamento:acabamento.value,
+  comprimento_mm:+comprimento.value,
+  valor_kg:+valor_kg.value,
+  valor_total:+total.value,
+  entregue:false,
+  boleto:false
+ };
+ const {error}=await supabase.from("zincagem_tratamento").insert(payload);
+ if(error) alert(error.message);
+ else location.reload();
+}
 
 async function carregarLista(){
-  const { data } = await supabase
-    .from("zincagem_tratamento")
-    .select("*")
-    .order("data",{ascending:false});
-
-  if(!data || !data.length){
-    lista.innerHTML="<tr><td colspan='9'>Nenhum registro</td></tr>";
-    return;
-  }
-
-  lista.innerHTML="";
-  data.forEach(r=>{
-    lista.innerHTML+=`
-      <tr>
-        <td>${r.op}</td>
-        <td>${r.data}</td>
-        <td>${r.codigo_peca}</td>
-        <td>${r.acabamento}</td>
-        <td>${r.kg}</td>
-        <td>${r.quantidade}</td>
-        <td>${r.kg_material_bruto}</td>
-        <td>${r.valor_kg}</td>
-        <td>${r.valor_total}</td>
-      </tr>`;
-  });
+ const {data}=await supabase.from("zincagem_tratamento").select("*").order("data",{ascending:false});
+ const tbody=document.getElementById("lista");
+ tbody.innerHTML="";
+ data.forEach(r=>{
+  tbody.innerHTML+=`
+  <tr>
+  <td>${r.op}</td>
+  <td>${r.data}</td>
+  <td>${r.codigo_peca}</td>
+  <td>${r.acabamento}</td>
+  <td>${r.kg}</td>
+  <td>${r.quantidade}</td>
+  <td>${r.kg_material_bruto}</td>
+  <td>${r.valor_kg}</td>
+  <td>${r.valor_total}</td>
+  </tr>`;
+ });
 }
-
 carregarLista();
 </script>
 
