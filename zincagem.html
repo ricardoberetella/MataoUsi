@@ -112,11 +112,13 @@ input[readonly]{background:#020b1a;color:#9ca3af}
   <div class="campo"><label>OP</label><input id="op"></div>
   <div class="campo"><label>Data</label><input type="date" id="data"></div>
 
-  <div class="campo"><label>Peça</label>
-    <select id="peca"></select>
+  <div class="campo">
+    <label>Peça (código)</label>
+    <select id="codigo_peca"></select>
   </div>
 
-  <div class="campo"><label>Acabamento</label>
+  <div class="campo">
+    <label>Acabamento</label>
     <input id="acabamento" readonly>
   </div>
 
@@ -148,12 +150,8 @@ const el = id => document.getElementById(id);
 let pesoLiquido = 0;
 let pesoBruto = 0;
 
-function br(v){
-  return Number(String(v).replace(",", ".")) || 0;
-}
-function fmt(v){
-  return v.toFixed(2).replace(".", ",");
-}
+function br(v){ return Number(String(v).replace(",", ".")) || 0; }
+function fmt(v){ return v.toFixed(2).replace(".", ","); }
 
 window.abrirModal = async () => {
   el("modalBg").style.display = "flex";
@@ -162,16 +160,16 @@ window.abrirModal = async () => {
 window.fecharModal = () => el("modalBg").style.display = "none";
 
 async function carregarProdutos(){
-  const sel = el("peca");
+  const sel = el("codigo_peca");
   const { data } = await sb
     .from("produtos")
-    .select("descricao, acabamento, peso_liquido, peso_bruto");
+    .select("codigo, acabamento, peso_liquido, peso_bruto");
 
   sel.innerHTML = "<option></option>";
   data.forEach(p => {
     const o = document.createElement("option");
-    o.value = p.descricao;
-    o.textContent = p.descricao;
+    o.value = p.codigo;
+    o.textContent = p.codigo;
     o.dataset.acab = p.acabamento;
     o.dataset.pl = p.peso_liquido;
     o.dataset.pb = p.peso_bruto;
@@ -203,7 +201,7 @@ window.salvar = async () => {
   const payload = {
     op: el("op").value,
     data: el("data").value,
-    peca: el("peca").value,
+    codigo_peca: el("codigo_peca").value,
     acabamento: el("acabamento").value,
     kg: br(el("kg").value),
     quantidade: br(el("quantidade").value),
@@ -229,7 +227,7 @@ async function carregarLista(){
     <tr>
       <td>${r.op}</td>
       <td>${r.data}</td>
-      <td>${r.peca}</td>
+      <td>${r.codigo_peca}</td>
       <td>${r.acabamento}</td>
       <td>${fmt(r.kg)}</td>
       <td>${r.quantidade}</td>
