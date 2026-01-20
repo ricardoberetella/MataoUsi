@@ -46,7 +46,6 @@ th{color:#38bdf8;text-align:left;white-space:nowrap}
 
 .btn-acao{background:#334155;color:#e5e7eb}
 .btn-excluir{background:#7f1d1d;color:#fff}
-
 </style>
 </head>
 
@@ -55,7 +54,7 @@ th{color:#38bdf8;text-align:left;white-space:nowrap}
 <header>
   <h1>Zincagem / Tratamento</h1>
   <button class="btn-branco" onclick="location.href='menu.html'">← Voltar ao menu</button>
-  <button class="btn-azul" onclick="abrirModal()">+ Nova OP</button>
+  <button class="btn-azul">+ Nova OP</button>
 </header>
 
 <div class="container">
@@ -81,24 +80,34 @@ th{color:#38bdf8;text-align:left;white-space:nowrap}
 </div>
 
 <script>
+/* =========================
+   SUPABASE
+========================= */
 const sb = window.supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
 );
 
 function fmt(v){ return Number(v).toFixed(2).replace(".", ","); }
-
 function formatarDataBR(dataISO){
   if(!dataISO) return "";
   const [ano, mes, dia] = dataISO.split("-");
   return `${dia}/${mes}/${ano}`;
 }
 
+/* =========================
+   LISTAGEM
+========================= */
 async function carregarLista(){
-  const { data } = await sb
+  const { data, error } = await sb
     .from("zincagem_tratamento")
     .select("*")
     .order("data",{ascending:false});
+
+  if(error){
+    alert(error.message);
+    return;
+  }
 
   const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
@@ -133,7 +142,10 @@ async function carregarLista(){
   });
 }
 
-async function toggleStatus(id, campo, valorAtual){
+/* =========================
+   AÇÕES (EXPOSTAS GLOBAL)
+========================= */
+window.toggleStatus = async function(id, campo, valorAtual){
   const { error } = await sb
     .from("zincagem_tratamento")
     .update({ [campo]: !valorAtual })
@@ -141,13 +153,13 @@ async function toggleStatus(id, campo, valorAtual){
 
   if(error) alert(error.message);
   else carregarLista();
-}
+};
 
-function editar(id){
-  alert("Editar OP ID " + id + " (estrutura pronta)");
-}
+window.editar = function(id){
+  alert("Editar OP ID " + id + " (modal será implementado)");
+};
 
-async function excluir(id){
+window.excluir = async function(id){
   if(!confirm("Deseja excluir esta OP?")) return;
 
   const { error } = await sb
@@ -157,7 +169,7 @@ async function excluir(id){
 
   if(error) alert(error.message);
   else carregarLista();
-}
+};
 
 carregarLista();
 </script>
