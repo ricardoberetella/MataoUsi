@@ -112,7 +112,7 @@ input[readonly]{
         <th>Total</th>
       </tr>
     </thead>
-    <tbody id="lista">
+    <tbody>
       <tr><td colspan="9">Nenhum registro</td></tr>
     </tbody>
   </table>
@@ -183,9 +183,9 @@ input[readonly]{
 </div>
 
 <script>
-const supabase = window.supabase.createClient(
+const supabaseClient = window.supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
+  "SUA_ANON_KEY"
 );
 
 const modalBg = document.getElementById("modalBg");
@@ -213,8 +213,7 @@ btnNovaOp.onclick = async () => {
 btnCancelar.onclick = () => modalBg.style.display = "none";
 
 async function carregarPecas(){
-  pecaSel.innerHTML = "<option>Carregando...</option>";
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from("produtos")
     .select("codigo,peso_liquido,peso_bruto,pecas_por_caixa,comprimento_mm");
 
@@ -277,7 +276,7 @@ btnSalvar.onclick = async () => {
     boleto: false
   };
 
-  const { error } = await supabase
+  const { error } = await supabaseClient
     .from("zincagem_tratamento")
     .insert(payload);
 
