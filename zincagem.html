@@ -112,7 +112,9 @@ input[readonly]{
         <th>Total</th>
       </tr>
     </thead>
-    <tbody id="lista"></tbody>
+    <tbody id="lista">
+      <tr><td colspan="9">Carregando...</td></tr>
+    </tbody>
   </table>
 </div>
 
@@ -122,7 +124,6 @@ input[readonly]{
     <h2>Nova OP</h2>
 
     <div class="grid">
-
       <div class="campo">
         <label>OP</label>
         <input id="op">
@@ -170,66 +171,67 @@ input[readonly]{
         <label>Total (R$)</label>
         <input id="valor_total" readonly>
       </div>
-
     </div>
 
     <div class="footer">
-      <button class="btn-branco" id="btnCancelar">Cancelar</button>
-      <button class="btn-azul" id="btnSalvar">Salvar</button>
+      <button class="btn-branco" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-azul" onclick="salvar()">Salvar</button>
     </div>
   </div>
 </div>
 
 <script>
+/* ================= SUPABASE (UMA ÚNICA VEZ) ================= */
 const supabase = window.supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
+  "SUA_ANON_KEY_AQUI"
 );
 
-const modalBg = document.getElementById("modalBg");
-const lista = document.getElementById("lista");
-
-const pecaSel = document.getElementById("peca");
-const kgInp = document.getElementById("kg");
-const qtdInp = document.getElementById("quantidade");
-const kgBrutoInp = document.getElementById("kg_material_bruto");
-const valorKgInp = document.getElementById("valor_kg");
-const totalInp = document.getElementById("valor_total");
-
+/* ================= VARIÁVEIS ================= */
 let pesoLiquido = 0;
 let pesoBruto = 0;
-let pecasPorCaixa = 0;
-let comprimento = 0;
 
-document.getElementById("btnNovaOp").onclick = async () => {
-  modalBg.style.display = "flex";
+/* ================= MODAL ================= */
+function abrirModal(){
+  document.getElementById("modalBg").style.display = "flex";
   document.getElementById("data").value = new Date().toISOString().slice(0,10);
-  await carregarPecas();
-};
+}
+function fecharModal(){
+  document.getElementById("modalBg").style.display = "none";
+}
 
-document.getElementById("btnCancelar").onclick = () => modalBg.style.display = "none";
+/* ================= EVENTOS ================= */
+document.getElementById("btnNovaOp").onclick = abrirModal;
 
+/* ================= PEÇAS ================= */
 async function carregarPecas(){
   const { data } = await supabase
     .from("produtos")
-    .select("codigo,peso_liquido,peso_bruto,pecas_por_caixa,comprimento_mm");
+    .select("codigo,peso_liquido,peso_bruto");
 
-  pecaSel.innerHTML = "<option value=''>Selecione</option>";
+  const sel = document.getElementById("peca");
+  sel.innerHTML = "<option value=''>Selecione</option>";
+
   data.forEach(p=>{
     const o = document.createElement("option");
     o.value = p.codigo;
     o.textContent = p.codigo;
     o.dataset.pl = p.peso_liquido;
     o.dataset.pb = p.peso_bruto;
-    o.dataset.ppc = p.pecas_por_caixa;
-    o.dataset.comp = p.comprimento_mm;
-    pecaSel.appendChild(o);
+    sel.appendChild(o);
   });
 }
 
-function calc(){
-  const kg = Number(kgInp.value.replace(",", ".")) || 0;
-  const valorKg = Number(valorKgInp.value.replace(",", ".")) || 0;
+document.getElementById("peca").onchange = e=>{
+  pesoLiquido = Number(e.target.selectedOptions[0].dataset.pl);
+  pesoBruto   = Number(e.target.selectedOptions[0].dataset.pb);
+  calcular();
+};
+
+/* ================= CÁLCULOS ================= */
+function calcular(){
+  const kg = Number(document.getElementById("kg").value.replace(",", ".")) || 0;
+  const valorKg = Number(document.getElementById("valor_kg").value.replace(",", ".")) || 0;
 
   if(!pesoLiquido) return;
 
@@ -237,39 +239,26 @@ function calc(){
   const kgBruto = qtd * pesoBruto;
   const total = kg * valorKg;
 
-  qtdInp.value = qtd;
-  kgBrutoInp.value = kgBruto.toLocaleString("pt-BR",{minimumFractionDigits:2});
-  totalInp.value = total.toLocaleString("pt-BR",{minimumFractionDigits:2});
+  document.getElementById("quantidade").value = qtd;
+  document.getElementById("kg_material_bruto").value = kgBruto.toLocaleString("pt-BR",{minimumFractionDigits:2});
+  document.getElementById("valor_total").value = total.toLocaleString("pt-BR",{minimumFractionDigits:2});
 }
 
-pecaSel.onchange = ()=>{
-  const o = pecaSel.selectedOptions[0];
-  pesoLiquido = Number(o.dataset.pl);
-  pesoBruto = Number(o.dataset.pb);
-  pecasPorCaixa = Number(o.dataset.ppc);
-  comprimento = Number(o.dataset.comp);
-  calc();
-};
+document.getElementById("kg").oninput = calcular;
+document.getElementById("valor_kg").oninput = calcular;
 
-kgInp.oninput = calc;
-valorKgInp.oninput = calc;
-
-document.getElementById("btnSalvar").onclick = async () => {
+/* ================= SALVAR ================= */
+async function salvar(){
   const payload = {
     op: document.getElementById("op").value,
     data: document.getElementById("data").value,
-    codigo_peca: pecaSel.value,
+    codigo_peca: document.getElementById("peca").value,
     acabamento: document.getElementById("acabamento").value,
-    kg: Number(kgInp.value.replace(",", ".")),
-    quantidade: Number(qtdInp.value),
-    kg_material_bruto: Number(kgBrutoInp.value.replace(",", ".")),
-    pecas_por_caixa: pecasPorCaixa,
-    peso_caixa: pesoLiquido * pecasPorCaixa,
-    comprimento_mm: comprimento,
-    valor_kg: Number(valorKgInp.value.replace(",", ".")),
-    valor_total: Number(totalInp.value.replace(",", ".")),
-    entregue: false,
-    boleto: false
+    kg: Number(document.getElementById("kg").value.replace(",", ".")),
+    quantidade: Number(document.getElementById("quantidade").value),
+    kg_material_bruto: Number(document.getElementById("kg_material_bruto").value.replace(",", ".")),
+    valor_kg: Number(document.getElementById("valor_kg").value.replace(",", ".")),
+    valor_total: Number(document.getElementById("valor_total").value.replace(",", "."))
   };
 
   const { error } = await supabase
@@ -281,22 +270,25 @@ document.getElementById("btnSalvar").onclick = async () => {
   }else{
     location.reload();
   }
-};
+}
 
+/* ================= LISTA ================= */
 async function carregarLista(){
   const { data } = await supabase
     .from("zincagem_tratamento")
     .select("*")
     .order("data",{ascending:false});
 
-  lista.innerHTML = "";
+  const tbody = document.getElementById("lista");
+  tbody.innerHTML = "";
+
   if(!data.length){
-    lista.innerHTML = "<tr><td colspan='9'>Nenhum registro</td></tr>";
+    tbody.innerHTML = "<tr><td colspan='9'>Nenhum registro</td></tr>";
     return;
   }
 
   data.forEach(r=>{
-    lista.innerHTML += `
+    tbody.innerHTML += `
       <tr>
         <td>${r.op}</td>
         <td>${r.data.split("-").reverse().join("/")}</td>
@@ -312,6 +304,7 @@ async function carregarLista(){
   });
 }
 
+carregarPecas();
 carregarLista();
 </script>
 
