@@ -18,8 +18,9 @@ body{
 header{
   padding:20px 30px;
   display:flex;
-  justify-content:space-between;
+  justify-content:flex-start;
   align-items:center;
+  gap:20px;
 }
 h1{margin:0;color:#38bdf8}
 button{
@@ -79,10 +80,8 @@ input[readonly]{background:#020b1a;color:#9ca3af}
 
 <header>
   <h1>Zincagem / Tratamento</h1>
-  <div>
-    <button class="btn-branco" onclick="location.href='menu.html'">← Voltar ao menu</button>
-    <button class="btn-azul" onclick="abrirModal()">+ Nova OP</button>
-  </div>
+  <button class="btn-branco" onclick="location.href='menu.html'">← Voltar ao menu</button>
+  <button class="btn-azul" onclick="abrirModal()">+ Nova OP</button>
 </header>
 
 <div class="container">
@@ -108,70 +107,65 @@ input[readonly]{background:#020b1a;color:#9ca3af}
 
 <!-- MODAL -->
 <div class="modal-bg" id="modalBg">
-  <div class="modal">
-    <h2>Nova OP</h2>
+<div class="modal">
+<h2>Nova OP</h2>
 
-    <div class="grid">
-      <div class="campo">
-        <label>OP</label>
-        <input id="op">
-      </div>
-
-      <div class="campo">
-        <label>Data</label>
-        <input type="date" id="data">
-      </div>
-
-      <div class="campo">
-        <label>Peça</label>
-        <select id="produto_id"></select>
-      </div>
-
-      <div class="campo">
-        <label>Acabamento</label>
-        <input id="acabamento" placeholder="Zincado / Tratado">
-      </div>
-
-      <div class="campo">
-        <label>Kg</label>
-        <input id="kg" inputmode="decimal" placeholder="0,00">
-      </div>
-
-      <div class="campo">
-        <label>Quantidade</label>
-        <input id="quantidade" readonly>
-      </div>
-
-      <div class="campo">
-        <label>Kg Bruto</label>
-        <input id="kg_bruto" readonly>
-      </div>
-
-      <div class="campo">
-        <label>R$/Kg</label>
-        <input id="preco_kg" inputmode="decimal" placeholder="0,00">
-      </div>
-
-      <div class="campo" style="grid-column:1/3">
-        <label>Total</label>
-        <input id="valor_total" readonly>
-      </div>
-    </div>
-
-    <div class="footer">
-      <button class="btn-branco" onclick="fecharModal()">Cancelar</button>
-      <button class="btn-azul" onclick="salvar()">Salvar</button>
-    </div>
+<div class="grid">
+  <div class="campo">
+    <label>OP</label>
+    <input id="op">
   </div>
+
+  <div class="campo">
+    <label>Data</label>
+    <input type="date" id="data">
+  </div>
+
+  <div class="campo">
+    <label>Peça</label>
+    <select id="produto_id"></select>
+  </div>
+
+  <div class="campo">
+    <label>Acabamento</label>
+    <input id="acabamento" placeholder="Zincado / Tratado">
+  </div>
+
+  <div class="campo">
+    <label>Kg</label>
+    <input id="kg" inputmode="decimal">
+  </div>
+
+  <div class="campo">
+    <label>Quantidade</label>
+    <input id="quantidade" readonly>
+  </div>
+
+  <div class="campo">
+    <label>Kg Bruto</label>
+    <input id="kg_bruto" readonly>
+  </div>
+
+  <div class="campo">
+    <label>R$/Kg</label>
+    <input id="preco_kg" inputmode="decimal">
+  </div>
+
+  <div class="campo" style="grid-column:1/3">
+    <label>Total</label>
+    <input id="valor_total" readonly>
+  </div>
+</div>
+
+<div class="footer">
+  <button class="btn-branco" onclick="fecharModal()">Cancelar</button>
+  <button class="btn-azul" onclick="salvar()">Salvar</button>
+</div>
+</div>
 </div>
 
 <script>
 (() => {
-  // ===============================
-  //  SUPABASE CLIENT (SEM CONFLITO)
-  //  - nunca usa "const supabase"
-  //  - guarda em window.__sbClient
-  // ===============================
   const SUPABASE_URL = "https://uxtgicfuggpuyjybwawa.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg";
 
@@ -180,207 +174,102 @@ input[readonly]{background:#020b1a;color:#9ca3af}
   }
   const sb = window.__sbClient;
 
-  // ===============================
-  //  ELEMENTOS
-  // ===============================
-  const modalBg = document.getElementById("modalBg");
-  const lista = document.getElementById("lista");
+  const el = id => document.getElementById(id);
+  const modal = el("modalBg");
+  let pesoLiquido = 0;
+  let pesoBruto = 0;
 
-  const el = (id) => document.getElementById(id);
-
-  // ===============================
-  //  PRODUTO SELECIONADO (pesos)
-  // ===============================
-  let pesoUnit = 0;       // peso unitario (liquido)
-  let pesoBrutoUnit = 0;  // peso bruto unitario
-
-  function parseBR(v) {
-    if (v === null || v === undefined) return 0;
-    const s = String(v).trim().replace(/\./g, "").replace(",", ".");
-    const n = Number(s);
-    return Number.isFinite(n) ? n : 0;
+  function parse(v){
+    return Number(String(v).replace(",", ".")) || 0;
   }
 
-  function format2(n) {
-    const x = Number(n);
-    return Number.isFinite(x) ? x.toFixed(2) : "0.00";
-  }
-
-  // ===============================
-  //  MODAL
-  // ===============================
-  async function abrirModal() {
-    modalBg.style.display = "flex";
-
-    // data default hoje (BR)
-    if (!el("data").value) {
-      const d = new Date();
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, "0");
-      const dd = String(d.getDate()).padStart(2, "0");
-      el("data").value = `${yyyy}-${mm}-${dd}`;
-    }
-
+  window.abrirModal = async () => {
+    modal.style.display = "flex";
     await carregarProdutos();
-    calcular(); // recalcula se já tiver valores
-  }
+  };
 
-  function fecharModal() {
-    modalBg.style.display = "none";
-  }
+  window.fecharModal = () => modal.style.display = "none";
 
-  // expor para onclick
-  window.abrirModal = abrirModal;
-  window.fecharModal = fecharModal;
-
-  // ===============================
-  //  CARREGAR PRODUTOS
-  //  (aceita peso_unitario OU peso_liquido)
-  // ===============================
-  async function carregarProdutos() {
+  async function carregarProdutos(){
     const sel = el("produto_id");
-
     const { data, error } = await sb
       .from("produtos")
-      .select("id, descricao, codigo, peso_unitario, peso_liquido, peso_bruto");
+      .select("id, descricao, peso_liquido, peso_bruto");
 
-    if (error) {
+    if(error){
       alert("Erro produtos: " + error.message);
-      sel.innerHTML = "<option value=''>Erro ao carregar</option>";
       return;
     }
 
     sel.innerHTML = "<option value=''>Selecione</option>";
-
-    (data || []).forEach(p => {
+    data.forEach(p => {
       const o = document.createElement("option");
       o.value = p.id;
-      o.textContent = p.descricao || p.codigo || ("ID " + p.id);
-
-      // prioridade: peso_unitario, senão peso_liquido
-      const pu = (p.peso_unitario ?? p.peso_liquido ?? 0);
-      const pb = (p.peso_bruto ?? 0);
-
-      o.dataset.pu = pu;
-      o.dataset.pb = pb;
+      o.textContent = p.descricao;
+      o.dataset.pl = p.peso_liquido;
+      o.dataset.pb = p.peso_bruto;
       sel.appendChild(o);
     });
 
     sel.onchange = () => {
-      const opt = sel.selectedOptions[0];
-      if (!opt || !opt.value) {
-        pesoUnit = 0;
-        pesoBrutoUnit = 0;
-        calcular();
-        return;
-      }
-      pesoUnit = Number(opt.dataset.pu) || 0;
-      pesoBrutoUnit = Number(opt.dataset.pb) || 0;
+      const o = sel.selectedOptions[0];
+      pesoLiquido = parse(o.dataset.pl);
+      pesoBruto = parse(o.dataset.pb);
       calcular();
     };
   }
 
-  // ===============================
-  //  CÁLCULOS AUTOMÁTICOS
-  //  Quantidade = floor(kg / pesoUnit)
-  //  Kg Bruto   = quantidade * pesoBrutoUnit
-  //  Total      = kg * preco_kg
-  // ===============================
-  function calcular() {
-    const kg = parseBR(el("kg").value);
-    const precoKg = parseBR(el("preco_kg").value);
+  ["kg","preco_kg"].forEach(id => el(id).addEventListener("input", calcular));
 
-    // quantidade / kg_bruto só se tiver peso unit
-    let qtd = 0;
-    if (pesoUnit > 0 && kg > 0) {
-      qtd = Math.floor(kg / pesoUnit);
-    }
+  function calcular(){
+    const kg = parse(el("kg").value);
+    const preco = parse(el("preco_kg").value);
 
-    el("quantidade").value = qtd ? String(qtd) : "";
-    el("kg_bruto").value = (qtd && pesoBrutoUnit) ? format2(qtd * pesoBrutoUnit) : (qtd ? format2(qtd * (pesoBrutoUnit || 0)) : "");
-
-    el("valor_total").value = (kg && precoKg) ? format2(kg * precoKg) : (kg && precoKg === 0 ? format2(0) : "");
+    const qtd = pesoLiquido > 0 ? Math.floor(kg / pesoLiquido) : 0;
+    el("quantidade").value = qtd || "";
+    el("kg_bruto").value = qtd ? (qtd * pesoBruto).toFixed(2) : "";
+    el("valor_total").value = (kg * preco).toFixed(2);
   }
 
-  el("kg").addEventListener("input", calcular);
-  el("preco_kg").addEventListener("input", calcular);
-
-  // ===============================
-  //  SALVAR (NOMES IGUAIS À TABELA)
-  //  zincagem_tratamento:
-  //   op, data, produto_id, acabamento,
-  //   kg, quantidade, kg_bruto, preco_kg, valor_total
-  // ===============================
-  async function salvar() {
+  window.salvar = async () => {
     const payload = {
       op: el("op").value,
       data: el("data").value,
-      produto_id: el("produto_id").value || null,
+      produto_id: el("produto_id").value,
       acabamento: el("acabamento").value,
-      kg: parseBR(el("kg").value),
-      quantidade: Number(el("quantidade").value || 0),
-      kg_bruto: parseBR(el("kg_bruto").value),
-      preco_kg: parseBR(el("preco_kg").value),
-      valor_total: parseBR(el("valor_total").value)
+      kg: parse(el("kg").value),
+      quantidade: parse(el("quantidade").value),
+      kg_bruto: parse(el("kg_bruto").value),
+      preco_kg: parse(el("preco_kg").value),
+      valor_total: parse(el("valor_total").value)
     };
 
     const { error } = await sb.from("zincagem_tratamento").insert(payload);
+    if(error) alert(error.message);
+    else location.reload();
+  };
 
-    if (error) {
-      alert("Erro ao salvar: " + error.message);
-      return;
-    }
-
-    location.reload();
-  }
-
-  window.salvar = salvar;
-
-  // ===============================
-  //  LISTAGEM (JOIN produtos.descricao)
-  // ===============================
-  async function carregarLista() {
-    const { data, error } = await sb
+  async function carregarLista(){
+    const { data } = await sb
       .from("zincagem_tratamento")
-      .select(`
-        op,
-        data,
-        acabamento,
-        kg,
-        quantidade,
-        kg_bruto,
-        preco_kg,
-        valor_total,
-        produtos ( descricao )
-      `)
-      .order("data", { ascending: false });
+      .select(`op,data,acabamento,kg,quantidade,kg_bruto,preco_kg,valor_total,produtos(descricao)`)
+      .order("data",{ascending:false});
 
-    if (error) {
-      lista.innerHTML = `<tr><td colspan="9">Erro ao carregar: ${error.message}</td></tr>`;
-      return;
-    }
-
-    lista.innerHTML = "";
-
-    (data || []).forEach(r => {
-      lista.innerHTML += `
-        <tr>
-          <td>${r.op ?? ""}</td>
-          <td>${r.data ?? ""}</td>
-          <td>${(r.produtos && r.produtos.descricao) ? r.produtos.descricao : "-"}</td>
-          <td>${r.acabamento ?? ""}</td>
-          <td>${r.kg ?? ""}</td>
-          <td>${r.quantidade ?? ""}</td>
-          <td>${r.kg_bruto ?? ""}</td>
-          <td>${r.preco_kg ?? ""}</td>
-          <td>${r.valor_total ?? ""}</td>
-        </tr>
-      `;
+    el("lista").innerHTML = "";
+    data.forEach(r => {
+      el("lista").innerHTML += `
+      <tr>
+        <td>${r.op}</td>
+        <td>${r.data}</td>
+        <td>${r.produtos?.descricao || "-"}</td>
+        <td>${r.acabamento}</td>
+        <td>${r.kg}</td>
+        <td>${r.quantidade}</td>
+        <td>${r.kg_bruto}</td>
+        <td>${r.preco_kg}</td>
+        <td>${r.valor_total}</td>
+      </tr>`;
     });
-
-    if ((data || []).length === 0) {
-      lista.innerHTML = `<tr><td colspan="9">Sem registros</td></tr>`;
-    }
   }
 
   carregarLista();
