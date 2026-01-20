@@ -2,50 +2,82 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zincagem / Tratamento</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- SUPABASE CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 body{
   margin:0;
+  font-family:Segoe UI,Arial;
   background:radial-gradient(circle at top,#0b1224,#020617 70%);
   color:#e5e7eb;
-  font-family:Segoe UI,Arial;
 }
 header{
+  padding:20px 30px;
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:16px 24px;
-  border-bottom:1px solid rgba(56,189,248,.25);
 }
-header h1{margin:0;color:#38bdf8;}
-header .acoes{display:flex;gap:10px;}
-main{padding:20px 24px;}
-button{padding:8px 14px;border-radius:8px;border:none;cursor:pointer}
-table{width:100%;border-collapse:collapse;}
-th,td{padding:10px;border-bottom:1px solid rgba(148,163,184,.15);}
+h1{color:#38bdf8;margin:0;}
+.btn{
+  padding:8px 14px;
+  border-radius:8px;
+  border:none;
+  cursor:pointer;
+}
+.btn-azul{background:#38bdf8;color:#000;}
+.btn-branco{background:#fff;color:#000;}
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+th,td{
+  padding:10px;
+  border-bottom:1px solid #1e293b;
+}
 th{color:#38bdf8;text-align:left;}
-
+.container{padding:0 30px 30px;}
+/* MODAL */
 .modal-bg{
-  position:fixed; inset:0; background:rgba(0,0,0,.7);
-  display:none; justify-content:center; align-items:center; z-index:9999;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.7);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
 }
 .modal{
+  width:900px;
+  max-width:95%;
   background:linear-gradient(180deg,#020b1a,#020617);
-  border-radius:16px; width:900px; padding:22px;
-  border:1px solid rgba(56,189,248,.25);
+  border-radius:16px;
+  padding:24px;
 }
-.modal h2{margin-top:0;color:#38bdf8;}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
-label{font-size:13px;color:#cbd5f5;}
+.modal h2{color:#38bdf8;margin-top:0;}
+.form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+}
+label{font-size:13px;opacity:.9;}
 input,select{
-  width:100%; padding:10px; border-radius:10px;
-  border:1px solid rgba(148,163,184,.3);
-  background:#020617; color:#e5e7eb;
+  width:100%;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #1e293b;
+  background:#020617;
+  color:#e5e7eb;
 }
-input[readonly]{background:#020b1a;color:#9ca3af;}
-.acoes-modal{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;}
+.footer{
+  margin-top:20px;
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+}
 </style>
 </head>
 
@@ -53,125 +85,172 @@ input[readonly]{background:#020b1a;color:#9ca3af;}
 
 <header>
   <h1>Zincagem / Tratamento</h1>
-  <div class="acoes">
-    <button onclick="location.href='dashboard.html'">← Voltar ao menu</button>
-    <button id="btnNovaOp">+ Nova OP</button>
+  <div>
+    <button class="btn btn-branco" onclick="window.location.href='menu.html'">← Voltar ao menu</button>
+    <button class="btn btn-azul" id="btnNovaOp">+ Nova OP</button>
   </div>
 </header>
 
-<main>
-<table>
-<thead>
-<tr>
-  <th>OP</th><th>Data</th><th>Peça</th><th>Acab.</th>
-  <th>Kg Líq.</th><th>Qtd</th><th>Kg Bruto</th><th>R$/Kg</th><th>Total</th>
-</tr>
-</thead>
-<tbody id="lista">
-<tr><td colspan="9">Carregando…</td></tr>
-</tbody>
-</table>
-</main>
+<div class="container">
+  <table>
+    <thead>
+      <tr>
+        <th>OP</th>
+        <th>Data</th>
+        <th>Peça</th>
+        <th>Acab.</th>
+        <th>Kg Líq.</th>
+        <th>Qtd</th>
+        <th>Kg Bruto</th>
+        <th>R$/Kg</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody id="listaOps">
+      <tr><td colspan="9">Carregando...</td></tr>
+    </tbody>
+  </table>
+</div>
 
-<!-- MODAL -->
+<!-- MODAL NOVA OP -->
 <div class="modal-bg" id="modalBg">
   <div class="modal">
     <h2>Nova OP</h2>
 
-    <div class="grid">
-      <div><label>OP</label><input id="op"></div>
-      <div><label>Data</label><input type="date" id="data"></div>
+    <div class="form-grid">
+      <div>
+        <label>OP</label>
+        <input id="op">
+      </div>
+      <div>
+        <label>Data</label>
+        <input type="date" id="data">
+      </div>
 
       <div>
         <label>Peça</label>
         <select id="peca"></select>
       </div>
-
       <div>
         <label>Acabamento</label>
-        <input id="acabamento" readonly>
+        <select id="acabamento">
+          <option>Zincado</option>
+          <option>Tratado</option>
+        </select>
       </div>
 
-      <div><label>Kg Líquido</label><input id="kg_liq"></div>
-      <div><label>R$/Kg</label><input id="rs_kg"></div>
+      <div>
+        <label>Kg Líquido</label>
+        <input id="kg_liquido">
+      </div>
+      <div>
+        <label>R$/Kg</label>
+        <input id="rs_kg">
+      </div>
 
-      <div><label>Quantidade</label><input id="qtd" readonly></div>
-      <div><label>Kg Bruto</label><input id="kg_bruto" readonly></div>
+      <div>
+        <label>Quantidade</label>
+        <input id="quantidade">
+      </div>
+      <div>
+        <label>Kg Bruto</label>
+        <input id="kg_bruto" readonly>
+      </div>
 
-      <div><label>Total (R$)</label><input id="total" readonly></div>
+      <div style="grid-column:1/3">
+        <label>Total (R$)</label>
+        <input id="total" readonly>
+      </div>
     </div>
 
-    <div class="acoes-modal">
-      <button id="btnSalvar">Salvar</button>
-      <button id="btnCancelar">Cancelar</button>
+    <div class="footer">
+      <button class="btn btn-branco" id="btnCancelar">Cancelar</button>
+      <button class="btn btn-azul" id="btnSalvar">Salvar</button>
     </div>
   </div>
 </div>
 
-<!-- SUPABASE (UMA ÚNICA VEZ) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
+/* ================= SUPABASE (UMA ÚNICA VEZ) ================= */
 const supabase = window.supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
 );
 
-const $ = id => document.getElementById(id);
-const n = v => Number(String(v||"").replace(",", ".")) || 0;
-const f2 = v => n(v).toLocaleString("pt-BR",{minimumFractionDigits:2});
-const f3 = v => n(v).toLocaleString("pt-BR",{minimumFractionDigits:3});
-
-$("btnNovaOp").onclick = async () => {
-  $("modalBg").style.display = "flex";
-  await carregarProdutos();
+/* ================= MODAL ================= */
+const modalBg = document.getElementById("modalBg");
+document.getElementById("btnNovaOp").onclick = async () => {
+  modalBg.style.display = "flex";
+  await carregarPecas();
+};
+document.getElementById("btnCancelar").onclick = () => {
+  modalBg.style.display = "none";
 };
 
-$("btnCancelar").onclick = () => $("modalBg").style.display = "none";
-
-async function carregarProdutos(){
-  const select = $("peca");
-  select.innerHTML = "<option value=''>Selecione</option>";
+/* ================= CARREGAR PEÇAS ================= */
+async function carregarPecas(){
+  const select = document.getElementById("peca");
+  select.innerHTML = `<option value="">Selecione</option>`;
 
   const { data, error } = await supabase
     .from("produtos")
-    .select("id,codigo,descricao,peso_caixa,quantidade_caixa,acabamento")
+    .select("id,codigo,descricao,quantidade_caixa,peso_caixa")
     .order("codigo");
 
-  if(error){ console.error(error); return; }
+  if(error){
+    alert(error.message);
+    return;
+  }
 
   data.forEach(p=>{
     const o = document.createElement("option");
     o.value = p.id;
     o.textContent = `${p.codigo} - ${p.descricao}`;
-    o.dataset.peso = p.peso_caixa || 0;
-    o.dataset.qtd  = p.quantidade_caixa || 0;
-    o.dataset.acab = p.acabamento || "Zincado";
+    o.dataset.qtd = p.quantidade_caixa;
+    o.dataset.peso = p.peso_caixa;
     select.appendChild(o);
   });
 }
 
-$("peca").onchange = calcular;
-$("kg_liq").oninput = calcular;
-$("rs_kg").oninput = calcular;
-
-function calcular(){
-  const opt = $("peca").selectedOptions[0];
-  if(!opt) return;
-
-  $("acabamento").value = opt.dataset.acab;
-  const peso = n(opt.dataset.peso);
-  const kg = n($("kg_liq").value);
-  const rs = n($("rs_kg").value);
-  if(!peso || !kg) return;
-
-  const qtd = Math.floor(kg / peso);
-  const bruto = qtd * peso;
-
-  $("qtd").value = qtd;
-  $("kg_bruto").value = f3(bruto);
-  $("total").value = f2(bruto * rs);
+/* ================= CÁLCULOS ================= */
+function calc(){
+  const qtd = Number(quantidade.value||0);
+  const peso = Number(peca.selectedOptions[0]?.dataset.peso||0);
+  const rs = Number(rs_kg.value.replace(",","."))||0;
+  kg_bruto.value = (qtd*peso).toFixed(3);
+  total.value = (kg_bruto.value*rs).toFixed(2).replace(".",",");
 }
+quantidade.oninput = rs_kg.oninput = calc;
+
+/* ================= LISTAR OPS ================= */
+async function carregarOps(){
+  const tbody = document.getElementById("listaOps");
+  const { data } = await supabase
+    .from("zincagem_tratamento")
+    .select("*")
+    .order("created_at",{ascending:false});
+
+  tbody.innerHTML = "";
+  if(!data || !data.length){
+    tbody.innerHTML = `<tr><td colspan="9">Nenhum registro</td></tr>`;
+    return;
+  }
+  data.forEach(op=>{
+    tbody.innerHTML += `
+      <tr>
+        <td>${op.op}</td>
+        <td>${op.data}</td>
+        <td>${op.peca_texto}</td>
+        <td>${op.acabamento}</td>
+        <td>${op.kg_liquido}</td>
+        <td>${op.quantidade}</td>
+        <td>${op.kg_bruto}</td>
+        <td>${op.rs_kg}</td>
+        <td>${op.total}</td>
+      </tr>`;
+  });
+}
+carregarOps();
 </script>
 
 </body>
