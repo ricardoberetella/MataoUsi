@@ -4,9 +4,7 @@
 <meta charset="UTF-8">
 <title>Zincagem / Tratamento</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
 *{box-sizing:border-box;font-family:Segoe UI,Arial}
 body{
@@ -15,162 +13,62 @@ body{
   color:#e5e7eb;
 }
 
-/* Controle de Visibilidade por Perfil */
-.admin-only { display: inline-flex; }
+/* FORÇA O SUMIÇO DOS BOTOES */
+.admin-only { display: inline-flex !important; }
 body.perfil-visualizador .admin-only { display: none !important; }
 
-header{
-  padding:20px 30px;
-  display:flex;
-  align-items:center;
-  gap:16px;
-}
+header{ padding:20px 30px; display:flex; align-items:center; gap:16px; }
 h1{margin:0;color:#38bdf8}
-
-.header-botoes {
-  margin-left: auto;
-  display: flex;
-  gap: 16px;
-}
-
-button{
-  border:none;
-  padding:8px 14px;
-  border-radius:8px;
-  cursor:pointer;
-}
+.header-botoes { margin-left: auto; display: flex; gap: 16px; }
+button{ border:none; padding:8px 14px; border-radius:8px; cursor:pointer; }
 .btn-azul{background:#38bdf8;color:#000}
-
-.btn-outline-azul {
-  background: transparent;
-  color: #38bdf8;
-  border: 1px solid #38bdf8;
-  font-weight: bold;
-}
-
+.btn-outline-azul { background: transparent; color: #38bdf8; border: 1px solid #38bdf8; font-weight: bold; }
 .container{padding:0 30px 30px}
-
-.filtros {
-  display: flex;
-  gap: 15px;
-  background: rgba(30, 41, 59, 0.5);
-  padding: 15px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  align-items: flex-end;
-}
-.filtros .campo-filtro {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
+.filtros { display: flex; gap: 15px; background: rgba(30, 41, 59, 0.5); padding: 15px; border-radius: 12px; margin-bottom: 20px; align-items: flex-end; }
 .filtros label { font-size: 12px; color: #38bdf8; font-weight: bold; }
-.filtros input, .filtros select { 
-  padding: 8px; 
-  border-radius: 6px; 
-  border: 1px solid #334155; 
-  background: #020617; 
-  color: #fff; 
-  min-width: 150px;
-}
-
+.filtros input, .filtros select { padding: 8px; border-radius: 6px; border: 1px solid #334155; background: #020617; color: #fff; min-width: 150px; }
 table{width:100%;border-collapse:collapse}
-th,td{
-  padding:10px;
-  border-bottom:1px solid #1e293b;
-  text-align: center;
-}
+th,td{ padding:10px; border-bottom:1px solid #1e293b; text-align: center; }
 th{color:#38bdf8;white-space:nowrap}
-
-tfoot td {
-  font-weight: bold;
-  color: #38bdf8;
-  background: rgba(56, 189, 248, 0.1);
-  border-top: 2px solid #38bdf8;
-}
-
-.acoes{
-  display:flex;
-  gap:8px;
-  white-space:nowrap;
-  justify-content: center;
-}
-.btn-pill{
-  padding:7px 12px;
-  border-radius:10px;
-  font-weight:700;
-  font-size:13px;
-}
+tfoot td { font-weight: bold; color: #38bdf8; background: rgba(56, 189, 248, 0.1); border-top: 2px solid #38bdf8; }
+.acoes{ display:flex; gap:8px; white-space:nowrap; justify-content: center; }
+.btn-pill{ padding:7px 12px; border-radius:10px; font-weight:700; font-size:13px; }
 .pendente{background:#ef4444;color:#fff}
 .ok{background:#22c55e;color:#06110a}
 .btn-editar{background:#334155;color:#e5e7eb}
 .btn-excluir{background:#7f1d1d;color:#fff}
-
-.modal-bg{
-  position:fixed; inset:0; background:rgba(0,0,0,.7);
-  display:none; align-items:center; justify-content:center; z-index:999;
-}
-.modal{
-  width:1000px; background:linear-gradient(180deg,#020b1a,#020617);
-  border-radius:16px; padding:24px;
-}
+.modal-bg{ position:fixed; inset:0; background:rgba(0,0,0,.7); display:none; align-items:center; justify-content:center; z-index:999; }
+.modal{ width:1000px; background:linear-gradient(180deg,#020b1a,#020617); border-radius:16px; padding:24px; }
 .grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 .campo{display:flex;flex-direction:column; text-align: left;}
-.campo label{font-size:13px;margin-bottom:4px;color:#cbd5f5}
 input,select{ padding:10px; border-radius:8px; border:1px solid #1e293b; background:#020617; color:#e5e7eb; }
 input[readonly]{background:#020b1a;color:#9ca3af}
 .footer{ margin-top:20px; display:flex; justify-content:flex-end; gap:10px; }
 </style>
 </head>
-
 <body>
 
 <header>
   <h1>Zincagem / Tratamento</h1>
   <div class="header-botoes">
-    <button class="btn-outline-azul" onclick="location.href='https://matao-usi.vercel.app/dashboard.html'">
-      ← Voltar ao menu
-    </button>
+    <button class="btn-outline-azul" onclick="location.href='https://matao-usi.vercel.app/dashboard.html'">← Voltar ao menu</button>
     <button class="btn-azul admin-only" onclick="abrirModal()">+ Nova OP</button>
   </div>
 </header>
 
 <div class="container">
   <div class="filtros">
-    <div class="campo-filtro">
-      <label>Data Início</label>
-      <input type="date" id="filtro_data_ini" oninput="filtrarLocal()">
-    </div>
-    <div class="campo-filtro">
-      <label>Data Fim</label>
-      <input type="date" id="filtro_data_fim" oninput="filtrarLocal()">
-    </div>
-    <div class="campo-filtro">
-      <label>Peça (Pinos)</label>
-      <select id="filtro_peca" onchange="filtrarLocal()">
-        <option value="">Todas as peças</option>
-      </select>
-    </div>
+    <div class="campo-filtro"><label>Data Início</label><input type="date" id="filtro_data_ini" oninput="filtrarLocal()"></div>
+    <div class="campo-filtro"><label>Data Fim</label><input type="date" id="filtro_data_fim" oninput="filtrarLocal()"></div>
+    <div class="campo-filtro"><label>Peça (Pinos)</label><select id="filtro_peca" onchange="filtrarLocal()"><option value="">Todas as peças</option></select></div>
   </div>
-
   <table>
     <thead>
       <tr>
-        <th>OP</th>
-        <th>Data</th>
-        <th>Peça</th>
-        <th>Acab.</th>
-        <th>Kg</th>
-        <th>Qtd</th>
-        <th>Kg Bruto</th>
-        <th>R$/Kg</th>
-        <th>Total</th>
-        <th class="admin-only">Ações</th>
+        <th>OP</th><th>Data</th><th>Peça</th><th>Acab.</th><th>Kg</th><th>Qtd</th><th>Kg Bruto</th><th>R$/Kg</th><th>Total</th><th class="admin-only">Ações</th>
       </tr>
     </thead>
-    <tbody id="lista">
-      <tr><td colspan="10">Carregando...</td></tr>
-    </tbody>
+    <tbody id="lista"><tr><td colspan="10">Carregando...</td></tr></tbody>
     <tfoot id="rodape_totais"></tfoot>
   </table>
 </div>
@@ -197,204 +95,84 @@ input[readonly]{background:#020b1a;color:#9ca3af}
 </div>
 
 <script>
-const sb = window.supabase.createClient(
-  "https://uxtgicfuggpuyjybwawa.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
-);
-
+const sb = window.supabase.createClient("https://uxtgicfuggpuyjybwawa.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg");
 const el = id => document.getElementById(id);
 let dadosCompletos = []; 
-let eAdmin = true;
+let eAdmin = true; 
 
-// VERIFICAÇÃO DE LOGIN E PERFIL (PADRÃO SUPABASE)
-async function verificarUsuario() {
+async function verificarAcesso() {
   const { data: { user } } = await sb.auth.getUser();
-  
-  if (!user) {
-    window.location.href = "index.html"; // Ajuste para sua página de login
-    return;
-  }
+  const urlParams = new URLSearchParams(window.location.search);
+  const perfilURL = urlParams.get('perfil');
 
-  // Verifica se o perfil é visualizador via metadata ou tabela perfil
-  const role = user.user_metadata?.role || user.app_metadata?.role;
+  // Verifica no Metadata do Supabase OU na URL (para garantir)
+  const roleSupabase = user?.user_metadata?.role || user?.app_metadata?.role;
   
-  if (role === 'visualizador') {
+  if (roleSupabase === 'visualizador' || perfilURL === 'visualizador') {
     eAdmin = false;
     document.body.classList.add('perfil-visualizador');
+  } else {
+    eAdmin = true;
+    document.body.classList.remove('perfil-visualizador');
   }
-
   carregarLista();
 }
 
-function num(v){
-  if(typeof v === "number") return v;
-  if(!v) return 0;
-  let s = String(v);
-  if(s.includes(",")) s = s.replace(/\./g,"").replace(",",".");
-  return Number(s)||0;
-}
+function num(v){ if(!v) return 0; let s = String(v); if(s.includes(",")) s = s.replace(/\./g,"").replace(",","."); return Number(s)||0; }
 function fmt(v){ return Number(v||0).toFixed(2).replace(".",","); }
-function dataBR(d){
-  if(!d) return "";
-  const [a,m,di] = d.split("-");
-  return `${di}/${m}/${a}`;
-}
+function dataBR(d){ if(!d) return ""; const [a,m,di] = d.split("-"); return `${di}/${m}/${a}`; }
 
 let pesoLiquido = 0, pesoBruto = 0, editId = null;
 
-async function abrirModal(){
-  if(!eAdmin) return;
-  editId = null; el("tituloModal").innerText = "Nova OP";
-  ["op","data","kg","valor_kg","quantidade","kg_bruto","valor_total","acabamento"].forEach(i=>el(i).value="");
-  el("modalBg").style.display="flex";
-  await carregarProdutos();
-}
-
+async function abrirModal(){ if(!eAdmin) return; editId = null; el("tituloModal").innerText = "Nova OP"; ["op","data","kg","valor_kg","quantidade","kg_bruto","valor_total","acabamento"].forEach(i=>el(i).value=""); el("modalBg").style.display="flex"; await carregarProdutos(); }
 function fecharModal(){ el("modalBg").style.display="none"; }
 
 async function carregarProdutos(){
-  const selModal = el("codigo_peca");
-  const selFiltro = el("filtro_peca");
-  const { data, error } = await sb.from("produtos").select("*").order("codigo");
-  if(error) return;
-
+  const selModal = el("codigo_peca"); const selFiltro = el("filtro_peca");
+  const { data } = await sb.from("produtos").select("*").order("codigo");
+  if(!data) return;
   selModal.innerHTML = `<option value=""></option>`;
   selFiltro.innerHTML = `<option value="">Todas as peças</option>`;
-
   data.forEach(p => {
-    const oModal = document.createElement("option");
-    oModal.value = p.codigo; oModal.textContent = p.codigo;
-    oModal.dataset.acab = p.acabamento; oModal.dataset.pl = p.peso_liquido; oModal.dataset.pb = p.peso_bruto;
-    selModal.appendChild(oModal);
-
+    const oM = document.createElement("option"); oM.value = p.codigo; oM.textContent = p.codigo;
+    oM.dataset.acab=p.acabamento; oM.dataset.pl=p.peso_liquido; oM.dataset.pb=p.peso_bruto;
+    selModal.appendChild(oM);
     if (p.codigo.toLowerCase().startsWith("pino")) {
-      const oFiltro = document.createElement("option");
-      oFiltro.value = p.codigo; oFiltro.textContent = p.codigo;
-      selFiltro.appendChild(oFiltro);
+      const oF = document.createElement("option"); oF.value = p.codigo; oF.textContent = p.codigo;
+      selFiltro.appendChild(oF);
     }
   });
-
-  selModal.onchange = () => {
-    const o = selModal.selectedOptions[0];
-    if(!o || !o.value) return;
-    el("acabamento").value = o.dataset.acab || "";
-    pesoLiquido = num(o.dataset.pl); pesoBruto = num(o.dataset.pb); calcular();
-  };
+  selModal.onchange = () => { const o = selModal.selectedOptions[0]; if(!o.value) return; el("acabamento").value = o.dataset.acab; pesoLiquido = num(o.dataset.pl); pesoBruto = num(o.dataset.pb); calcular(); };
 }
 
 ["kg","valor_kg"].forEach(i=>el(i).oninput=calcular);
+function calcular(){ const kg=num(el("kg").value), vkg=num(el("valor_kg").value); const qtd=pesoLiquido?Math.floor(kg/pesoLiquido):0; el("quantidade").value=qtd; el("kg_bruto").value=fmt(qtd*pesoBruto); el("valor_total").value=fmt(kg*vkg); }
 
-function calcular(){
-  const kg=num(el("kg").value), vkg=num(el("valor_kg").value);
-  const qtd=pesoLiquido?Math.floor(kg/pesoLiquido):0;
-  el("quantidade").value=qtd; el("kg_bruto").value=fmt(qtd*pesoBruto);
-  el("valor_total").value=fmt(kg*vkg);
-}
+async function salvar(){ if(!eAdmin) return; const payload={ op:el("op").value, data:el("data").value, codigo_peca:el("codigo_peca").value, acabamento:el("acabamento").value, kg:num(el("kg").value), quantidade:num(el("quantidade").value), kg_bruto:num(el("kg_bruto").value), valor_kg:num(el("valor_kg").value), valor_total:num(el("valor_total").value) }; if(editId===null){ payload.entregue=false; payload.boleto=false; await sb.from("zincagem_tratamento").insert(payload); } else { await sb.from("zincagem_tratamento").update(payload).eq("id",editId); } fecharModal(); carregarLista(); }
+async function editarOp(id){ if(!eAdmin) return; const { data } = await sb.from("zincagem_tratamento").select("*").eq("id",id).single(); editId=id; el("tituloModal").innerText="Editar OP"; el("modalBg").style.display="flex"; await carregarProdutos(); el("op").value=data.op; el("data").value=data.data; el("codigo_peca").value=data.codigo_peca; el("codigo_peca").dispatchEvent(new Event("change")); el("kg").value=fmt(data.kg); el("valor_kg").value=fmt(data.valor_kg); calcular(); }
+async function toggle(id,campo,valor){ if(!eAdmin) return; await sb.from("zincagem_tratamento").update({[campo]:!valor}).eq("id",id); carregarLista(); }
+async function excluirOp(id){ if(!eAdmin) return; if(confirm("Excluir OP?")) { await sb.from("zincagem_tratamento").delete().eq("id",id); carregarLista(); } }
 
-async function salvar(){
-  if(!eAdmin) return;
-  const payload={
-    op:el("op").value, data:el("data").value, codigo_peca:el("codigo_peca").value,
-    acabamento:el("acabamento").value, kg:num(el("kg").value),
-    quantidade:num(el("quantidade").value), kg_bruto:num(el("kg_bruto").value),
-    valor_kg:num(el("valor_kg").value), valor_total:num(el("valor_total").value)
-  };
-  if(editId===null){
-    payload.entregue=false; payload.boleto=false;
-    await sb.from("zincagem_tratamento").insert(payload);
-  } else {
-    await sb.from("zincagem_tratamento").update(payload).eq("id",editId);
-  }
-  fecharModal(); carregarLista();
-}
-
-async function editarOp(id){
-  if(!eAdmin) return;
-  const { data } = await sb.from("zincagem_tratamento").select("*").eq("id",id).single();
-  editId=id; el("tituloModal").innerText="Editar OP"; el("modalBg").style.display="flex";
-  await carregarProdutos();
-  el("op").value=data.op; el("data").value=data.data; el("codigo_peca").value=data.codigo_peca;
-  el("codigo_peca").dispatchEvent(new Event("change"));
-  el("kg").value=fmt(data.kg); el("valor_kg").value=fmt(data.valor_kg); calcular();
-}
-
-async function toggle(id,campo,valor){
-  if(!eAdmin) return;
-  await sb.from("zincagem_tratamento").update({[campo]:!valor}).eq("id",id);
-  carregarLista();
-}
-
-async function excluirOp(id){
-  if(!eAdmin) return;
-  if(confirm("Excluir OP?")) { await sb.from("zincagem_tratamento").delete().eq("id",id); carregarLista(); }
-}
-
-async function carregarLista(){
-  const { data, error } = await sb.from("zincagem_tratamento").select("*").order("data",{ascending:false});
-  if(error) return;
-  dadosCompletos = data || [];
-  filtrarLocal();
-}
+async function carregarLista(){ const { data } = await sb.from("zincagem_tratamento").select("*").order("data",{ascending:false}); dadosCompletos = data || []; filtrarLocal(); }
 
 function filtrarLocal(){
-  const dIni = el("filtro_data_ini").value;
-  const dFim = el("filtro_data_fim").value;
-  const pecaSelecionada = el("filtro_peca").value;
-
-  const filtrados = dadosCompletos.filter(r => {
-    const dataOk = (!dIni || r.data >= dIni) && (!dFim || r.data <= dFim);
-    const pecaOk = (!pecaSelecionada || r.codigo_peca === pecaSelecionada);
-    return dataOk && pecaOk;
-  });
-
+  const dI = el("filtro_data_ini").value, dF = el("filtro_data_fim").value, pS = el("filtro_peca").value;
+  const filtrados = dadosCompletos.filter(r => (!dI || r.data >= dI) && (!dF || r.data <= dF) && (!pS || r.codigo_peca === pS));
   renderizarTabela(filtrados);
 }
 
 function renderizarTabela(dados){
-  const tb = el("lista");
-  tb.innerHTML = "";
-  let totKg=0, totQtd=0, totBruto=0, totVal=0;
-
+  const tb = el("lista"); tb.innerHTML = "";
+  let tK=0, tQ=0, tB=0, tV=0;
   dados.forEach(r => {
-    totKg += num(r.kg); totQtd += num(r.quantidade);
-    totBruto += num(r.kg_bruto); totVal += num(r.valor_total);
-
-    tb.innerHTML += `
-      <tr>
-        <td>${r.op}</td>
-        <td>${dataBR(r.data)}</td>
-        <td>${r.codigo_peca}</td>
-        <td>${r.acabamento}</td>
-        <td>${fmt(r.kg)}</td>
-        <td>${r.quantidade}</td>
-        <td>${fmt(r.kg_bruto)}</td>
-        <td>${fmt(r.valor_kg)}</td>
-        <td>${fmt(r.valor_total)}</td>
-        ${eAdmin ? `
-          <td class="acoes">
-            <button class="btn-pill ${r.entregue?'ok':'pendente'}" onclick="toggle(${r.id},'entregue',${r.entregue})">${r.entregue?'OK':'Entregue'}</button>
-            <button class="btn-pill ${r.boleto?'ok':'pendente'}" onclick="toggle(${r.id},'boleto',${r.boleto})">${r.boleto?'OK':'Boleto'}</button>
-            <button class="btn-pill btn-editar" onclick="editarOp(${r.id})">Editar</button>
-            <button class="btn-pill btn-excluir" onclick="excluirOp(${r.id})">Excluir</button>
-          </td>` : ''}
-      </tr>`;
+    tK += num(r.kg); tQ += num(r.quantidade); tB += num(r.kg_bruto); tV += num(r.valor_total);
+    tb.innerHTML += `<tr><td>${r.op}</td><td>${dataBR(r.data)}</td><td>${r.codigo_peca}</td><td>${r.acabamento}</td><td>${fmt(r.kg)}</td><td>${r.quantidade}</td><td>${fmt(r.kg_bruto)}</td><td>${fmt(r.valor_kg)}</td><td>${fmt(r.valor_total)}</td>
+    ${eAdmin ? `<td class="acoes"><button class="btn-pill ${r.entregue?'ok':'pendente'}" onclick="toggle(${r.id},'entregue',${r.entregue})">${r.entregue?'OK':'Entregue'}</button><button class="btn-pill ${r.boleto?'ok':'pendente'}" onclick="toggle(${r.id},'boleto',${r.boleto})">${r.boleto?'OK':'Boleto'}</button><button class="btn-pill btn-editar" onclick="editarOp(${r.id})">Editar</button><button class="btn-pill btn-excluir" onclick="excluirOp(${r.id})">Excluir</button></td>` : ''}</tr>`;
   });
-
-  el("rodape_totais").innerHTML = `
-    <tr>
-      <td colspan="4">TOTALIZADOR</td>
-      <td>${fmt(totKg)}</td>
-      <td>${totQtd}</td>
-      <td>${fmt(totBruto)}</td>
-      <td></td>
-      <td>${fmt(totVal)}</td>
-      ${eAdmin ? '<td></td>' : ''}
-    </tr>`;
-
-  if(dados.length === 0) tb.innerHTML = `<tr><td colspan="${eAdmin?10:9}">Nenhum registro encontrado</td></tr>`;
+  el("rodape_totais").innerHTML = `<tr><td colspan="4">TOTALIZADOR</td><td>${fmt(tK)}</td><td>${tQ}</td><td>${fmt(tB)}</td><td></td><td>${fmt(tV)}</td>${eAdmin ? '<td></td>' : ''}</tr>`;
 }
 
-verificarUsuario();
+verificarAcesso();
 </script>
 </body>
 </html>
