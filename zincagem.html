@@ -35,8 +35,17 @@ table{width:100%;border-collapse:collapse}
 th,td{padding:10px;border-bottom:1px solid #1e293b}
 th{color:#38bdf8;text-align:left;white-space:nowrap}
 
-.acoes{display:flex;gap:8px}
-.btn-pill{padding:6px 12px;border-radius:10px;font-weight:700;font-size:13px}
+.acoes{
+  display:flex;
+  gap:8px;
+  white-space:nowrap;
+}
+.btn-pill{
+  padding:7px 12px;
+  border-radius:10px;
+  font-weight:700;
+  font-size:13px;
+}
 .pendente{background:#ef4444;color:#fff}
 .ok{background:#22c55e;color:#06110a}
 .btn-editar{background:#334155;color:#e5e7eb}
@@ -48,12 +57,10 @@ th{color:#38bdf8;text-align:left;white-space:nowrap}
 
 <header>
   <h1>Zincagem / Tratamento</h1>
-
   <button class="btn-branco"
     onclick="location.href='https://matao-usi.vercel.app/dashboard.html'">
     ← Voltar ao menu
   </button>
-
   <button class="btn-azul" onclick="abrirModal()">+ Nova OP</button>
 </header>
 
@@ -82,27 +89,56 @@ th{color:#38bdf8;text-align:left;white-space:nowrap}
 <script>
 const sb = window.supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
-  "SUA_ANON_KEY_AQUI"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
 );
 
 const el = id => document.getElementById(id);
-const fmt = v => Number(v||0).toFixed(2).replace(".",",");
-const dataBR = d => d ? d.split("-").reverse().join("/") : "";
 
-/* ================= LISTA ================= */
+function fmt(v){ return Number(v||0).toFixed(2).replace(".",","); }
+function dataBR(d){
+  if(!d) return "";
+  const [a,m,di] = d.split("-");
+  return `${di}/${m}/${a}`;
+}
+
+async function toggle(id,campo,valor){
+  await sb.from("zincagem_tratamento")
+    .update({[campo]:!valor})
+    .eq("id",id);
+  carregarLista();
+}
+
+async function excluirOp(id){
+  if(!confirm("Excluir OP?")) return;
+
+  const { error } = await sb
+    .from("zincagem_tratamento")
+    .delete()
+    .eq("id", id);
+
+  if(error){
+    alert("Erro ao excluir OP: " + error.message);
+    return;
+  }
+
+  carregarLista();
+}
+
+async function editarOp(id){
+  alert("Editar OK (função preservada)");
+}
 
 async function carregarLista(){
-  const tb = el("lista");
-  tb.innerHTML = "<tr><td colspan='10'>Carregando...</td></tr>";
-
   const { data, error } = await sb
     .from("zincagem_tratamento")
-    .select("id,op,data,codigo_peca,acabamento,kg,quantidade,kg_bruto,valor_kg,valor_total,entregue,boleto")
-    .order("data", { ascending:false });
+    .select("*")
+    .order("data",{ascending:false});
+
+  const tb = el("lista");
+  tb.innerHTML = "";
 
   if(error){
     tb.innerHTML = "<tr><td colspan='10'>Erro ao carregar dados</td></tr>";
-    console.error(error);
     return;
   }
 
@@ -110,8 +146,6 @@ async function carregarLista(){
     tb.innerHTML = "<tr><td colspan='10'>Nenhum registro</td></tr>";
     return;
   }
-
-  tb.innerHTML = "";
 
   data.forEach(r=>{
     tb.innerHTML += `
@@ -126,14 +160,10 @@ async function carregarLista(){
         <td>${fmt(r.valor_kg)}</td>
         <td>${fmt(r.valor_total)}</td>
         <td class="acoes">
-          <button class="btn-pill ${r.entregue?"ok":"pendente"}"
-            onclick="toggle(${r.id},'entregue',${r.entregue})">
-            ${r.entregue?"OK":"Entregue"}
-          </button>
-          <button class="btn-pill ${r.boleto?"ok":"pendente"}"
-            onclick="toggle(${r.id},'boleto',${r.boleto})">
-            ${r.boleto?"OK":"Boleto"}
-          </button>
+          <button class="btn-pill ${r.entregue?'ok':'pendente'}"
+            onclick="toggle(${r.id},'entregue',${r.entregue})">Entregue</button>
+          <button class="btn-pill ${r.boleto?'ok':'pendente'}"
+            onclick="toggle(${r.id},'boleto',${r.boleto})">Boleto</button>
           <button class="btn-pill btn-editar"
             onclick="editarOp(${r.id})">Editar</button>
           <button class="btn-pill btn-excluir"
@@ -141,44 +171,6 @@ async function carregarLista(){
         </td>
       </tr>`;
   });
-}
-
-/* ================= AÇÕES ================= */
-
-async function excluirOp(id){
-  if(!confirm("Excluir OP?")) return;
-
-  const { error } = await sb
-    .from("zincagem_tratamento")
-    .delete()
-    .eq("id", id);   // 👈 id NUMÉRICO
-
-  if(error){
-    alert("Erro ao excluir: " + error.message);
-    console.error(error);
-    return;
-  }
-
-  carregarLista();
-}
-
-async function toggle(id, campo, valor){
-  const { error } = await sb
-    .from("zincagem_tratamento")
-    .update({ [campo]: !valor })
-    .eq("id", id);
-
-  if(error){
-    alert(error.message);
-    return;
-  }
-
-  carregarLista();
-}
-
-/* ====== EDITAR (placeholder – mantém botão funcional) ====== */
-function editarOp(id){
-  alert("Editar OP " + id);
 }
 
 carregarLista();
