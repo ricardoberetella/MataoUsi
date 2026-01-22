@@ -61,7 +61,6 @@ button{
   gap: 5px;
 }
 .filtros label { font-size: 12px; color: #38bdf8; font-weight: bold; }
-/* Estilo unificado para input e select dos filtros */
 .filtros input, .filtros select { 
   padding: 8px; 
   border-radius: 6px; 
@@ -240,13 +239,10 @@ async function carregarProdutos(){
   
   if(error) return;
 
-  // Limpa e popula o select do Modal (Todas as peças)
   selModal.innerHTML = `<option value=""></option>`;
-  // Limpa e popula o select do Filtro (Apenas que começam com "Pino")
   selFiltro.innerHTML = `<option value="">Todas as peças</option>`;
 
   data.forEach(p => {
-    // Opção para o Modal
     const oModal = document.createElement("option");
     oModal.value = p.codigo;
     oModal.textContent = p.codigo;
@@ -255,7 +251,6 @@ async function carregarProdutos(){
     oModal.dataset.pb = p.peso_bruto;
     selModal.appendChild(oModal);
 
-    // Filtro: Apenas produtos cujo código começa com "Pino" ou descrição começa com "Pino"
     if (p.codigo.toLowerCase().startsWith("pino") || (p.descricao && p.descricao.toLowerCase().startsWith("pino"))) {
       const oFiltro = document.createElement("option");
       oFiltro.value = p.codigo;
@@ -321,7 +316,7 @@ async function carregarLista(){
   const { data, error } = await sb.from("zincagem_tratamento").select("*").order("data",{ascending:false});
   if(error) return;
   dadosCompletos = data || [];
-  await carregarProdutos(); // Garante que o select de filtro esteja populado
+  await carregarProdutos(); 
   filtrarLocal();
 }
 
@@ -343,14 +338,13 @@ function renderizarTabela(dados){
   const tb = el("lista");
   tb.innerHTML = "";
   
-  let totKg=0, totQtd=0, totBruto=0, totVal=0, somaValKg=0;
+  let totKg=0, totQtd=0, totBruto=0, totVal=0;
 
   dados.forEach(r => {
     totKg += num(r.kg);
     totQtd += num(r.quantidade);
     totBruto += num(r.kg_bruto);
     totVal += num(r.valor_total);
-    somaValKg += num(r.valor_kg);
 
     tb.innerHTML += `
       <tr>
@@ -372,14 +366,14 @@ function renderizarTabela(dados){
       </tr>`;
   });
 
-  const mediaValKg = dados.length > 0 ? somaValKg / dados.length : 0;
+  // Linha do Totalizador com a coluna R$/Kg vazia
   el("rodape_totais").innerHTML = `
     <tr>
       <td colspan="4">TOTALIZADOR</td>
       <td>${fmt(totKg)}</td>
       <td>${totQtd}</td>
       <td>${fmt(totBruto)}</td>
-      <td>${fmt(mediaValKg)} (méd)</td>
+      <td></td>
       <td>${fmt(totVal)}</td>
       <td></td>
     </tr>`;
