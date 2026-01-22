@@ -61,7 +61,15 @@ button{
   gap: 5px;
 }
 .filtros label { font-size: 12px; color: #38bdf8; font-weight: bold; }
-.filtros input { padding: 8px; border-radius: 6px; border: 1px solid #334155; background: #020617; color: #fff; }
+/* Estilo unificado para input e select dos filtros */
+.filtros input, .filtros select { 
+  padding: 8px; 
+  border-radius: 6px; 
+  border: 1px solid #334155; 
+  background: #020617; 
+  color: #fff; 
+  min-width: 150px;
+}
 
 /* Tabela e Alinhamentos */
 table{width:100%;border-collapse:collapse}
@@ -137,8 +145,10 @@ input[readonly]{background:#020b1a;color:#9ca3af}
       <input type="date" id="filtro_data_fim" oninput="filtrarLocal()">
     </div>
     <div class="campo-filtro">
-      <label>Peça</label>
-      <input type="text" id="filtro_peca" placeholder="Buscar peça..." oninput="filtrarLocal()">
+      <label>Peça (Pinos)</label>
+      <select id="filtro_peca" onchange="filtrarLocal()">
+        <option value="">Todas as peças</option>
+      </select>
     </div>
   </div>
 
@@ -193,7 +203,7 @@ const sb = window.supabase.createClient(
 );
 
 const el = id => document.getElementById(id);
-let dadosCompletos = []; // Cache para filtros locais
+let dadosCompletos = []; 
 
 function num(v){
   if(typeof v === "number") return v;
@@ -221,19 +231,46 @@ async function abrirModal(){
 function fecharModal(){ el("modalBg").style.display="none"; }
 
 async function carregarProdutos(){
-  const sel = el("codigo_peca"); sel.innerHTML = `<option value="">Carregando...</option>`;
-  const { data, error } = await sb.from("produtos").select("*").order("codigo");
+  const selModal = el("codigo_peca");
+  const selFiltro = el("filtro_peca");
+  
+  selModal.innerHTML = `<option value="">Carregando...</option>`;
+
+  const { data, error } = await sb.from("produtos").select("codigo, acabamento, peso_liquido, peso_bruto, descricao").order("codigo");
+  
   if(error) return;
-  sel.innerHTML = `<option value=""></option>`;
-  data.forEach(p=>{
-    const o=document.createElement("option"); o.value=p.codigo; o.textContent=p.codigo;
-    o.dataset.acab=p.acabamento; o.dataset.pl=p.peso_liquido; o.dataset.pb=p.peso_bruto;
-    sel.appendChild(o);
+
+  // Limpa e popula o select do Modal (Todas as peças)
+  selModal.innerHTML = `<option value=""></option>`;
+  // Limpa e popula o select do Filtro (Apenas que começam com "Pino")
+  selFiltro.innerHTML = `<option value="">Todas as peças</option>`;
+
+  data.forEach(p => {
+    // Opção para o Modal
+    const oModal = document.createElement("option");
+    oModal.value = p.codigo;
+    oModal.textContent = p.codigo;
+    oModal.dataset.acab = p.acabamento;
+    oModal.dataset.pl = p.peso_liquido;
+    oModal.dataset.pb = p.peso_bruto;
+    selModal.appendChild(oModal);
+
+    // Filtro: Apenas produtos cujo código começa com "Pino" ou descrição começa com "Pino"
+    if (p.codigo.toLowerCase().startsWith("pino") || (p.descricao && p.descricao.toLowerCase().startsWith("pino"))) {
+      const oFiltro = document.createElement("option");
+      oFiltro.value = p.codigo;
+      oFiltro.textContent = p.codigo;
+      selFiltro.appendChild(oFiltro);
+    }
   });
-  sel.onchange=()=>{
-    const o=sel.selectedOptions[0]; if(!o || !o.value) return;
-    el("acabamento").value=o.dataset.acab || "";
-    pesoLiquido=num(o.dataset.pl); pesoBruto=num(o.dataset.pb); calcular();
+
+  selModal.onchange = () => {
+    const o = selModal.selectedOptions[0];
+    if(!o || !o.value) return;
+    el("acabamento").value = o.dataset.acab || "";
+    pesoLiquido = num(o.dataset.pl);
+    pesoBruto = num(o.dataset.pb);
+    calcular();
   };
 }
 
@@ -281,21 +318,21 @@ async function excluirOp(id){
 }
 
 async function carregarLista(){
-  const { data, error } = await sb.from("zincagem_tratamento")
-    .select("*").order("data",{ascending:false});
+  const { data, error } = await sb.from("zincagem_tratamento").select("*").order("data",{ascending:false});
   if(error) return;
   dadosCompletos = data || [];
+  await carregarProdutos(); // Garante que o select de filtro esteja populado
   filtrarLocal();
 }
 
 function filtrarLocal(){
   const dIni = el("filtro_data_ini").value;
   const dFim = el("filtro_data_fim").value;
-  const peca = el("filtro_peca").value.toLowerCase();
+  const pecaSelecionada = el("filtro_peca").value;
 
   const filtrados = dadosCompletos.filter(r => {
     const dataOk = (!dIni || r.data >= dIni) && (!dFim || r.data <= dFim);
-    const pecaOk = (!peca || r.codigo_peca.toLowerCase().includes(peca));
+    const pecaOk = (!pecaSelecionada || r.codigo_peca === pecaSelecionada);
     return dataOk && pecaOk;
   });
 
@@ -335,7 +372,6 @@ function renderizarTabela(dados){
       </tr>`;
   });
 
-  // Atualiza Rodapé de Totais
   const mediaValKg = dados.length > 0 ? somaValKg / dados.length : 0;
   el("rodape_totais").innerHTML = `
     <tr>
