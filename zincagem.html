@@ -29,9 +29,11 @@ button{
 .btn-azul{background:#38bdf8;color:#000}
 .btn-branco{background:#fff;color:#000}
 .container{padding:0 30px 30px}
+
 table{width:100%;border-collapse:collapse}
 th,td{padding:10px;border-bottom:1px solid #1e293b}
 th{color:#38bdf8;text-align:left;white-space:nowrap}
+
 .acoes{display:flex;gap:8px;white-space:nowrap}
 .btn-pill{padding:7px 12px;border-radius:10px;font-weight:700;font-size:13px}
 .pendente{background:#ef4444;color:#fff}
@@ -68,7 +70,9 @@ th{color:#38bdf8;text-align:left;white-space:nowrap}
   <th>Ações</th>
 </tr>
 </thead>
-<tbody id="lista"></tbody>
+<tbody id="lista">
+<tr><td colspan="10">Carregando...</td></tr>
+</tbody>
 </table>
 </div>
 
@@ -80,13 +84,6 @@ const sb = window.supabase.createClient(
 
 const el = id => document.getElementById(id);
 
-function num(v){
-  if(typeof v === "number") return v;
-  if(!v) return 0;
-  let s = String(v);
-  if(s.includes(",")) s = s.replace(/\./g,"").replace(",",".");
-  return Number(s)||0;
-}
 function fmt(v){ return Number(v||0).toFixed(2).replace(".",","); }
 function dataBR(d){
   if(!d) return "";
@@ -94,55 +91,79 @@ function dataBR(d){
   return `${di}/${m}/${a}`;
 }
 
-async function excluirOp(id){
-  if(!confirm("Excluir OP?")) return;
+/* ================= LISTA ================= */
 
+async function carregarLista(){
   const { data, error } = await sb
     .from("zincagem_tratamento")
-    .delete()
-    .eq("id", Number(id))
-    .select("id");
+    .select("id,op,data,codigo_peca,acabamento,kg,quantidade,kg_bruto,valor_kg,valor_total,entregue,boleto")
+    .order("data",{ascending:false});
+
+  const tb = el("lista");
+  tb.innerHTML = "";
 
   if(error){
-    alert("Erro ao excluir OP: " + error.message);
+    tb.innerHTML = `<tr><td colspan="10">Erro ao carregar dados</td></tr>`;
+    console.error(error);
     return;
   }
 
   if(!data || data.length === 0){
-    alert("Registro não encontrado para exclusão.");
+    tb.innerHTML = `<tr><td colspan="10">Nenhum registro encontrado</td></tr>`;
+    return;
+  }
+
+  data.forEach(r=>{
+    tb.innerHTML += `
+      <tr>
+        <td>${r.op}</td>
+        <td>${dataBR(r.data)}</td>
+        <td>${r.codigo_peca}</td>
+        <td>${r.acabamento}</td>
+        <td>${fmt(r.kg)}</td>
+        <td>${r.quantidade}</td>
+        <td>${fmt(r.kg_bruto)}</td>
+        <td>${fmt(r.valor_kg)}</td>
+        <td>${fmt(r.valor_total)}</td>
+        <td class="acoes">
+          <button class="btn-pill ${r.entregue?"ok":"pendente"}"
+            onclick="toggle(${r.id},'entregue',${r.entregue})">Entregue</button>
+          <button class="btn-pill ${r.boleto?"ok":"pendente"}"
+            onclick="toggle(${r.id},'boleto',${r.boleto})">Boleto</button>
+          <button class="btn-pill btn-editar">Editar</button>
+          <button class="btn-pill btn-excluir"
+            onclick="excluirOp(${r.id})">Excluir</button>
+        </td>
+      </tr>`;
+  });
+}
+
+/* ================= DELETE ================= */
+
+async function excluirOp(id){
+  if(!confirm("Excluir OP?")) return;
+
+  const { error } = await sb
+    .from("zincagem_tratamento")
+    .delete()
+    .eq("id", Number(id));
+
+  if(error){
+    alert("Erro ao excluir: " + error.message);
     return;
   }
 
   carregarLista();
 }
 
-async function carregarLista(){
-  const { data } = await sb
-    .from("zincagem_tratamento")
-    .select("*")
-    .order("data",{ascending:false});
+/* ================= TOGGLE ================= */
 
-  const tb = el("lista");
-  tb.innerHTML = "";
+async function toggle(id, campo, valor){
+  await sb.from("zincagem_tratamento")
+    .update({ [campo]: !valor })
+    .eq("id", Number(id));
 
-  data.forEach(r=>{
-    tb.innerHTML += `
-    <tr>
-      <td>${r.op}</td>
-      <td>${dataBR(r.data)}</td>
-      <td>${r.codigo_peca}</td>
-      <td>${r.acabamento}</td>
-      <td>${fmt(r.kg)}</td>
-      <td>${r.quantidade}</td>
-      <td>${fmt(r.kg_bruto)}</td>
-      <td>${fmt(r.valor_kg)}</td>
-      <td>${fmt(r.valor_total)}</td>
-      <td class="acoes">
-        <button class="btn-pill btn-excluir"
-          onclick="excluirOp(${r.id})">Excluir</button>
-      </td>
-    </tr>`;
-  });
+  carregarLista();
 }
 
 carregarLista();
