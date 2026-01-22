@@ -36,7 +36,6 @@ button{
 }
 .btn-azul{background:#38bdf8;color:#000}
 
-/* Novo estilo para o botão voltar (conforme imagem) */
 .btn-outline-azul {
   background: transparent;
   color: #38bdf8;
@@ -46,14 +45,20 @@ button{
 
 .container{padding:0 30px 30px}
 
+/* Ajuste de centralização para cabeçalhos e células */
 table{width:100%;border-collapse:collapse}
-th,td{padding:10px;border-bottom:1px solid #1e293b}
-th{color:#38bdf8;text-align:left;white-space:nowrap}
+th,td{
+  padding:10px;
+  border-bottom:1px solid #1e293b;
+  text-align: center; /* Centraliza o texto em relação ao conteúdo abaixo */
+}
+th{color:#38bdf8;white-space:nowrap}
 
 .acoes{
   display:flex;
   gap:8px;
   white-space:nowrap;
+  justify-content: center; /* Centraliza os botões de ação abaixo do título Ações */
 }
 .btn-pill{
   padding:7px 12px;
@@ -86,7 +91,7 @@ th{color:#38bdf8;text-align:left;white-space:nowrap}
   grid-template-columns:1fr 1fr;
   gap:16px;
 }
-.campo{display:flex;flex-direction:column}
+.campo{display:flex;flex-direction:column; text-align: left;} /* Mantém inputs alinhados à esquerda */
 .campo label{font-size:13px;margin-bottom:4px;color:#cbd5f5}
 input,select{
   padding:10px;
@@ -206,7 +211,6 @@ async function abrirModal(){
   ["op","data","kg","valor_kg","quantidade","kg_bruto","valor_total","acabamento"].forEach(i=>el(i).value="");
   pesoLiquido = 0;
   pesoBruto = 0;
-
   el("modalBg").style.display="flex";
   await carregarProdutos();
 }
@@ -218,18 +222,15 @@ function fecharModal(){
 async function carregarProdutos(){
   const sel = el("codigo_peca");
   sel.innerHTML = `<option value="">Carregando...</option>`;
-
   const { data, error } = await sb
     .from("produtos")
     .select("codigo, acabamento, peso_liquido, peso_bruto")
     .order("codigo");
-
   if(error){
     console.error("Erro produtos:", error);
     sel.innerHTML = `<option value="">ERRO AO CARREGAR PEÇAS</option>`;
     return;
   }
-
   sel.innerHTML = `<option value=""></option>`;
   (data || []).forEach(p=>{
     const o=document.createElement("option");
@@ -240,7 +241,6 @@ async function carregarProdutos(){
     o.dataset.pb=p.peso_bruto;
     sel.appendChild(o);
   });
-
   sel.onchange=()=>{
     const o=sel.selectedOptions[0];
     if(!o || !o.value) return;
@@ -274,42 +274,29 @@ async function salvar(){
     valor_kg:num(el("valor_kg").value),
     valor_total:num(el("valor_total").value)
   };
-
   let resp;
   if(editId===null){
     payload.entregue=false;
     payload.boleto=false;
     resp=await sb.from("zincagem_tratamento").insert(payload).select();
   }else{
-    resp=await sb.from("zincagem_tratamento")
-      .update(payload)
-      .eq("id",editId)
-      .select();
+    resp=await sb.from("zincagem_tratamento").update(payload).eq("id",editId).select();
   }
-
   if(resp.error){
     alert(resp.error.message);
     return;
   }
-
   fecharModal();
   await carregarLista();
 }
 
 async function editarOp(id){
-  const { data, error } = await sb.from("zincagem_tratamento")
-    .select("*").eq("id",id).single();
-
-  if(error){
-    alert("Erro ao carregar OP: " + error.message);
-    return;
-  }
-
+  const { data, error } = await sb.from("zincagem_tratamento").select("*").eq("id",id).single();
+  if(error){ alert("Erro ao carregar OP: " + error.message); return; }
   editId=id;
   el("tituloModal").innerText="Editar OP";
   el("modalBg").style.display="flex";
   await carregarProdutos();
-
   el("op").value=data.op;
   el("data").value=data.data;
   el("codigo_peca").value=data.codigo_peca;
@@ -320,47 +307,29 @@ async function editarOp(id){
 }
 
 async function toggle(id,campo,valor){
-  const { error } = await sb.from("zincagem_tratamento")
-    .update({[campo]:!valor}).eq("id",id);
-
-  if(error){
-    alert("Erro ao atualizar: " + error.message);
-    return;
-  }
-
+  const { error } = await sb.from("zincagem_tratamento").update({[campo]:!valor}).eq("id",id);
+  if(error){ alert("Erro ao atualizar: " + error.message); return; }
   carregarLista();
 }
 
 async function excluirOp(id){
   if(!confirm("Excluir OP?")) return;
-
-  const { error } = await sb
-    .from("zincagem_tratamento")
-    .delete()
-    .eq("id",id);
-
-  if(error){
-    alert("Erro ao excluir OP: " + error.message);
-    return;
-  }
-
+  const { error } = await sb.from("zincagem_tratamento").delete().eq("id",id);
+  if(error){ alert("Erro ao excluir OP: " + error.message); return; }
   carregarLista();
 }
 
 async function carregarLista(){
   const tb=el("lista");
   tb.innerHTML = `<tr><td colspan="10">Carregando...</td></tr>`;
-
   const { data, error } = await sb.from("zincagem_tratamento")
     .select("id,op,data,codigo_peca,acabamento,kg,quantidade,kg_bruto,valor_kg,valor_total,entregue,boleto")
     .order("data",{ascending:false});
-
   if(error){
     console.error("Erro lista:", error);
     tb.innerHTML = `<tr><td colspan="10">Erro ao carregar dados</td></tr>`;
     return;
   }
-
   tb.innerHTML="";
   (data || []).forEach(r=>{
     tb.innerHTML+=`
@@ -375,12 +344,10 @@ async function carregarLista(){
       <td>${fmt(r.valor_kg)}</td>
       <td>${fmt(r.valor_total)}</td>
       <td class="acoes">
-        <button class="btn-pill ${r.entregue?"ok":"pendente"}"
-          onclick="toggle(${r.id},'entregue',${r.entregue})">
+        <button class="btn-pill ${r.entregue?"ok":"pendente"}" onclick="toggle(${r.id},'entregue',${r.entregue})">
           ${r.entregue?"OK":"Entregue"}
         </button>
-        <button class="btn-pill ${r.boleto?"ok":"pendente"}"
-          onclick="toggle(${r.id},'boleto',${r.boleto})">
+        <button class="btn-pill ${r.boleto?"ok":"pendente"}" onclick="toggle(${r.id},'boleto',${r.boleto})">
           ${r.boleto?"OK":"Boleto"}
         </button>
         <button class="btn-pill btn-editar" onclick="editarOp(${r.id})">Editar</button>
@@ -388,12 +355,8 @@ async function carregarLista(){
       </td>
     </tr>`;
   });
-
-  if((data || []).length === 0){
-    tb.innerHTML = `<tr><td colspan="10">Sem registros</td></tr>`;
-  }
+  if((data || []).length === 0){ tb.innerHTML = `<tr><td colspan="10">Sem registros</td></tr>`; }
 }
-
 carregarLista();
 </script>
 
