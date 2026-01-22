@@ -18,8 +18,8 @@ body{
 body.e-admin .admin-only { display: table-cell !important; }
 body.e-admin button.admin-only { display: inline-flex !important; }
 
-header{ padding:20px 30px; display:flex; align-items:center; gap:16px; }
-h1{margin:0;color:#38bdf8}
+header{ padding: 15px 30px; display:flex; align-items:center; gap:16px; flex-wrap: wrap; }
+h1{margin:0;color:#38bdf8; font-size: 1.8rem;}
 .header-botoes { margin-left: auto; display: flex; gap: 12px; }
 
 button{ border:none; padding:8px 12px; border-radius:8px; cursor:pointer; transition: 0.3s; }
@@ -31,57 +31,75 @@ button{ border:none; padding:8px 12px; border-radius:8px; cursor:pointer; transi
 .container{padding:0 30px 30px}
 
 /* Filtros */
-.filtros { display: flex; gap: 20px; background: rgba(30, 41, 59, 0.5); padding: 20px; border-radius: 12px; margin-bottom: 20px; align-items: flex-end; }
-.filtros label { font-size: 16px; color: #38bdf8; font-weight: bold; margin-bottom: 8px; }
+.filtros { display: flex; gap: 15px; background: rgba(30, 41, 59, 0.5); padding: 15px; border-radius: 12px; margin-bottom: 20px; align-items: flex-end; flex-wrap: wrap; }
+.filtros label { font-size: 14px; color: #38bdf8; font-weight: bold; margin-bottom: 5px; }
 .filtros input, .filtros select { 
-    padding: 10px; 
-    border-radius: 6px; 
-    border: 1px solid #334155; 
-    background: #020617; 
-    color: #fff; 
-    min-width: 160px; 
-    font-size: 15px; 
+    padding: 8px; border-radius: 6px; border: 1px solid #334155; 
+    background: #020617; color: #fff; min-width: 150px; font-size: 14px; 
 }
 
 /* Tabela */
 table{width:100%; border-collapse:collapse; table-layout: auto;}
-th,td{ padding:8px 4px; border-bottom:1px solid #1e293b; text-align: center; font-size: 14px; }
+th,td{ padding:8px 4px; border-bottom:1px solid #1e293b; text-align: center; font-size: 13px; }
 th{color:#38bdf8; white-space:nowrap}
-tfoot td { font-weight: bold; color: #38bdf8; background: rgba(56, 189, 248, 0.1); border-top: 2px solid #38bdf8; padding: 12px 4px; }
+tfoot td { font-weight: bold; color: #38bdf8; background: rgba(56, 189, 248, 0.1); border-top: 2px solid #38bdf8; padding: 10px 4px; }
 
-.btn-pill { padding: 6px 8px; border-radius: 8px; font-weight: 700; font-size: 12px; min-width: 75px; white-space: nowrap;}
+.btn-pill { padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 11px; min-width: 65px; white-space: nowrap;}
 .pendente{background:#ef4444;color:#fff}
 .ok{background:#22c55e;color:#06110a}
 .btn-editar{background:#334155;color:#e5e7eb}
 .btn-excluir{background:#7f1d1d;color:#fff}
 
-/* MODAL MODERNO (Nova OP) */
+/* MODAL CORRIGIDO (Para não cortar) */
 .modal-bg{ 
   position:fixed; inset:0; 
   background:rgba(0,0,0,0.85); 
   display:none; align-items:center; justify-content:center; 
   z-index:999; backdrop-filter: blur(4px);
+  padding: 20px; /* Margem de segurança para telas pequenas */
 }
 .modal{ 
-  width:90%; max-width:800px; 
+  width:100%; max-width:700px; 
+  max-height: 95vh; /* Altura máxima de 95% da tela */
   background:#0f172a; 
   border: 1px solid #1e293b;
-  border-radius:16px; padding:30px;
+  border-radius:16px; 
+  display: flex; flex-direction: column; /* Organiza título, corpo e footer */
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
 }
-.modal h2 { margin-top:0; color:#38bdf8; border-bottom: 1px solid #1e293b; padding-bottom:15px; }
-.grid{ display:grid; grid-template-columns: 1fr 1fr; gap:20px; }
+.modal-header { padding: 20px 25px; border-bottom: 1px solid #1e293b; }
+.modal-header h2 { margin:0; color:#38bdf8; font-size: 1.5rem; }
+
+.modal-body { 
+  padding: 25px; 
+  overflow-y: auto; /* Scroll apenas no conteúdo se necessário */
+  flex: 1; 
+}
+.grid{ display:grid; grid-template-columns: 1fr 1fr; gap:15px; }
 .campo{display:flex;flex-direction:column; text-align: left;}
-.campo label { color: #94a3b8; font-size: 13px; margin-bottom: 6px; font-weight: 600; }
+.campo label { color: #94a3b8; font-size: 12px; margin-bottom: 5px; font-weight: 600; }
 .modal input, .modal select { 
-  padding: 12px; border-radius: 8px; border: 1px solid #334155; 
-  background: #020617; color: #e5e7eb; font-size: 14px;
+  padding: 10px; border-radius: 8px; border: 1px solid #334155; 
+  background: #020617; color: #e5e7eb; font-size: 14px; width: 100%;
 }
 .modal input:focus { border-color: #38bdf8; outline: none; }
 .modal input[readonly] { background: #1e293b; color: #94a3b8; border-style: dashed; }
-.modal-footer { margin-top:30px; display:flex; justify-content:flex-end; gap:12px; }
+
+.modal-footer { 
+  padding: 15px 25px; 
+  border-top: 1px solid #1e293b; 
+  display:flex; justify-content:flex-end; gap:12px; 
+  background: #0f172a;
+}
 
 .visualizador-btn { cursor: default; pointer-events: none; opacity: 0.9; }
+
+@media (max-width: 600px) {
+  .grid { grid-template-columns: 1fr; }
+  header { padding: 10px; }
+  h1 { font-size: 1.4rem; }
+}
 </style>
 </head>
 <body>
@@ -106,7 +124,7 @@ tfoot td { font-weight: bold; color: #38bdf8; background: rgba(56, 189, 248, 0.1
   <table>
     <thead>
       <tr>
-        <th style="width:5%">OP</th><th style="width:10%">Data</th><th style="width:10%">Peça</th><th style="width:10%">Acab.</th><th style="width:8%">Kg</th><th style="width:8%">Qtd</th><th style="width:8%">Kg Bruto</th><th style="width:8%">R$/Kg</th><th style="width:8%">Total</th><th style="width:8%">Entregue</th><th style="width:8%">Boleto</th><th class="admin-only" style="width:10%">Ações</th>
+        <th>OP</th><th>Data</th><th>Peça</th><th>Acab.</th><th>Kg</th><th>Qtd</th><th>Kg Bruto</th><th>R$/Kg</th><th>Total</th><th>Entregue</th><th>Boleto</th><th class="admin-only">Ações</th>
       </tr>
     </thead>
     <tbody id="lista"><tr><td colspan="12">Carregando...</td></tr></tbody>
@@ -116,17 +134,21 @@ tfoot td { font-weight: bold; color: #38bdf8; background: rgba(56, 189, 248, 0.1
 
 <div class="modal-bg" id="modalBg">
   <div class="modal">
-    <h2 id="tituloModal">Nova OP</h2>
-    <div class="grid">
-      <div class="campo"><label>OP</label><input id="op"></div>
-      <div class="campo"><label>Data</label><input type="date" id="data"></div>
-      <div class="campo"><label>Peça (código)</label><select id="codigo_peca"></select></div>
-      <div class="campo"><label>Acabamento</label><input id="acabamento" readonly></div>
-      <div class="campo"><label>Kg</label><input id="kg"></div>
-      <div class="campo"><label>Quantidade</label><input id="quantidade" readonly></div>
-      <div class="campo"><label>Kg Bruto</label><input id="kg_bruto" readonly></div>
-      <div class="campo"><label>R$/Kg</label><input id="valor_kg"></div>
-      <div class="campo" style="grid-column: 1 / 3;"><label>Valor Total</label><input id="valor_total" readonly></div>
+    <div class="modal-header">
+      <h2 id="tituloModal">Nova OP</h2>
+    </div>
+    <div class="modal-body">
+      <div class="grid">
+        <div class="campo"><label>OP</label><input id="op"></div>
+        <div class="campo"><label>Data</label><input type="date" id="data"></div>
+        <div class="campo"><label>Peça (código)</label><select id="codigo_peca"></select></div>
+        <div class="campo"><label>Acabamento</label><input id="acabamento" readonly></div>
+        <div class="campo"><label>Kg</label><input id="kg"></div>
+        <div class="campo"><label>Quantidade</label><input id="quantidade" readonly></div>
+        <div class="campo"><label>Kg Bruto</label><input id="kg_bruto" readonly></div>
+        <div class="campo"><label>R$/Kg</label><input id="valor_kg"></div>
+        <div class="campo" style="grid-column: 1 / -1;"><label>Valor Total</label><input id="valor_total" readonly></div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-outline-azul" onclick="fecharModal()" style="color:#fff; border-color:#334155;">Cancelar</button>
@@ -136,7 +158,7 @@ tfoot td { font-weight: bold; color: #38bdf8; background: rgba(56, 189, 248, 0.1
 </div>
 
 <script>
-// Configurações do Supabase e lógica JS permanecem as mesmas das versões anteriores
+// Lógica do Supabase (Mantida a mesma da sua versão funcional)
 const sb = window.supabase.createClient("https://uxtgicfuggpuyjybwawa.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg");
 const el = id => document.getElementById(id);
 let dadosCompletos = []; 
