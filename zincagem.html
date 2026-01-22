@@ -21,6 +21,14 @@ header{
   gap:16px;
 }
 h1{margin:0;color:#38bdf8}
+
+/* Container para empurrar os botões para a direita */
+.header-botoes {
+  margin-left: auto;
+  display: flex;
+  gap: 16px;
+}
+
 button{
   border:none;
   padding:8px 14px;
@@ -95,11 +103,13 @@ input[readonly]{background:#020b1a;color:#9ca3af}
 <header>
   <h1>Zincagem / Tratamento</h1>
 
-  <button class="btn-branco" onclick="location.href='https://matao-usi.vercel.app/dashboard.html'">
-    ← Voltar ao menu
-  </button>
+  <div class="header-botoes">
+    <button class="btn-branco" onclick="location.href='https://matao-usi.vercel.app/dashboard.html'">
+      ← Voltar ao menu
+    </button>
 
-  <button class="btn-azul" onclick="abrirModal()">+ Nova OP</button>
+    <button class="btn-azul" onclick="abrirModal()">+ Nova OP</button>
+  </div>
 </header>
 
 <div class="container">
@@ -124,7 +134,6 @@ input[readonly]{background:#020b1a;color:#9ca3af}
 </table>
 </div>
 
-<!-- MODAL -->
 <div class="modal-bg" id="modalBg">
   <div class="modal">
     <h2 id="tituloModal">Nova OP</h2>
@@ -191,10 +200,7 @@ async function abrirModal(){
   pesoLiquido = 0;
   pesoBruto = 0;
 
-  // abre modal na hora (sem depender do supabase)
   el("modalBg").style.display="flex";
-
-  // carrega produtos com fallback
   await carregarProdutos();
 }
 
@@ -214,7 +220,6 @@ async function carregarProdutos(){
   if(error){
     console.error("Erro produtos:", error);
     sel.innerHTML = `<option value="">ERRO AO CARREGAR PEÇAS</option>`;
-    alert("Não consegui carregar as peças (provável RLS na tabela PRODUTOS).\\n\\nDetalhe: " + error.message);
     return;
   }
 
@@ -277,10 +282,6 @@ async function salvar(){
 
   if(resp.error){
     alert(resp.error.message);
-    return;
-  }
-  if(!resp.data || resp.data.length===0){
-    alert("ERRO: nenhum registro alterado");
     return;
   }
 
