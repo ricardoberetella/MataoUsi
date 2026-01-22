@@ -1,93 +1,106 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Zincagem / Tratamento</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>Zincagem / Tratamento</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<style>
-*{box-sizing:border-box;font-family:Segoe UI,Arial}
-body{
-  margin:0;
-  background:radial-gradient(circle at top,#0b1224,#020617 70%);
-  color:#e5e7eb;
-}
-header{
-  padding:20px 30px;
-  display:flex;
-  align-items:center;
-  gap:16px;
-}
-h1{margin:0;color:#38bdf8}
-button{
-  border:none;
-  padding:8px 14px;
-  border-radius:8px;
-  cursor:pointer;
-}
-.btn-azul{background:#38bdf8;color:#000}
-.btn-branco{background:#fff;color:#000}
-.container{padding:0 30px 30px}
+  <style>
+    *{box-sizing:border-box;font-family:Segoe UI,Arial}
 
-table{width:100%;border-collapse:collapse}
-th,td{padding:10px;border-bottom:1px solid #1e293b}
-th{color:#38bdf8;text-align:left;white-space:nowrap}
+    body{
+      margin:0;
+      background:radial-gradient(circle at top,#0b1224,#020617 70%);
+      color:#e5e7eb;
+    }
 
-.acoes{
-  display:flex;
-  gap:8px;
-  white-space:nowrap;
-}
-.btn-pill{
-  padding:7px 12px;
-  border-radius:10px;
-  font-weight:700;
-  font-size:13px;
-}
-.pendente{background:#ef4444;color:#fff}
-.ok{background:#22c55e;color:#06110a}
-.btn-editar{background:#334155;color:#e5e7eb}
-.btn-excluir{background:#7f1d1d;color:#fff}
+    header{
+      padding:20px 30px;
+      display:flex;
+      align-items:center;
+      gap:16px;
+    }
 
-.modal-bg{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.7);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:999;
-}
-.modal{
-  width:1000px;
-  background:linear-gradient(180deg,#020b1a,#020617);
-  border-radius:16px;
-  padding:24px;
-}
-.grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:16px;
-}
-.campo{display:flex;flex-direction:column}
-.campo label{font-size:13px;margin-bottom:4px;color:#cbd5f5}
-input,select{
-  padding:10px;
-  border-radius:8px;
-  border:1px solid #1e293b;
-  background:#020617;
-  color:#e5e7eb;
-}
-input[readonly]{background:#020b1a;color:#9ca3af}
-.footer{
-  margin-top:20px;
-  display:flex;
-  justify-content:flex-end;
-  gap:10px;
-}
-</style>
+    h1{margin:0;color:#38bdf8}
+
+    button{
+      border:none;
+      padding:8px 14px;
+      border-radius:8px;
+      cursor:pointer;
+    }
+
+    .btn-azul{background:#38bdf8;color:#000}
+    .btn-branco{background:#fff;color:#000}
+    .container{padding:0 30px 30px}
+
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px;border-bottom:1px solid #1e293b}
+    th{color:#38bdf8;text-align:left;white-space:nowrap}
+
+    .acoes{
+      display:flex;
+      gap:8px;
+      white-space:nowrap;
+    }
+
+    .btn-pill{
+      padding:7px 12px;
+      border-radius:10px;
+      font-weight:700;
+      font-size:13px;
+    }
+
+    .pendente{background:#ef4444;color:#fff}
+    .ok{background:#22c55e;color:#06110a}
+    .btn-editar{background:#334155;color:#e5e7eb}
+    .btn-excluir{background:#7f1d1d;color:#fff}
+
+    .modal-bg{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.7);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:999;
+    }
+
+    .modal{
+      width:1000px;
+      background:linear-gradient(180deg,#020b1a,#020617);
+      border-radius:16px;
+      padding:24px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:16px;
+    }
+
+    .campo{display:flex;flex-direction:column}
+    .campo label{font-size:13px;margin-bottom:4px;color:#cbd5f5}
+
+    input,select{
+      padding:10px;
+      border-radius:8px;
+      border:1px solid #1e293b;
+      background:#020617;
+      color:#e5e7eb;
+    }
+
+    input[readonly]{background:#020b1a;color:#9ca3af}
+
+    .footer{
+      margin-top:20px;
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+    }
+  </style>
 </head>
 
 <body>
@@ -99,25 +112,27 @@ input[readonly]{background:#020b1a;color:#9ca3af}
 </header>
 
 <div class="container">
-<table>
-<thead>
-<tr>
-  <th>OP</th>
-  <th>Data</th>
-  <th>Peça</th>
-  <th>Acab.</th>
-  <th>Kg</th>
-  <th>Qtd</th>
-  <th>Kg Bruto</th>
-  <th>R$/Kg</th>
-  <th>Total</th>
-  <th>Ações</th>
-</tr>
-</thead>
-<tbody id="lista">
-<tr><td colspan="10">Carregando...</td></tr>
-</tbody>
-</table>
+  <table>
+    <thead>
+      <tr>
+        <th>OP</th>
+        <th>Data</th>
+        <th>Peça</th>
+        <th>Acab.</th>
+        <th>Kg</th>
+        <th>Qtd</th>
+        <th>Kg Bruto</th>
+        <th>R$/Kg</th>
+        <th>Total</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="lista">
+      <tr>
+        <td colspan="10">Carregando...</td>
+      </tr>
+    </tbody>
+  </table>
 </div>
 
 <!-- MODAL -->
@@ -129,10 +144,13 @@ input[readonly]{background:#020b1a;color:#9ca3af}
       <div class="campo"><label>OP</label><input id="op"></div>
       <div class="campo"><label>Data</label><input type="date" id="data"></div>
 
-      <div class="campo"><label>Peça (código)</label>
+      <div class="campo">
+        <label>Peça (código)</label>
         <select id="codigo_peca"></select>
       </div>
-      <div class="campo"><label>Acabamento</label>
+
+      <div class="campo">
+        <label>Acabamento</label>
         <input id="acabamento" readonly>
       </div>
 
@@ -143,7 +161,8 @@ input[readonly]{background:#020b1a;color:#9ca3af}
       <div class="campo"><label>R$/Kg</label><input id="valor_kg"></div>
 
       <div class="campo" style="grid-column:1/3">
-        <label>Total</label><input id="valor_total" readonly>
+        <label>Total</label>
+        <input id="valor_total" readonly>
       </div>
     </div>
 
@@ -155,181 +174,190 @@ input[readonly]{background:#020b1a;color:#9ca3af}
 </div>
 
 <script>
-const sb = window.supabase.createClient(
-  "https://uxtgicfuggpuyjybwawa.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
-);
+  const sb = window.supabase.createClient(
+    "https://uxtgicfuggpuyjybwawa.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
+  );
 
-const el = id => document.getElementById(id);
+  const el = id => document.getElementById(id);
 
-function num(v){
-  if(typeof v === "number") return v;
-  if(!v) return 0;
-  let s = String(v);
-  if(s.includes(",")) s = s.replace(/\./g,"").replace(",",".");
-  return Number(s)||0;
-}
-function fmt(v){ return Number(v||0).toFixed(2).replace(".",","); }
-function dataBR(d){
-  if(!d) return "";
-  const [a,m,di] = d.split("-");
-  return ${di}/${m}/${a};
-}
+  function num(v){
+    if(typeof v === "number") return v;
+    if(!v) return 0;
+    let s = String(v);
+    if(s.includes(",")) s = s.replace(/\./g,"").replace(",",".");
+    return Number(s)||0;
+  }
 
-let pesoLiquido = 0;
-let pesoBruto = 0;
-let editId = null;
+  function fmt(v){
+    return Number(v||0).toFixed(2).replace(".",",");
+  }
 
-function abrirModal(){
-  editId = null;
-  el("tituloModal").innerText = "Nova OP";
-  ["op","data","kg","valor_kg","quantidade","kg_bruto","valor_total","acabamento"].forEach(i=>el(i).value="");
-  pesoLiquido = 0; pesoBruto = 0;
-  carregarProdutos();
-  el("modalBg").style.display="flex";
-}
-function fecharModal(){ el("modalBg").style.display="none"; }
+  function dataBR(d){
+    if(!d) return "";
+    const [a,m,di] = d.split("-");
+    return ${di}/${m}/${a};
+  }
 
-async function carregarProdutos(){
-  const sel = el("codigo_peca");
-  const { data } = await sb.from("produtos")
-    .select("codigo, acabamento, peso_liquido, peso_bruto")
-    .order("codigo");
+  let pesoLiquido = 0;
+  let pesoBruto = 0;
+  let editId = null;
 
-  sel.innerHTML="<option></option>";
-  data.forEach(p=>{
-    const o=document.createElement("option");
-    o.value=p.codigo;
-    o.textContent=p.codigo;
-    o.dataset.acab=p.acabamento;
-    o.dataset.pl=p.peso_liquido;
-    o.dataset.pb=p.peso_bruto;
-    sel.appendChild(o);
-  });
+  function abrirModal(){
+    editId = null;
+    el("tituloModal").innerText = "Nova OP";
+    ["op","data","kg","valor_kg","quantidade","kg_bruto","valor_total","acabamento"]
+      .forEach(i=>el(i).value="");
+    pesoLiquido = 0;
+    pesoBruto = 0;
+    carregarProdutos();
+    el("modalBg").style.display="flex";
+  }
 
-  sel.onchange=()=>{
-    const o=sel.selectedOptions[0];
-    if(!o) return;
-    el("acabamento").value=o.dataset.acab;
-    pesoLiquido=num(o.dataset.pl);
-    pesoBruto=num(o.dataset.pb);
+  function fecharModal(){
+    el("modalBg").style.display="none";
+  }
+
+  async function carregarProdutos(){
+    const sel = el("codigo_peca");
+    const { data } = await sb.from("produtos")
+      .select("codigo, acabamento, peso_liquido, peso_bruto")
+      .order("codigo");
+
+    sel.innerHTML="<option></option>";
+
+    data.forEach(p=>{
+      const o=document.createElement("option");
+      o.value=p.codigo;
+      o.textContent=p.codigo;
+      o.dataset.acab=p.acabamento;
+      o.dataset.pl=p.peso_liquido;
+      o.dataset.pb=p.peso_bruto;
+      sel.appendChild(o);
+    });
+
+    sel.onchange=()=>{
+      const o=sel.selectedOptions[0];
+      if(!o) return;
+      el("acabamento").value=o.dataset.acab;
+      pesoLiquido=num(o.dataset.pl);
+      pesoBruto=num(o.dataset.pb);
+      calcular();
+    };
+  }
+
+  ["kg","valor_kg"].forEach(i=>el(i).oninput=calcular);
+
+  function calcular(){
+    const kg=num(el("kg").value);
+    const vkg=num(el("valor_kg").value);
+    const qtd=pesoLiquido?Math.floor(kg/pesoLiquido):0;
+    el("quantidade").value=qtd;
+    el("kg_bruto").value=fmt(qtd*pesoBruto);
+    el("valor_total").value=fmt(kg*vkg);
+  }
+
+  async function salvar(){
+    const payload={
+      op:el("op").value,
+      data:el("data").value,
+      codigo_peca:el("codigo_peca").value,
+      acabamento:el("acabamento").value,
+      kg:num(el("kg").value),
+      quantidade:num(el("quantidade").value),
+      kg_bruto:num(el("kg_bruto").value),
+      valor_kg:num(el("valor_kg").value),
+      valor_total:num(el("valor_total").value)
+    };
+
+    let resp;
+    if(editId===null){
+      payload.entregue=false;
+      payload.boleto=false;
+      resp=await sb.from("zincagem_tratamento").insert(payload).select();
+    }else{
+      resp=await sb.from("zincagem_tratamento")
+        .update(payload)
+        .eq("id",editId)
+        .select();
+    }
+
+    if(resp.error){ alert(resp.error.message); return; }
+    if(!resp.data || resp.data.length===0){
+      alert("ERRO: nenhum registro alterado");
+      return;
+    }
+
+    fecharModal();
+    await carregarLista();
+  }
+
+  async function editarOp(id){
+    const { data } = await sb.from("zincagem_tratamento")
+      .select("*")
+      .eq("id",id)
+      .single();
+
+    editId=id;
+    el("tituloModal").innerText="Editar OP";
+    el("modalBg").style.display="flex";
+    await carregarProdutos();
+
+    el("op").value=data.op;
+    el("data").value=data.data;
+    el("codigo_peca").value=data.codigo_peca;
+    el("codigo_peca").dispatchEvent(new Event("change"));
+    el("kg").value=fmt(data.kg);
+    el("valor_kg").value=fmt(data.valor_kg);
     calcular();
-  };
-}
-
-["kg","valor_kg"].forEach(i=>el(i).oninput=calcular);
-
-function calcular(){
-  const kg=num(el("kg").value);
-  const vkg=num(el("valor_kg").value);
-  const qtd=pesoLiquido?Math.floor(kg/pesoLiquido):0;
-  el("quantidade").value=qtd;
-  el("kg_bruto").value=fmt(qtd*pesoBruto);
-  el("valor_total").value=fmt(kg*vkg);
-}
-
-async function salvar(){
-  const payload={
-    op:el("op").value,
-    data:el("data").value,
-    codigo_peca:el("codigo_peca").value,
-    acabamento:el("acabamento").value,
-    kg:num(el("kg").value),
-    quantidade:num(el("quantidade").value),
-    kg_bruto:num(el("kg_bruto").value),
-    valor_kg:num(el("valor_kg").value),
-    valor_total:num(el("valor_total").value)
-  };
-
-  let resp;
-  if(editId===null){
-    payload.entregue=false;
-    payload.boleto=false;
-    resp=await sb.from("zincagem_tratamento").insert(payload).select();
-  }else{
-    resp=await sb.from("zincagem_tratamento")
-      .update(payload)
-      .eq("id",editId)
-      .select();
   }
 
-  if(resp.error){ alert(resp.error.message); return; }
-  if(!resp.data || resp.data.length===0){
-    alert("ERRO: nenhum registro alterado");
-    return;
-  }
-
-  fecharModal();
-  await carregarLista();
-}
-
-async function editarOp(id){
-  const { data } = await sb.from("zincagem_tratamento")
-    .select("*").eq("id",id).single();
-
-  editId=id;
-  el("tituloModal").innerText="Editar OP";
-  el("modalBg").style.display="flex";
-  await carregarProdutos();
-
-  el("op").value=data.op;
-  el("data").value=data.data;
-  el("codigo_peca").value=data.codigo_peca;
-  el("codigo_peca").dispatchEvent(new Event("change"));
-  el("kg").value=fmt(data.kg);
-  el("valor_kg").value=fmt(data.valor_kg);
-  calcular();
-}
-
-async function toggle(id,campo,valor){
-  await sb.from("zincagem_tratamento")
-    .update({[campo]:!valor}).eq("id",id);
-  carregarLista();
-}
-
-async function excluirOp(id){
-  if(confirm("Excluir OP?")){
-    await sb.from("zincagem_tratamento").delete().eq("id",id);
+  async function toggle(id,campo,valor){
+    await sb.from("zincagem_tratamento")
+      .update({[campo]:!valor})
+      .eq("id",id);
     carregarLista();
   }
-}
 
-async function carregarLista(){
-  const { data } = await sb.from("zincagem_tratamento")
-    .select("id,op,data,codigo_peca,acabamento,kg,quantidade,kg_bruto,valor_kg,valor_total,entregue,boleto")
-    .order("data",{ascending:false});
+  async function excluirOp(id){
+    if(confirm("Excluir OP?")){
+      await sb.from("zincagem_tratamento")
+        .delete()
+        .eq("id",id);
+      carregarLista();
+    }
+  }
 
-  const tb=el("lista");
-  tb.innerHTML="";
-  data.forEach(r=>{
-    tb.innerHTML+=
-    <tr>
-      <td>${r.op}</td>
-      <td>${dataBR(r.data)}</td>
-      <td>${r.codigo_peca}</td>
-      <td>${r.acabamento}</td>
-      <td>${fmt(r.kg)}</td>
-      <td>${r.quantidade}</td>
-      <td>${fmt(r.kg_bruto)}</td>
-      <td>${fmt(r.valor_kg)}</td>
-      <td>${fmt(r.valor_total)}</td>
-      <td class="acoes">
-        <button class="btn-pill ${r.entregue?"ok":"pendente"}"
-          onclick="toggle(${r.id},'entregue',${r.entregue})">
-          ${r.entregue?"OK":"Entregue"}
-        </button>
-        <button class="btn-pill ${r.boleto?"ok":"pendente"}"
-          onclick="toggle(${r.id},'boleto',${r.boleto})">
-          ${r.boleto?"OK":"Boleto"}
-        </button>
-        <button class="btn-pill btn-editar" onclick="editarOp(${r.id})">Editar</button>
-        <button class="btn-pill btn-excluir" onclick="excluirOp(${r.id})">Excluir</button>
-      </td>
-    </tr>;
-  });
-}
+  async function carregarLista(){
+    const { data } = await sb.from("zincagem_tratamento")
+      .select("id,op,data,codigo_peca,acabamento,kg,quantidade,kg_bruto,valor_kg,valor_total,entregue,boleto")
+      .order("data",{ascending:false});
 
-carregarLista();
+    const tb=el("lista");
+    tb.innerHTML="";
+
+    data.forEach(r=>{
+      tb.innerHTML+= <tr>
+        <td>${r.op}</td>
+        <td>${dataBR(r.data)}</td>
+        <td>${r.codigo_peca}</td>
+        <td>${r.acabamento}</td>
+        <td>${fmt(r.kg)}</td>
+        <td>${r.quantidade}</td>
+        <td>${fmt(r.kg_bruto)}</td>
+        <td>${fmt(r.valor_kg)}</td>
+        <td>${fmt(r.valor_total)}</td>
+        <td class="acoes">
+          <button class="btn-pill ${r.entregue?"ok":"pendente"}" onclick="toggle(${r.id},'entregue',${r.entregue})">${r.entregue?"OK":"Entregue"}</button>
+          <button class="btn-pill ${r.boleto?"ok":"pendente"}" onclick="toggle(${r.id},'boleto',${r.boleto})">${r.boleto?"OK":"Boleto"}</button>
+          <button class="btn-pill btn-editar" onclick="editarOp(${r.id})">Editar</button>
+          <button class="btn-pill btn-excluir" onclick="excluirOp(${r.id})">Excluir</button>
+        </td>
+      </tr>;
+    });
+  }
+
+  carregarLista();
 </script>
 
 </body>
