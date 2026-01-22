@@ -26,7 +26,7 @@ button{ border:none; padding:8px 12px; border-radius:8px; cursor:pointer; }
 
 .container{padding:0 30px 30px}
 
-.filtros { display: flex; gap: 20px; background: rgba(30, 41, 59, 0.5); padding: 20px; border-radius: 12px; margin-bottom: 20px; align-items: flex-end; }
+.filtros { display: flex; gap: 20px; background: rgba(30, 41, 59, 0.5); padding: 20px; border-radius: 12px; margin-bottom: 20px; align-items: flex-end; flex-wrap: wrap; }
 .filtros label { font-size: 16px; color: #38bdf8; font-weight: bold; margin-bottom: 8px; }
 .filtros input, .filtros select { 
     padding: 10px; 
@@ -34,9 +34,10 @@ button{ border:none; padding:8px 12px; border-radius:8px; cursor:pointer; }
     border: 1px solid #334155; 
     background: #020617; 
     color: #fff; 
-    min-width: 180px; 
+    min-width: 160px; 
     font-size: 15px; 
 }
+.btn-limpar { background: #475569; color: #fff; font-weight: bold; padding: 10px 15px; }
 
 table{width:100%; border-collapse:collapse; table-layout: auto;}
 th,td{ padding:8px 4px; border-bottom:1px solid #1e293b; text-align: center; font-size: 14px; }
@@ -84,7 +85,15 @@ input[readonly]{background:#020b1a;color:#9ca3af}
   <div class="filtros">
     <div class="campo-filtro"><label>Data Início</label><input type="date" id="filtro_data_ini" oninput="filtrarLocal()"></div>
     <div class="campo-filtro"><label>Data Fim</label><input type="date" id="filtro_data_fim" oninput="filtrarLocal()"></div>
-    <div class="campo-filtro"><label>Peça</label><select id="filtro_peca" onchange="filtrarLocal()"><option value="">Todas as peças</option></select></div>
+    <div class="campo-filtro">
+      <label>Peça</label>
+      <select id="filtro_peca" onchange="filtrarLocal()"><option value="">Todas as peças</option></select>
+    </div>
+    <div class="campo-filtro">
+      <label>Acab.</label>
+      <select id="filtro_acabamento" onchange="filtrarLocal()"><option value="">Todos</option></select>
+    </div>
+    <button class="btn-limpar" onclick="limparFiltros()">Limpar Filtros</button>
   </div>
   <table>
     <thead>
@@ -161,20 +170,51 @@ async function abrirModal(){ if(!eAdmin) return; editId = null; el("tituloModal"
 function fecharModal(){ el("modalBg").style.display="none"; }
 
 async function carregarProdutos(){
-  const selModal = el("codigo_peca"); const selFiltro = el("filtro_peca");
+  const selModal = el("codigo_peca"); 
+  const selFiltroPeca = el("filtro_peca");
+  const selFiltroAcab = el("filtro_acabamento");
+  
   const { data } = await sb.from("produtos").select("*").order("codigo");
   if(!data) return;
+
   selModal.innerHTML = `<option value=""></option>`;
-  selFiltro.innerHTML = `<option value="">Todas as peças</option>`;
+  selFiltroPeca.innerHTML = `<option value="">Todas as peças</option>`;
+  selFiltroAcab.innerHTML = `<option value="">Todos</option>`;
+
+  const acabamentosUnicos = new Set();
+
   data.forEach(p => {
     const oM = document.createElement("option"); oM.value = p.codigo; oM.textContent = p.codigo;
     oM.dataset.acab=p.acabamento; oM.dataset.pl=p.peso_liquido; oM.dataset.pb=p.peso_bruto;
     selModal.appendChild(oM);
 
     const oF = document.createElement("option"); oF.value = p.codigo; oF.textContent = p.codigo;
-    selFiltro.appendChild(oF);
+    selFiltroPeca.appendChild(oF);
+
+    if (p.acabamento) acabamentosUnicos.add(p.acabamento);
   });
-  selModal.onchange = () => { const o = selModal.selectedOptions[0]; if(!o || !o.value) return; el("acabamento").value = o.dataset.acab; pesoLiquido = num(o.dataset.pl); pesoBruto = num(o.dataset.pb); calcular(); };
+
+  acabamentosUnicos.forEach(acab => {
+    const oA = document.createElement("option"); oA.value = acab; oA.textContent = acab;
+    selFiltroAcab.appendChild(oA);
+  });
+
+  selModal.onchange = () => { 
+    const o = selModal.selectedOptions[0]; 
+    if(!o || !o.value) return; 
+    el("acabamento").value = o.dataset.acab; 
+    pesoLiquido = num(o.dataset.pl); 
+    pesoBruto = num(o.dataset.pb); 
+    calcular(); 
+  };
+}
+
+function limparFiltros() {
+  el("filtro_data_ini").value = "";
+  el("filtro_data_fim").value = "";
+  el("filtro_peca").value = "";
+  el("filtro_acabamento").value = "";
+  filtrarLocal();
 }
 
 ["kg","valor_kg"].forEach(i=>el(i).oninput=calcular);
@@ -188,8 +228,8 @@ async function excluirOp(id){ if(!eAdmin) return; if(confirm("Excluir OP?")) { a
 async function carregarLista(){ const { data } = await sb.from("zincagem_tratamento").select("*").order("data",{ascending:true}); dadosCompletos = data || []; filtrarLocal(); }
 
 function filtrarLocal(){
-  const dI = el("filtro_data_ini").value, dF = el("filtro_data_fim").value, pS = el("filtro_peca").value;
-  const filtrados = dadosCompletos.filter(r => (!dI || r.data >= dI) && (!dF || r.data <= dF) && (!pS || r.codigo_peca === pS));
+  const dI = el("filtro_data_ini").value, dF = el("filtro_data_fim").value, pS = el("filtro_peca").value, aS = el("filtro_acabamento").value;
+  const filtrados = dadosCompletos.filter(r => (!dI || r.data >= dI) && (!dF || r.data <= dF) && (!pS || r.codigo_peca === pS) && (!aS || r.acabamento === aS));
   renderizarTabela(filtrados);
 }
 
