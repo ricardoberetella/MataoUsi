@@ -14,6 +14,11 @@ body{
   background:radial-gradient(circle at top,#0b1224,#020617 70%);
   color:#e5e7eb;
 }
+
+/* Controle de Visibilidade por Perfil */
+.admin-only { display: inline-flex; }
+body.perfil-visualizador .admin-only { display: none !important; }
+
 header{
   padding:20px 30px;
   display:flex;
@@ -45,7 +50,6 @@ button{
 
 .container{padding:0 30px 30px}
 
-/* Estilo dos Filtros */
 .filtros {
   display: flex;
   gap: 15px;
@@ -70,7 +74,6 @@ button{
   min-width: 150px;
 }
 
-/* Tabela e Alinhamentos */
 table{width:100%;border-collapse:collapse}
 th,td{
   padding:10px;
@@ -79,7 +82,6 @@ th,td{
 }
 th{color:#38bdf8;white-space:nowrap}
 
-/* Linha de Totais */
 tfoot td {
   font-weight: bold;
   color: #38bdf8;
@@ -129,7 +131,7 @@ input[readonly]{background:#020b1a;color:#9ca3af}
     <button class="btn-outline-azul" onclick="location.href='https://matao-usi.vercel.app/dashboard.html'">
       ← Voltar ao menu
     </button>
-    <button class="btn-azul" onclick="abrirModal()">+ Nova OP</button>
+    <button class="btn-azul admin-only" onclick="abrirModal()">+ Nova OP</button>
   </div>
 </header>
 
@@ -163,14 +165,13 @@ input[readonly]{background:#020b1a;color:#9ca3af}
         <th>Kg Bruto</th>
         <th>R$/Kg</th>
         <th>Total</th>
-        <th>Ações</th>
+        <th class="admin-only">Ações</th>
       </tr>
     </thead>
     <tbody id="lista">
       <tr><td colspan="10">Carregando...</td></tr>
     </tbody>
-    <tfoot id="rodape_totais">
-      </tfoot>
+    <tfoot id="rodape_totais"></tfoot>
   </table>
 </div>
 
@@ -203,6 +204,27 @@ const sb = window.supabase.createClient(
 
 const el = id => document.getElementById(id);
 let dadosCompletos = []; 
+let eAdmin = true;
+
+// VERIFICAÇÃO DE LOGIN E PERFIL (PADRÃO SUPABASE)
+async function verificarUsuario() {
+  const { data: { user } } = await sb.auth.getUser();
+  
+  if (!user) {
+    window.location.href = "index.html"; // Ajuste para sua página de login
+    return;
+  }
+
+  // Verifica se o perfil é visualizador via metadata ou tabela perfil
+  const role = user.user_metadata?.role || user.app_metadata?.role;
+  
+  if (role === 'visualizador') {
+    eAdmin = false;
+    document.body.classList.add('perfil-visualizador');
+  }
+
+  carregarLista();
+}
 
 function num(v){
   if(typeof v === "number") return v;
@@ -221,6 +243,7 @@ function dataBR(d){
 let pesoLiquido = 0, pesoBruto = 0, editId = null;
 
 async function abrirModal(){
+  if(!eAdmin) return;
   editId = null; el("tituloModal").innerText = "Nova OP";
   ["op","data","kg","valor_kg","quantidade","kg_bruto","valor_total","acabamento"].forEach(i=>el(i).value="");
   el("modalBg").style.display="flex";
@@ -232,11 +255,7 @@ function fecharModal(){ el("modalBg").style.display="none"; }
 async function carregarProdutos(){
   const selModal = el("codigo_peca");
   const selFiltro = el("filtro_peca");
-  
-  selModal.innerHTML = `<option value="">Carregando...</option>`;
-
-  const { data, error } = await sb.from("produtos").select("codigo, acabamento, peso_liquido, peso_bruto, descricao").order("codigo");
-  
+  const { data, error } = await sb.from("produtos").select("*").order("codigo");
   if(error) return;
 
   selModal.innerHTML = `<option value=""></option>`;
@@ -244,17 +263,13 @@ async function carregarProdutos(){
 
   data.forEach(p => {
     const oModal = document.createElement("option");
-    oModal.value = p.codigo;
-    oModal.textContent = p.codigo;
-    oModal.dataset.acab = p.acabamento;
-    oModal.dataset.pl = p.peso_liquido;
-    oModal.dataset.pb = p.peso_bruto;
+    oModal.value = p.codigo; oModal.textContent = p.codigo;
+    oModal.dataset.acab = p.acabamento; oModal.dataset.pl = p.peso_liquido; oModal.dataset.pb = p.peso_bruto;
     selModal.appendChild(oModal);
 
-    if (p.codigo.toLowerCase().startsWith("pino") || (p.descricao && p.descricao.toLowerCase().startsWith("pino"))) {
+    if (p.codigo.toLowerCase().startsWith("pino")) {
       const oFiltro = document.createElement("option");
-      oFiltro.value = p.codigo;
-      oFiltro.textContent = p.codigo;
+      oFiltro.value = p.codigo; oFiltro.textContent = p.codigo;
       selFiltro.appendChild(oFiltro);
     }
   });
@@ -263,9 +278,7 @@ async function carregarProdutos(){
     const o = selModal.selectedOptions[0];
     if(!o || !o.value) return;
     el("acabamento").value = o.dataset.acab || "";
-    pesoLiquido = num(o.dataset.pl);
-    pesoBruto = num(o.dataset.pb);
-    calcular();
+    pesoLiquido = num(o.dataset.pl); pesoBruto = num(o.dataset.pb); calcular();
   };
 }
 
@@ -279,6 +292,7 @@ function calcular(){
 }
 
 async function salvar(){
+  if(!eAdmin) return;
   const payload={
     op:el("op").value, data:el("data").value, codigo_peca:el("codigo_peca").value,
     acabamento:el("acabamento").value, kg:num(el("kg").value),
@@ -295,6 +309,7 @@ async function salvar(){
 }
 
 async function editarOp(id){
+  if(!eAdmin) return;
   const { data } = await sb.from("zincagem_tratamento").select("*").eq("id",id).single();
   editId=id; el("tituloModal").innerText="Editar OP"; el("modalBg").style.display="flex";
   await carregarProdutos();
@@ -304,11 +319,13 @@ async function editarOp(id){
 }
 
 async function toggle(id,campo,valor){
+  if(!eAdmin) return;
   await sb.from("zincagem_tratamento").update({[campo]:!valor}).eq("id",id);
   carregarLista();
 }
 
 async function excluirOp(id){
+  if(!eAdmin) return;
   if(confirm("Excluir OP?")) { await sb.from("zincagem_tratamento").delete().eq("id",id); carregarLista(); }
 }
 
@@ -316,7 +333,6 @@ async function carregarLista(){
   const { data, error } = await sb.from("zincagem_tratamento").select("*").order("data",{ascending:false});
   if(error) return;
   dadosCompletos = data || [];
-  await carregarProdutos(); 
   filtrarLocal();
 }
 
@@ -337,14 +353,11 @@ function filtrarLocal(){
 function renderizarTabela(dados){
   const tb = el("lista");
   tb.innerHTML = "";
-  
   let totKg=0, totQtd=0, totBruto=0, totVal=0;
 
   dados.forEach(r => {
-    totKg += num(r.kg);
-    totQtd += num(r.quantidade);
-    totBruto += num(r.kg_bruto);
-    totVal += num(r.valor_total);
+    totKg += num(r.kg); totQtd += num(r.quantidade);
+    totBruto += num(r.kg_bruto); totVal += num(r.valor_total);
 
     tb.innerHTML += `
       <tr>
@@ -357,16 +370,16 @@ function renderizarTabela(dados){
         <td>${fmt(r.kg_bruto)}</td>
         <td>${fmt(r.valor_kg)}</td>
         <td>${fmt(r.valor_total)}</td>
-        <td class="acoes">
-          <button class="btn-pill ${r.entregue?'ok':'pendente'}" onclick="toggle(${r.id},'entregue',${r.entregue})">${r.entregue?'OK':'Entregue'}</button>
-          <button class="btn-pill ${r.boleto?'ok':'pendente'}" onclick="toggle(${r.id},'boleto',${r.boleto})">${r.boleto?'OK':'Boleto'}</button>
-          <button class="btn-pill btn-editar" onclick="editarOp(${r.id})">Editar</button>
-          <button class="btn-pill btn-excluir" onclick="excluirOp(${r.id})">Excluir</button>
-        </td>
+        ${eAdmin ? `
+          <td class="acoes">
+            <button class="btn-pill ${r.entregue?'ok':'pendente'}" onclick="toggle(${r.id},'entregue',${r.entregue})">${r.entregue?'OK':'Entregue'}</button>
+            <button class="btn-pill ${r.boleto?'ok':'pendente'}" onclick="toggle(${r.id},'boleto',${r.boleto})">${r.boleto?'OK':'Boleto'}</button>
+            <button class="btn-pill btn-editar" onclick="editarOp(${r.id})">Editar</button>
+            <button class="btn-pill btn-excluir" onclick="excluirOp(${r.id})">Excluir</button>
+          </td>` : ''}
       </tr>`;
   });
 
-  // Linha do Totalizador com a coluna R$/Kg vazia
   el("rodape_totais").innerHTML = `
     <tr>
       <td colspan="4">TOTALIZADOR</td>
@@ -375,13 +388,13 @@ function renderizarTabela(dados){
       <td>${fmt(totBruto)}</td>
       <td></td>
       <td>${fmt(totVal)}</td>
-      <td></td>
+      ${eAdmin ? '<td></td>' : ''}
     </tr>`;
 
-  if(dados.length === 0) tb.innerHTML = `<tr><td colspan="10">Nenhum registro encontrado</td></tr>`;
+  if(dados.length === 0) tb.innerHTML = `<tr><td colspan="${eAdmin?10:9}">Nenhum registro encontrado</td></tr>`;
 }
 
-carregarLista();
+verificarUsuario();
 </script>
 </body>
 </html>
