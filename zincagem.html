@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>Zincagem / Tratamento</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -34,12 +35,58 @@ table{width:100%;border-collapse:collapse}
 th,td{padding:10px;border-bottom:1px solid #1e293b}
 th{color:#38bdf8;text-align:left;white-space:nowrap}
 
-.acoes{display:flex;gap:8px;white-space:nowrap}
-.btn-pill{padding:7px 12px;border-radius:10px;font-weight:700;font-size:13px}
+.acoes{
+  display:flex;
+  gap:8px;
+  white-space:nowrap;
+}
+.btn-pill{
+  padding:7px 12px;
+  border-radius:10px;
+  font-weight:700;
+  font-size:13px;
+}
 .pendente{background:#ef4444;color:#fff}
 .ok{background:#22c55e;color:#06110a}
 .btn-editar{background:#334155;color:#e5e7eb}
 .btn-excluir{background:#7f1d1d;color:#fff}
+
+.modal-bg{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.7);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+}
+.modal{
+  width:1000px;
+  background:linear-gradient(180deg,#020b1a,#020617);
+  border-radius:16px;
+  padding:24px;
+}
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+}
+.campo{display:flex;flex-direction:column}
+.campo label{font-size:13px;margin-bottom:4px;color:#cbd5f5}
+input,select{
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #1e293b;
+  background:#020617;
+  color:#e5e7eb;
+}
+input[readonly]{background:#020b1a;color:#9ca3af}
+.footer{
+  margin-top:20px;
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+}
 </style>
 </head>
 
@@ -47,10 +94,12 @@ th{color:#38bdf8;text-align:left;white-space:nowrap}
 
 <header>
   <h1>Zincagem / Tratamento</h1>
+
   <button class="btn-branco"
     onclick="location.href='https://matao-usi.vercel.app/dashboard.html'">
     ← Voltar ao menu
   </button>
+
   <button class="btn-azul" onclick="abrirModal()">+ Nova OP</button>
 </header>
 
@@ -76,14 +125,60 @@ th{color:#38bdf8;text-align:left;white-space:nowrap}
 </table>
 </div>
 
+<!-- MODAL -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h2 id="tituloModal">Nova OP</h2>
+
+    <div class="grid">
+      <div class="campo"><label>OP</label><input id="op"></div>
+      <div class="campo"><label>Data</label><input type="date" id="data"></div>
+
+      <div class="campo">
+        <label>Peça (código)</label>
+        <select id="codigo_peca"></select>
+      </div>
+
+      <div class="campo">
+        <label>Acabamento</label>
+        <input id="acabamento" readonly>
+      </div>
+
+      <div class="campo"><label>Kg</label><input id="kg"></div>
+      <div class="campo"><label>Quantidade</label><input id="quantidade" readonly></div>
+
+      <div class="campo"><label>Kg Bruto</label><input id="kg_bruto" readonly></div>
+      <div class="campo"><label>R$/Kg</label><input id="valor_kg"></div>
+
+      <div class="campo" style="grid-column:1/3">
+        <label>Total</label>
+        <input id="valor_total" readonly>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="btn-branco" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-azul" onclick="salvar()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const sb = window.supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
+  "COLE_AQUI_SUA_ANON_KEY"
 );
 
 const el = id => document.getElementById(id);
 
+/* ===== helpers ===== */
+function num(v){
+  if(typeof v === "number") return v;
+  if(!v) return 0;
+  let s = String(v);
+  if(s.includes(",")) s = s.replace(/\./g,"").replace(",",".");
+  return Number(s)||0;
+}
 function fmt(v){ return Number(v||0).toFixed(2).replace(".",","); }
 function dataBR(d){
   if(!d) return "";
@@ -91,83 +186,33 @@ function dataBR(d){
   return `${di}/${m}/${a}`;
 }
 
-/* ================= LISTA ================= */
+let pesoLiquido = 0;
+let pesoBruto = 0;
+let editId = null;
 
-async function carregarLista(){
+/* ===== MODAL ===== */
+function abrirModal(){
+  editId = null;
+  el("tituloModal").innerText = "Nova OP";
+  ["op","data","kg","valor_kg","quantidade","kg_bruto","valor_total","acabamento"]
+    .forEach(i => el(i).value = "");
+  pesoLiquido = 0;
+  pesoBruto = 0;
+  carregarProdutos();
+  el("modalBg").style.display="flex";
+}
+function fecharModal(){
+  el("modalBg").style.display="none";
+}
+
+/* ===== PRODUTOS ===== */
+async function carregarProdutos(){
+  const sel = el("codigo_peca");
+
   const { data, error } = await sb
-    .from("zincagem_tratamento")
-    .select("id,op,data,codigo_peca,acabamento,kg,quantidade,kg_bruto,valor_kg,valor_total,entregue,boleto")
-    .order("data",{ascending:false});
-
-  const tb = el("lista");
-  tb.innerHTML = "";
+    .from("produtos")
+    .select("codigo, acabamento, peso_liquido, peso_bruto")
+    .order("codigo");
 
   if(error){
-    tb.innerHTML = `<tr><td colspan="10">Erro ao carregar dados</td></tr>`;
-    console.error(error);
-    return;
-  }
-
-  if(!data || data.length === 0){
-    tb.innerHTML = `<tr><td colspan="10">Nenhum registro encontrado</td></tr>`;
-    return;
-  }
-
-  data.forEach(r=>{
-    tb.innerHTML += `
-      <tr>
-        <td>${r.op}</td>
-        <td>${dataBR(r.data)}</td>
-        <td>${r.codigo_peca}</td>
-        <td>${r.acabamento}</td>
-        <td>${fmt(r.kg)}</td>
-        <td>${r.quantidade}</td>
-        <td>${fmt(r.kg_bruto)}</td>
-        <td>${fmt(r.valor_kg)}</td>
-        <td>${fmt(r.valor_total)}</td>
-        <td class="acoes">
-          <button class="btn-pill ${r.entregue?"ok":"pendente"}"
-            onclick="toggle(${r.id},'entregue',${r.entregue})">Entregue</button>
-          <button class="btn-pill ${r.boleto?"ok":"pendente"}"
-            onclick="toggle(${r.id},'boleto',${r.boleto})">Boleto</button>
-          <button class="btn-pill btn-editar">Editar</button>
-          <button class="btn-pill btn-excluir"
-            onclick="excluirOp(${r.id})">Excluir</button>
-        </td>
-      </tr>`;
-  });
-}
-
-/* ================= DELETE ================= */
-
-async function excluirOp(id){
-  if(!confirm("Excluir OP?")) return;
-
-  const { error } = await sb
-    .from("zincagem_tratamento")
-    .delete()
-    .eq("id", Number(id));
-
-  if(error){
-    alert("Erro ao excluir: " + error.message);
-    return;
-  }
-
-  carregarLista();
-}
-
-/* ================= TOGGLE ================= */
-
-async function toggle(id, campo, valor){
-  await sb.from("zincagem_tratamento")
-    .update({ [campo]: !valor })
-    .eq("id", Number(id));
-
-  carregarLista();
-}
-
-carregarLista();
-</script>
-
-</body>
-</html>
+    aler
