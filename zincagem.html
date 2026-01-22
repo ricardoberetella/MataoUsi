@@ -94,10 +94,9 @@ input[readonly]{background:#020b1a;color:#9ca3af}
 
 <header>
   <h1>Zincagem / Tratamento</h1>
-  <!-- ÚNICA LINHA CORRIGIDA -->
- <button class="btn-branco" onclick="location.href='https://matao-usi.vercel.app/dashboard.html'">
-  ← Voltar ao menu
-</button>
+  <button class="btn-branco" onclick="location.href='https://matao-usi.vercel.app/dashboard.html'">
+    ← Voltar ao menu
+  </button>
   <button class="btn-azul" onclick="abrirModal()">+ Nova OP</button>
 </header>
 
@@ -290,6 +289,7 @@ async function toggle(id,campo,valor){
   carregarLista();
 }
 
+/* ✅ EXCLUIR OP (CORRIGIDO) */
 async function excluirOp(id){
   if(!confirm("Excluir OP?")) return;
 
@@ -297,7 +297,7 @@ async function excluirOp(id){
     .from("zincagem_tratamento")
     .delete()
     .eq("id", id)
-    .select();   // 👈 ESSENCIAL no v2
+    .select();
 
   if(error){
     alert("Erro ao excluir OP: " + error.message);
@@ -307,12 +307,25 @@ async function excluirOp(id){
   carregarLista();
 }
 
-  const { data } = await sb.from("zincagem_tratamento")
+/* ✅ CARREGAR LISTA (ESTAVA SUMIDA/QUEBRADA) */
+async function carregarLista(){
+  const { data, error } = await sb.from("zincagem_tratamento")
     .select("id,op,data,codigo_peca,acabamento,kg,quantidade,kg_bruto,valor_kg,valor_total,entregue,boleto")
     .order("data",{ascending:false});
 
+  if(error){
+    el("lista").innerHTML = `<tr><td colspan="10">Erro: ${error.message}</td></tr>`;
+    return;
+  }
+
   const tb=el("lista");
   tb.innerHTML="";
+
+  if(!data || data.length === 0){
+    tb.innerHTML = `<tr><td colspan="10">Nenhum registro.</td></tr>`;
+    return;
+  }
+
   data.forEach(r=>{
     tb.innerHTML+=`
     <tr>
