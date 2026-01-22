@@ -13,7 +13,7 @@ body{
   color:#e5e7eb;
 }
 
-/* Oculta por padrão. Só mostra se a classe .e-admin for adicionada ao body */
+/* Oculta elementos restritos ao admin */
 .admin-only { display: none !important; }
 body.e-admin .admin-only { display: inline-flex !important; }
 
@@ -37,6 +37,10 @@ tfoot td { font-weight: bold; color: #38bdf8; background: rgba(56, 189, 248, 0.1
 .ok{background:#22c55e;color:#06110a}
 .btn-editar{background:#334155;color:#e5e7eb}
 .btn-excluir{background:#7f1d1d;color:#fff}
+
+/* Estilo para desativar cliques do visualizador nos botões de status */
+.visualizador-btn { cursor: default; pointer-events: none; opacity: 0.9; }
+
 .modal-bg{ position:fixed; inset:0; background:rgba(0,0,0,.7); display:none; align-items:center; justify-content:center; z-index:999; }
 .modal{ width:1000px; background:linear-gradient(180deg,#020b1a,#020617); border-radius:16px; padding:24px; }
 .grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
@@ -65,7 +69,7 @@ input[readonly]{background:#020b1a;color:#9ca3af}
   <table>
     <thead>
       <tr>
-        <th>OP</th><th>Data</th><th>Peça</th><th>Acab.</th><th>Kg</th><th>Qtd</th><th>Kg Bruto</th><th>R$/Kg</th><th>Total</th><th class="admin-only">Ações</th>
+        <th>OP</th><th>Data</th><th>Peça</th><th>Acab.</th><th>Kg</th><th>Qtd</th><th>Kg Bruto</th><th>R$/Kg</th><th>Total</th><th>Status / Ações</th>
       </tr>
     </thead>
     <tbody id="lista"><tr><td colspan="10">Carregando...</td></tr></tbody>
@@ -98,19 +102,13 @@ input[readonly]{background:#020b1a;color:#9ca3af}
 const sb = window.supabase.createClient("https://uxtgicfuggpuyjybwawa.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg");
 const el = id => document.getElementById(id);
 let dadosCompletos = []; 
-let eAdmin = false; // Começa como FALSO por segurança
+let eAdmin = false; 
 
 async function verificarAcesso() {
   const { data: { user } } = await sb.auth.getUser();
   const urlParams = new URLSearchParams(window.location.search);
-  
-  // LOG PARA DEPURAÇÃO: Abre o console do navegador (F12) para ver o que aparece aqui
-  console.log("Usuário logado:", user);
-  console.log("Metadata:", user?.user_metadata);
-
   const role = user?.user_metadata?.role || user?.app_metadata?.role || urlParams.get('perfil');
   
-  // Só libera se for explicitamente 'admin'
   if (role === 'admin') {
     eAdmin = true;
     document.body.classList.add('e-admin');
@@ -118,11 +116,9 @@ async function verificarAcesso() {
     eAdmin = false;
     document.body.classList.remove('e-admin');
   }
-  
   carregarLista();
 }
 
-// Funções num, fmt, dataBR permanecem iguais...
 function num(v){ if(!v) return 0; let s = String(v); if(s.includes(",")) s = s.replace(/\./g,"").replace(",","."); return Number(s)||0; }
 function fmt(v){ return Number(v||0).toFixed(2).replace(".",","); }
 function dataBR(d){ if(!d) return ""; const [a,m,di] = d.split("-"); return `${di}/${m}/${a}`; }
@@ -171,10 +167,37 @@ function renderizarTabela(dados){
   let tK=0, tQ=0, tB=0, tV=0;
   dados.forEach(r => {
     tK += num(r.kg); tQ += num(r.quantidade); tB += num(r.kg_bruto); tV += num(r.valor_total);
-    tb.innerHTML += `<tr><td>${r.op}</td><td>${dataBR(r.data)}</td><td>${r.codigo_peca}</td><td>${r.acabamento}</td><td>${fmt(r.kg)}</td><td>${r.quantidade}</td><td>${fmt(r.kg_bruto)}</td><td>${fmt(r.valor_kg)}</td><td>${fmt(r.valor_total)}</td>
-    ${eAdmin ? `<td class="acoes"><button class="btn-pill ${r.entregue?'ok':'pendente'}" onclick="toggle(${r.id},'entregue',${r.entregue})">${r.entregue?'OK':'Entregue'}</button><button class="btn-pill ${r.boleto?'ok':'pendente'}" onclick="toggle(${r.id},'boleto',${r.boleto})">${r.boleto?'OK':'Boleto'}</button><button class="btn-pill btn-editar" onclick="editarOp(${r.id})">Editar</button><button class="btn-pill btn-excluir" onclick="excluirOp(${r.id})">Excluir</button></td>` : ''}</tr>`;
+    
+    // Define se o botão de status terá ação ou será apenas visual
+    const acaoEntregue = eAdmin ? `onclick="toggle(${r.id},'entregue',${r.entregue})"` : "";
+    const acaoBoleto = eAdmin ? `onclick="toggle(${r.id},'boleto',${r.boleto})"` : "";
+    const classeVisualizador = eAdmin ? "" : "visualizador-btn";
+
+    tb.innerHTML += `<tr>
+      <td>${r.op}</td>
+      <td>${dataBR(r.data)}</td>
+      <td>${r.codigo_peca}</td>
+      <td>${r.acabamento}</td>
+      <td>${fmt(r.kg)}</td>
+      <td>${r.quantidade}</td>
+      <td>${fmt(r.kg_bruto)}</td>
+      <td>${fmt(r.valor_kg)}</td>
+      <td>${fmt(r.valor_total)}</td>
+      <td class="acoes">
+        <button class="btn-pill ${r.entregue?'ok':'pendente'} ${classeVisualizador}" ${acaoEntregue}>
+          ${r.entregue?'OK':'Entregue'}
+        </button>
+        <button class="btn-pill ${r.boleto?'ok':'pendente'} ${classeVisualizador}" ${acaoBoleto}>
+          ${r.boleto?'OK':'Boleto'}
+        </button>
+        ${eAdmin ? `
+          <button class="btn-pill btn-editar" onclick="editarOp(${r.id})">Editar</button>
+          <button class="btn-pill btn-excluir" onclick="excluirOp(${r.id})">Excluir</button>
+        ` : ''}
+      </td>
+    </tr>`;
   });
-  el("rodape_totais").innerHTML = `<tr><td colspan="4">TOTALIZADOR</td><td>${fmt(tK)}</td><td>${tQ}</td><td>${fmt(tB)}</td><td></td><td>${fmt(tV)}</td>${eAdmin ? '<td></td>' : ''}</tr>`;
+  el("rodape_totais").innerHTML = `<tr><td colspan="4">TOTALIZADOR</td><td>${fmt(tK)}</td><td>${tQ}</td><td>${fmt(tB)}</td><td></td><td>${fmt(tV)}</td><td></td></tr>`;
 }
 
 verificarAcesso();
