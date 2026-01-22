@@ -15,53 +15,45 @@ body{
   color:#e5e7eb;
 }
 
-/* HEADER */
-header{
+/* ===== TOPO ===== */
+.topo{
   padding:20px 30px;
   display:flex;
   align-items:center;
   justify-content:space-between;
 }
-
-h1{
+.topo h1{
   margin:0;
   color:#38bdf8;
 }
-
-/* BOTÕES */
-.btn-group{
+.acoes-topo{
   display:flex;
   gap:12px;
 }
 
 button{
   border:none;
-  padding:10px 16px;
-  border-radius:10px;
+  padding:8px 16px;
+  border-radius:12px;
   cursor:pointer;
   font-weight:600;
 }
-
-/* Voltar ao menu – igual ao print */
-.btn-voltar{
+.btn-azul{
+  background:#38bdf8;
+  color:#020617;
+}
+.btn-outline{
   background:transparent;
   color:#38bdf8;
   border:2px solid #38bdf8;
 }
-
-.btn-voltar:hover{
-  background:rgba(56,189,248,0.1);
-}
-
-/* Nova OP */
-.btn-azul{
+.btn-outline:hover{
   background:#38bdf8;
-  color:#000;
+  color:#020617;
 }
 
-/* CONTEÚDO */
+/* ===== TABELA ===== */
 .container{padding:0 30px 30px}
-
 table{width:100%;border-collapse:collapse}
 th,td{padding:10px;border-bottom:1px solid #1e293b}
 th{color:#38bdf8;text-align:left;white-space:nowrap}
@@ -71,7 +63,6 @@ th{color:#38bdf8;text-align:left;white-space:nowrap}
   gap:8px;
   white-space:nowrap;
 }
-
 .btn-pill{
   padding:7px 12px;
   border-radius:10px;
@@ -83,7 +74,7 @@ th{color:#38bdf8;text-align:left;white-space:nowrap}
 .btn-editar{background:#334155;color:#e5e7eb}
 .btn-excluir{background:#7f1d1d;color:#fff}
 
-/* MODAL */
+/* ===== MODAL ===== */
 .modal-bg{
   position:fixed;
   inset:0;
@@ -125,11 +116,11 @@ input[readonly]{background:#020b1a;color:#9ca3af}
 
 <body>
 
-<header>
+<header class="topo">
   <h1>Zincagem / Tratamento</h1>
 
-  <div class="btn-group">
-    <button class="btn-voltar"
+  <div class="acoes-topo">
+    <button class="btn-outline"
       onclick="location.href='https://matao-usi.vercel.app/dashboard.html'">
       ← Voltar ao Menu
     </button>
@@ -169,11 +160,13 @@ input[readonly]{background:#020b1a;color:#9ca3af}
       <div class="campo"><label>OP</label><input id="op"></div>
       <div class="campo"><label>Data</label><input type="date" id="data"></div>
 
-      <div class="campo"><label>Peça (código)</label>
+      <div class="campo">
+        <label>Peça (código)</label>
         <select id="codigo_peca"></select>
       </div>
 
-      <div class="campo"><label>Acabamento</label>
+      <div class="campo">
+        <label>Acabamento</label>
         <input id="acabamento" readonly>
       </div>
 
@@ -184,12 +177,13 @@ input[readonly]{background:#020b1a;color:#9ca3af}
       <div class="campo"><label>R$/Kg</label><input id="valor_kg"></div>
 
       <div class="campo" style="grid-column:1/3">
-        <label>Total</label><input id="valor_total" readonly>
+        <label>Total</label>
+        <input id="valor_total" readonly>
       </div>
     </div>
 
     <div class="footer">
-      <button class="btn-voltar" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-outline" onclick="fecharModal()">Cancelar</button>
       <button class="btn-azul" onclick="salvar()">Salvar</button>
     </div>
   </div>
@@ -198,13 +192,24 @@ input[readonly]{background:#020b1a;color:#9ca3af}
 <script>
 const sb = window.supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
-  "SUA_ANON_KEY_AQUI"
+  "SUA_ANON_KEY"
 );
 
-const el=id=>document.getElementById(id);
-const num=v=>Number(String(v||0).replace(".","").replace(",","."))||0;
-const fmt=v=>Number(v||0).toFixed(2).replace(".",",");
-const dataBR=d=>d?d.split("-").reverse().join("/"):"";
+const el = id => document.getElementById(id);
+
+function num(v){
+  if(typeof v==="number") return v;
+  if(!v) return 0;
+  let s=String(v);
+  if(s.includes(",")) s=s.replace(/\./g,"").replace(",",".");
+  return Number(s)||0;
+}
+function fmt(v){return Number(v||0).toFixed(2).replace(".",",");}
+function dataBR(d){
+  if(!d) return "";
+  const [a,m,di]=d.split("-");
+  return `${di}/${m}/${a}`;
+}
 
 let pesoLiquido=0,pesoBruto=0,editId=null;
 
@@ -236,7 +241,7 @@ async function carregarProdutos(){
 
   sel.onchange=()=>{
     const o=sel.selectedOptions[0];
-    if(!o)return;
+    if(!o) return;
     el("acabamento").value=o.dataset.acab;
     pesoLiquido=num(o.dataset.pl);
     pesoBruto=num(o.dataset.pb);
@@ -265,43 +270,19 @@ async function salvar(){
     quantidade:num(el("quantidade").value),
     kg_bruto:num(el("kg_bruto").value),
     valor_kg:num(el("valor_kg").value),
-    valor_total:num(el("valor_total").value)
+    valor_total:num(el("valor_total").value),
+    entregue:false,
+    boleto:false
   };
-
-  if(editId===null){
-    payload.entregue=false;
-    payload.boleto=false;
-    await sb.from("zincagem_tratamento").insert(payload);
-  }else{
-    await sb.from("zincagem_tratamento").update(payload).eq("id",editId);
-  }
-
+  await sb.from("zincagem_tratamento").insert(payload);
   fecharModal();
   carregarLista();
 }
 
-async function editarOp(id){
-  const {data}=await sb.from("zincagem_tratamento")
-    .select("*").eq("id",id).single();
-
-  editId=id;
-  el("modalBg").style.display="flex";
-  await carregarProdutos();
-
-  el("op").value=data.op;
-  el("data").value=data.data;
-  el("codigo_peca").value=data.codigo_peca;
-  el("codigo_peca").dispatchEvent(new Event("change"));
-  el("kg").value=fmt(data.kg);
-  el("valor_kg").value=fmt(data.valor_kg);
-  calcular();
-}
-
 async function excluirOp(id){
-  if(confirm("Excluir OP?")){
-    await sb.from("zincagem_tratamento").delete().eq("id",id);
-    carregarLista();
-  }
+  if(!confirm("Excluir OP?")) return;
+  await sb.from("zincagem_tratamento").delete().eq("id",id);
+  carregarLista();
 }
 
 async function toggle(id,campo,valor){
@@ -315,11 +296,8 @@ async function carregarLista(){
     .select("*").order("data",{ascending:false});
 
   const tb=el("lista");
-  tb.innerHTML="";
-  if(!data || data.length===0){
-    tb.innerHTML=`<tr><td colspan="10">Sem registros</td></tr>`;
-    return;
-  }
+  tb.innerHTML=data.length?"":
+    "<tr><td colspan='10'>Sem registros</td></tr>";
 
   data.forEach(r=>{
     tb.innerHTML+=`
@@ -335,15 +313,11 @@ async function carregarLista(){
       <td>${fmt(r.valor_total)}</td>
       <td class="acoes">
         <button class="btn-pill ${r.entregue?"ok":"pendente"}"
-          onclick="toggle(${r.id},'entregue',${r.entregue})">
-          ${r.entregue?"OK":"Entregue"}
-        </button>
+          onclick="toggle(${r.id},'entregue',${r.entregue})">Entregue</button>
         <button class="btn-pill ${r.boleto?"ok":"pendente"}"
-          onclick="toggle(${r.id},'boleto',${r.boleto})">
-          ${r.boleto?"OK":"Boleto"}
-        </button>
-        <button class="btn-pill btn-editar" onclick="editarOp(${r.id})">Editar</button>
-        <button class="btn-pill btn-excluir" onclick="excluirOp(${r.id})">Excluir</button>
+          onclick="toggle(${r.id},'boleto',${r.boleto})">Boleto</button>
+        <button class="btn-pill btn-excluir"
+          onclick="excluirOp(${r.id})">Excluir</button>
       </td>
     </tr>`;
   });
