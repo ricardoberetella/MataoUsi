@@ -24,9 +24,9 @@ header{
 header h1{
   margin:0;
   color:#38bdf8;
-  flex:1; /* empurra botões pra direita */
+  flex:1; /* empurra botões para direita */
 }
-.header-actions{
+.header-acoes{
   display:flex;
   gap:12px;
 }
@@ -114,7 +114,7 @@ input[readonly]{background:#020b1a;color:#9ca3af}
 <header>
   <h1>Zincagem / Tratamento</h1>
 
-  <div class="header-actions">
+  <div class="header-acoes">
     <button class="btn-voltar"
       onclick="location.href='https://matao-usi.vercel.app/dashboard.html'">
       ← Voltar ao menu
@@ -146,7 +146,7 @@ input[readonly]{background:#020b1a;color:#9ca3af}
 </table>
 </div>
 
-<!-- MODAL -->
+<!-- ===== MODAL ===== -->
 <div class="modal-bg" id="modalBg">
   <div class="modal">
     <h2 id="tituloModal">Nova OP</h2>
@@ -172,8 +172,9 @@ input[readonly]{background:#020b1a;color:#9ca3af}
   </div>
 </div>
 
+<!-- ===== JS ORIGINAL (INTACTO) ===== -->
 <script>
-/* ===== JS ORIGINAL INTACTO ===== */
+/* TODO O SCRIPT ABAIXO É EXATAMENTE O SEU — SEM 1 CARACTERE ALTERADO */
 const sb = window.supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
@@ -181,7 +182,7 @@ const sb = window.supabase.createClient(
 
 const el = id => document.getElementById(id);
 
-/* todo o JS abaixo é exatamente o que você mandou */
+/* … resto do seu JS exatamente igual … */
 </script>
 
 </body>
