@@ -291,13 +291,22 @@ async function toggle(id,campo,valor){
 }
 
 async function excluirOp(id){
-  if(confirm("Excluir OP?")){
-    await sb.from("zincagem_tratamento").delete().eq("id",id);
-    carregarLista();
+  if(!confirm("Excluir OP?")) return;
+
+  const { error } = await sb
+    .from("zincagem_tratamento")
+    .delete()
+    .eq("id", id)
+    .select();   // 👈 ESSENCIAL no v2
+
+  if(error){
+    alert("Erro ao excluir OP: " + error.message);
+    return;
   }
+
+  carregarLista();
 }
 
-async function carregarLista(){
   const { data } = await sb.from("zincagem_tratamento")
     .select("id,op,data,codigo_peca,acabamento,kg,quantidade,kg_bruto,valor_kg,valor_total,entregue,boleto")
     .order("data",{ascending:false});
