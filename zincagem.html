@@ -13,7 +13,6 @@ body{
   color:#e5e7eb;
 }
 
-/* Oculta elementos restritos ao admin */
 .admin-only { display: none !important; }
 body.e-admin .admin-only { display: table-cell !important; }
 body.e-admin button.admin-only { display: inline-flex !important; }
@@ -27,7 +26,6 @@ button{ border:none; padding:8px 12px; border-radius:8px; cursor:pointer; }
 
 .container{padding:0 30px 30px}
 
-/* Filtros com fonte aumentada */
 .filtros { display: flex; gap: 20px; background: rgba(30, 41, 59, 0.5); padding: 20px; border-radius: 12px; margin-bottom: 20px; align-items: flex-end; }
 .filtros label { font-size: 16px; color: #38bdf8; font-weight: bold; margin-bottom: 8px; }
 .filtros input, .filtros select { 
@@ -44,18 +42,16 @@ table{width:100%; border-collapse:collapse; table-layout: auto;}
 th,td{ padding:8px 4px; border-bottom:1px solid #1e293b; text-align: center; font-size: 14px; }
 th{color:#38bdf8; white-space:nowrap}
 
-/* Ajuste do Totalizador para alinhamento perfeito */
 tfoot td { font-weight: bold; color: #38bdf8; background: rgba(56, 189, 248, 0.1); border-top: 2px solid #38bdf8; padding: 12px 4px; }
 
 .acoes-container { display: flex; gap: 4px; justify-content: center; }
 
-/* Botões menores para caber na tela */
 .btn-pill { 
     padding: 6px 8px; 
     border-radius: 8px; 
     font-weight: 700; 
     font-size: 12px; 
-    min-width: 70px; 
+    min-width: 75px; 
     white-space: nowrap;
 }
 .pendente{background:#ef4444;color:#fff}
@@ -88,7 +84,7 @@ input[readonly]{background:#020b1a;color:#9ca3af}
   <div class="filtros">
     <div class="campo-filtro"><label>Data Início</label><input type="date" id="filtro_data_ini" oninput="filtrarLocal()"></div>
     <div class="campo-filtro"><label>Data Fim</label><input type="date" id="filtro_data_fim" oninput="filtrarLocal()"></div>
-    <div class="campo-filtro"><label>Peça (Pinos)</label><select id="filtro_peca" onchange="filtrarLocal()"><option value="">Todas as peças</option></select></div>
+    <div class="campo-filtro"><label>Peça</label><select id="filtro_peca" onchange="filtrarLocal()"><option value="">Todas as peças</option></select></div>
   </div>
   <table>
     <thead>
@@ -151,7 +147,8 @@ async function verificarAcesso() {
     eAdmin = false;
     document.body.classList.remove('e-admin');
   }
-  carregarLista();
+  await carregarProdutos();
+  await carregarLista();
 }
 
 function num(v){ if(!v) return 0; let s = String(v); if(s.includes(",")) s = s.replace(/\./g,"").replace(",","."); return Number(s)||0; }
@@ -173,10 +170,9 @@ async function carregarProdutos(){
     const oM = document.createElement("option"); oM.value = p.codigo; oM.textContent = p.codigo;
     oM.dataset.acab=p.acabamento; oM.dataset.pl=p.peso_liquido; oM.dataset.pb=p.peso_bruto;
     selModal.appendChild(oM);
-    if (p.codigo.toLowerCase().startsWith("pino")) {
-      const oF = document.createElement("option"); oF.value = p.codigo; oF.textContent = p.codigo;
-      selFiltro.appendChild(oF);
-    }
+
+    const oF = document.createElement("option"); oF.value = p.codigo; oF.textContent = p.codigo;
+    selFiltro.appendChild(oF);
   });
   selModal.onchange = () => { const o = selModal.selectedOptions[0]; if(!o || !o.value) return; el("acabamento").value = o.dataset.acab; pesoLiquido = num(o.dataset.pl); pesoBruto = num(o.dataset.pb); calcular(); };
 }
@@ -189,7 +185,7 @@ async function editarOp(id){ if(!eAdmin) return; const { data } = await sb.from(
 async function toggle(id,campo,valor){ if(!eAdmin) return; await sb.from("zincagem_tratamento").update({[campo]:!valor}).eq("id",id); carregarLista(); }
 async function excluirOp(id){ if(!eAdmin) return; if(confirm("Excluir OP?")) { await sb.from("zincagem_tratamento").delete().eq("id",id); carregarLista(); } }
 
-async function carregarLista(){ const { data } = await sb.from("zincagem_tratamento").select("*").order("data",{ascending:false}); dadosCompletos = data || []; filtrarLocal(); }
+async function carregarLista(){ const { data } = await sb.from("zincagem_tratamento").select("*").order("data",{ascending:true}); dadosCompletos = data || []; filtrarLocal(); }
 
 function filtrarLocal(){
   const dI = el("filtro_data_ini").value, dF = el("filtro_data_fim").value, pS = el("filtro_peca").value;
@@ -203,9 +199,9 @@ function renderizarTabela(dados){
   dados.forEach(r => {
     tK += num(r.kg); tQ += num(r.quantidade); tB += num(r.kg_bruto); tV += num(r.valor_total);
     
-    const acaoEntregue = eAdmin ? `onclick="toggle(${r.id},'entregue',${r.entregue})"` : "";
-    const acaoBoleto = eAdmin ? `onclick="toggle(${r.id},'boleto',${r.boleto})"` : "";
-    const classeVis = eAdmin ? "" : "visualizador-btn";
+    const acEnt = eAdmin ? `onclick="toggle(${r.id},'entregue',${r.entregue})"` : "";
+    const acBol = eAdmin ? `onclick="toggle(${r.id},'boleto',${r.boleto})"` : "";
+    const clV = eAdmin ? "" : "visualizador-btn";
 
     tb.innerHTML += `<tr>
       <td>${r.op}</td>
@@ -217,8 +213,8 @@ function renderizarTabela(dados){
       <td>${fmt(r.kg_bruto)}</td>
       <td>${fmt(r.valor_kg)}</td>
       <td>${fmt(r.valor_total)}</td>
-      <td><button class="btn-pill ${r.entregue?'ok':'pendente'} ${classeVis}" ${acaoEntregue}>${r.entregue?'OK':'Pendente'}</button></td>
-      <td><button class="btn-pill ${r.boleto?'ok':'pendente'} ${classeVis}" ${acaoBoleto}>${r.boleto?'OK':'Pendente'}</button></td>
+      <td><button class="btn-pill ${r.entregue?'ok':'pendente'} ${clV}" ${acEnt}>${r.entregue?'OK':'Pendente'}</button></td>
+      <td><button class="btn-pill ${r.boleto?'ok':'pendente'} ${clV}" ${acBol}>${r.boleto?'OK':'Pendente'}</button></td>
       <td class="admin-only">
         <div class="acoes-container">
           <button class="btn-pill btn-editar" onclick="editarOp(${r.id})">Editar</button>
@@ -228,8 +224,6 @@ function renderizarTabela(dados){
     </tr>`;
   });
   
-  // ALINHAMENTO DO TOTALIZADOR: 
-  // 4 colunas iniciais vazias (OP, Data, Peça, Acabamento)
   el("rodape_totais").innerHTML = `<tr>
     <td colspan="4">TOTALIZADOR</td>
     <td>${fmt(tK)}</td>
