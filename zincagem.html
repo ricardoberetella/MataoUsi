@@ -50,6 +50,43 @@ th{color:#38bdf8;text-align:left;white-space:nowrap}
 .ok{background:#22c55e;color:#06110a}
 .btn-editar{background:#334155;color:#e5e7eb}
 .btn-excluir{background:#7f1d1d;color:#fff}
+
+.modal-bg{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.7);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+}
+.modal{
+  width:1000px;
+  background:linear-gradient(180deg,#020b1a,#020617);
+  border-radius:16px;
+  padding:24px;
+}
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+}
+.campo{display:flex;flex-direction:column}
+.campo label{font-size:13px;margin-bottom:4px;color:#cbd5f5}
+input,select{
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #1e293b;
+  background:#020617;
+  color:#e5e7eb;
+}
+input[readonly]{background:#020b1a;color:#9ca3af}
+.footer{
+  margin-top:20px;
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+}
 </style>
 </head>
 
@@ -88,6 +125,44 @@ th{color:#38bdf8;text-align:left;white-space:nowrap}
 </table>
 </div>
 
+<!-- MODAL -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h2 id="tituloModal">Nova OP</h2>
+
+    <div class="grid">
+      <div class="campo"><label>OP</label><input id="op"></div>
+      <div class="campo"><label>Data</label><input type="date" id="data"></div>
+
+      <div class="campo">
+        <label>Peça (código)</label>
+        <select id="codigo_peca"></select>
+      </div>
+
+      <div class="campo">
+        <label>Acabamento</label>
+        <input id="acabamento" readonly>
+      </div>
+
+      <div class="campo"><label>Kg</label><input id="kg"></div>
+      <div class="campo"><label>Quantidade</label><input id="quantidade" readonly></div>
+
+      <div class="campo"><label>Kg Bruto</label><input id="kg_bruto" readonly></div>
+      <div class="campo"><label>R$/Kg</label><input id="valor_kg"></div>
+
+      <div class="campo" style="grid-column:1/3">
+        <label>Total</label>
+        <input id="valor_total" readonly>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="btn-branco" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-azul" onclick="salvar()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const sb = window.supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
@@ -96,6 +171,13 @@ const sb = window.supabase.createClient(
 
 const el = id => document.getElementById(id);
 
+function num(v){
+  if(typeof v === "number") return v;
+  if(!v) return 0;
+  let s = String(v);
+  if(s.includes(",")) s = s.replace(/\./g,"").replace(",",".");
+  return Number(s)||0;
+}
 function fmt(v){ return Number(v||0).toFixed(2).replace(".",","); }
 function dataBR(d){
   if(!d) return "";
@@ -103,32 +185,198 @@ function dataBR(d){
   return `${di}/${m}/${a}`;
 }
 
+let pesoLiquido = 0;
+let pesoBruto = 0;
+let editId = null;
+
+/* ================= MODAL ================= */
+
+function abrirModal(){
+  editId = null;
+  el("tituloModal").innerText = "Nova OP";
+  ["op","data","kg","valor_kg","quantidade","kg_bruto","valor_total","acabamento"]
+    .forEach(i => el(i).value = "");
+  pesoLiquido = 0;
+  pesoBruto = 0;
+  carregarProdutos();
+  el("modalBg").style.display="flex";
+}
+
+function fecharModal(){
+  el("modalBg").style.display="none";
+}
+
+/* ================= PRODUTOS ================= */
+
+async function carregarProdutos(){
+  const sel = el("codigo_peca");
+
+  const { data, error } = await sb
+    .from("produtos")
+    .select("codigo, acabamento, peso_liquido, peso_bruto")
+    .order("codigo");
+
+  if(error){
+    alert("Erro ao carregar produtos: " + error.message);
+    return;
+  }
+
+  sel.innerHTML = "<option></option>";
+
+  (data || []).forEach(p=>{
+    const o = document.createElement("option");
+    o.value = p.codigo;
+    o.textContent = p.codigo;
+    o.dataset.acab = p.acabamento;
+    o.dataset.pl = p.peso_liquido;
+    o.dataset.pb = p.peso_bruto;
+    sel.appendChild(o);
+  });
+
+  sel.onchange = () => {
+    const o = sel.selectedOptions[0];
+    if(!o) return;
+    el("acabamento").value = o.dataset.acab;
+    pesoLiquido = num(o.dataset.pl);
+    pesoBruto   = num(o.dataset.pb);
+    calcular();
+  };
+}
+
+["kg","valor_kg"].forEach(i => el(i).oninput = calcular);
+
+function calcular(){
+  const kg  = num(el("kg").value);
+  const vkg = num(el("valor_kg").value);
+  const qtd = pesoLiquido ? Math.floor(kg / pesoLiquido) : 0;
+
+  el("quantidade").value  = qtd;
+  el("kg_bruto").value    = fmt(qtd * pesoBruto);
+  el("valor_total").value = fmt(kg * vkg);
+}
+
+/* ================= CRUD ================= */
+
+async function salvar(){
+  const payload = {
+    op: el("op").value,
+    data: el("data").value,
+    codigo_peca: el("codigo_peca").value,
+    acabamento: el("acabamento").value,
+    kg: num(el("kg").value),
+    quantidade: num(el("quantidade").value),
+    kg_bruto: num(el("kg_bruto").value),
+    valor_kg: num(el("valor_kg").value),
+    valor_total: num(el("valor_total").value)
+  };
+
+  let resp;
+
+  if(editId === null){
+    payload.entregue = false;
+    payload.boleto   = false;
+    resp = await sb.from("zincagem_tratamento").insert(payload).select();
+  }else{
+    resp = await sb.from("zincagem_tratamento")
+      .update(payload)
+      .eq("id", editId)
+      .select();
+  }
+
+  if(resp.error){
+    alert(resp.error.message);
+    return;
+  }
+
+  fecharModal();
+  carregarLista();
+}
+
+async function editarOp(id){
+  const { data, error } = await sb
+    .from("zincagem_tratamento")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if(error){
+    alert("Erro ao abrir edição: " + error.message);
+    return;
+  }
+
+  editId = id;
+  el("tituloModal").innerText = "Editar OP";
+  el("modalBg").style.display="flex";
+
+  await carregarProdutos();
+
+  el("op").value = data.op;
+  el("data").value = data.data;
+  el("codigo_peca").value = data.codigo_peca;
+  el("codigo_peca").dispatchEvent(new Event("change"));
+  el("kg").value = fmt(data.kg);
+  el("valor_kg").value = fmt(data.valor_kg);
+  calcular();
+}
+
 async function excluirOp(id){
   if(!confirm("Excluir OP?")) return;
 
-  const { error } = await sb
+  const idNum = Number(id);
+
+  const { data, error } = await sb
     .from("zincagem_tratamento")
     .delete()
-    .eq("id", id)
-    .select();
+    .eq("id", idNum)
+    .select("id"); // <- garante retorno, e denuncia RLS (volta vazio)
 
   if(error){
-    alert(error.message);
+    alert("Erro ao excluir OP: " + error.message);
+    return;
+  }
+
+  // Se não apagou nada, geralmente é RLS bloqueando ou id não encontrado
+  if(!data || data.length === 0){
+    alert("Não foi possível excluir (sem permissão/RLS ou registro não encontrado).");
     return;
   }
 
   carregarLista();
 }
 
-/* ===== LISTA ===== */
+async function toggle(id, campo, valor){
+  const { error } = await sb.from("zincagem_tratamento")
+    .update({ [campo]: !valor })
+    .eq("id", id);
+
+  if(error){
+    alert("Erro ao atualizar: " + error.message);
+    return;
+  }
+
+  carregarLista();
+}
+
+/* ================= LISTA ================= */
 
 async function carregarLista(){
-  const { data } = await sb
+  const { data, error } = await sb
     .from("zincagem_tratamento")
-    .select("*")
+    .select("id,op,data,codigo_peca,acabamento,kg,quantidade,kg_bruto,valor_kg,valor_total,entregue,boleto")
     .order("data", { ascending:false });
 
   const tb = el("lista");
+
+  if(error){
+    tb.innerHTML = `<tr><td colspan="10">Erro: ${error.message}</td></tr>`;
+    return;
+  }
+
+  if(!data || data.length === 0){
+    tb.innerHTML = `<tr><td colspan="10">Nenhum registro</td></tr>`;
+    return;
+  }
+
   tb.innerHTML = "";
 
   data.forEach(r=>{
@@ -144,22 +392,23 @@ async function carregarLista(){
         <td>${fmt(r.valor_kg)}</td>
         <td>${fmt(r.valor_total)}</td>
         <td class="acoes">
-          <button class="btn-pill btn-excluir"
-            data-id="${r.id}">
-            Excluir
+          <button class="btn-pill ${r.entregue ? "ok" : "pendente"}"
+            onclick="toggle(${r.id},'entregue',${r.entregue})">
+            ${r.entregue ? "OK" : "Entregue"}
           </button>
+          <button class="btn-pill ${r.boleto ? "ok" : "pendente"}"
+            onclick="toggle(${r.id},'boleto',${r.boleto})">
+            ${r.boleto ? "OK" : "Boleto"}
+          </button>
+          <button class="btn-pill btn-editar"
+            onclick="editarOp(${r.id})">Editar</button>
+          <button class="btn-pill btn-excluir"
+            onclick="excluirOp(${r.id})">Excluir</button>
         </td>
       </tr>
     `;
   });
 }
-
-/* ===== EVENT DELEGATION (ESSENCIAL) ===== */
-
-document.addEventListener("click", (e) => {
-  if(!e.target.classList.contains("btn-excluir")) return;
-  excluirOp(e.target.dataset.id);
-});
 
 carregarLista();
 </script>
