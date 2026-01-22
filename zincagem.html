@@ -14,22 +14,13 @@ body{
   background:radial-gradient(circle at top,#0b1224,#020617 70%);
   color:#e5e7eb;
 }
-
-/* HEADER */
 header{
   padding:20px 30px;
   display:flex;
-  justify-content:space-between;
   align-items:center;
+  gap:16px;
 }
-
-.header-acoes{
-  display:flex;
-  gap:12px;
-}
-
 h1{margin:0;color:#38bdf8}
-
 button{
   border:none;
   padding:8px 14px;
@@ -38,7 +29,6 @@ button{
 }
 .btn-azul{background:#38bdf8;color:#000}
 .btn-branco{background:#fff;color:#000}
-
 .container{padding:0 30px 30px}
 
 table{width:100%;border-collapse:collapse}
@@ -105,13 +95,11 @@ input[readonly]{background:#020b1a;color:#9ca3af}
 <header>
   <h1>Zincagem / Tratamento</h1>
 
-  <div class="header-acoes">
-    <button class="btn-branco" onclick="location.href='https://matao-usi.vercel.app/dashboard.html'">
-      ← Voltar ao menu
-    </button>
+  <button class="btn-branco" onclick="location.href='https://matao-usi.vercel.app/dashboard.html'">
+    ← Voltar ao menu
+  </button>
 
-    <button class="btn-azul" onclick="abrirModal()">+ Nova OP</button>
-  </div>
+  <button class="btn-azul" onclick="abrirModal()">+ Nova OP</button>
 </header>
 
 <div class="container">
@@ -145,12 +133,10 @@ input[readonly]{background:#020b1a;color:#9ca3af}
       <div class="campo"><label>OP</label><input id="op"></div>
       <div class="campo"><label>Data</label><input type="date" id="data"></div>
 
-      <div class="campo">
-        <label>Peça (código)</label>
+      <div class="campo"><label>Peça (código)</label>
         <select id="codigo_peca"></select>
       </div>
-      <div class="campo">
-        <label>Acabamento</label>
+      <div class="campo"><label>Acabamento</label>
         <input id="acabamento" readonly>
       </div>
 
@@ -173,7 +159,234 @@ input[readonly]{background:#020b1a;color:#9ca3af}
 </div>
 
 <script>
-/* === SCRIPT INTACTO – SEM ALTERAÇÕES === */
+const sb = window.supabase.createClient(
+  "https://uxtgicfuggpuyjybwawa.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
+);
+
+const el = id => document.getElementById(id);
+
+function num(v){
+  if(typeof v === "number") return v;
+  if(!v) return 0;
+  let s = String(v);
+  if(s.includes(",")) s = s.replace(/\./g,"").replace(",",".");
+  return Number(s)||0;
+}
+function fmt(v){ return Number(v||0).toFixed(2).replace(".",","); }
+function dataBR(d){
+  if(!d) return "";
+  const [a,m,di] = d.split("-");
+  return `${di}/${m}/${a}`;
+}
+
+let pesoLiquido = 0;
+let pesoBruto = 0;
+let editId = null;
+
+async function abrirModal(){
+  editId = null;
+  el("tituloModal").innerText = "Nova OP";
+  ["op","data","kg","valor_kg","quantidade","kg_bruto","valor_total","acabamento"].forEach(i=>el(i).value="");
+  pesoLiquido = 0;
+  pesoBruto = 0;
+
+  // abre modal na hora (sem depender do supabase)
+  el("modalBg").style.display="flex";
+
+  // carrega produtos com fallback
+  await carregarProdutos();
+}
+
+function fecharModal(){
+  el("modalBg").style.display="none";
+}
+
+async function carregarProdutos(){
+  const sel = el("codigo_peca");
+  sel.innerHTML = `<option value="">Carregando...</option>`;
+
+  const { data, error } = await sb
+    .from("produtos")
+    .select("codigo, acabamento, peso_liquido, peso_bruto")
+    .order("codigo");
+
+  if(error){
+    console.error("Erro produtos:", error);
+    sel.innerHTML = `<option value="">ERRO AO CARREGAR PEÇAS</option>`;
+    alert("Não consegui carregar as peças (provável RLS na tabela PRODUTOS).\\n\\nDetalhe: " + error.message);
+    return;
+  }
+
+  sel.innerHTML = `<option value=""></option>`;
+  (data || []).forEach(p=>{
+    const o=document.createElement("option");
+    o.value=p.codigo;
+    o.textContent=p.codigo;
+    o.dataset.acab=p.acabamento;
+    o.dataset.pl=p.peso_liquido;
+    o.dataset.pb=p.peso_bruto;
+    sel.appendChild(o);
+  });
+
+  sel.onchange=()=>{
+    const o=sel.selectedOptions[0];
+    if(!o || !o.value) return;
+    el("acabamento").value=o.dataset.acab || "";
+    pesoLiquido=num(o.dataset.pl);
+    pesoBruto=num(o.dataset.pb);
+    calcular();
+  };
+}
+
+["kg","valor_kg"].forEach(i=>el(i).oninput=calcular);
+
+function calcular(){
+  const kg=num(el("kg").value);
+  const vkg=num(el("valor_kg").value);
+  const qtd=pesoLiquido?Math.floor(kg/pesoLiquido):0;
+  el("quantidade").value=qtd;
+  el("kg_bruto").value=fmt(qtd*pesoBruto);
+  el("valor_total").value=fmt(kg*vkg);
+}
+
+async function salvar(){
+  const payload={
+    op:el("op").value,
+    data:el("data").value,
+    codigo_peca:el("codigo_peca").value,
+    acabamento:el("acabamento").value,
+    kg:num(el("kg").value),
+    quantidade:num(el("quantidade").value),
+    kg_bruto:num(el("kg_bruto").value),
+    valor_kg:num(el("valor_kg").value),
+    valor_total:num(el("valor_total").value)
+  };
+
+  let resp;
+  if(editId===null){
+    payload.entregue=false;
+    payload.boleto=false;
+    resp=await sb.from("zincagem_tratamento").insert(payload).select();
+  }else{
+    resp=await sb.from("zincagem_tratamento")
+      .update(payload)
+      .eq("id",editId)
+      .select();
+  }
+
+  if(resp.error){
+    alert(resp.error.message);
+    return;
+  }
+  if(!resp.data || resp.data.length===0){
+    alert("ERRO: nenhum registro alterado");
+    return;
+  }
+
+  fecharModal();
+  await carregarLista();
+}
+
+async function editarOp(id){
+  const { data, error } = await sb.from("zincagem_tratamento")
+    .select("*").eq("id",id).single();
+
+  if(error){
+    alert("Erro ao carregar OP: " + error.message);
+    return;
+  }
+
+  editId=id;
+  el("tituloModal").innerText="Editar OP";
+  el("modalBg").style.display="flex";
+  await carregarProdutos();
+
+  el("op").value=data.op;
+  el("data").value=data.data;
+  el("codigo_peca").value=data.codigo_peca;
+  el("codigo_peca").dispatchEvent(new Event("change"));
+  el("kg").value=fmt(data.kg);
+  el("valor_kg").value=fmt(data.valor_kg);
+  calcular();
+}
+
+async function toggle(id,campo,valor){
+  const { error } = await sb.from("zincagem_tratamento")
+    .update({[campo]:!valor}).eq("id",id);
+
+  if(error){
+    alert("Erro ao atualizar: " + error.message);
+    return;
+  }
+
+  carregarLista();
+}
+
+async function excluirOp(id){
+  if(!confirm("Excluir OP?")) return;
+
+  const { error } = await sb
+    .from("zincagem_tratamento")
+    .delete()
+    .eq("id",id);
+
+  if(error){
+    alert("Erro ao excluir OP: " + error.message);
+    return;
+  }
+
+  carregarLista();
+}
+
+async function carregarLista(){
+  const tb=el("lista");
+  tb.innerHTML = `<tr><td colspan="10">Carregando...</td></tr>`;
+
+  const { data, error } = await sb.from("zincagem_tratamento")
+    .select("id,op,data,codigo_peca,acabamento,kg,quantidade,kg_bruto,valor_kg,valor_total,entregue,boleto")
+    .order("data",{ascending:false});
+
+  if(error){
+    console.error("Erro lista:", error);
+    tb.innerHTML = `<tr><td colspan="10">Erro ao carregar dados</td></tr>`;
+    return;
+  }
+
+  tb.innerHTML="";
+  (data || []).forEach(r=>{
+    tb.innerHTML+=`
+    <tr>
+      <td>${r.op}</td>
+      <td>${dataBR(r.data)}</td>
+      <td>${r.codigo_peca}</td>
+      <td>${r.acabamento}</td>
+      <td>${fmt(r.kg)}</td>
+      <td>${r.quantidade}</td>
+      <td>${fmt(r.kg_bruto)}</td>
+      <td>${fmt(r.valor_kg)}</td>
+      <td>${fmt(r.valor_total)}</td>
+      <td class="acoes">
+        <button class="btn-pill ${r.entregue?"ok":"pendente"}"
+          onclick="toggle(${r.id},'entregue',${r.entregue})">
+          ${r.entregue?"OK":"Entregue"}
+        </button>
+        <button class="btn-pill ${r.boleto?"ok":"pendente"}"
+          onclick="toggle(${r.id},'boleto',${r.boleto})">
+          ${r.boleto?"OK":"Boleto"}
+        </button>
+        <button class="btn-pill btn-editar" onclick="editarOp(${r.id})">Editar</button>
+        <button class="btn-pill btn-excluir" onclick="excluirOp(${r.id})">Excluir</button>
+      </td>
+    </tr>`;
+  });
+
+  if((data || []).length === 0){
+    tb.innerHTML = `<tr><td colspan="10">Sem registros</td></tr>`;
+  }
+}
+
+carregarLista();
 </script>
 
 </body>
