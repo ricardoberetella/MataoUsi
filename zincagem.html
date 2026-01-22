@@ -82,7 +82,7 @@ th{color:#38bdf8;text-align:left;white-space:nowrap}
 <script>
 const sb = window.supabase.createClient(
   "https://uxtgicfuggpuyjybwawa.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"
+  "SUA_ANON_KEY_AQUI"
 );
 
 const el = id => document.getElementById(id);
@@ -127,15 +127,17 @@ async function carregarLista(){
         <td>${fmt(r.valor_total)}</td>
         <td class="acoes">
           <button class="btn-pill ${r.entregue?"ok":"pendente"}"
-            onclick="toggle('${r.id}','entregue',${r.entregue})">
+            onclick="toggle(${r.id},'entregue',${r.entregue})">
             ${r.entregue?"OK":"Entregue"}
           </button>
           <button class="btn-pill ${r.boleto?"ok":"pendente"}"
-            onclick="toggle('${r.id}','boleto',${r.boleto})">
+            onclick="toggle(${r.id},'boleto',${r.boleto})">
             ${r.boleto?"OK":"Boleto"}
           </button>
+          <button class="btn-pill btn-editar"
+            onclick="editarOp(${r.id})">Editar</button>
           <button class="btn-pill btn-excluir"
-            onclick="excluirOp('${r.id}')">Excluir</button>
+            onclick="excluirOp(${r.id})">Excluir</button>
         </td>
       </tr>`;
   });
@@ -149,7 +151,7 @@ async function excluirOp(id){
   const { error } = await sb
     .from("zincagem_tratamento")
     .delete()
-    .eq("id", id);
+    .eq("id", id);   // 👈 id NUMÉRICO
 
   if(error){
     alert("Erro ao excluir: " + error.message);
@@ -172,6 +174,11 @@ async function toggle(id, campo, valor){
   }
 
   carregarLista();
+}
+
+/* ====== EDITAR (placeholder – mantém botão funcional) ====== */
+function editarOp(id){
+  alert("Editar OP " + id);
 }
 
 carregarLista();
