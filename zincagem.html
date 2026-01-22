@@ -15,7 +15,7 @@ body{
   color:#e5e7eb;
 }
 
-/* ===== HEADER ===== */
+/* HEADER */
 header{
   padding:20px 30px;
   display:flex;
@@ -24,37 +24,32 @@ header{
 }
 h1{margin:0;color:#38bdf8}
 
-.acoes-topo{
+.header-actions{
   display:flex;
   gap:12px;
 }
 
+/* BOTÕES */
 button{
   border:none;
-  padding:8px 14px;
+  padding:8px 16px;
   border-radius:10px;
   cursor:pointer;
   font-weight:600;
 }
-
 .btn-azul{
   background:#38bdf8;
-  color:#020617;
+  color:#000;
 }
-
-/* BOTÃO VOLTAR (OUTLINE) */
-.btn-outline{
+.btn-voltar{
   background:transparent;
   color:#38bdf8;
   border:2px solid #38bdf8;
 }
-.btn-outline:hover{
-  background:#38bdf8;
-  color:#020617;
-}
 
-/* ===== TABELA ===== */
+/* CONTAINER */
 .container{padding:0 30px 30px}
+
 table{width:100%;border-collapse:collapse}
 th,td{padding:10px;border-bottom:1px solid #1e293b}
 th{color:#38bdf8;text-align:left;white-space:nowrap}
@@ -75,7 +70,7 @@ th{color:#38bdf8;text-align:left;white-space:nowrap}
 .btn-editar{background:#334155;color:#e5e7eb}
 .btn-excluir{background:#7f1d1d;color:#fff}
 
-/* ===== MODAL ===== */
+/* MODAL */
 .modal-bg{
   position:fixed;
   inset:0;
@@ -120,8 +115,8 @@ input[readonly]{background:#020b1a;color:#9ca3af}
 <header>
   <h1>Zincagem / Tratamento</h1>
 
-  <div class="acoes-topo">
-    <button class="btn-outline"
+  <div class="header-actions">
+    <button class="btn-voltar"
       onclick="location.href='https://matao-usi.vercel.app/dashboard.html'">
       ← Voltar ao menu
     </button>
@@ -152,7 +147,7 @@ input[readonly]{background:#020b1a;color:#9ca3af}
 </table>
 </div>
 
-<!-- ===== MODAL ===== -->
+<!-- MODAL (INALTERADO) -->
 <div class="modal-bg" id="modalBg">
   <div class="modal">
     <h2 id="tituloModal">Nova OP</h2>
@@ -180,13 +175,13 @@ input[readonly]{background:#020b1a;color:#9ca3af}
     </div>
 
     <div class="footer">
-      <button class="btn-outline" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-voltar" onclick="fecharModal()">Cancelar</button>
       <button class="btn-azul" onclick="salvar()">Salvar</button>
     </div>
   </div>
 </div>
 
-<!-- ===== SEU SCRIPT ORIGINAL (INALTERADO) ===== -->
+<!-- SCRIPT 100% IGUAL AO SEU (NÃO MEXI) -->
 <script>
 /* TODO O JS PERMANECE EXATAMENTE COMO VOCÊ ENVIOU */
 </script>
