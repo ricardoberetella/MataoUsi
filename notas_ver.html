@@ -160,18 +160,27 @@
 </div>
 
 <script type="module">
-    import * as FuncoesNota from './js/notas_ver.js';
-    
-    // Vincula a função ao window para que o onclick do botão funcione
+    // Importamos o seu arquivo de lógica
+    import * as Funcoes from './js/notas_ver.js';
+
+    // Esta função será injetada no 'window' para o HTML conseguir chamar
     window.excluirBoleto = async function(id) {
         if (!id) return;
-        if (confirm("Deseja realmente excluir este boleto?")) {
-            if (typeof FuncoesNota.excluirBoleto === 'function') {
-                await FuncoesNota.excluirBoleto(id);
-                // Força o recarregamento da página para limpar o boleto da tela
-                window.location.reload(); 
-            } else {
-                alert("Erro: A função de exclusão não foi encontrada no arquivo JS.");
+        
+        if (confirm("Tem certeza que deseja excluir este boleto?")) {
+            try {
+                // Tenta chamar a função que está no seu arquivo notas_ver.js
+                if (Funcoes.excluirBoleto) {
+                    await Funcoes.excluirBoleto(id);
+                    // O recarregamento garante que o item saia da tela
+                    window.location.reload();
+                } else {
+                    console.error("Função excluirBoleto não exportada no JS.");
+                    alert("Erro interno: A função de exclusão não está acessível.");
+                }
+            } catch (err) {
+                console.error("Erro ao tentar excluir:", err);
+                alert("Falha ao excluir o boleto no banco de dados.");
             }
         }
     };
