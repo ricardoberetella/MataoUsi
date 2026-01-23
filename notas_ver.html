@@ -74,26 +74,25 @@
 </div>
 
 <script type="module">
+    // Importa o seu arquivo de lógica
     import * as NotasJS from './js/notas_ver.js';
 
+    // Cria a ponte global para o botão onclick
     window.excluirBoleto = async function(id) {
         if (!id) return;
-        if (confirm("Deseja realmente excluir este boleto?")) {
-            console.log("Tentando excluir boleto ID:", id);
-            
+        
+        if (confirm("Tem certeza que deseja excluir este boleto?")) {
+            // Verifica se a função existe no seu arquivo notas_ver.js
             if (typeof NotasJS.excluirBoleto === 'function') {
                 try {
                     await NotasJS.excluirBoleto(id);
-                    console.log("Comando enviado ao banco com sucesso.");
-                    // Recarrega a página para o boleto sumir da lista
+                    // O segredo está aqui: recarrega a página para o boleto sumir
                     window.location.reload();
                 } catch (error) {
-                    console.error("Erro na execução da exclusão:", error);
-                    alert("O banco de dados recusou a exclusão. Verifique as permissões (RLS).");
+                    alert("Erro ao excluir no banco de dados. Verifique o Supabase.");
                 }
             } else {
-                console.error("ERRO: A função excluirBoleto não foi encontrada ou não está 'exportada' no arquivo js/notas_ver.js");
-                alert("Erro técnico: função não localizada no script.");
+                alert("Erro: A função excluirBoleto não foi 'exportada' no seu arquivo notas_ver.js");
             }
         }
     };
