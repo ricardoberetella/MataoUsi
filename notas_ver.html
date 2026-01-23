@@ -160,27 +160,25 @@
 </div>
 
 <script type="module">
-    // Importamos todas as funções do seu arquivo JS
-    import * as Funcoes from './js/notas_ver.js';
+    import * as FuncoesJS from './js/notas_ver.js';
     
-    // Vinculamos manualmente a função ao objeto global window
-    // Isso resolve o erro "excluirBoleto is not a function"
+    // Vincula a função ao objeto window para o HTML conseguir executar
     window.excluirBoleto = async function(id) {
         if (!id) return;
         
         if (confirm("Deseja realmente excluir este boleto?")) {
-            // Tenta localizar a função no seu arquivo JS
-            if (Funcoes.excluirBoleto) {
+            // Verifica se a função existe no seu arquivo JS e a executa
+            if (typeof FuncoesJS.excluirBoleto === 'function') {
                 try {
-                    await Funcoes.excluirBoleto(id);
-                    // Força o reload para limpar o item da tela após excluir no banco
-                    window.location.reload();
-                } catch (err) {
-                    console.error("Erro na exclusão:", err);
+                    await FuncoesJS.excluirBoleto(id);
+                    // IMPORTANTE: Recarrega a página para o boleto sumir da tela
+                    window.location.reload(); 
+                } catch (e) {
+                    console.error("Erro ao deletar do banco:", e);
+                    alert("Erro ao excluir: verifique sua conexão ou permissões no Supabase.");
                 }
             } else {
-                console.error("A função excluirBoleto não está exportada no arquivo notas_ver.js.");
-                alert("Erro técnico: função de exclusão não localizada no arquivo JS.");
+                console.error("Função excluirBoleto não exportada no notas_ver.js");
             }
         }
     };
