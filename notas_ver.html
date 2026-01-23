@@ -72,7 +72,6 @@
 
 <div class="container">
 
-    <!-- DADOS DA NF -->
     <section class="card">
         <h2>Informações da Nota Fiscal</h2>
         <p><strong>Número:</strong> <span id="nfNumero"></span></p>
@@ -80,7 +79,6 @@
         <p><strong>Cliente:</strong> <span id="nfCliente"></span></p>
     </section>
 
-    <!-- ITENS -->
     <section class="card">
         <h2>Itens da Nota Fiscal</h2>
         <table>
@@ -94,7 +92,6 @@
         </table>
     </section>
 
-    <!-- BAIXAS -->
     <section class="card">
         <h2>Baixas Realizadas nos Pedidos</h2>
         <table>
@@ -110,7 +107,6 @@
         </table>
     </section>
 
-    <!-- BOLETOS -->
     <section class="card">
         <h2>Boletos</h2>
 
@@ -131,12 +127,10 @@
     </section>
 </div>
 
-<!-- MODAL BOLETO -->
 <div class="modal" id="modalBoleto">
     <div class="modal-box">
         <h3>Boleto</h3>
 
-        <!-- COM NF / SEM NF (LINHA ÚNICA) -->
         <div class="linha-tipo-nf">
             <label class="opcao-nf">
                 <input type="radio" name="tipo_nf" value="NF" checked>
@@ -165,6 +159,11 @@
     </div>
 </div>
 
+<script type="module">
+    // Importação necessária para expor a função de exclusão globalmente
+    import { excluirBoleto } from './js/notas_ver.js';
+    window.excluirBoleto = excluirBoleto;
+</script>
 <script type="module" src="js/notas_ver.js"></script>
 </body>
 </html>
