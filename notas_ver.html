@@ -38,27 +38,17 @@
             color: #e5e7eb;
         }
         .modal-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
+            display: flex; gap: 10px; justify-content: flex-end;
         }
 
-        /* LINHA COM NF / SEM NF */
         .linha-tipo-nf {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 10px;
+            display: flex; gap: 12px; margin-bottom: 10px;
         }
         .opcao-nf {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            border: 1px solid #1e293b;
-            border-radius: 6px;
-            cursor: pointer;
-            background: #020617;
-            color: #e5e7eb;
+            display: flex; align-items: center; gap: 6px;
+            padding: 6px 12px; border: 1px solid #1e293b;
+            border-radius: 6px; cursor: pointer;
+            background: #020617; color: #e5e7eb;
         }
     </style>
 </head>
@@ -71,7 +61,6 @@
 </header>
 
 <div class="container">
-
     <section class="card">
         <h2>Informações da Nota Fiscal</h2>
         <p><strong>Número:</strong> <span id="nfNumero"></span></p>
@@ -82,12 +71,7 @@
     <section class="card">
         <h2>Itens da Nota Fiscal</h2>
         <table>
-            <thead>
-                <tr>
-                    <th>Produto</th>
-                    <th>Quantidade NF</th>
-                </tr>
-            </thead>
+            <thead><tr><th>Produto</th><th>Quantidade NF</th></tr></thead>
             <tbody id="listaItens"></tbody>
         </table>
     </section>
@@ -95,31 +79,18 @@
     <section class="card">
         <h2>Baixas Realizadas nos Pedidos</h2>
         <table>
-            <thead>
-                <tr>
-                    <th>Pedido</th>
-                    <th>Produto</th>
-                    <th>Qtd Baixada</th>
-                    <th>Situação</th>
-                </tr>
-            </thead>
+            <thead><tr><th>Pedido</th><th>Produto</th><th>Qtd Baixada</th><th>Situação</th></tr></thead>
             <tbody id="listaBaixas"></tbody>
         </table>
     </section>
 
     <section class="card">
         <h2>Boletos</h2>
-
         <button id="btnNovoBoleto" class="btn-verde">➕ Incluir Boleto</button>
-
         <table>
             <thead>
                 <tr>
-                    <th>Vinculação</th>
-                    <th>Origem</th>
-                    <th>Valor</th>
-                    <th>Vencimento</th>
-                    <th>Ações</th>
+                    <th>Vinculação</th><th>Origem</th><th>Valor</th><th>Vencimento</th><th>Ações</th>
                 </tr>
             </thead>
             <tbody id="listaBoletos"></tbody>
@@ -130,28 +101,13 @@
 <div class="modal" id="modalBoleto">
     <div class="modal-box">
         <h3>Boleto</h3>
-
         <div class="linha-tipo-nf">
-            <label class="opcao-nf">
-                <input type="radio" name="tipo_nf" value="NF" checked>
-                <span>Com NF</span>
-            </label>
-
-            <label class="opcao-nf">
-                <input type="radio" name="tipo_nf" value="SEM_NF">
-                <span>Sem NF</span>
-            </label>
+            <label class="opcao-nf"><input type="radio" name="tipo_nf" value="NF" checked><span>Com NF</span></label>
+            <label class="opcao-nf"><input type="radio" name="tipo_nf" value="SEM_NF"><span>Sem NF</span></label>
         </div>
-
-        <label>Origem</label>
-        <input id="boletoOrigem" type="text">
-
-        <label>Valor</label>
-        <input id="boletoValor" type="number" step="0.01">
-
-        <label>Vencimento</label>
-        <input id="boletoVencimento" type="date">
-
+        <label>Origem</label><input id="boletoOrigem" type="text">
+        <label>Valor</label><input id="boletoValor" type="number" step="0.01">
+        <label>Vencimento</label><input id="boletoVencimento" type="date">
         <div class="modal-actions">
             <button id="btnCancelarBoleto" class="btn-cinza">Cancelar</button>
             <button id="btnSalvarBoleto" class="btn-azul">Salvar</button>
@@ -160,11 +116,23 @@
 </div>
 
 <script type="module">
-    import * as NotasVer from './js/notas_ver.js';
+    import * as Funcoes from './js/notas_ver.js';
     
-    // Expõe as funções para o onclick do HTML
-    window.excluirBoleto = NotasVer.excluirBoleto;
-    window.editarBoleto = NotasVer.editarBoleto;
+    // Vincula as funções do seu arquivo JS ao escopo global para os botões funcionarem
+    window.excluirBoleto = async (id) => {
+        if (!confirm("Tem certeza que deseja excluir este boleto?")) return;
+        
+        // Chama a função que já existe no seu notas_ver.js
+        if (typeof Funcoes.excluirBoleto === 'function') {
+            await Funcoes.excluirBoleto(id);
+            // Dá um pequeno tempo para o Supabase processar e recarrega a página
+            setTimeout(() => { location.reload(); }, 500);
+        } else {
+            console.error("Função excluirBoleto não exportada no JS.");
+        }
+    };
+
+    window.editarBoleto = Funcoes.editarBoleto;
 </script>
 
 <script type="module" src="js/notas_ver.js"></script>
