@@ -18,7 +18,8 @@ let boletoValor;
 let boletoVencimento;
 
 // ===============================================
-
+// FORMATADORES
+// ===============================================
 function formatarDataBR(dataISO) {
     if (!dataISO) return "—";
     return dataISO.split("T")[0].split("-").reverse().join("/");
@@ -32,6 +33,8 @@ function formatarMoedaBR(valor) {
     });
 }
 
+// ===============================================
+// INIT
 // ===============================================
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
@@ -154,7 +157,7 @@ async function carregarBaixas() {
     baixas.forEach(b => {
         tbody.innerHTML += `
             <tr>
-                <td>${numeroNFAtual ?? "—"}</td>
+                <td>${b.pedido_id}</td>
                 <td>${nomeProduto(b.produto_id)}</td>
                 <td>${b.quantidade_baixada}</td>
                 <td>Concluído</td>
@@ -198,7 +201,7 @@ async function carregarBoletos() {
 }
 
 // ===============================================
-// MODAL / AÇÕES (ADMIN)
+// MODAL
 // ===============================================
 function abrirModalNovo() {
     if (roleUsuario !== "admin") return;
@@ -230,7 +233,6 @@ async function salvarBoleto() {
         origem: boletoOrigem.value || null,
         valor,
         data_vencimento: boletoVencimento.value + "T12:00:00"
-
     };
 
     const resp = boletoEditandoId
@@ -239,6 +241,7 @@ async function salvarBoleto() {
 
     if (resp.error) {
         alert("Erro ao salvar boleto");
+        console.error(resp.error);
         return;
     }
 
@@ -246,9 +249,18 @@ async function salvarBoleto() {
     carregarBoletos();
 }
 
-window.editarBoleto = async id => {
+// ===============================================
+// AÇÕES (OBRIGATORIAMENTE NO WINDOW)
+// ===============================================
+window.editarBoleto = async function (id) {
     if (roleUsuario !== "admin") return;
-    const { data } = await supabase.from("boletos").select("*").eq("id", id).single();
+
+    const { data } = await supabase
+        .from("boletos")
+        .select("*")
+        .eq("id", id)
+        .single();
+
     boletoEditandoId = id;
 
     boletoOrigem.value = data.origem || "";
@@ -258,9 +270,22 @@ window.editarBoleto = async id => {
     modalBoleto.style.display = "flex";
 };
 
-window.excluirBoleto = async id => {
+window.excluirBoleto = async function (id) {
     if (roleUsuario !== "admin") return;
-    if (!confirm("Excluir boleto?")) return;
-    await supabase.from("boletos").delete().eq("id", id);
-    carregarBoletos();
+
+    const ok = confirm("Excluir boleto?");
+    if (!ok) return;
+
+    const { error } = await supabase
+        .from("boletos")
+        .delete()
+        .eq("id", id);
+
+    if (error) {
+        alert("Erro ao excluir boleto");
+        console.error(error);
+        return;
+    }
+
+    await carregarBoletos();
 };
