@@ -160,11 +160,13 @@
 </div>
 
 <script type="module">
-    // Esta parte resolve o erro "does not provide an export named excluirBoleto" 
-    // mapeando a função do seu arquivo JS para o botão do HTML
-    import * as NotasVer from './js/notas_ver.js';
-    window.excluirBoleto = NotasVer.excluirBoleto;
+    import * as Modulo from './js/notas_ver.js';
+    // Mapeia todas as funções exportadas para o nível global do navegador
+    Object.keys(Modulo).forEach(key => {
+        window[key] = Modulo[key];
+    });
 </script>
+
 <script type="module" src="js/notas_ver.js"></script>
 </body>
 </html>
