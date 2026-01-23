@@ -160,24 +160,19 @@
 </div>
 
 <script type="module">
-    // Importamos o script que contém a lógica
     import * as FuncoesNota from './js/notas_ver.js';
-
-    /**
-     * Como o onclick="excluirBoleto(id)" no HTML procura uma função GLOBAL,
-     * e os módulos (type="module") são ISOLADOS, precisamos "pendurar" a 
-     * função no objeto window manualmente.
-     */
+    
+    // Vincula a função ao window para que o onclick do botão funcione
     window.excluirBoleto = async function(id) {
         if (!id) return;
-        
-        // Verifica se a função existe no seu arquivo JS
-        if (typeof FuncoesNota.excluirBoleto === 'function') {
-            await FuncoesNota.excluirBoleto(id);
-        } else {
-            // Fallback caso a função não esteja exportada corretamente no seu JS
-            console.error("A função excluirBoleto não foi encontrada ou não está exportada no arquivo notas_ver.js.");
-            alert("Erro: Não foi possível localizar a função de exclusão.");
+        if (confirm("Deseja realmente excluir este boleto?")) {
+            if (typeof FuncoesNota.excluirBoleto === 'function') {
+                await FuncoesNota.excluirBoleto(id);
+                // Força o recarregamento da página para limpar o boleto da tela
+                window.location.reload(); 
+            } else {
+                alert("Erro: A função de exclusão não foi encontrada no arquivo JS.");
+            }
         }
     };
 </script>
