@@ -160,18 +160,27 @@
 </div>
 
 <script type="module">
-    import { excluirBoleto } from './js/notas_ver.js';
+    // Importamos todas as funções do seu arquivo JS
+    import * as Funcoes from './js/notas_ver.js';
     
-    // Torna a função visível globalmente para o HTML
+    // Vinculamos manualmente a função ao objeto global window
+    // Isso resolve o erro "excluirBoleto is not a function"
     window.excluirBoleto = async function(id) {
+        if (!id) return;
+        
         if (confirm("Deseja realmente excluir este boleto?")) {
-            try {
-                await excluirBoleto(id);
-                // Força o reload para garantir que o item suma da tela
-                window.location.reload();
-            } catch (err) {
-                console.error("Erro ao excluir:", err);
-                alert("Não foi possível excluir o boleto.");
+            // Tenta localizar a função no seu arquivo JS
+            if (Funcoes.excluirBoleto) {
+                try {
+                    await Funcoes.excluirBoleto(id);
+                    // Força o reload para limpar o item da tela após excluir no banco
+                    window.location.reload();
+                } catch (err) {
+                    console.error("Erro na exclusão:", err);
+                }
+            } else {
+                console.error("A função excluirBoleto não está exportada no arquivo notas_ver.js.");
+                alert("Erro técnico: função de exclusão não localizada no arquivo JS.");
             }
         }
     };
