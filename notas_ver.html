@@ -160,18 +160,18 @@
 </div>
 
 <script type="module">
-    import * as Funcoes from './js/notas_ver.js';
+    // Importação dinâmica para garantir que a função seja exposta globalmente
+    // resolvendo o erro de função não localizada
+    import * as NotasVer from './js/notas_ver.js';
     
-    // Força a exportação da função para o escopo global
-    // permitindo que o onclick do botão a encontre
-    window.excluirBoleto = async function(id) {
-        if (confirm("Tem certeza que deseja excluir este boleto?")) {
-            // Tenta chamar a função original do seu arquivo js
-            if (typeof Funcoes.excluirBoleto === 'function') {
-                await Funcoes.excluirBoleto(id);
+    // Vincula a função ao objeto window para que o onclick="excluirBoleto(...)" funcione
+    window.excluirBoleto = async (id) => {
+        if (confirm("Deseja realmente excluir este boleto?")) {
+            // Verifica se a função existe no módulo importado antes de chamar
+            if (NotasVer.excluirBoleto) {
+                await NotasVer.excluirBoleto(id);
             } else {
-                console.error("A função excluirBoleto não foi encontrada no arquivo notas_ver.js");
-                alert("Erro técnico: função de exclusão não localizada.");
+                alert("Erro técnico: função de exclusão não localizada no arquivo JS.");
             }
         }
     };
