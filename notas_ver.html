@@ -3,66 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <title>Detalhes da Nota Fiscal</title>
-
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/pedidos_lista.css">
-
     <style>
-        /* MODAL BOLETO */
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.75);
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
-        .modal-box {
-            background: #0b1220;
-            padding: 20px;
-            border-radius: 10px;
-            width: 360px;
-            border: 1px solid #38bdf8;
-        }
-        .modal-box h3 {
-            margin-top: 0;
-            color: #38bdf8;
-        }
-        .modal-box input {
-            width: 100%;
-            margin-bottom: 10px;
-            padding: 8px;
-            background: #020617;
-            border: 1px solid #1e293b;
-            color: #e5e7eb;
-        }
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
-
-        /* LINHA COM NF / SEM NF */
-        .linha-tipo-nf {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 10px;
-        }
-        .opcao-nf {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            border: 1px solid #1e293b;
-            border-radius: 6px;
-            cursor: pointer;
-            background: #020617;
-            color: #e5e7eb;
-        }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); justify-content: center; align-items: center; z-index: 9999; }
+        .modal-box { background: #0b1220; padding: 20px; border-radius: 10px; width: 360px; border: 1px solid #38bdf8; }
+        .modal-box h3 { margin-top: 0; color: #38bdf8; }
+        .modal-box input { width: 100%; margin-bottom: 10px; padding: 8px; background: #020617; border: 1px solid #1e293b; color: #e5e7eb; }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+        .linha-tipo-nf { display: flex; gap: 12px; margin-bottom: 10px; }
+        .opcao-nf { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid #1e293b; border-radius: 6px; cursor: pointer; background: #020617; color: #e5e7eb; }
     </style>
 </head>
-
 <body>
 
 <header class="topbar">
@@ -71,7 +23,6 @@
 </header>
 
 <div class="container">
-
     <section class="card">
         <h2>Informações da Nota Fiscal</h2>
         <p><strong>Número:</strong> <span id="nfNumero"></span></p>
@@ -82,12 +33,7 @@
     <section class="card">
         <h2>Itens da Nota Fiscal</h2>
         <table>
-            <thead>
-                <tr>
-                    <th>Produto</th>
-                    <th>Quantidade NF</th>
-                </tr>
-            </thead>
+            <thead><tr><th>Produto</th><th>Quantidade NF</th></tr></thead>
             <tbody id="listaItens"></tbody>
         </table>
     </section>
@@ -95,33 +41,16 @@
     <section class="card">
         <h2>Baixas Realizadas nos Pedidos</h2>
         <table>
-            <thead>
-                <tr>
-                    <th>Pedido</th>
-                    <th>Produto</th>
-                    <th>Qtd Baixada</th>
-                    <th>Situação</th>
-                </tr>
-            </thead>
+            <thead><tr><th>Pedido</th><th>Produto</th><th>Qtd Baixada</th><th>Situação</th></tr></thead>
             <tbody id="listaBaixas"></tbody>
         </table>
     </section>
 
     <section class="card">
         <h2>Boletos</h2>
-
         <button id="btnNovoBoleto" class="btn-verde">➕ Incluir Boleto</button>
-
         <table>
-            <thead>
-                <tr>
-                    <th>Vinculação</th>
-                    <th>Origem</th>
-                    <th>Valor</th>
-                    <th>Vencimento</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
+            <thead><tr><th>Vinculação</th><th>Origem</th><th>Valor</th><th>Vencimento</th><th>Ações</th></tr></thead>
             <tbody id="listaBoletos"></tbody>
         </table>
     </section>
@@ -130,28 +59,13 @@
 <div class="modal" id="modalBoleto">
     <div class="modal-box">
         <h3>Boleto</h3>
-
         <div class="linha-tipo-nf">
-            <label class="opcao-nf">
-                <input type="radio" name="tipo_nf" value="NF" checked>
-                <span>Com NF</span>
-            </label>
-
-            <label class="opcao-nf">
-                <input type="radio" name="tipo_nf" value="SEM_NF">
-                <span>Sem NF</span>
-            </label>
+            <label class="opcao-nf"><input type="radio" name="tipo_nf" value="NF" checked><span>Com NF</span></label>
+            <label class="opcao-nf"><input type="radio" name="tipo_nf" value="SEM_NF"><span>Sem NF</span></label>
         </div>
-
-        <label>Origem</label>
-        <input id="boletoOrigem" type="text">
-
-        <label>Valor</label>
-        <input id="boletoValor" type="number" step="0.01">
-
-        <label>Vencimento</label>
-        <input id="boletoVencimento" type="date">
-
+        <label>Origem</label><input id="boletoOrigem" type="text">
+        <label>Valor</label><input id="boletoValor" type="number" step="0.01">
+        <label>Vencimento</label><input id="boletoVencimento" type="date">
         <div class="modal-actions">
             <button id="btnCancelarBoleto" class="btn-cinza">Cancelar</button>
             <button id="btnSalvarBoleto" class="btn-azul">Salvar</button>
@@ -160,23 +74,26 @@
 </div>
 
 <script type="module">
-    import * as Funcoes from './js/notas_ver.js';
-    
-    // Torna a função visível para os botões da tabela
+    import * as NotasJS from './js/notas_ver.js';
+
     window.excluirBoleto = async function(id) {
         if (!id) return;
         if (confirm("Deseja realmente excluir este boleto?")) {
-            // Tenta chamar a função que está no seu js/notas_ver.js
-            if (Funcoes.excluirBoleto) {
+            console.log("Tentando excluir boleto ID:", id);
+            
+            if (typeof NotasJS.excluirBoleto === 'function') {
                 try {
-                    await Funcoes.excluirBoleto(id);
-                    // Atualiza a tela para confirmar que sumiu
+                    await NotasJS.excluirBoleto(id);
+                    console.log("Comando enviado ao banco com sucesso.");
+                    // Recarrega a página para o boleto sumir da lista
                     window.location.reload();
-                } catch (e) {
-                    console.error("Erro ao deletar:", e);
+                } catch (error) {
+                    console.error("Erro na execução da exclusão:", error);
+                    alert("O banco de dados recusou a exclusão. Verifique as permissões (RLS).");
                 }
             } else {
-                alert("Erro: Função de exclusão não encontrada no arquivo notas_ver.js. Verifique se existe 'export' antes da função.");
+                console.error("ERRO: A função excluirBoleto não foi encontrada ou não está 'exportada' no arquivo js/notas_ver.js");
+                alert("Erro técnico: função não localizada no script.");
             }
         }
     };
