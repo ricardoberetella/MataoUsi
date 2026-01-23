@@ -160,9 +160,10 @@
 </div>
 
 <script type="module">
-    // Importação necessária para expor a função de exclusão globalmente
-    import { excluirBoleto } from './js/notas_ver.js';
-    window.excluirBoleto = excluirBoleto;
+    // Esta parte resolve o erro "does not provide an export named excluirBoleto" 
+    // mapeando a função do seu arquivo JS para o botão do HTML
+    import * as NotasVer from './js/notas_ver.js';
+    window.excluirBoleto = NotasVer.excluirBoleto;
 </script>
 <script type="module" src="js/notas_ver.js"></script>
 </body>
