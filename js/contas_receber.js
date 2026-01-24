@@ -1,13 +1,8 @@
-// ======================================================
-// CONTAS_RECEBER.JS — ROLE AWARE (ADMIN x VIEWER)
-// ======================================================
-
 import { supabase, verificarLogin } from "./auth.js";
 
 let editandoId = null;
-let roleUsuario = "viewer"; // PADRÃO CORRETO
+let roleUsuario = "viewer"; 
 
-// ======================================================
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
@@ -17,10 +12,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("btnFiltrar")?.addEventListener("click", carregarLancamentos);
     document.getElementById("btnGerarPDF")?.addEventListener("click", gerarPDF);
 
-    // + Lançamento Manual → SOMENTE admin / operador
     if (roleUsuario !== "viewer") {
-        document.getElementById("btnNovoManual")
-            ?.addEventListener("click", abrirModalNovo);
+        document.getElementById("btnNovoManual")?.addEventListener("click", abrirModalNovo);
     } else {
         document.getElementById("btnNovoManual")?.remove();
     }
@@ -32,14 +25,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     carregarLancamentos();
 });
 
-// ======================================================
-// FORMATADORES
-// ======================================================
 function formatarValor(v) {
-    return Number(v || 0).toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL"
-    });
+    return Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
 function formatarData(iso) {
@@ -53,16 +40,12 @@ function hojeISO() {
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
 
-// ======================================================
-// CARREGAR LANÇAMENTOS
-// ======================================================
 async function carregarLancamentos() {
     const tbody = document.getElementById("listaReceber");
     const totalEl = document.getElementById("totalReceber");
 
     tbody.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
-    totalEl.innerText = "R$ 0,00";
-
+    
     const statusFiltro = document.getElementById("filtroStatus").value;
     const vencimentoAte = document.getElementById("filtroVencimento").value;
 
@@ -75,7 +58,6 @@ async function carregarLancamentos() {
 
     const { data, error } = await query;
     if (error) {
-        console.error(error);
         tbody.innerHTML = "<tr><td colspan='5'>Erro</td></tr>";
         return;
     }
@@ -83,12 +65,14 @@ async function carregarLancamentos() {
     const hoje = hojeISO();
     let lista = data || [];
 
+    // LÓGICA DE FILTRO ATUALIZADA
     if (statusFiltro === "PAGO") {
         lista = lista.filter(l => l.status === "PAGO");
     } else if (statusFiltro === "VENCIDO") {
         lista = lista.filter(l => l.status !== "PAGO" && l.data_vencimento < hoje);
     } else if (statusFiltro === "ABERTO") {
-        lista = lista.filter(l => l.status !== "PAGO" && l.data_vencimento >= hoje);
+        // Agora o filtro "Aberto" mostra tudo que não está pago (Vencidos + A Vencer)
+        lista = lista.filter(l => l.status !== "PAGO");
     }
 
     tbody.innerHTML = "";
@@ -96,7 +80,6 @@ async function carregarLancamentos() {
 
     lista.forEach(l => {
         total += Number(l.valor || 0);
-
         const pago = l.status === "PAGO";
         const vencido = !pago && l.data_vencimento < hoje;
 
@@ -104,11 +87,9 @@ async function carregarLancamentos() {
         if (roleUsuario !== "viewer") {
             acoesHTML = `
                 <button class="btn-azul btn-editar" data-id="${l.id}">Editar</button>
-                ${
-                    pago
-                        ? `<button class="btn-cinza btn-reverter" data-id="${l.id}">Reverter</button>`
-                        : `<button class="btn-pagar" data-id="${l.id}">Pagar</button>`
-                }
+                ${pago 
+                    ? `<button class="btn-cinza btn-reverter" data-id="${l.id}">Reverter</button>` 
+                    : `<button class="btn-pagar" data-id="${l.id}">Pagar</button>`}
             `;
         }
 
@@ -117,7 +98,7 @@ async function carregarLancamentos() {
             <td>${l.descricao || "-"}</td>
             <td>${formatarValor(l.valor)}</td>
             <td>${formatarData(l.data_vencimento)}</td>
-            <td>${l.status}</td>
+            <td>${vencido ? "VENCIDO" : l.status}</td>
             <td class="td-acoes">${acoesHTML}</td>
         `;
 
@@ -129,7 +110,6 @@ async function carregarLancamentos() {
                 }
             });
         }
-
         tbody.appendChild(tr);
     });
 
@@ -137,24 +117,12 @@ async function carregarLancamentos() {
     if (roleUsuario !== "viewer") bindAcoes();
 }
 
-// ======================================================
-// AÇÕES (ADMIN / OPERADOR)
-// ======================================================
 function bindAcoes() {
-
     document.querySelectorAll(".btn-editar").forEach(btn => {
         btn.onclick = async () => {
-            const id = btn.dataset.id;
-
-            const { data } = await supabase
-                .from("contas_receber")
-                .select("*")
-                .eq("id", id)
-                .single();
-
+            const { data } = await supabase.from("contas_receber").select("*").eq("id", btn.dataset.id).single();
             if (!data) return;
-
-            editandoId = id;
+            editandoId = data.id;
             document.getElementById("tituloModal").innerText = "Editar Lançamento";
             document.getElementById("origemManual").value = data.descricao || "";
             document.getElementById("valorManual").value = data.valor || "";
@@ -166,9 +134,7 @@ function bindAcoes() {
     document.querySelectorAll(".btn-pagar").forEach(btn => {
         btn.onclick = async () => {
             if (!confirm("Confirmar pagamento?")) return;
-            await supabase.from("contas_receber")
-                .update({ status: "PAGO", data_pagamento: hojeISO() })
-                .eq("id", btn.dataset.id);
+            await supabase.from("contas_receber").update({ status: "PAGO", data_pagamento: hojeISO() }).eq("id", btn.dataset.id);
             carregarLancamentos();
         };
     });
@@ -176,17 +142,12 @@ function bindAcoes() {
     document.querySelectorAll(".btn-reverter").forEach(btn => {
         btn.onclick = async () => {
             if (!confirm("Reverter pagamento?")) return;
-            await supabase.from("contas_receber")
-                .update({ status: "ABERTO", data_pagamento: null })
-                .eq("id", btn.dataset.id);
+            await supabase.from("contas_receber").update({ status: "ABERTO", data_pagamento: null }).eq("id", btn.dataset.id);
             carregarLancamentos();
         };
     });
 }
 
-// ======================================================
-// MODAL
-// ======================================================
 function abrirModalNovo() {
     editandoId = null;
     document.getElementById("tituloModal").innerText = "Novo Lançamento Manual";
@@ -196,42 +157,28 @@ function abrirModalNovo() {
     abrirModal();
 }
 
-function abrirModal() {
-    document.getElementById("modalManual").classList.add("ativo");
-}
-
-function fecharModal() {
-    document.getElementById("modalManual").classList.remove("ativo");
-}
+function abrirModal() { document.getElementById("modalManual").classList.add("ativo"); }
+function fecharModal() { document.getElementById("modalManual").classList.remove("ativo"); }
 
 async function salvarManual() {
     const descricao = document.getElementById("origemManual").value.trim();
     const valor = Number(document.getElementById("valorManual").value);
     const venc = document.getElementById("vencimentoManual").value;
 
-    if (!descricao || !valor || !venc) {
-        alert("Preencha todos os campos");
-        return;
-    }
+    if (!descricao || !valor || !venc) return alert("Preencha todos os campos");
 
     if (editandoId) {
-        await supabase.from("contas_receber")
-            .update({ descricao, valor, data_vencimento: venc })
-            .eq("id", editandoId);
+        await supabase.from("contas_receber").update({ descricao, valor, data_vencimento: venc }).eq("id", editandoId);
     } else {
-        await supabase.from("contas_receber")
-            .insert({ descricao, valor, data_vencimento: venc, status: "ABERTO" });
+        await supabase.from("contas_receber").insert({ descricao, valor, data_vencimento: venc, status: "ABERTO" });
     }
-
     fecharModal();
     carregarLancamentos();
 }
 
-// ======================================================
 function gerarPDF() {
     document.body.classList.add("modo-pdf");
-    html2pdf().from(document.getElementById("areaPdf")).save()
-        .then(() => document.body.classList.remove("modo-pdf"));
+    html2pdf().from(document.getElementById("areaPdf")).save().then(() => document.body.classList.remove("modo-pdf"));
 }
 
 function atualizarDataHoraPDF() {
