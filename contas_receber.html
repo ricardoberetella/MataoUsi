@@ -7,38 +7,31 @@
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/pedidos_lista.css">
 
-    <!-- LIB PDF (igual outras telas) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
+/* ... (Seu CSS permanece o mesmo) ... */
 /* =========================
    PDF – RELATÓRIO FINAL
 ========================= */
-
-/* esconder elementos fora do PDF */
 body.modo-pdf header,
 body.modo-pdf .card:first-child,
 body.modo-pdf button {
     display: none !important;
 }
 
-/* fundo e fonte */
 body.modo-pdf {
     background: #fff !important;
     color: #000 !important;
     font-family: Arial, sans-serif;
 }
 
-/* container ocupa página */
 body.modo-pdf .container {
     width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
 }
 
-/* =========================
-   CABEÇALHO DO RELATÓRIO
-========================= */
 .cabecalho-pdf { display: none; }
 body.modo-pdf .cabecalho-pdf { display: block; margin-bottom: 10px; }
 
@@ -59,9 +52,6 @@ body.modo-pdf .cabecalho-pdf { display: block; margin-bottom: 10px; }
 .titulo-pdf h2 { margin: 0; font-size: 15px; }
 .titulo-pdf p { margin: 0; font-size: 11px; }
 
-/* =========================
-   TABELA – QUEBRA CORRETA
-========================= */
 body.modo-pdf table {
     width: 100%;
     border-collapse: collapse;
@@ -88,14 +78,11 @@ body.modo-pdf tr.vencido td {
     font-weight: bold !important;
 }
 
-/* remover filtros no PDF */
 body.modo-pdf .card:first-of-type { display: none !important; }
 
-/* remover coluna ações no PDF */
 body.modo-pdf th:last-child,
 body.modo-pdf td:last-child { display: none !important; }
 
-/* ajustes finais PDF */
 body.modo-pdf table,
 body.modo-pdf th,
 body.modo-pdf td { box-sizing: border-box; }
@@ -117,9 +104,6 @@ body.modo-pdf .titulo-pdf p { font-size: 11px; }
 body.modo-pdf .container { padding-left: 12px !important; padding-right: 12px !important; }
 body.modo-pdf table { transform: scale(0.96); transform-origin: top left; }
 
-/* =========================
-   MODAL – MAIS BONITO
-========================= */
 .modal {
     display: none;
     position: fixed;
@@ -169,7 +153,6 @@ body.modo-pdf table { transform: scale(0.96); transform-origin: top left; }
     opacity: .85;
 }
 
-/* manter botões pagar/editar alinhados */
 .td-acoes {
     display:flex;
     gap:8px;
@@ -189,14 +172,13 @@ body.modo-pdf table { transform: scale(0.96); transform-origin: top left; }
 
 <header class="topbar">
     <a href="dashboard.html">
-        <button class="btn-voltar">⬅ Voltar</button>
+        <button class="btn-voltar">⬅ Voltar ao Menu</button>
     </a>
     <h1 class="topbar-title">Contas a Receber</h1>
 </header>
 
 <div class="container" id="areaPdf">
 
-    <!-- CABEÇALHO DO PDF -->
     <div class="cabecalho-pdf">
         <div class="cabecalho-linha">
             <div class="logo-pdf">
@@ -214,7 +196,6 @@ body.modo-pdf table { transform: scale(0.96); transform-origin: top left; }
         <hr>
     </div>
 
-    <!-- FILTROS -->
     <section class="card">
         <h2 class="card-title">Filtros</h2>
 
@@ -223,8 +204,8 @@ body.modo-pdf table { transform: scale(0.96); transform-origin: top left; }
                 <label>Status</label>
                 <select id="filtroStatus">
                     <option value="">Todos</option>
-                    <option value="ABERTO">Em aberto</option>
-                    <option value="VENCIDO">Vencido</option>
+                    <option value="ABERTO">Em aberto / Vencidos</option>
+                    <option value="VENCIDO">Somente Vencidos</option>
                     <option value="PAGO">Pago</option>
                 </select>
             </div>
@@ -242,7 +223,6 @@ body.modo-pdf table { transform: scale(0.96); transform-origin: top left; }
         </div>
     </section>
 
-    <!-- TABELA -->
     <section class="card">
         <h2 class="card-title">Lançamentos</h2>
 
@@ -265,7 +245,6 @@ body.modo-pdf table { transform: scale(0.96); transform-origin: top left; }
     </section>
 </div>
 
-<!-- MODAL (USADO PARA NOVO + EDITAR) -->
 <div id="modalManual" class="modal">
     <div class="modal-conteudo">
         <h3 id="tituloModal">Novo Lançamento Manual</h3>
