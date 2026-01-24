@@ -1,6 +1,5 @@
 // ====================================================
-// PEDIDOS_ABERTOS.JS — FINAL DEFINITIVO
-// QUANTIDADE BAIXADA REAL (TABELA PODE ESTAR VAZIA)
+// PEDIDOS_ABERTOS.JS — CORRIGIDO (FILTRO CLIENTE OK)
 // ====================================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -58,20 +57,24 @@ async function carregarPedidosAbertos() {
 
   tbody.innerHTML = `<tr><td colspan="6">Carregando...</td></tr>`;
 
+  // Captura dos valores dos filtros
+  const clienteId = document.getElementById("clienteFiltro")?.value || "";
   const produtoId = document.getElementById("produtoFiltro")?.value || "";
   const entregaAte = document.getElementById("dataFiltro")?.value || "";
 
-  // 1️⃣ Buscar itens de pedido
+  // 1️⃣ Buscar itens de pedido — Adicionado cliente_id na relação
   let query = supabase
     .from("pedidos_itens")
     .select(`
       id,
       quantidade,
       data_entrega,
-      pedidos:pedido_id ( numero_pedido ),
+      pedidos!inner( numero_pedido, cliente_id ), 
       produtos:produto_id ( codigo, descricao )
     `);
 
+  // Aplicar filtros na Query
+  if (clienteId) query = query.eq("pedidos.cliente_id", clienteId);
   if (produtoId) query = query.eq("produto_id", produtoId);
   if (entregaAte) query = query.lte("data_entrega", entregaAte);
 
@@ -88,7 +91,7 @@ async function carregarPedidosAbertos() {
     return;
   }
 
-  // 2️⃣ Buscar baixas (tabela pode estar vazia, OK)
+  // 2️⃣ Buscar baixas
   const ids = itens.map(i => i.id);
 
   const { data: baixas, error: erroBaixas } = await supabase
@@ -109,7 +112,7 @@ async function carregarPedidosAbertos() {
       (mapaBaixas[b.pedido_item_id] || 0) + Number(b.quantidade_baixada || 0);
   });
 
-  // 4️⃣ Calcular saldo
+  // 4️⃣ Calcular saldo e filtrar apenas o que tem saldo > 0
   const abertos = itens
     .map(i => {
       const baixado = mapaBaixas[i.id] || 0;
@@ -126,14 +129,14 @@ async function carregarPedidosAbertos() {
     return;
   }
 
-  // FIFO REAL
+  // Ordenação FIFO (Entrega mais antiga primeiro)
   abertos.sort((a, b) => {
     if (a.data_entrega < b.data_entrega) return -1;
     if (a.data_entrega > b.data_entrega) return 1;
     return Number(a.pedidos.numero_pedido) - Number(b.pedidos.numero_pedido);
   });
 
-  // Render
+  // Renderização final da tabela
   tbody.innerHTML = "";
   abertos.forEach(i => {
     tbody.innerHTML += `
