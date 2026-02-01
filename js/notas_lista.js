@@ -4,148 +4,88 @@ document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
 
-    const role = user.user_metadata?.role || "viewer";
-
-    // Ocultar botão de nova NF para visualizadores
-    if (role === "viewer") {
-        const btnNovaNF = document.getElementById("btnNovaNF");
-        if (btnNovaNF) btnNovaNF.style.display = "none";
-    }
-
     carregarNotas();
 
-    // Exposição global das funções para o HTML
-    window.abrirModalFaturamento = () => {
-        const modal = document.getElementById('modalFaturamento');
-        if (modal) {
-            modal.style.display = 'block';
-            document.getElementById('resFaturamento').style.display = 'none';
-        }
-    };
-
-    window.fecharModalFaturamento = () => {
-        const modal = document.getElementById('modalFaturamento');
-        if (modal) modal.style.display = 'none';
-    };
-
+    // Vinculação Global para o HTML
+    window.abrirModalFaturamento = abrirModalFaturamento;
+    window.fecharModalFaturamento = fecharModalFaturamento;
     window.calcularFaturamento = calcularFaturamento;
+    window.corrigirTotaisNotas = corrigirTotaisNotas; // Função para preencher os zerados
 });
 
-// ===============================================
-//   CÁLCULO DE FATURAMENTO (SOMANDO BOLETOS)
-// ===============================================
-async function calcularFaturamento() {
-    const mes = document.getElementById("fatMes").value;
-    const ano = document.getElementById("fatAno").value;
-    const tipo = document.getElementById("fatTipo").value;
-    const resDiv = document.getElementById("resFaturamento");
-    const valorTotalTxt = document.getElementById("valorTotal");
-
-    resDiv.style.display = "block";
-    valorTotalTxt.innerText = "Calculando faturamento...";
-
-    // Define o intervalo baseado na data_nf solicitada
-    const dataInicio = `${ano}-${mes}-01`;
-    const dataFim = `${ano}-${mes}-${new Date(ano, mes, 0).getDate()}`;
-
-    try {
-        // 1. Busca as notas fiscais emitidas no mês selecionado
-        let queryNF = supabase.from("notas_fiscais")
-            .select("id, numero_nf")
-            .gte("data_nf", dataInicio)
-            .lte("data_nf", dataFim);
-        
-        if (tipo === "com_nf") {
-            queryNF = queryNF.not("numero_nf", "eq", "Sem NF");
-        } else if (tipo === "sem_nf") {
-            queryNF = queryNF.eq("numero_nf", "Sem NF");
-        }
-
-        const { data: notas, error: errNF } = await queryNF;
-        if (errNF) throw errNF;
-
-        if (!notas || notas.length === 0) {
-            valorTotalTxt.innerText = "R$ 0,00";
-            return;
-        }
-
-        // Criamos um array com os IDs das notas para buscar os boletos de uma vez só
-        const idsNotas = notas.map(n => n.id);
-
-        // 2. Busca todos os boletos vinculados a essas notas (conforme o print)
-        const { data: boletos, error: errBol } = await supabase
-            .from("boletos")
-            .select("valor")
-            .in("nota_id", idsNotas);
-
-        if (errBol) throw errBol;
-
-        // 3. Soma o valor de todos os boletos encontrados
-        const totalFaturamento = boletos.reduce((acc, boleto) => {
-            return acc + (parseFloat(boleto.valor) || 0);
-        }, 0);
-
-        // 4. Exibe o resultado com formatação amigável
-        valorTotalTxt.innerHTML = `
-            <span style="color: #10b981; font-weight: bold; font-size: 1.4rem;">
-                ${totalFaturamento.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-            </span>
-        `;
-
-    } catch (err) {
-        console.error("Erro no faturamento:", err);
-        valorTotalTxt.innerText = "Erro ao processar dados.";
-    }
-}
-
-// ===============================================
-//   LISTAGEM DE NOTAS FISCAIS
-// ===============================================
 async function carregarNotas() {
     const tbody = document.getElementById("listaNotas");
     if (!tbody) return;
 
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: #64748b;">Carregando notas...</td></tr>`;
-
+    // Buscamos a coluna 'total' que agora você vai usar
     const { data, error } = await supabase
         .from("notas_fiscais")
-        .select(`
-            id,
-            numero_nf,
-            data_nf,
-            clientes ( razao_social )
-        `)
+        .select(`id, numero_nf, data_nf, total, clientes(razao_social)`)
         .order("data_nf", { ascending: false });
 
     if (error) {
-        console.error("Erro ao carregar lista:", error);
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: #ef4444;">Erro ao carregar dados.</td></tr>`;
-        return;
-    }
-
-    if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: #64748b;">Nenhuma nota encontrada.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5">Erro ao carregar dados.</td></tr>`;
         return;
     }
 
     tbody.innerHTML = "";
     data.forEach(nf => {
+        const valorFormatado = (nf.total || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+        
         const tr = document.createElement("tr");
         tr.innerHTML = `
             <td>${nf.numero_nf}</td>
             <td>${nf.clientes?.razao_social ?? "-"}</td>
-            <td>${formatarData(nf.data_nf)}</td>
-            <td><button class="btn-secundario" onclick="verNF(${nf.id})">Ver</button></td>
+            <td>${new Date(nf.data_nf).toLocaleDateString("pt-BR", {timeZone: "UTC"})}</td>
+            <td style="font-weight: bold; color: #10b981;">${valorFormatado}</td>
+            <td><button class="btn-secundario" onclick="window.location.href='notas_ver.html?id=${nf.id}'">Ver</button></td>
         `;
         tbody.appendChild(tr);
     });
 }
 
-function formatarData(d) {
-    if (!d) return "-";
-    return new Date(d).toLocaleDateString("pt-BR", { timeZone: "UTC" });
+// FUNÇÃO PARA CORRIGIR OS TOTAIS ZERADOS NO BANCO
+async function corrigirTotaisNotas() {
+    if (!confirm("Deseja somar os boletos e atualizar o total de todas as notas agora?")) return;
+
+    const { data: notas } = await supabase.from("notas_fiscais").select("id");
+
+    for (const nf of notas) {
+        const { data: boletos } = await supabase.from("boletos").select("valor").eq("nota_id", nf.id);
+        const soma = boletos.reduce((acc, b) => acc + (parseFloat(b.valor) || 0), 0);
+
+        await supabase.from("notas_fiscais").update({ total: soma }).eq("id", nf.id);
+    }
+
+    alert("Totais atualizados com sucesso!");
+    carregarNotas();
 }
 
-window.verNF = (id) => {
-    window.location.href = `notas_ver.html?id=${id}`;
-};
+// LÓGICA DO FATURAMENTO MENSAL (Lendo a coluna total corrigida)
+async function calcularFaturamento() {
+    const mes = document.getElementById("fatMes").value;
+    const ano = document.getElementById("fatAno").value;
+    const tipo = document.getElementById("fatTipo").value;
+    const valorTotalTxt = document.getElementById("valorTotal");
+
+    document.getElementById("resFaturamento").style.display = "block";
+    valorTotalTxt.innerText = "Calculando...";
+
+    const dataInicio = `${ano}-${mes}-01`;
+    const dataFim = `${ano}-${mes}-${new Date(ano, mes, 0).getDate()}`;
+
+    let query = supabase.from("notas_fiscais").select("total").gte("data_nf", dataInicio).lte("data_nf", dataFim);
+
+    if (tipo === "com_nf") query = query.not("numero_nf", "eq", "Sem NF");
+    else if (tipo === "sem_nf") query = query.eq("numero_nf", "Sem NF");
+
+    const { data, error } = await query;
+
+    if (error) {
+        valorTotalTxt.innerText = "Erro ao buscar.";
+        return;
+    }
+
+    const totalGeral = data.reduce((acc, nf) => acc + (parseFloat(nf.total) || 0), 0);
+    valorTotalTxt.innerText = totalGeral.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
