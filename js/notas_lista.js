@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // ===============================================
-//   CÁLCULO DE FATURAMENTO (VIA TABELA BOLETOS)
+//   CÁLCULO DE FATURAMENTO (SOMANDO BOLETOS)
 // ===============================================
 async function calcularFaturamento() {
     const mes = document.getElementById("fatMes").value;
@@ -42,13 +42,14 @@ async function calcularFaturamento() {
     const valorTotalTxt = document.getElementById("valorTotal");
 
     resDiv.style.display = "block";
-    valorTotalTxt.innerText = "Calculando valores...";
+    valorTotalTxt.innerText = "Calculando faturamento...";
 
+    // Intervalo de data baseado na data_nf
     const dataInicio = `${ano}-${mes}-01`;
     const dataFim = `${ano}-${mes}-${new Date(ano, mes, 0).getDate()}`;
 
     try {
-        // 1. Buscar as notas fiscais do período para obter os IDs
+        // 1. Busca as notas fiscais do período
         let queryNF = supabase.from("notas_fiscais")
             .select("id, numero_nf")
             .gte("data_nf", dataInicio)
@@ -64,41 +65,39 @@ async function calcularFaturamento() {
         if (errNF) throw errNF;
 
         if (!notas || notas.length === 0) {
-            valorTotalTxt.innerHTML = "R$ 0,00";
+            valorTotalTxt.innerText = "R$ 0,00";
             return;
         }
 
-        // Pegamos todos os IDs das notas encontradas
         const idsNotas = notas.map(n => n.id);
 
-        // 2. Buscar e somar os boletos vinculados a esses IDs
-        // NOTA: Certifique-se que o nome da coluna na tabela boletos é 'nota_id'
+        // 2. Busca todos os boletos vinculados a essas notas
+        // No print, vemos que boletos pertencem a uma nota específica.
         const { data: boletos, error: errBol } = await supabase
             .from("boletos")
-            .select("valor")
+            .select("valor, nota_id")
             .in("nota_id", idsNotas);
 
         if (errBol) throw errBol;
 
-        // Soma todos os valores dos boletos encontrados
-        const totalGeral = boletos.reduce((acc, b) => {
-            return acc + (parseFloat(b.valor) || 0);
+        // 3. Soma o valor de todos os boletos encontrados
+        const totalFaturamento = boletos.reduce((acc, boleto) => {
+            return acc + (parseFloat(boleto.valor) || 0);
         }, 0);
 
-        // Exibe o resultado formatado
-        valorTotalTxt.innerHTML = `<strong style="color: #10b981; font-size: 1.25rem;">${totalGeral.toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL"
-        })}</strong>`;
+        // 4. Exibe o resultado final
+        valorTotalTxt.innerHTML = `<span style="color: #10b981; font-weight: bold; font-size: 1.4rem;">
+            ${totalFaturamento.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+        </span>`;
 
     } catch (err) {
-        console.error("Erro no cálculo:", err);
-        valorTotalTxt.innerText = "Erro ao processar valores.";
+        console.error("Erro no faturamento:", err);
+        valorTotalTxt.innerText = "Erro ao processar dados.";
     }
 }
 
 // ===============================================
-//   LISTAGEM DE NOTAS NA TABELA PRINCIPAL
+//   CARREGAR LISTAGEM GERAL
 // ===============================================
 async function carregarNotas() {
     const tbody = document.getElementById("listaNotas");
@@ -112,32 +111,21 @@ async function carregarNotas() {
         .order("data_nf", { ascending: false });
 
     if (error) {
-        console.error("Erro ao listar:", error);
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: red;">Erro ao carregar dados.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:red;">Erro ao carregar lista.</td></tr>`;
         return;
     }
 
     tbody.innerHTML = "";
-    if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Nenhuma nota fiscal lançada.</td></tr>`;
-        return;
-    }
-
     data.forEach(nf => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
             <td>${nf.numero_nf}</td>
             <td>${nf.clientes?.razao_social ?? "-"}</td>
-            <td>${formatarData(nf.data_nf)}</td>
+            <td>${new Date(nf.data_nf).toLocaleDateString("pt-BR", { timeZone: "UTC" })}</td>
             <td><button class="btn-secundario" onclick="verNF(${nf.id})">Ver</button></td>
         `;
         tbody.appendChild(tr);
     });
-}
-
-function formatarData(d) {
-    if (!d) return "-";
-    return new Date(d).toLocaleDateString("pt-BR", { timeZone: "UTC" });
 }
 
 window.verNF = (id) => {
