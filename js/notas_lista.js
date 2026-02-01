@@ -6,7 +6,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const role = user.user_metadata?.role || "viewer";
 
-    // CONTROLE DE ACESSO: Esconde botão de incluir para visualizadores
     if (role === "viewer") {
         const btnNova = document.getElementById("linkNovaNF");
         if (btnNova) btnNova.style.display = "none";
@@ -14,10 +13,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     carregarNotas(role);
 
-    // Funções Globais expostas para o HTML
     window.abrirModalFaturamento = () => { 
         document.getElementById('modalFaturamento').style.display='block'; 
-        document.getElementById('resFaturamento').style.display='none'; // Limpa resultado anterior
+        document.getElementById('resFaturamento').style.display='none';
     };
     window.fecharModalFaturamento = () => { document.getElementById('modalFaturamento').style.display='none'; };
     window.fecharModalEdicao = () => { document.getElementById('modalEditar').style.display='none'; };
@@ -31,7 +29,7 @@ async function carregarNotas(role) {
     const tbody = document.getElementById("listaNotas");
     try {
         const { data, error } = await supabase.from("notas_fiscais")
-            .select(`id, numero_nf, data_nf, total, clientes ( razao_social )`)
+            .select(`id, numero_nf, tipo, data_nf, total, clientes ( razao_social )`)
             .order("data_nf", { ascending: false });
 
         if (error) throw error;
@@ -40,13 +38,14 @@ async function carregarNotas(role) {
         data.forEach(nf => {
             const tr = document.createElement("tr");
             
-            // Botão EDITAR aparece apenas para não-viewers
+            const corTipo = nf.tipo === "NF" ? "#0ea5e9" : "#94a3b8";
             const btnEditarHTML = role !== "viewer" 
-                ? `<button class="btn-primario" style="background:#f59e0b;" onclick="editarNF(${nf.id}, '${nf.numero_nf}', ${nf.total || 0})">Editar</button>`
+                ? `<button class="btn-primario" style="background:#f59e0b;" onclick="editarNF(${nf.id}, '${nf.numero_nf}', '${nf.tipo}', ${nf.total || 0})">Editar</button>`
                 : "";
 
             tr.innerHTML = `
                 <td>${nf.numero_nf}</td>
+                <td><span class="tag-tipo" style="background: ${corTipo}; color: white;">${nf.tipo || 'NF'}</span></td>
                 <td>${nf.clientes?.razao_social || "N/A"}</td>
                 <td>${new Date(nf.data_nf).toLocaleDateString("pt-BR", {timeZone: "UTC"})}</td>
                 <td style="font-weight:bold; color:#10b981;">
@@ -62,13 +61,14 @@ async function carregarNotas(role) {
             tbody.appendChild(tr);
         });
     } catch (err) {
-        tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar dados.</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='6'>Erro ao carregar dados.</td></tr>";
     }
 }
 
-function editarNF(id, numero, total) {
+function editarNF(id, numero, tipo, total) {
     document.getElementById('editId').value = id;
     document.getElementById('editNumero').value = numero;
+    document.getElementById('editTipo').value = tipo || "NF";
     document.getElementById('editTotal').value = total;
     document.getElementById('modalEditar').style.display = 'block';
 }
@@ -76,54 +76,52 @@ function editarNF(id, numero, total) {
 async function salvarEdicao() {
     const id = document.getElementById('editId').value;
     const numero = document.getElementById('editNumero').value;
+    const tipo = document.getElementById('editTipo').value;
     const total = parseFloat(document.getElementById('editTotal').value);
 
     const { error } = await supabase.from("notas_fiscais")
-        .update({ numero_nf: numero, total: total })
+        .update({ numero_nf: numero, tipo: tipo, total: total })
         .eq("id", id);
 
     if (error) {
         alert("Erro ao atualizar!");
     } else {
         fecharModalEdicao();
-        location.reload(); // Recarrega para atualizar a lista
+        location.reload();
     }
 }
 
 async function calcularFaturamento() {
     const mes = document.getElementById("fatMes").value;
     const ano = document.getElementById("fatAno").value;
+    const tipoFiltro = document.getElementById("fatTipo").value;
     const resDiv = document.getElementById("resFaturamento");
     const valorTxt = document.getElementById("valorTotalTxt");
 
-    // Formata o intervalo de datas do mês (YYYY-MM-DD)
     const dataInicio = `${ano}-${mes}-01`;
     const ultimoDia = new Date(ano, parseInt(mes), 0).getDate();
     const dataFim = `${ano}-${mes}-${ultimoDia}`;
 
     try {
-        const { data, error } = await supabase
-            .from("notas_fiscais")
-            .select("total")
+        let query = supabase.from("notas_fiscais").select("total, tipo")
             .gte("data_nf", dataInicio)
             .lte("data_nf", dataFim);
 
+        // Aplica filtro de tipo se não for "TODOS"
+        if (tipoFiltro !== "TODOS") {
+            query = query.eq("tipo", tipoFiltro);
+        }
+
+        const { data, error } = await query;
         if (error) throw error;
 
-        // Soma robusta tratando possíveis valores nulos ou strings
-        const totalGeral = data.reduce((acc, item) => {
-            const v = parseFloat(item.total) || 0;
-            return acc + v;
-        }, 0);
+        const totalGeral = data.reduce((acc, item) => acc + (parseFloat(item.total) || 0), 0);
 
         resDiv.style.display = "block";
-        valorTxt.innerText = totalGeral.toLocaleString("pt-BR", { 
-            style: "currency", 
-            currency: "BRL" 
-        });
+        valorTxt.innerText = totalGeral.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+        document.getElementById("labelFaturamento").innerText = `Total (${tipoFiltro}):`;
 
     } catch (err) {
-        console.error("Erro ao calcular:", err);
-        alert("Não foi possível calcular o faturamento.");
+        alert("Erro ao calcular faturamento.");
     }
 }
