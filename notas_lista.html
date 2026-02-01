@@ -3,108 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notas Fiscais</title>
+    <title>Lançar Nota Fiscal</title>
     <link rel="stylesheet" href="css/global.css">
-    <link rel="stylesheet" href="css/pedidos_lista.css">
-    <style>
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); }
-        .modal-content { background-color: #1e293b; margin: 5% auto; padding: 20px; border: 1px solid #334155; width: 400px; border-radius: 8px; color: white; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-size: 14px; }
-        .form-group input, .form-group select { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #334155; background: #0f172a; color: white; }
-        .btn-acao { width: 100%; padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        .tag-tipo { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
-        @media print { header, .acoes, button, th:last-child, td:last-child, .modal { display:none !important; } }
-    </style>
+    <link rel="stylesheet" href="css/clientes_novo.css">
 </head>
 <body>
     <header class="topbar">
-        <a href="dashboard.html"><button class="btn-voltar">⬅ Voltar ao Menu</button></a>
-        <h1 class="topbar-title">Notas Fiscais</h1>
+        <a href="notas_lista.html"><button class="btn-voltar">⬅ Voltar</button></a>
+        <h1 class="topbar-title">Lançar Nova NF</h1>
     </header>
 
     <div class="container">
-        <section class="card">
-            <div class="acoes" style="display: flex; gap: 10px; margin-bottom: 20px;">
-                <a href="notas_nova.html" id="linkNovaNF"><button class="btn-primario">Lançar Nova NF</button></a>
-                <button class="btn-primario" style="background-color: #10b981;" onclick="abrirModalFaturamento()">Faturamento Mensal</button>
+        <form id="formNota" class="card">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="numero_nf">Número da Nota/Documento</label>
+                    <input type="text" id="numero_nf" required placeholder="Ex: 1234">
+                </div>
+
+                <div class="form-group">
+                    <label for="tipo">Tipo de Registro</label>
+                    <select id="tipo" required>
+                        <option value="NF">Com NF (Fiscal)</option>
+                        <option value="Sem NF">Sem NF (Simples Conferência)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="cliente_id">Cliente</label>
+                    <select id="cliente_id" required>
+                        <option value="">Carregando clientes...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="data_nf">Data da Emissão</label>
+                    <input type="date" id="data_nf" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="total">Valor Total (R$)</label>
+                    <input type="number" id="total" step="0.01" required placeholder="0,00">
+                </div>
             </div>
 
-            <table class="tabela">
-                <thead>
-                    <tr>
-                        <th>Número</th>
-                        <th>Tipo</th>
-                        <th>Cliente</th>
-                        <th>Data</th>
-                        <th>Valor Total</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody id="listaNotas">
-                    <tr><td colspan="6" style="text-align:center;">Carregando notas...</td></tr>
-                </tbody>
-            </table>
-        </section>
+            <div class="form-acoes">
+                <button type="submit" class="btn-primario">Salvar Nota</button>
+                <button type="reset" class="btn-secundario">Limpar</button>
+            </div>
+        </form>
     </div>
 
-    <div id="modalEditar" class="modal">
-        <div class="modal-content">
-            <h3>Editar Dados</h3>
-            <input type="hidden" id="editId">
-            <div class="form-group">
-                <label>Número</label>
-                <input type="text" id="editNumero">
-            </div>
-            <div class="form-group">
-                <label>Tipo</label>
-                <select id="editTipo">
-                    <option value="NF">Com NF</option>
-                    <option value="Sem NF">Sem NF</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Valor Total (R$)</label>
-                <input type="number" id="editTotal" step="0.01">
-            </div>
-            <button class="btn-acao" style="background: #10b981;" onclick="salvarEdicao()">Salvar Alterações</button>
-            <button class="btn-acao" style="background: #64748b;" onclick="fecharModalEdicao()">Cancelar</button>
-        </div>
-    </div>
-
-    <div id="modalFaturamento" class="modal">
-        <div class="modal-content">
-            <h3>Faturamento Mensal</h3>
-            <div class="form-group">
-                <label>Tipo de Filtro</label>
-                <select id="fatTipo">
-                    <option value="TODOS">Todos (NF + Sem NF)</option>
-                    <option value="NF">Apenas NF</option>
-                    <option value="Sem NF">Apenas Sem NF</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Mês</label>
-                <select id="fatMes">
-                    <option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option>
-                    <option value="04">Abril</option><option value="05">Maio</option><option value="06">Junho</option>
-                    <option value="07">Julho</option><option value="08">Agosto</option><option value="09">Setembro</option>
-                    <option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Ano</label>
-                <input type="number" id="fatAno" value="2026">
-            </div>
-            <button class="btn-acao" style="background: #0ea5e9;" onclick="calcularFaturamento()">Calcular Total</button>
-            <button class="btn-acao" style="background: #64748b;" onclick="fecharModalFaturamento()">Fechar</button>
-            <div id="resFaturamento" style="display:none; margin-top:20px; text-align:center;">
-                <span id="labelFaturamento">Total Faturado:</span>
-                <h2 id="valorTotalTxt" style="color:#10b981; margin-top:5px;">R$ 0,00</h2>
-            </div>
-        </div>
-    </div>
-
-    <script type="module" src="./js/notas_lista.js"></script>
+    <script type="module" src="./js/notas_nova.js"></script>
 </body>
 </html>
