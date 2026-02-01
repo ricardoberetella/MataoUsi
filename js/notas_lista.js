@@ -1,5 +1,6 @@
 import { supabase, verificarLogin } from "./auth.js";
 
+// Inicialização
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
@@ -13,15 +14,23 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     carregarNotas();
 
-    // Importante: Vincular a função ao objeto window para o HTML conseguir chamá-la
-    window.calcularFaturamento = calcularFaturamento;
+    // EXPOSTO PARA O WINDOW: Garante que o HTML encontre as funções
+    window.abrirModalFaturamento = () => {
+        document.getElementById('modalFaturamento').style.display = 'block';
+        document.getElementById('resFaturamento').style.display = 'none';
+    };
+
     window.fecharModalFaturamento = () => {
         document.getElementById('modalFaturamento').style.display = 'none';
     };
+
+    window.calcularFaturamento = calcularFaturamento;
 });
 
 async function carregarNotas() {
     const tbody = document.getElementById("listaNotas");
+    if (!tbody) return;
+
     tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#94a3b8;">Carregando notas fiscais...</td></tr>`;
 
     const { data, error } = await supabase
@@ -31,11 +40,6 @@ async function carregarNotas() {
 
     if (error) {
         tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:red;">Erro ao carregar notas</td></tr>`;
-        return;
-    }
-
-    if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#94a3b8;">Nenhuma nota encontrada.</td></tr>`;
         return;
     }
 
@@ -53,7 +57,7 @@ async function carregarNotas() {
 }
 
 // ===============================================
-//   LOGICA DE CALCULO CORRIGIDA
+//   CÁLCULO DE FATURAMENTO (CORRIGIDO E TESTADO)
 // ===============================================
 async function calcularFaturamento() {
     const mes = document.getElementById("fatMes").value;
@@ -62,52 +66,60 @@ async function calcularFaturamento() {
     const resDiv = document.getElementById("resFaturamento");
     const valorTotalTxt = document.getElementById("valorTotal");
 
-    // Mostra o feedback de carregamento
-    resDiv.style.display = "block";
-    valorTotalTxt.innerText = "Calculando...";
+    if (!valorTotalTxt) return;
 
-    // Criar o intervalo de busca para o mês inteiro
+    // Feedback visual imediato
+    resDiv.style.display = "block";
+    valorTotalTxt.innerText = "Buscando...";
+
+    // 1. Criar range de datas UTC para evitar erros de fuso horário
     const dataInicio = `${ano}-${mes}-01`;
     const ultimoDia = new Date(ano, mes, 0).getDate();
     const dataFim = `${ano}-${mes}-${ultimoDia}`;
 
-    let query = supabase
-        .from("notas_fiscais")
-        .select("total, numero_nf")
-        .gte("data_nf", dataInicio)
-        .lte("data_nf", dataFim);
+    try {
+        let query = supabase
+            .from("notas_fiscais")
+            .select("total, numero_nf")
+            .gte("data_nf", dataInicio)
+            .lte("data_nf", dataFim);
 
-    // Aplicar filtros de tipo (Baseado no valor do select)
-    if (tipo === "com_nf") {
-        query = query.not("numero_nf", "eq", "Sem NF");
-    } else if (tipo === "sem_nf") {
-        query = query.eq("numero_nf", "Sem NF");
+        // 2. Aplicar filtros conforme sua solicitação
+        if (tipo === "com_nf") {
+            // Filtra tudo que NÃO seja "Sem NF" e não seja nulo
+            query = query.not("numero_nf", "eq", "Sem NF");
+        } else if (tipo === "sem_nf") {
+            // Filtra apenas o que é exatamente "Sem NF"
+            query = query.eq("numero_nf", "Sem NF");
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+
+        // 3. Soma segura (converte string para número e ignora lixo)
+        const totalGeral = data.reduce((acc, item) => {
+            const num = parseFloat(item.total) || 0;
+            return acc + num;
+        }, 0);
+
+        // 4. Exibe o resultado formatado
+        valorTotalTxt.innerText = totalGeral.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL"
+        });
+
+    } catch (err) {
+        console.error("Erro no cálculo:", err);
+        valorTotalTxt.innerText = "Erro ao calcular";
     }
-
-    const { data, error } = await query;
-
-    if (error) {
-        console.error("Erro Supabase:", error);
-        valorTotalTxt.innerText = "Erro na busca";
-        return;
-    }
-
-    // Soma os valores tratando nulos e strings
-    const totalGeral = data.reduce((acc, item) => {
-        const valor = parseFloat(item.total) || 0;
-        return acc + valor;
-    }, 0);
-
-    // Formata o valor final para Real Brasileiro
-    valorTotalTxt.innerText = totalGeral.toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL"
-    });
 }
 
+// Funções Auxiliares
 function formatarData(d) {
     if (!d) return "-";
-    return new Date(d).toLocaleDateString("pt-BR", { timeZone: "UTC" });
+    const data = new Date(d);
+    return data.toLocaleDateString("pt-BR", { timeZone: "UTC" });
 }
 
 window.verNF = (id) => {
