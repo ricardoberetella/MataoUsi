@@ -1,97 +1,77 @@
 import { supabase, verificarLogin } from "./auth.js";
 
-// Captura o ID da URL para saber se é Edição ou Nova Nota
-const urlParams = new URLSearchParams(window.location.search);
-const notaId = urlParams.get('id');
-
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
+    carregarNotas();
 
-    await carregarClientes();
-
-    // Se houver ID na URL, estamos em modo EDIÇÃO
-    if (notaId) {
-        document.querySelector(".topbar-title").innerText = "Editar Nota Fiscal";
-        document.getElementById("btnSalvar").innerText = "Atualizar Nota";
-        await carregarDadosEdicao(notaId);
-    }
+    // Funções Globais
+    window.abrirModalFaturamento = () => { document.getElementById('modalFaturamento').style.display='block'; };
+    window.fecharModalFaturamento = () => { document.getElementById('modalFaturamento').style.display='none'; };
+    window.fecharModalEdicao = () => { document.getElementById('modalEditar').style.display='none'; };
+    window.editarNF = editarNF;
+    window.salvarEdicao = salvarEdicao;
+    window.calcularFaturamento = calcularFaturamento;
 });
 
-async function carregarClientes() {
-    const select = document.getElementById("cliente_id");
-    const { data, error } = await supabase.from("clientes").select("id, razao_social").order("razao_social");
-    
-    if (data) {
-        data.forEach(cliente => {
-            const opt = document.createElement("option");
-            opt.value = cliente.id;
-            opt.text = cliente.razao_social;
-            select.appendChild(opt);
-        });
-    }
+async function carregarNotas() {
+    const tbody = document.getElementById("listaNotas");
+    const { data, error } = await supabase.from("notas_fiscais")
+        .select(`id, numero_nf, data_nf, total, clientes ( razao_social )`)
+        .order("data_nf", { ascending: false });
+
+    if (error) return;
+
+    tbody.innerHTML = "";
+    data.forEach(nf => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${nf.numero_nf}</td>
+            <td>${nf.clientes?.razao_social || "N/A"}</td>
+            <td>${new Date(nf.data_nf).toLocaleDateString("pt-BR", {timeZone: "UTC"})}</td>
+            <td style="font-weight:bold; color:#10b981;">${(nf.total || 0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</td>
+            <td>
+                <button class="btn-primario" style="background:#f59e0b;" onclick="editarNF(${nf.id}, '${nf.numero_nf}', ${nf.total || 0})">Editar</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
-async function carregarDadosEdicao(id) {
-    const { data, error } = await supabase
-        .from("notas_fiscais")
-        .select("*")
-        .eq("id", id)
-        .single();
+function editarNF(id, numero, total) {
+    document.getElementById('editId').value = id;
+    document.getElementById('editNumero').value = numero;
+    document.getElementById('editTotal').value = total;
+    document.getElementById('modalEditar').style.display = 'block';
+}
+
+async function salvarEdicao() {
+    const id = document.getElementById('editId').value;
+    const numero = document.getElementById('editNumero').value;
+    const total = parseFloat(document.getElementById('editTotal').value);
+
+    const { error } = await supabase.from("notas_fiscais")
+        .update({ numero_nf: numero, total: total })
+        .eq("id", id);
 
     if (error) {
-        console.error("Erro ao carregar nota:", error);
-        alert("Erro ao buscar dados da nota.");
-        return;
-    }
-
-    if (data) {
-        document.getElementById("numero_nf").value = data.numero_nf;
-        document.getElementById("cliente_id").value = data.cliente_id;
-        document.getElementById("data_nf").value = data.data_nf;
-        document.getElementById("total").value = data.total || 0;
+        alert("Erro ao salvar!");
+    } else {
+        fecharModalEdicao();
+        carregarNotas();
     }
 }
 
-document.getElementById("formNota").addEventListener("submit", async (e) => {
-    e.preventDefault();
+async function calcularFaturamento() {
+    const mes = document.getElementById("fatMes").value;
+    const ano = document.getElementById("fatAno").value;
+    const dataInicio = `${ano}-${mes}-01`;
+    const dataFim = `${ano}-${mes}-${new Date(ano, mes, 0).getDate()}`;
 
-    const btn = document.getElementById("btnSalvar");
-    btn.disabled = true;
-    btn.innerText = "Salvando...";
+    const { data } = await supabase.from("notas_fiscais")
+        .select("total").gte("data_nf", dataInicio).lte("data_nf", dataFim);
 
-    const dados = {
-        numero_nf: document.getElementById("numero_nf").value,
-        cliente_id: document.getElementById("cliente_id").value,
-        data_nf: document.getElementById("data_nf").value,
-        total: parseFloat(document.getElementById("total").value)
-    };
-
-    try {
-        let erro;
-        if (notaId) {
-            // Lógica de UPDATE
-            const { error } = await supabase
-                .from("notas_fiscais")
-                .update(dados)
-                .eq("id", notaId);
-            erro = error;
-        } else {
-            // Lógica de INSERT
-            const { error } = await supabase
-                .from("notas_fiscais")
-                .insert([dados]);
-            erro = error;
-        }
-
-        if (erro) throw erro;
-
-        alert(notaId ? "Nota atualizada com sucesso!" : "Nota cadastrada com sucesso!");
-        window.location.href = "notas_lista.html";
-
-    } catch (err) {
-        alert("Erro ao salvar: " + err.message);
-        btn.disabled = false;
-        btn.innerText = "Salvar Nota";
-    }
-});
+    const total = data?.reduce((acc, n) => acc + (parseFloat(n.total) || 0), 0) || 0;
+    document.getElementById("resFaturamento").style.display = "block";
+    document.getElementById("valorTotal").innerText = total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
