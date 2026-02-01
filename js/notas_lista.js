@@ -4,159 +4,94 @@ document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
 
-    const role = user.user_metadata?.role || "viewer";
-
-    if (role === "viewer") {
-        const btnNovaNF = document.getElementById("btnNovaNF");
-        if (btnNovaNF) btnNovaNF.style.display = "none";
-    }
-
     carregarNotas();
 
-    // Vincula as funções ao objeto window para o HTML conseguir acessá-las
+    // Vinculação Global
     window.abrirModalFaturamento = () => {
-        const modal = document.getElementById('modalFaturamento');
-        if (modal) {
-            modal.style.display = 'block';
-            document.getElementById('resFaturamento').style.display = 'none';
-        }
+        document.getElementById('modalFaturamento').style.display = 'block';
+        document.getElementById('resFaturamento').style.display = 'none';
     };
-
     window.fecharModalFaturamento = () => {
-        const modal = document.getElementById('modalFaturamento');
-        if (modal) modal.style.display = 'none';
+        document.getElementById('modalFaturamento').style.display = 'none';
     };
-
     window.calcularFaturamento = calcularFaturamento;
 });
 
-// ===============================================
-//   LÓGICA DE CÁLCULO DE FATURAMENTO
-// ===============================================
 async function calcularFaturamento() {
     const mes = document.getElementById("fatMes").value;
     const ano = document.getElementById("fatAno").value;
     const tipo = document.getElementById("fatTipo").value;
-    const resDiv = document.getElementById("resFaturamento");
     const valorTotalTxt = document.getElementById("valorTotal");
+    const resDiv = document.getElementById("resFaturamento");
 
     resDiv.style.display = "block";
-    valorTotalTxt.innerText = "Processando...";
+    valorTotalTxt.innerText = "Calculando...";
 
-    // Define o intervalo baseado na data_nf
     const dataInicio = `${ano}-${mes}-01`;
-    const ultimoDia = new Date(ano, mes, 0).getDate();
-    const dataFim = `${ano}-${mes}-${ultimoDia}`;
+    const dataFim = `${ano}-${mes}-${new Date(ano, mes, 0).getDate()}`;
 
     try {
-        console.log(`Buscando NFs entre ${dataInicio} e ${dataFim}`);
-
-        // 1. Busca as notas fiscais na tabela notas_fiscais
-        let queryNotas = supabase
-            .from("notas_fiscais")
-            .select("numero_nf")
-            .gte("data_nf", dataInicio)
-            .lte("data_nf", dataFim);
-
-        if (tipo === "com_nf") {
-            queryNotas = queryNotas.not("numero_nf", "eq", "Sem NF");
-        } else if (tipo === "sem_nf") {
-            queryNotas = queryNotas.eq("numero_nf", "Sem NF");
-        }
-
-        const { data: notas, error: erroNotas } = await queryNotas;
+        // 1. Buscar Notas Fiscais
+        let queryNF = supabase.from("notas_fiscais").select("numero_nf").gte("data_nf", dataInicio).lte("data_nf", dataFim);
         
-        if (erroNotas) throw erroNotas;
+        if (tipo === "com_nf") queryNF = queryNF.not("numero_nf", "eq", "Sem NF");
+        else if (tipo === "sem_nf") queryNF = queryNF.eq("numero_nf", "Sem NF");
+
+        const { data: notas, error: errNF } = await queryNF;
+        if (errNF) throw errNF;
 
         if (!notas || notas.length === 0) {
-            console.warn("Nenhuma nota fiscal encontrada para este período.");
-            valorTotalTxt.innerText = "R$ 0,00 (Nenhuma NF)";
+            valorTotalTxt.innerText = "R$ 0,00";
             return;
         }
 
-        // Criamos uma lista limpa com os números das NFs (Ex: ["101", "102", "SEM NF"])
-        const listaNumerosNF = notas.map(n => String(n.numero_nf).trim().toUpperCase());
-        console.log("Números de NF detectados:", listaNumerosNF);
+        // Criar lista de números e remover zeros à esquerda para comparação flexível
+        const listaNumeros = notas.map(n => n.numero_nf.toString().replace(/^0+/, '').trim().toUpperCase());
 
-        // 2. Busca os dados na tabela contas_receber
-        const { data: contas, error: erroContas } = await supabase
-            .from("contas_receber")
-            .select("descricao, valor");
+        // 2. Buscar Contas a Receber (Pegamos tudo para cruzar no JS)
+        const { data: contas, error: errFin } = await supabase.from("contas_receber").select("descricao, valor");
+        if (errFin) throw errFin;
 
-        if (erroContas) throw erroContas;
-
-        // 3. Soma cruzada: Verifica se o número da NF está dentro da descrição da conta
-        let totalGeral = 0;
-        let itensSomados = 0;
-
-        contas.forEach(item => {
-            const desc = item.descricao ? String(item.descricao).toUpperCase() : "";
+        // 3. Soma com Cruzamento Inteligente
+        let total = 0;
+        contas.forEach(conta => {
+            const desc = (conta.descricao || "").toUpperCase();
             
-            const encontrouMatch = listaNumerosNF.some(num => {
-                if (num === "SEM NF") {
-                    return desc === "SEM NF"; // Para "Sem NF", a descrição deve ser exata
-                }
-                // Para números de NF, verifica se o número está contido na descrição (Ex: "Boleto NF 101")
+            const match = listaNumeros.some(num => {
+                if (num === "SEM NF") return desc.includes("SEM NF");
+                // Verifica se o número da NF (sem zeros) aparece na descrição
                 return desc.includes(num);
             });
 
-            if (encontrouMatch) {
-                const v = parseFloat(item.valor) || 0;
-                totalGeral += v;
-                itensSomados++;
+            if (match) {
+                total += parseFloat(conta.valor) || 0;
             }
         });
 
-        console.log(`Cálculo finalizado. Itens somados: ${itensSomados}. Total: ${totalGeral}`);
-
-        valorTotalTxt.innerText = totalGeral.toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL"
-        });
+        valorTotalTxt.innerHTML = `<strong style="color: #10b981;">${total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong>`;
 
     } catch (err) {
-        console.error("Erro completo no cálculo:", err);
-        valorTotalTxt.innerText = "Erro ao calcular. Veja o F12.";
+        console.error(err);
+        valorTotalTxt.innerText = "Erro na conexão.";
     }
 }
 
-// ===============================================
-//   CARREGAR LISTAGEM GERAL
-// ===============================================
 async function carregarNotas() {
     const tbody = document.getElementById("listaNotas");
     if (!tbody) return;
-
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Carregando notas...</td></tr>`;
-
-    const { data, error } = await supabase
-        .from("notas_fiscais")
-        .select(`id, numero_nf, data_nf, clientes ( razao_social )`)
-        .order("data_nf", { ascending: false });
-
-    if (error) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:red;">Erro ao carregar dados.</td></tr>`;
-        return;
-    }
-
+    const { data } = await supabase.from("notas_fiscais").select(`id, numero_nf, data_nf, clientes(razao_social)`).order("data_nf", { ascending: false });
+    
     tbody.innerHTML = "";
-    data.forEach(nf => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${nf.numero_nf}</td>
-            <td>${nf.clientes?.razao_social ?? "-"}</td>
-            <td>${formatarData(nf.data_nf)}</td>
-            <td><button class="btn-secundario" onclick="verNF(${nf.id})">Ver</button></td>
-        `;
-        tbody.appendChild(tr);
-    });
+    if (data) {
+        data.forEach(nf => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${nf.numero_nf}</td>
+                <td>${nf.clientes?.razao_social ?? "-"}</td>
+                <td>${new Date(nf.data_nf).toLocaleDateString("pt-BR", {timeZone: "UTC"})}</td>
+                <td><button class="btn-secundario" onclick="window.location.href='notas_ver.html?id=${nf.id}'">Ver</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
 }
-
-function formatarData(d) {
-    if (!d) return "-";
-    return new Date(d).toLocaleDateString("pt-BR", { timeZone: "UTC" });
-}
-
-window.verNF = (id) => {
-    window.location.href = `notas_ver.html?id=${id}`;
-};
