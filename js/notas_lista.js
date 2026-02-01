@@ -13,6 +13,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     carregarNotas();
+
+    // Vincula a função de cálculo ao botão do modal
+    window.calcularFaturamento = calcularFaturamento;
 });
 
 // ===============================================
@@ -77,6 +80,52 @@ async function carregarNotas() {
         `;
 
         tbody.appendChild(tr);
+    });
+}
+
+// ===============================================
+//   LÓGICA DO FATURAMENTO MENSAL
+// ===============================================
+async function calcularFaturamento() {
+    const mes = document.getElementById("fatMes").value;
+    const ano = document.getElementById("fatAno").value;
+    const tipo = document.getElementById("fatTipo").value;
+    const resDiv = document.getElementById("resFaturamento");
+    const valorTotalTxt = document.getElementById("valorTotal");
+
+    valorTotalTxt.innerText = "Calculando...";
+    resDiv.style.display = "block";
+
+    // Define o intervalo de datas (do primeiro ao último dia do mês)
+    const dataInicio = `${ano}-${mes}-01`;
+    const dataFim = new Date(ano, mes, 0).toISOString().split('T')[0];
+
+    let query = supabase
+        .from("notas_fiscais")
+        .select("total, numero_nf")
+        .gte("data_nf", dataInicio)
+        .lte("data_nf", dataFim);
+
+    // Filtro de tipo
+    if (tipo === "com_nf") {
+        query = query.neq("numero_nf", "Sem NF").not("numero_nf", "is", null);
+    } else if (tipo === "sem_nf") {
+        query = query.eq("numero_nf", "Sem NF");
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+        console.error("Erro ao calcular faturamento:", error);
+        valorTotalTxt.innerText = "Erro ao buscar";
+        return;
+    }
+
+    const totalGeral = data.reduce((acc, item) => acc + (parseFloat(item.total) || 0), 0);
+
+    valorTotalTxt.innerText = totalGeral.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
     });
 }
 
