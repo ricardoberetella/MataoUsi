@@ -1,12 +1,10 @@
 import { supabase, verificarLogin } from "./auth.js";
 
-// Inicialização
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
 
     const role = user.user_metadata?.role || "viewer";
-
     if (role === "viewer") {
         const btnNovaNF = document.getElementById("btnNovaNF");
         if (btnNovaNF) btnNovaNF.style.display = "none";
@@ -14,34 +12,92 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     carregarNotas();
 
-    // EXPOSTO PARA O WINDOW: Garante que o HTML encontre as funções
+    // Exposição global das funções do modal
     window.abrirModalFaturamento = () => {
         document.getElementById('modalFaturamento').style.display = 'block';
         document.getElementById('resFaturamento').style.display = 'none';
     };
-
     window.fecharModalFaturamento = () => {
         document.getElementById('modalFaturamento').style.display = 'none';
     };
-
     window.calcularFaturamento = calcularFaturamento;
 });
 
+// ... (função carregarNotas e formatarData permanecem as mesmas) ...
+
+async function calcularFaturamento() {
+    const mes = document.getElementById("fatMes").value;
+    const ano = document.getElementById("fatAno").value;
+    const tipo = document.getElementById("fatTipo").value;
+    const resDiv = document.getElementById("resFaturamento");
+    const valorTotalTxt = document.getElementById("valorTotal");
+
+    resDiv.style.display = "block";
+    valorTotalTxt.innerText = "Calculando boletos...";
+
+    const dataInicio = `${ano}-${mes}-01`;
+    const ultimoDia = new Date(ano, mes, 0).getDate();
+    const dataFim = `${ano}-${mes}-${ultimoDia}`;
+
+    try {
+        // 1. Buscamos as notas do período para filtrar os boletos depois
+        let queryNotas = supabase
+            .from("notas_fiscais")
+            .select("id, numero_nf")
+            .gte("data_nf", dataInicio)
+            .lte("data_nf", dataFim);
+
+        if (tipo === "com_nf") {
+            queryNotas = queryNotas.not("numero_nf", "eq", "Sem NF");
+        } else if (tipo === "sem_nf") {
+            queryNotas = queryNotas.eq("numero_nf", "Sem NF");
+        }
+
+        const { data: notas, error: erroNotas } = await queryNotas;
+        if (erroNotas) throw erroNotas;
+
+        if (!notas || notas.length === 0) {
+            valorTotalTxt.innerText = "R$ 0,00";
+            return;
+        }
+
+        // 2. Extraímos os IDs das notas encontradas
+        const idsNotas = notas.map(n => n.id);
+
+        // 3. Buscamos os BOLETOS vinculados a essas notas
+        const { data: boletos, error: erroBoletos } = await supabase
+            .from("boletos")
+            .select("valor")
+            .in("nota_id", idsNotas); // Assumindo que a coluna de vínculo chama-se nota_id
+
+        if (erroBoletos) throw erroBoletos;
+
+        // 4. Somamos os valores dos boletos
+        const totalGeral = boletos.reduce((acc, b) => {
+            return acc + (parseFloat(b.valor) || 0);
+        }, 0);
+
+        valorTotalTxt.innerText = totalGeral.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL"
+        });
+
+    } catch (err) {
+        console.error("Erro detalhado:", err);
+        valorTotalTxt.innerText = "Erro ao buscar boletos";
+    }
+}
+
 async function carregarNotas() {
     const tbody = document.getElementById("listaNotas");
-    if (!tbody) return;
-
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#94a3b8;">Carregando notas fiscais...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Carregando...</td></tr>`;
 
     const { data, error } = await supabase
         .from("notas_fiscais")
-        .select(`id, numero_nf, data_nf, total, clientes ( razao_social )`)
+        .select(`id, numero_nf, data_nf, clientes ( razao_social )`)
         .order("data_nf", { ascending: false });
 
-    if (error) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:red;">Erro ao carregar notas</td></tr>`;
-        return;
-    }
+    if (error) return;
 
     tbody.innerHTML = "";
     data.forEach(nf => {
@@ -56,70 +112,9 @@ async function carregarNotas() {
     });
 }
 
-// ===============================================
-//   CÁLCULO DE FATURAMENTO (CORRIGIDO E TESTADO)
-// ===============================================
-async function calcularFaturamento() {
-    const mes = document.getElementById("fatMes").value;
-    const ano = document.getElementById("fatAno").value;
-    const tipo = document.getElementById("fatTipo").value;
-    const resDiv = document.getElementById("resFaturamento");
-    const valorTotalTxt = document.getElementById("valorTotal");
-
-    if (!valorTotalTxt) return;
-
-    // Feedback visual imediato
-    resDiv.style.display = "block";
-    valorTotalTxt.innerText = "Buscando...";
-
-    // 1. Criar range de datas UTC para evitar erros de fuso horário
-    const dataInicio = `${ano}-${mes}-01`;
-    const ultimoDia = new Date(ano, mes, 0).getDate();
-    const dataFim = `${ano}-${mes}-${ultimoDia}`;
-
-    try {
-        let query = supabase
-            .from("notas_fiscais")
-            .select("total, numero_nf")
-            .gte("data_nf", dataInicio)
-            .lte("data_nf", dataFim);
-
-        // 2. Aplicar filtros conforme sua solicitação
-        if (tipo === "com_nf") {
-            // Filtra tudo que NÃO seja "Sem NF" e não seja nulo
-            query = query.not("numero_nf", "eq", "Sem NF");
-        } else if (tipo === "sem_nf") {
-            // Filtra apenas o que é exatamente "Sem NF"
-            query = query.eq("numero_nf", "Sem NF");
-        }
-
-        const { data, error } = await query;
-
-        if (error) throw error;
-
-        // 3. Soma segura (converte string para número e ignora lixo)
-        const totalGeral = data.reduce((acc, item) => {
-            const num = parseFloat(item.total) || 0;
-            return acc + num;
-        }, 0);
-
-        // 4. Exibe o resultado formatado
-        valorTotalTxt.innerText = totalGeral.toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL"
-        });
-
-    } catch (err) {
-        console.error("Erro no cálculo:", err);
-        valorTotalTxt.innerText = "Erro ao calcular";
-    }
-}
-
-// Funções Auxiliares
 function formatarData(d) {
     if (!d) return "-";
-    const data = new Date(d);
-    return data.toLocaleDateString("pt-BR", { timeZone: "UTC" });
+    return new Date(d).toLocaleDateString("pt-BR", { timeZone: "UTC" });
 }
 
 window.verNF = (id) => {
