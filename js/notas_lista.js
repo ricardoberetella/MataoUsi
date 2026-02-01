@@ -3,12 +3,21 @@ import { supabase, verificarLogin } from "./auth.js";
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
+
+    // Respeitar permissões para o botão de Nova NF
+    const role = user.user_metadata?.role || "viewer";
+    if (role === "viewer") {
+        const btn = document.getElementById("btnNovaNF");
+        if (btn) btn.style.display = "none";
+    }
+
     carregarNotas();
 
-    // Funções Globais
+    // Exporta funções para o HTML
     window.abrirModalFaturamento = () => { document.getElementById('modalFaturamento').style.display='block'; };
     window.fecharModalFaturamento = () => { document.getElementById('modalFaturamento').style.display='none'; };
     window.fecharModalEdicao = () => { document.getElementById('modalEditar').style.display='none'; };
+    window.verNF = (id) => { window.location.href = `notas_ver.html?id=${id}`; };
     window.editarNF = editarNF;
     window.salvarEdicao = salvarEdicao;
     window.calcularFaturamento = calcularFaturamento;
@@ -16,26 +25,35 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 async function carregarNotas() {
     const tbody = document.getElementById("listaNotas");
-    const { data, error } = await supabase.from("notas_fiscais")
-        .select(`id, numero_nf, data_nf, total, clientes ( razao_social )`)
-        .order("data_nf", { ascending: false });
+    try {
+        const { data, error } = await supabase.from("notas_fiscais")
+            .select(`id, numero_nf, data_nf, total, clientes ( razao_social )`)
+            .order("data_nf", { ascending: false });
 
-    if (error) return;
+        if (error) throw error;
 
-    tbody.innerHTML = "";
-    data.forEach(nf => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${nf.numero_nf}</td>
-            <td>${nf.clientes?.razao_social || "N/A"}</td>
-            <td>${new Date(nf.data_nf).toLocaleDateString("pt-BR", {timeZone: "UTC"})}</td>
-            <td style="font-weight:bold; color:#10b981;">${(nf.total || 0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</td>
-            <td>
-                <button class="btn-primario" style="background:#f59e0b;" onclick="editarNF(${nf.id}, '${nf.numero_nf}', ${nf.total || 0})">Editar</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
+        tbody.innerHTML = "";
+        data.forEach(nf => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${nf.numero_nf}</td>
+                <td>${nf.clientes?.razao_social || "N/A"}</td>
+                <td>${new Date(nf.data_nf).toLocaleDateString("pt-BR", {timeZone: "UTC"})}</td>
+                <td style="font-weight:bold; color:#10b981;">
+                    ${(nf.total || 0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}
+                </td>
+                <td>
+                    <div style="display: flex; gap: 5px; justify-content: center;">
+                        <button class="btn-secundario" onclick="verNF(${nf.id})">Ver</button>
+                        <button class="btn-primario" style="background:#f59e0b;" onclick="editarNF(${nf.id}, '${nf.numero_nf}', ${nf.total || 0})">Editar</button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (err) {
+        tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar dados.</td></tr>";
+    }
 }
 
 function editarNF(id, numero, total) {
@@ -55,7 +73,7 @@ async function salvarEdicao() {
         .eq("id", id);
 
     if (error) {
-        alert("Erro ao salvar!");
+        alert("Erro ao atualizar!");
     } else {
         fecharModalEdicao();
         carregarNotas();
@@ -65,13 +83,20 @@ async function salvarEdicao() {
 async function calcularFaturamento() {
     const mes = document.getElementById("fatMes").value;
     const ano = document.getElementById("fatAno").value;
+    const resDiv = document.getElementById("resFaturamento");
+    const valorTxt = document.getElementById("valorTotalTxt");
+
     const dataInicio = `${ano}-${mes}-01`;
     const dataFim = `${ano}-${mes}-${new Date(ano, mes, 0).getDate()}`;
 
-    const { data } = await supabase.from("notas_fiscais")
-        .select("total").gte("data_nf", dataInicio).lte("data_nf", dataFim);
+    const { data, error } = await supabase.from("notas_fiscais")
+        .select("total")
+        .gte("data_nf", dataInicio)
+        .lte("data_nf", dataFim);
 
-    const total = data?.reduce((acc, n) => acc + (parseFloat(n.total) || 0), 0) || 0;
-    document.getElementById("resFaturamento").style.display = "block";
-    document.getElementById("valorTotal").innerText = total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    if (error) return;
+
+    const total = data.reduce((acc, n) => acc + (parseFloat(n.total) || 0), 0);
+    resDiv.style.display = "block";
+    valorTxt.innerText = total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
