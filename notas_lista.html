@@ -7,13 +7,19 @@
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/pedidos_lista.css">
     <style>
+        .print-header, .print-info, .print-title { display: none; }
+        /* Estilos dos Modais */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); }
         .modal-content { background-color: #1e293b; margin: 5% auto; padding: 20px; border: 1px solid #334155; width: 400px; border-radius: 8px; color: white; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-size: 14px; }
         .form-group input, .form-group select { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #334155; background: #0f172a; color: white; }
         .btn-acao { width: 100%; padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        @media print { .acoes, button, th:last-child, td:last-child, .modal { display:none !important; } }
+        
+        @media print {
+            body { background:#fff !important; }
+            header, .acoes, button, th:last-child, td:last-child, .modal { display:none !important; }
+        }
     </style>
 </head>
 <body>
@@ -50,8 +56,14 @@
         <div class="modal-content">
             <h3>Editar Dados da Nota</h3>
             <input type="hidden" id="editId">
-            <div class="form-group"><label>Número da NF</label><input type="text" id="editNumero"></div>
-            <div class="form-group"><label>Valor Total (R$)</label><input type="number" id="editTotal" step="0.01"></div>
+            <div class="form-group">
+                <label>Número da NF</label>
+                <input type="text" id="editNumero">
+            </div>
+            <div class="form-group">
+                <label>Valor Total (R$)</label>
+                <input type="number" id="editTotal" step="0.01">
+            </div>
             <button class="btn-acao" style="background: #10b981;" onclick="salvarEdicao()">Salvar Alterações</button>
             <button class="btn-acao" style="background: #64748b;" onclick="fecharModalEdicao()">Cancelar</button>
         </div>
@@ -60,17 +72,23 @@
     <div id="modalFaturamento" class="modal">
         <div class="modal-content">
             <h3>Faturamento Mensal</h3>
-            <div class="form-group"><label>Mês</label><select id="fatMes">
-                <option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option>
-                <option value="04">Abril</option><option value="05">Maio</option><option value="06">Junho</option>
-                <option value="07">Julho</option><option value="08">Agosto</option><option value="09">Setembro</option>
-                <option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
-            </select></div>
-            <div class="form-group"><label>Ano</label><input type="number" id="fatAno" value="2026"></div>
+            <div class="form-group">
+                <label>Mês</label>
+                <select id="fatMes">
+                    <option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option>
+                    <option value="04">Abril</option><option value="05">Maio</option><option value="06">Junho</option>
+                    <option value="07">Julho</option><option value="08">Agosto</option><option value="09">Setembro</option>
+                    <option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Ano</label>
+                <input type="number" id="fatAno" value="2026">
+            </div>
             <button class="btn-acao" style="background: #0ea5e9;" onclick="calcularFaturamento()">Calcular Total</button>
             <button class="btn-acao" style="background: #64748b;" onclick="fecharModalFaturamento()">Fechar</button>
             <div id="resFaturamento" style="display:none; margin-top:20px; text-align:center;">
-                <span>Total Faturado:</span>
+                <span>Total Faturado no Mês:</span>
                 <h2 id="valorTotalTxt" style="color:#10b981; margin-top:5px;">R$ 0,00</h2>
             </div>
         </div>
