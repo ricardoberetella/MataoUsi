@@ -12,20 +12,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     carregarNotas();
+
+    // Exporta funções para o escopo global (botões HTML)
+    window.abrirModalFaturamento = abrirModalFaturamento;
+    window.fecharModalFaturamento = fecharModalFaturamento;
+    window.calcularFaturamento = calcularFaturamento;
+    window.verNF = verNF;
+    window.editarNF = editarNF;
 });
 
-// Funções Globais para o HTML
-window.abrirModalFaturamento = () => {
+function abrirModalFaturamento() {
     document.getElementById('modalFaturamento').style.display = 'block';
     document.getElementById('fatAno').value = new Date().getFullYear();
     document.getElementById('resFaturamento').style.display = 'none';
-};
+}
 
-window.fecharModalFaturamento = () => {
+function fecharModalFaturamento() {
     document.getElementById('modalFaturamento').style.display = 'none';
-};
+}
 
-// --- CARREGAR LISTA ---
 async function carregarNotas() {
     const tbody = document.getElementById("listaNotas");
     if (!tbody) return;
@@ -40,7 +45,6 @@ async function carregarNotas() {
 
         tbody.innerHTML = "";
         data.forEach(nf => {
-            // Se o total for nulo/zerado, exibe R$ 0,00 amigavelmente
             const valorTotal = nf.total ? parseFloat(nf.total) : 0;
             
             const tr = document.createElement("tr");
@@ -52,7 +56,10 @@ async function carregarNotas() {
                     ${valorTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                 </td>
                 <td>
-                    <button class="btn-secundario" onclick="verNF(${nf.id})">Ver</button>
+                    <div style="display: flex; gap: 8px; justify-content: center;">
+                        <button class="btn-secundario" onclick="verNF(${nf.id})">Ver</button>
+                        <button class="btn-primario" style="background-color: #f59e0b; border:none;" onclick="editarNF(${nf.id})">Editar</button>
+                    </div>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -63,12 +70,16 @@ async function carregarNotas() {
     }
 }
 
-window.verNF = (id) => {
+function verNF(id) {
     window.location.href = `notas_ver.html?id=${id}`;
-};
+}
 
-// --- CÁLCULO DE FATURAMENTO ---
-window.calcularFaturamento = async () => {
+function editarNF(id) {
+    // Redireciona para a mesma tela de criação, mas passando o ID para carregar os dados
+    window.location.href = `notas_nova.html?id=${id}`;
+}
+
+async function calcularFaturamento() {
     const mes = document.getElementById("fatMes").value;
     const ano = document.getElementById("fatAno").value;
     const tipo = document.getElementById("fatTipo").value;
@@ -82,7 +93,6 @@ window.calcularFaturamento = async () => {
     const dataFim = `${ano}-${mes}-${new Date(ano, mes, 0).getDate()}`;
 
     try {
-        // Buscamos as notas do período
         let query = supabase.from("notas_fiscais").select("id").gte("data_nf", dataInicio).lte("data_nf", dataFim);
         
         if (tipo === "com_nf") query = query.not("numero_nf", "eq", "Sem NF");
@@ -96,7 +106,6 @@ window.calcularFaturamento = async () => {
             return;
         }
 
-        // Somamos os boletos dessas notas para ser 100% fiel ao print
         const ids = notas.map(n => n.id);
         const { data: boletos, error: errBol } = await supabase.from("boletos").select("valor").in("nota_id", ids);
         if (errBol) throw errBol;
@@ -108,4 +117,4 @@ window.calcularFaturamento = async () => {
         console.error("Erro no faturamento:", err);
         valorTotalTxt.innerText = "Erro no cálculo.";
     }
-};
+}
