@@ -4,16 +4,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
 
-    // Respeitar permissões para o botão de Nova NF
     const role = user.user_metadata?.role || "viewer";
+
+    // ESCONDER BOTÕES DE AÇÃO PARA VIEWERS
     if (role === "viewer") {
-        const btn = document.getElementById("btnNovaNF");
-        if (btn) btn.style.display = "none";
+        const btnNova = document.getElementById("linkNovaNF");
+        const btnFat = document.getElementById("btnFaturamento");
+        if (btnNova) btnNova.style.display = "none";
+        if (btnFat) btnFat.style.display = "none";
     }
 
-    carregarNotas();
+    carregarNotas(role);
 
-    // Exporta funções para o HTML
+    // Funções Globais
     window.abrirModalFaturamento = () => { document.getElementById('modalFaturamento').style.display='block'; };
     window.fecharModalFaturamento = () => { document.getElementById('modalFaturamento').style.display='none'; };
     window.fecharModalEdicao = () => { document.getElementById('modalEditar').style.display='none'; };
@@ -23,7 +26,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.calcularFaturamento = calcularFaturamento;
 });
 
-async function carregarNotas() {
+async function carregarNotas(role) {
     const tbody = document.getElementById("listaNotas");
     try {
         const { data, error } = await supabase.from("notas_fiscais")
@@ -35,6 +38,12 @@ async function carregarNotas() {
         tbody.innerHTML = "";
         data.forEach(nf => {
             const tr = document.createElement("tr");
+            
+            // Lógica para mostrar botão editar apenas para Admins
+            const btnEditarHTML = role !== "viewer" 
+                ? `<button class="btn-primario" style="background:#f59e0b;" onclick="editarNF(${nf.id}, '${nf.numero_nf}', ${nf.total || 0})">Editar</button>`
+                : "";
+
             tr.innerHTML = `
                 <td>${nf.numero_nf}</td>
                 <td>${nf.clientes?.razao_social || "N/A"}</td>
@@ -45,7 +54,7 @@ async function carregarNotas() {
                 <td>
                     <div style="display: flex; gap: 5px; justify-content: center;">
                         <button class="btn-secundario" onclick="verNF(${nf.id})">Ver</button>
-                        <button class="btn-primario" style="background:#f59e0b;" onclick="editarNF(${nf.id}, '${nf.numero_nf}', ${nf.total || 0})">Editar</button>
+                        ${btnEditarHTML}
                     </div>
                 </td>
             `;
@@ -76,7 +85,7 @@ async function salvarEdicao() {
         alert("Erro ao atualizar!");
     } else {
         fecharModalEdicao();
-        carregarNotas();
+        carregarNotas(); // Recarrega com o cargo atual para manter os botões certos
     }
 }
 
