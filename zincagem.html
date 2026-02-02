@@ -238,7 +238,7 @@ function renderizarTabela(dados){
   let tK=0, tQ=0, tB=0, tV=0;
   dados.forEach(r => {
     tK += num(r.kg); tQ += num(r.quantidade); tB += num(r.kg_bruto); tV += num(r.valor_total);
-    const acEnt = eAdmin ? `onclick="toggle(${r.id},'entregue',${r.entregue})"` : "", acBol = eAdmin ? `onclick="toggle(${r.id},'pago',${r.pago})"` : "", clV = eAdmin ? "" : "visualizador-btn";
+    const acEnt = eAdmin ? `onclick="toggle(${r.id},'entregue',${r.entregue})"` : "", acBol = eAdmin ? `onclick="toggle(${r.id},'boleto',${r.boleto})"` : "", clV = eAdmin ? "" : "visualizador-btn";
     tb.innerHTML += `<tr><td>${r.op}</td><td>${dataBR(r.data)}</td><td>${r.codigo_peca}</td><td>${r.acabamento}</td><td>${fmt(r.kg)}</td><td>${r.quantidade}</td><td>${fmt(r.kg_bruto)}</td><td>${fmt(r.valor_kg)}</td><td>${fmt(r.valor_total)}</td><td><button class="btn-pill ${r.entregue?'ok':'pendente'} ${clV}" ${acEnt}>${r.entregue?'OK':'Pendente'}</button></td><td><button class="btn-pill ${r.boleto?'ok':'pendente'} ${clV}" ${acBol}>${r.boleto?'OK':'Pendente'}</button></td><td class="admin-only"><div style="display:flex;gap:4px;justify-content:center"><button class="btn-pill btn-editar" onclick="editarOp(${r.id})">Editar</button><button class="btn-pill btn-excluir" onclick="excluirOp(${r.id})">Excluir</button></div></td></tr>`;
   });
   el("rodape_totais").innerHTML = `<tr><td colspan="4">TOTALIZADOR</td><td>${fmt(tK)}</td><td>${tQ}</td><td>${fmt(tB)}</td><td></td><td>R$ ${fmt(tV)}</td><td></td><td></td>${eAdmin ? '<td></td>' : ''}</tr>`;
