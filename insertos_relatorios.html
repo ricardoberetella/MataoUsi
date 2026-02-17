@@ -4,28 +4,121 @@
     <meta charset="UTF-8">
     <title>Relatórios - Matão Usinagem</title>
     <link rel="stylesheet" href="css/dashboard.css">
-    <script type="module" src="js/auth.js"></script>
-    <script type="module" src="js/insertos_relatorios.js"></script>
-</head>
-<body style="background: #0b0e14; padding: 20px;">
-    <div style="max-width: 1000px; margin: 0 auto;">
-        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
-            <a href="insertos_lista.html" style="background: #1f2937; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; border: 1px solid #374151;">← Voltar para Lista</a>
-            <h1 style="color: white;">Relatórios de Movimentação</h1>
-        </header>
 
-        <table style="width: 100%; border-collapse: collapse; background: #111827; border-radius: 12px; overflow: hidden; border: 1px solid #1f2937;">
-            <thead>
-                <tr style="background: #1f2937; color: #38bdf8; text-align: left;">
-                    <th style="padding: 18px;">Data</th>
-                    <th style="padding: 18px;">Inserto</th>
-                    <th style="padding: 18px;">Tipo</th>
-                    <th style="padding: 18px;">Qtd</th>
-                    <th style="padding: 18px;">Observação</th>
-                </tr>
-            </thead>
-            <tbody id="corpoRelatorio"></tbody>
-        </table>
-    </div>
+    <!-- AUTH -->
+    <script type="module" src="js/auth.js"></script>
+
+    <style>
+        body{
+            background:#0b0e14;
+            padding:20px;
+            font-family:Segoe UI,Arial;
+        }
+        table{
+            width:100%;
+            border-collapse:collapse;
+            background:#111827;
+            border-radius:12px;
+            overflow:hidden;
+            border:1px solid #1f2937;
+        }
+        thead tr{
+            background:#1f2937;
+            color:#38bdf8;
+            text-align:left;
+        }
+        th,td{
+            padding:18px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div style="max-width:1000px;margin:0 auto;">
+    <header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:40px;">
+        <a href="insertos_lista.html"
+           style="background:#1f2937;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;border:1px solid #374151;">
+           ← Voltar para Lista
+        </a>
+        <h1 style="color:white;">Relatórios de Movimentação</h1>
+    </header>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Inserto</th>
+                <th>Tipo</th>
+                <th>Qtd</th>
+                <th>Observação</th>
+            </tr>
+        </thead>
+        <tbody id="corpoRelatorio"></tbody>
+    </table>
+</div>
+
+<script type="module">
+import { supabase } from "./js/auth.js";
+
+document.addEventListener("DOMContentLoaded", carregarRelatorio);
+
+function formatarDataHoraBR(iso){
+    if(!iso) return "-";
+    const d = new Date(iso);
+    const data = d.toLocaleDateString("pt-BR");
+    const hora = d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+    return `${data} ${hora}`;
+}
+
+function escapeHtml(str){
+    return String(str ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#39;");
+}
+
+async function carregarRelatorio(){
+    const tbody = document.getElementById("corpoRelatorio");
+    tbody.innerHTML = `<tr><td colspan="5">Carregando...</td></tr>`;
+
+    const { data, error } = await supabase
+        .from("insertos_movimentacoes")
+        .select("id, inserto_id, tipo, quantidade, data, observacao, insertos(descricao)")
+        .order("data", { ascending: false });
+
+    if(error){
+        console.error(error);
+        tbody.innerHTML = `<tr><td colspan="5">Erro ao carregar relatório.</td></tr>`;
+        return;
+    }
+
+    if(!data || data.length === 0){
+        tbody.innerHTML = `<tr><td colspan="5">Nenhuma movimentação encontrada.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = data.map(mov=>{
+        const desc = escapeHtml(mov.insertos?.descricao || "N/A");
+        const tipo = mov.tipo === "entrada" ? "entrada" : "saida";
+        const cor = tipo === "entrada" ? "#10b981" : "#f59e0b";
+        const sinal = tipo === "entrada" ? "+" : "-";
+        const obs = escapeHtml(mov.observacao || "-");
+
+        return `
+        <tr>
+            <td>${formatarDataHoraBR(mov.data)}</td>
+            <td style="color:#38bdf8;font-weight:bold;">${desc}</td>
+            <td style="text-transform:capitalize;color:${cor};font-weight:700;">${tipo}</td>
+            <td style="font-weight:bold;">${sinal}${Number(mov.quantidade ?? 0)}</td>
+            <td style="color:#9ca3af;">${obs}</td>
+        </tr>
+        `;
+    }).join("");
+}
+</script>
+
 </body>
 </html>
