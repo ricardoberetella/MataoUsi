@@ -2,65 +2,35 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastrar Novo Inserto - MataoUsi</title>
+    <title>Novo Inserto - MataoUsi</title>
     <link rel="stylesheet" href="css/style.css">
-    
-    <style>
-        body { background-color: #0b0e14; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
-        .container { max-width: 900px; margin: 40px auto; padding: 20px; }
-        
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .btn-voltar { background: #0ea5e9; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; text-decoration: none; }
-        
-        .form-card { background: #111827; padding: 30px; border-radius: 12px; border: 1px solid #1f2937; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-        
-        .form-group { margin-bottom: 25px; }
-        .form-group label { display: block; color: #38bdf8; font-weight: bold; margin-bottom: 10px; font-size: 14px; text-transform: uppercase; }
-        
-        /* IDs CORRIGIDOS PARA O JAVASCRIPT */
-        input { width: 100%; background: #1f2937; border: 1px solid #374151; color: white; padding: 14px; border-radius: 6px; font-size: 16px; outline: none; transition: border 0.3s; box-sizing: border-box; }
-        input:focus { border-color: #38bdf8; }
-        
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        
-        /* BOTÃO SALVAR */
-        #btnSalvarInserto { width: 100%; background: #38bdf8; color: #0b0e14; border: none; padding: 18px; border-radius: 8px; font-weight: bold; font-size: 18px; cursor: pointer; transition: background 0.3s; margin-top: 10px; }
-        #btnSalvarInserto:hover { background: #0ea5e9; }
-    </style>
-
     <script type="module" src="js/auth.js"></script>
     <script type="module" src="js/insertos.js"></script>
 </head>
-<body>
-
-    <div class="container">
-        <header>
-            <a href="insertos_lista.html" class="btn-voltar">← Voltar</a>
-            <h1 style="color: #fff; margin: 0;">Cadastrar Novo Inserto</h1>
+<body style="background: #0b0e14; color: white; font-family: sans-serif;">
+    <div style="max-width: 600px; margin: 40px auto; padding: 20px;">
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <a href="insertos_lista.html" style="color: #38bdf8; text-decoration: none;">← Voltar</a>
+            <h1 style="margin: 0;">Cadastrar Inserto</h1>
         </header>
 
-        <main class="form-card">
-            <div class="form-group">
-                <label for="ins_descricao">Descrição do Inserto</label>
-                <input type="text" id="ins_descricao" placeholder="Ex: TNMG 160404" required>
-            </div>
+        <div style="background: #111827; padding: 30px; border-radius: 12px; border: 1px solid #1f2937;">
+            <label style="display: block; color: #38bdf8; margin-bottom: 8px;">Descrição</label>
+            <input type="text" id="ins_descricao" placeholder="Ex: TNMG 160404" style="width: 100%; background: #1f2937; border: 1px solid #374151; color: white; padding: 12px; border-radius: 6px; margin-bottom: 20px;">
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="ins_marca">Marca</label>
-                    <input type="text" id="ins_marca" placeholder="Ex: SUMITOMO">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <label style="display: block; color: #38bdf8; margin-bottom: 8px;">Marca</label>
+                    <input type="text" id="ins_marca" style="width: 100%; background: #1f2937; border: 1px solid #374151; color: white; padding: 12px; border-radius: 6px;">
                 </div>
-
-                <div class="form-group">
-                    <label for="ins_quantidade">Quantidade em Estoque</label>
-                    <input type="number" id="ins_quantidade" value="0" min="0">
+                <div>
+                    <label style="display: block; color: #38bdf8; margin-bottom: 8px;">Qtd Inicial</label>
+                    <input type="number" id="ins_quantidade" value="0" style="width: 100%; background: #1f2937; border: 1px solid #374151; color: white; padding: 12px; border-radius: 6px;">
                 </div>
             </div>
 
-            <button id="btnSalvarInserto">Salvar Inserto</button>
-        </main>
+            <button id="btnSalvarInserto" style="width: 100%; background: #38bdf8; color: #0b0e14; border: none; padding: 15px; border-radius: 8px; font-weight: bold; margin-top: 30px; cursor: pointer;">Salvar Inserto</button>
+        </div>
     </div>
-
 </body>
 </html>
