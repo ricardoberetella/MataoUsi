@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Estoque de Insertos - MataoUsi</title>
+    <title>Lista de Insertos - MataoUsi</title>
     <link rel="stylesheet" href="css/style.css">
     <script type="module" src="js/auth.js"></script>
     <script type="module" src="js/insertos.js"></script>
@@ -10,27 +10,21 @@
         body { background: #0b0e14; color: white; font-family: sans-serif; }
         .container { max-width: 1000px; margin: 20px auto; padding: 20px; }
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .btn-top { background: #1f2937; color: white; border: 1px solid #374151; padding: 10px 20px; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 14px; }
-        .btn-novo { background: #0ea5e9; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; text-decoration: none; }
-        table { width: 100%; border-collapse: collapse; background: #111827; border-radius: 10px; border: 1px solid #1f2937; }
-        th { background: #1f2937; color: #38bdf8; padding: 15px; text-align: left; }
+        .btn-nav { background: #1f2937; color: white; border: 1px solid #374151; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-size: 14px; }
+        .btn-add { background: #0ea5e9; color: white; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; background: #111827; border-radius: 10px; border: 1px solid #1f2937; overflow: hidden; }
+        th { background: #1f2937; color: #38bdf8; padding: 15px; text-align: left; font-size: 12px; text-transform: uppercase; }
         td { padding: 15px; border-bottom: 1px solid #1f2937; }
-        .btn-mini { padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; margin-right: 5px; }
-        .btn-entrada { background: #10b981; color: white; }
-        .btn-saida { background: #f59e0b; color: white; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 1000; }
         .modal-content { background: #111827; padding: 30px; border-radius: 12px; width: 400px; border: 1px solid #38bdf8; }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <a href="menu.html" class="btn-top">← Voltar ao Menu</a>
+            <a href="menu.html" class="btn-nav">← Voltar ao Menu</a>
             <h1>Estoque de Insertos</h1>
-            <div style="display: flex; gap: 10px;">
-                <a href="insertos_relatorios.html" class="btn-top">Relatórios</a>
-                <a href="insertos_novo.html" class="btn-novo">+ Novo</a>
-            </div>
+            <a href="insertos_novo.html" class="btn-add">+ Novo Inserto</a>
         </header>
 
         <table>
@@ -38,7 +32,7 @@
                 <tr>
                     <th>Descrição</th>
                     <th>Marca</th>
-                    <th>Quantidade</th>
+                    <th>Qtd</th>
                     <th style="text-align: center;">Ações</th>
                 </tr>
             </thead>
@@ -48,18 +42,19 @@
 
     <div id="modalMovimentacao" class="modal">
         <div class="modal-content">
-            <h2 id="modalTitulo">Movimentação</h2>
+            <h2 id="modalTitulo" style="color:#38bdf8; margin-top:0;">Movimentação</h2>
             <input type="hidden" id="modalId">
             <input type="hidden" id="modalTipo">
-            <label style="display:block; margin: 10px 0;">Data</label>
+            
+            <label style="display:block; margin: 10px 0; color:#9ca3af;">Data</label>
             <input type="date" id="mov_data" style="width:100%; padding:10px; background:#1f2937; color:white; border:1px solid #374151; border-radius:5px;">
-            <label style="display:block; margin: 10px 0;">Quantidade</label>
+            
+            <label style="display:block; margin: 10px 0; color:#9ca3af;">Quantidade</label>
             <input type="number" id="mov_qtd" value="1" style="width:100%; padding:10px; background:#1f2937; color:white; border:1px solid #374151; border-radius:5px;">
-            <label style="display:block; margin: 10px 0;">Observação</label>
-            <textarea id="mov_obs" style="width:100%; padding:10px; background:#1f2937; color:white; border:1px solid #374151; border-radius:5px;"></textarea>
-            <div style="margin-top:20px; display:flex; gap:10px;">
-                <button onclick="window.confirmarMovimento()" style="flex:2; background:#38bdf8; border:none; padding:10px; border-radius:5px; font-weight:bold; cursor:pointer;">Confirmar</button>
-                <button onclick="window.fecharModalMov()" style="flex:1; background:#374151; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer;">Cancelar</button>
+            
+            <div style="margin-top:25px; display:flex; gap:10px;">
+                <button onclick="window.confirmarMovimento()" style="flex:2; background:#38bdf8; border:none; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer;">Confirmar</button>
+                <button onclick="window.fecharModalMov()" style="flex:1; background:#374151; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer;">Cancelar</button>
             </div>
         </div>
     </div>
