@@ -4,28 +4,187 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Estoque de Insertos - Matão Usinagem</title>
+
     <link rel="stylesheet" href="css/dashboard.css">
     <script type="module" src="js/auth.js"></script>
     <script type="module" src="js/insertos.js"></script>
+
     <style>
         .container-insertos { padding: 30px; max-width: 1200px; margin: 0 auto; }
-        .header-pagina { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .btn-acao-topo { padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 8px; transition: 0.3s; border: none; cursor: pointer; }
-        .btn-primario { background: #38bdf8; color: #0b0e14; }
-        .btn-secundario { background: #1f2937; color: white; border: 1px solid #374151; }
-        .tabela-estilizada { width: 100%; border-collapse: collapse; background: #111827; border-radius: 12px; overflow: hidden; border: 1px solid #1f2937; }
-        .tabela-estilizada th { background: #1f2937; color: #38bdf8; padding: 18px; text-align: left; }
-        .tabela-estilizada td { padding: 18px; border-bottom: 1px solid #1f2937; color: #e5e7eb; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { background: #111827; padding: 40px; border-radius: 16px; width: 450px; border: 1px solid #38bdf8; }
+
+        .header-pagina {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 26px;
+            gap: 16px;
+        }
+
+        .btn-acao-topo {
+            padding: 12px 18px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: 0.18s ease;
+            border: 1px solid rgba(255,255,255,0.10);
+            cursor: pointer;
+            user-select: none;
+        }
+        .btn-acao-topo:active { transform: translateY(1px); }
+
+        .btn-primario {
+            background: #38bdf8;
+            color: #0b0e14;
+            border-color: rgba(56,189,248,0.35);
+            box-shadow: 0 10px 30px rgba(56,189,248,0.18);
+        }
+        .btn-primario:hover { filter: brightness(1.05); }
+
+        .btn-secundario {
+            background: rgba(31,41,55,0.80);
+            color: white;
+            border: 1px solid rgba(55,65,81,0.85);
+        }
+        .btn-secundario:hover { background: rgba(31,41,55,0.95); }
+
+        .tabela-estilizada {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(17,24,39,0.78);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(55,65,81,0.55);
+            box-shadow: 0 18px 60px rgba(0,0,0,0.40);
+        }
+        .tabela-estilizada th {
+            background: rgba(31,41,55,0.85);
+            color: #38bdf8;
+            padding: 18px;
+            text-align: left;
+            font-weight: 900;
+            letter-spacing: .2px;
+        }
+        .tabela-estilizada td {
+            padding: 18px;
+            border-bottom: 1px solid rgba(55,65,81,0.35);
+            color: #e5e7eb;
+        }
+
+        /* ===== BOTÕES DA TABELA (PADRÃO SISTEMA) ===== */
+        .acoes-wrap{
+            display:flex;
+            gap:10px;
+            justify-content:center;
+            flex-wrap:wrap;
+        }
+
+        .btn-tabela{
+            border: 1px solid rgba(255,255,255,0.12);
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-weight: 900;
+            cursor: pointer;
+            transition: 0.18s ease;
+            line-height: 1;
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            box-shadow: 0 10px 28px rgba(0,0,0,0.25);
+            user-select:none;
+            white-space:nowrap;
+        }
+        .btn-tabela:active{ transform: translateY(1px); }
+        .btn-tabela:hover{ filter: brightness(1.06); }
+
+        /* Entrada (verde) */
+        .btn-entrada{
+            background: rgba(16,185,129,0.92);
+            color:#04110b;
+            border-color: rgba(16,185,129,0.35);
+        }
+
+        /* Saída (laranja) */
+        .btn-saida{
+            background: rgba(245,158,11,0.92);
+            color:#1a0e00;
+            border-color: rgba(245,158,11,0.35);
+        }
+
+        /* Excluir (vermelho) */
+        .btn-excluir{
+            background: rgba(239,68,68,0.92);
+            color:#190404;
+            border-color: rgba(239,68,68,0.35);
+        }
+
+        /* badge quantidade */
+        .badge-qtd{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            min-width: 54px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(56,189,248,0.10);
+            border: 1px solid rgba(56,189,248,0.22);
+            color: #e5e7eb;
+            font-weight: 900;
+        }
+        .qtd-baixa{
+            background: rgba(239,68,68,0.12);
+            border-color: rgba(239,68,68,0.25);
+            color: #fecaca;
+        }
+
+        /* ===== MODAL (mantém seu layout, só melhora botão) ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: rgba(17,24,39,0.92);
+            padding: 36px;
+            border-radius: 18px;
+            width: 460px;
+            max-width: calc(100% - 24px);
+            border: 1px solid rgba(56,189,248,0.35);
+            box-shadow: 0 24px 80px rgba(0,0,0,0.55);
+        }
+        .btn-modal{
+            border: 1px solid rgba(255,255,255,0.12);
+            padding: 14px 16px;
+            border-radius: 12px;
+            font-weight: 900;
+            cursor:pointer;
+            transition:.18s ease;
+            user-select:none;
+        }
+        .btn-modal:active{ transform: translateY(1px); }
+        .btn-modal:hover{ filter: brightness(1.06); }
+        .btn-modal-confirmar{ background:#38bdf8; color:#0b0e14; border-color: rgba(56,189,248,0.35); }
+        .btn-modal-cancelar{ background: rgba(31,41,55,0.85); color:#fff; border-color: rgba(55,65,81,0.85); }
     </style>
 </head>
+
 <body>
     <div class="container-insertos">
         <header class="header-pagina">
             <a href="dashboard.html" class="btn-acao-topo btn-secundario">← Voltar ao Menu</a>
-            <h1 style="color: white; margin: 0;">Estoque de Insertos</h1>
-            <div style="display: flex; gap: 12px;">
+
+            <h1 style="color: white; margin: 0; font-size: 40px; letter-spacing: .3px;">
+                Estoque de Insertos
+            </h1>
+
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: flex-end;">
                 <a href="insertos_relatorios.html" class="btn-acao-topo btn-secundario">📊 Relatórios</a>
                 <a href="insertos_novo.html" class="btn-acao-topo btn-primario">+ Novo Inserto</a>
             </div>
@@ -40,24 +199,63 @@
                     <th style="text-align: center;">Ações</th>
                 </tr>
             </thead>
-            <tbody id="corpoTabelaInsertos"></tbody>
+            <tbody id="corpoTabelaInsertos">
+                <!-- JS preenche -->
+            </tbody>
         </table>
     </div>
 
     <div id="modalMovimentacao" class="modal">
         <div class="modal-content">
-            <h2 id="modalTitulo" style="color: #38bdf8; margin-top: 0;">Registrar Movimento</h2>
+            <h2 id="modalTitulo" style="color: #38bdf8; margin-top: 0; font-weight: 900;">
+                Registrar Movimento
+            </h2>
+
             <input type="hidden" id="modalId">
             <input type="hidden" id="modalTipo">
+
             <div style="margin-bottom: 15px;">
-                <label style="color: #38bdf8; display: block; margin-bottom: 8px;">Quantidade</label>
-                <input type="number" id="mov_qtd" value="1" min="1" style="width: 100%; padding: 12px; background: #1f2937; color: white; border: 1px solid #374151; border-radius: 8px;">
+                <label style="color: #38bdf8; display: block; margin-bottom: 8px; font-weight: 900;">
+                    Quantidade
+                </label>
+                <input type="number" id="mov_qtd" value="1" min="1"
+                       style="width: 100%; padding: 12px; background: #1f2937; color: white; border: 1px solid #374151; border-radius: 12px; font-weight: 800;">
             </div>
-            <div style="display: flex; gap: 15px; margin-top: 30px;">
-                <button onclick="window.confirmarMovimento()" style="flex: 2; background: #38bdf8; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">Confirmar</button>
-                <button onclick="window.fecharModalMov()" style="flex: 1; background: #1f2937; color: white; border: 1px solid #374151; padding: 15px; border-radius: 8px; cursor: pointer;">Cancelar</button>
+
+            <div style="display: flex; gap: 12px; margin-top: 22px;">
+                <button onclick="window.confirmarMovimento()" class="btn-modal btn-modal-confirmar" style="flex:2;">
+                    Confirmar
+                </button>
+
+                <button onclick="window.fecharModalMov()" class="btn-modal btn-modal-cancelar" style="flex:1;">
+                    Cancelar
+                </button>
             </div>
         </div>
     </div>
+
+    <!-- Ajuste visual: centraliza os botões na coluna ações mesmo com HTML gerado pelo JS -->
+    <script>
+      // Este script não mexe no sistema; apenas adiciona uma classe visual no TD das ações após renderizar.
+      const observer = new MutationObserver(() => {
+        const rows = document.querySelectorAll("#corpoTabelaInsertos tr");
+        rows.forEach(r => {
+          const tds = r.querySelectorAll("td");
+          const acaoTd = tds[3];
+          if (acaoTd && !acaoTd.querySelector(".acoes-wrap")) {
+            const buttons = Array.from(acaoTd.querySelectorAll("button"));
+            if (buttons.length) {
+              const wrap = document.createElement("div");
+              wrap.className = "acoes-wrap";
+              buttons.forEach(b => wrap.appendChild(b));
+              acaoTd.innerHTML = "";
+              acaoTd.appendChild(wrap);
+            }
+          }
+        });
+      });
+      const tbody = document.getElementById("corpoTabelaInsertos");
+      if (tbody) observer.observe(tbody, { childList: true, subtree: true });
+    </script>
 </body>
 </html>
