@@ -9,17 +9,16 @@ async function carregarRelatorio() {
 
     const { data, error } = await supabase
         .from('insertos_movimentacoes')
-        .select(`*, insertos ( descricao )`)
+        .select(`*, insertos ( id, descricao )`)
         .gte('data', dataInicio)
         .lte('data', dataFim)
         .order('data', { ascending: false });
 
     if (error) return;
 
-    // Mostrar coluna de ações apenas para Admin
-    if (role === "admin") {
-        document.querySelectorAll(".col-acoes").forEach(el => el.style.display = "table-cell");
-    }
+    // Controle de visualização para Viewer
+    const isAdmin = (role === "admin");
+    document.querySelectorAll(".col-acoes").forEach(el => el.style.display = isAdmin ? "table-cell" : "none");
 
     tbody.innerHTML = data.map(mov => `
         <tr>
@@ -28,45 +27,68 @@ async function carregarRelatorio() {
             <td><span class="badge ${mov.tipo === 'entrada' ? 'badge-entrada' : 'badge-saida'}">${mov.tipo.toUpperCase()}</span></td>
             <td><b>${mov.quantidade}</b></td>
             <td>${mov.observacao || '-'}</td>
-            <td class="col-acoes" style="display: ${role === 'admin' ? 'table-cell' : 'none'}">
-                <button class="btn-mini btn-edit" onclick="abrirEdicao('${mov.id}', '${mov.quantidade}', '${mov.observacao || ''}')">Editar</button>
-                <button class="btn-mini btn-del" onclick="excluirMov('${mov.id}')">Excluir</button>
+            <td class="col-acoes" style="display: ${isAdmin ? 'table-cell' : 'none'}">
+                <button class="btn-mini btn-edit" onclick="abrirEdicao('${mov.id}', '${mov.insertos.id}', '${mov.tipo}', ${mov.quantidade}, '${mov.observacao || ''}')">Editar</button>
+                <button class="btn-mini btn-del" onclick="excluirMov('${mov.id}', '${mov.insertos.id}', '${mov.tipo}', ${mov.quantidade})">Excluir</button>
             </td>
         </tr>
     `).join('');
 }
 
-// --- FUNÇÕES DE AÇÃO (EXPOSTAS AO WINDOW) ---
+// --- FUNÇÃO EXCLUIR COM REVERSÃO DE SALDO ---
+window.excluirMov = async (id, insertoId, tipo, quantidade) => {
+    if (!confirm(`Deseja excluir esta movimentação? O saldo do inserto será ajustado automaticamente.`)) return;
 
-window.excluirMov = async (id) => {
-    if (!confirm("Deseja realmente excluir este registro de movimentação? Isso não alterará o saldo atual do inserto automaticamente.")) return;
-    
-    const { error } = await supabase.from('insertos_movimentacoes').delete().eq('id', id);
-    if (error) alert("Erro ao excluir");
-    else carregarRelatorio();
+    // 1. Buscar saldo atual
+    const { data: ins } = await supabase.from('insertos').select('estoque_atual').eq('id', insertoId).single();
+    let novoSaldo = (tipo === 'entrada') ? ins.estoque_atual - quantidade : ins.estoque_atual + quantidade;
+
+    // 2. Deletar e Atualizar
+    const { error: errDel } = await supabase.from('insertos_movimentacoes').delete().eq('id', id);
+    if (!errDel) {
+        await supabase.from('insertos').update({ estoque_atual: novoSaldo }).eq('id', insertoId);
+        carregarRelatorio();
+    } else {
+        alert("Erro ao excluir.");
+    }
 };
 
-window.abrirEdicao = (id, qtd, obs) => {
+// --- FUNÇÃO EDITAR COM AJUSTE DE DIFERENÇA ---
+window.abrirEdicao = (id, insertoId, tipo, qtdAtual, obs) => {
     document.getElementById("edit_id").value = id;
-    document.getElementById("edit_qtd").value = qtd;
+    document.getElementById("edit_inserto_id").value = insertoId;
+    document.getElementById("edit_tipo").value = tipo;
+    document.getElementById("edit_qtd_antiga").value = qtdAtual;
+    document.getElementById("edit_qtd").value = qtdAtual;
     document.getElementById("edit_obs").value = obs;
     document.getElementById("modalEditMov").style.display = "flex";
 };
 
 document.getElementById("btnSalvarEdit").onclick = async () => {
     const id = document.getElementById("edit_id").value;
-    const qtd = document.getElementById("edit_qtd").value;
+    const insertoId = document.getElementById("edit_inserto_id").value;
+    const tipo = document.getElementById("edit_tipo").value;
+    const qtdAntiga = Number(document.getElementById("edit_qtd_antiga").value);
+    const qtdNova = Number(document.getElementById("edit_qtd").value);
     const obs = document.getElementById("edit_obs").value;
 
-    const { error } = await supabase
-        .from('insertos_movimentacoes')
-        .update({ quantidade: qtd, observacao: obs })
-        .eq('id', id);
+    // Calcular a diferença para aplicar no saldo
+    // Se era entrada de 10 e mudei para 12, somo 2 ao saldo.
+    // Se era saída de 10 e mudei para 12, subtraio 2 do saldo.
+    const diferenca = qtdNova - qtdAntiga;
+    const { data: ins } = await supabase.from('insertos').select('estoque_atual').eq('id', insertoId).single();
+    
+    let ajusteSaldo = (tipo === 'entrada') ? ins.estoque_atual + diferenca : ins.estoque_atual - diferenca;
 
-    if (error) alert("Erro ao atualizar");
-    else {
+    // Atualizar registro e saldo
+    const { error } = await supabase.from('insertos_movimentacoes').update({ quantidade: qtdNova, observacao: obs }).eq('id', id);
+
+    if (!error) {
+        await supabase.from('insertos').update({ estoque_atual: ajusteSaldo }).eq('id', insertoId);
         document.getElementById("modalEditMov").style.display = "none";
         carregarRelatorio();
+    } else {
+        alert("Erro ao atualizar.");
     }
 };
 
