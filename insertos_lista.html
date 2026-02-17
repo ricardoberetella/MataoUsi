@@ -2,47 +2,35 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Estoque de Insertos - MataoUsi</title>
     <link rel="stylesheet" href="css/style.css">
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/insertos.js"></script>
     <style>
-        body { background-color: #0b0e14; color: white; font-family: sans-serif; }
+        body { background: #0b0e14; color: white; font-family: sans-serif; }
         .container { max-width: 1000px; margin: 20px auto; padding: 20px; }
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        
-        .btn-menu { background: #1f2937; color: white; border: 1px solid #374151; padding: 10px 20px; border-radius: 6px; cursor: pointer; text-decoration: none; }
+        .btn-top { background: #1f2937; color: white; border: 1px solid #374151; padding: 10px 20px; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 14px; }
         .btn-novo { background: #0ea5e9; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; text-decoration: none; }
-        
-        table { width: 100%; border-collapse: collapse; background: #111827; border-radius: 10px; overflow: hidden; border: 1px solid #1f2937; }
-        th { background: #1f2937; color: #38bdf8; text-align: left; padding: 15px; text-transform: uppercase; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; background: #111827; border-radius: 10px; border: 1px solid #1f2937; }
+        th { background: #1f2937; color: #38bdf8; padding: 15px; text-align: left; }
         td { padding: 15px; border-bottom: 1px solid #1f2937; }
-        
         .btn-mini { padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; margin-right: 5px; }
         .btn-entrada { background: #10b981; color: white; }
         .btn-saida { background: #f59e0b; color: white; }
-        .btn-del { background: #ef4444; color: white; }
-
-        /* MODAL STYLE */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 1000; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; }
         .modal-content { background: #111827; padding: 30px; border-radius: 12px; width: 400px; border: 1px solid #38bdf8; }
-        .modal-content h2 { color: #38bdf8; margin-top: 0; }
-        .modal-content label { display: block; margin: 15px 0 5px; color: #9ca3af; }
-        .modal-content input, .modal-content textarea { width: 100%; background: #1f2937; border: 1px solid #374151; color: white; padding: 10px; border-radius: 6px; box-sizing: border-box; }
-        .modal-footer { display: flex; gap: 10px; margin-top: 25px; }
-        .btn-confirmar { flex: 2; background: #38bdf8; color: #0b0e14; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .btn-cancelar { flex: 1; background: #374151; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; }
     </style>
-
-    <script type="module" src="js/auth.js"></script>
-    <script type="module" src="js/insertos.js"></script>
 </head>
 <body>
-
     <div class="container">
         <header>
-            <a href="menu.html" class="btn-menu">← Voltar ao Menu</a>
+            <a href="menu.html" class="btn-top">← Voltar ao Menu</a>
             <h1>Estoque de Insertos</h1>
-            <a href="insertos_novo.html" class="btn-novo">+ Novo Inserto</a>
+            <div style="display: flex; gap: 10px;">
+                <a href="insertos_relatorios.html" class="btn-top">Relatórios</a>
+                <a href="insertos_novo.html" class="btn-novo">+ Novo</a>
+            </div>
         </header>
 
         <table>
@@ -54,33 +42,26 @@
                     <th style="text-align: center;">Ações</th>
                 </tr>
             </thead>
-            <tbody id="corpoTabelaInsertos">
-                </tbody>
+            <tbody id="corpoTabelaInsertos"></tbody>
         </table>
     </div>
 
     <div id="modalMovimentacao" class="modal">
         <div class="modal-content">
             <h2 id="modalTitulo">Movimentação</h2>
-            
             <input type="hidden" id="modalId">
             <input type="hidden" id="modalTipo">
-
-            <label>Data</label>
-            <input type="date" id="mov_data">
-
-            <label>Quantidade</label>
-            <input type="number" id="mov_qtd" value="1" min="1">
-
-            <label>Observação</label>
-            <textarea id="mov_obs" rows="3" placeholder="Ex: Máquina 01, NF..."></textarea>
-
-            <div class="modal-footer">
-                <button class="btn-confirmar" onclick="window.confirmarMovimento()">Confirmar</button>
-                <button class="btn-cancelar" onclick="window.fecharModalMov()">Cancelar</button>
+            <label style="display:block; margin: 10px 0;">Data</label>
+            <input type="date" id="mov_data" style="width:100%; padding:10px; background:#1f2937; color:white; border:1px solid #374151; border-radius:5px;">
+            <label style="display:block; margin: 10px 0;">Quantidade</label>
+            <input type="number" id="mov_qtd" value="1" style="width:100%; padding:10px; background:#1f2937; color:white; border:1px solid #374151; border-radius:5px;">
+            <label style="display:block; margin: 10px 0;">Observação</label>
+            <textarea id="mov_obs" style="width:100%; padding:10px; background:#1f2937; color:white; border:1px solid #374151; border-radius:5px;"></textarea>
+            <div style="margin-top:20px; display:flex; gap:10px;">
+                <button onclick="window.confirmarMovimento()" style="flex:2; background:#38bdf8; border:none; padding:10px; border-radius:5px; font-weight:bold; cursor:pointer;">Confirmar</button>
+                <button onclick="window.fecharModalMov()" style="flex:1; background:#374151; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer;">Cancelar</button>
             </div>
         </div>
     </div>
-
 </body>
 </html>
