@@ -9,18 +9,35 @@
         .tabela-limpa { width: 100%; border-collapse: collapse; margin-top: 15px; background: #1e293b; border-radius: 8px; }
         .tabela-limpa th { padding: 15px; text-align: left; border-bottom: 2px solid #38bdf8; color: #38bdf8; }
         .tabela-limpa td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .btn-acao { padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; }
-        .btn-mais { background: #22c55e; color: #000; margin-right: 5px; }
-        .btn-menos { background: #ef4444; color: #fff; }
+        
+        .btn-acao { padding: 8px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; color: #000; transition: 0.2s; }
+        .btn-entrada { background: #22c55e; margin-right: 5px; }
+        .btn-saida { background: #ef4444; color: #fff; }
+
+        /* Estilo do Modal */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; }
+        .modal-content { background: #1e293b; padding: 25px; border-radius: 12px; width: 350px; border: 1px solid #38bdf8; }
+        .modal-content h3 { color: #38bdf8; margin-top: 0; }
+        .modal-content label { display: block; margin: 10px 0 5px; font-size: 14px; }
+        .modal-content input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; }
+        .modal-footer { margin-top: 20px; display: flex; gap: 10px; }
     </style>
 </head>
 <body>
     <div class="layout">
+        <aside class="sidebar">
+            <div class="logo-sistema">MATÃO USINAGEM</div>
+            <nav class="menu">
+                <a href="dashboard.html" class="menu-item">🏠 Dashboard</a>
+                <a href="clientes.html" class="menu-item">👤 Clientes</a>
+                <a href="insertos_lista.html" class="menu-item active">🛠 Insertos</a>
+            </nav>
+        </aside>
+
         <main class="main">
             <header class="topbar">
-                <a href="dashboard.html" class="btn-voltar-menu">⬅ Menu</a>
-                <h1 class="topbar-title">Controle de Insertos</h1>
-                <button class="btn-primario" onclick="location.href='insertos_novo.html'">+ Novo</button>
+                <h1 class="topbar-title">Estoque de Insertos</h1>
+                <button class="btn-primario" onclick="location.href='insertos_novo.html'">+ Novo Inserto</button>
             </header>
 
             <div class="container">
@@ -30,8 +47,8 @@
                             <tr>
                                 <th>Descrição</th>
                                 <th>Marca</th>
-                                <th>Quantidade</th>
-                                <th style="text-align: center;">Ações</th>
+                                <th>Saldo Atual</th>
+                                <th style="text-align: center;">Movimentar</th>
                             </tr>
                         </thead>
                         <tbody id="corpoTabelaInsertos"></tbody>
@@ -40,6 +57,29 @@
             </div>
         </main>
     </div>
+
+    <div id="modalMovimentacao" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitulo">Registrar Entrada</h3>
+            <input type="hidden" id="modalId">
+            <input type="hidden" id="modalTipo">
+
+            <label>Data</label>
+            <input type="date" id="mov_data">
+
+            <label>Quantidade</label>
+            <input type="number" id="mov_qtd" min="1" value="1">
+
+            <label>Observação (Opcional)</label>
+            <input type="text" id="mov_obs" placeholder="Ex: NF 123 ou Uso na Máquina 2">
+
+            <div class="modal-footer">
+                <button class="btn-primario" id="btnConfirmarMov" style="flex:1">Confirmar</button>
+                <button class="btn-acao" onclick="fecharModal()" style="background:#64748b; color:white;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="js/insertos.js"></script>
 </body>
 </html>
