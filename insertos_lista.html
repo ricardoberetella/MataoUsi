@@ -1,100 +1,68 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estoque de Insertos - Matão Usinagem</title>
-    <link rel="stylesheet" href="css/global.css">
-    <link rel="stylesheet" href="css/dashboard.css">
+    <title>Estoque de Insertos - MataoUsi</title>
+    <link rel="stylesheet" href="css/style.css">
     <style>
-        /* Ajustes para layout sem sidebar (estilo Clientes) */
-        .topbar { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 0 30px; 
-            height: 70px; 
-            background: #0f172a;
-            border-bottom: 1px solid rgba(56, 189, 248, 0.2);
-        }
+        body { background-color: #0b0e14; color: white; font-family: sans-serif; }
+        .container { max-width: 1000px; margin: 20px auto; padding: 20px; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         
-        .topbar-title { 
-            color: #38bdf8; 
-            margin: 0; 
-            font-size: 1.5rem; 
-        }
-
-        .container { padding: 30px; max-width: 1200px; margin: 0 auto; }
-
-        /* Estilização da Tabela */
-        .tabela-limpa { width: 100%; border-collapse: collapse; margin-top: 15px; background: #1e293b; border-radius: 8px; overflow: hidden; }
-        .tabela-limpa th { padding: 15px; text-align: left; border-bottom: 2px solid #38bdf8; color: #38bdf8; background: #0f172a; }
-        .tabela-limpa td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); color: #e2e8f0; }
+        .btn-menu { background: #1f2937; color: white; border: 1px solid #374151; padding: 10px 20px; border-radius: 6px; cursor: pointer; text-decoration: none; }
+        .btn-novo { background: #0ea5e9; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; text-decoration: none; }
         
-        .btn-acao { padding: 8px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; color: #000; transition: 0.2s; }
-        .btn-entrada { background: #22c55e; margin-right: 5px; }
-        .btn-saida { background: #ef4444; color: #fff; }
+        table { width: 100%; border-collapse: collapse; background: #111827; border-radius: 10px; overflow: hidden; border: 1px solid #1f2937; }
+        th { background: #1f2937; color: #38bdf8; text-align: left; padding: 15px; text-transform: uppercase; font-size: 13px; }
+        td { padding: 15px; border-bottom: 1px solid #1f2937; }
+        
+        .btn-mini { padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; margin-right: 5px; }
+        .btn-entrada { background: #10b981; color: white; }
+        .btn-saida { background: #f59e0b; color: white; }
+        .btn-del { background: #ef4444; color: white; }
 
-        /* Modal de Movimentação */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; }
-        .modal-content { background: #1e293b; padding: 25px; border-radius: 12px; width: 350px; border: 1px solid #38bdf8; }
-        .modal-content h3 { color: #38bdf8; margin-top: 0; }
-        .modal-content label { display: block; margin: 10px 0 5px; font-size: 14px; color: #94a3b8; }
-        .modal-content input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; margin-bottom: 10px; }
-        .modal-footer { margin-top: 20px; display: flex; gap: 10px; }
-
-        /* Botão secundário para o relatório */
-        .btn-relatorio {
-            background: #38bdf8; 
-            color: #000; 
-            padding: 10px 15px; 
-            border-radius: 8px; 
-            font-weight: bold; 
-            border: none; 
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .btn-relatorio:hover { background: #7dd3fc; }
+        /* MODAL STYLE */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: #111827; padding: 30px; border-radius: 12px; width: 400px; border: 1px solid #38bdf8; }
+        .modal-content h2 { color: #38bdf8; margin-top: 0; }
+        .modal-content label { display: block; margin: 15px 0 5px; color: #9ca3af; }
+        .modal-content input, .modal-content textarea { width: 100%; background: #1f2937; border: 1px solid #374151; color: white; padding: 10px; border-radius: 6px; box-sizing: border-box; }
+        .modal-footer { display: flex; gap: 10px; margin-top: 25px; }
+        .btn-confirmar { flex: 2; background: #38bdf8; color: #0b0e14; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-cancelar { flex: 1; background: #374151; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; }
     </style>
+
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/insertos.js"></script>
 </head>
 <body>
 
-    <header class="topbar">
-        <a href="dashboard.html">
-            <button class="btn-voltar-menu">← Voltar ao Menu</button>
-        </a>
-        <h1 class="topbar-title">Insertos</h1>
-    </header>
-
     <div class="container">
-        
-        <div style="margin-bottom: 25px; display: flex; gap: 12px;">
-            <button class="btn-primario" onclick="location.href='insertos_novo.html'">+ Novo Inserto</button>
-            <button class="btn-relatorio" onclick="location.href='insertos_relatorio.html'">
-                📋 Ver Relatório de Uso
-            </button>
-        </div>
+        <header>
+            <a href="menu.html" class="btn-menu">← Voltar ao Menu</a>
+            <h1>Estoque de Insertos</h1>
+            <a href="insertos_novo.html" class="btn-novo">+ Novo Inserto</a>
+        </header>
 
-        <section class="card">
-            <h2 class="card-title">Estoque Atual</h2>
-            <table class="tabela-limpa">
-                <thead>
-                    <tr>
-                        <th>Descrição</th>
-                        <th>Marca</th>
-                        <th>Saldo Atual</th>
-                        <th style="text-align: center;">Movimentar</th>
-                    </tr>
-                </thead>
-                <tbody id="corpoTabelaInsertos">
-                    </tbody>
-            </table>
-        </section>
+        <table>
+            <thead>
+                <tr>
+                    <th>Descrição</th>
+                    <th>Marca</th>
+                    <th>Quantidade</th>
+                    <th style="text-align: center;">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="corpoTabelaInsertos">
+                </tbody>
+        </table>
     </div>
 
     <div id="modalMovimentacao" class="modal">
         <div class="modal-content">
-            <h3 id="modalTitulo">Registrar Movimentação</h3>
+            <h2 id="modalTitulo">Movimentação</h2>
+            
             <input type="hidden" id="modalId">
             <input type="hidden" id="modalTipo">
 
@@ -102,18 +70,17 @@
             <input type="date" id="mov_data">
 
             <label>Quantidade</label>
-            <input type="number" id="mov_qtd" min="1" value="1">
+            <input type="number" id="mov_qtd" value="1" min="1">
 
-            <label>Observação (Opcional)</label>
-            <input type="text" id="mov_obs" placeholder="Ex: NF 123 ou Máquina 02">
+            <label>Observação</label>
+            <textarea id="mov_obs" rows="3" placeholder="Ex: Máquina 01, NF..."></textarea>
 
             <div class="modal-footer">
-                <button class="btn-primario" id="btnConfirmarMov" style="flex:1">Confirmar</button>
-                <button class="btn-acao" onclick="fecharModal()" style="background:#64748b; color:white;">Cancelar</button>
+                <button class="btn-confirmar" onclick="window.confirmarMovimento()">Confirmar</button>
+                <button class="btn-cancelar" onclick="window.fecharModalMov()">Cancelar</button>
             </div>
         </div>
     </div>
 
-    <script type="module" src="js/insertos.js"></script>
 </body>
 </html>
