@@ -1,36 +1,44 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Novo Inserto - MataoUsi</title>
-    <link rel="stylesheet" href="css/style.css">
-    <script type="module" src="js/auth.js"></script>
-    <script type="module" src="js/insertos.js"></script>
+  <meta charset="UTF-8">
+  <title>Novo Inserto - Matão Usinagem</title>
+  <link rel="stylesheet" href="css/dashboard.css">
+  <script type="module" src="js/auth.js"></script>
+  <script type="module" src="js/insertos.js"></script>
 </head>
-<body style="background: #0b0e14; color: white; font-family: sans-serif;">
-    <div style="max-width: 600px; margin: 40px auto; padding: 20px;">
-        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-            <a href="insertos_lista.html" style="color: #38bdf8; text-decoration: none;">← Voltar</a>
-            <h1 style="margin: 0;">Cadastrar Inserto</h1>
-        </header>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="logo-sistema">MATÃO USINAGEM</div>
+      <nav class="menu">
+        <a href="dashboard.html" class="menu-item">🏠 Dashboard</a>
+        <a href="insertos_lista.html" class="menu-item">📦 Estoque de Insertos</a>
+      </nav>
+    </aside>
 
-        <div style="background: #111827; padding: 30px; border-radius: 12px; border: 1px solid #1f2937;">
-            <label style="display: block; color: #38bdf8; margin-bottom: 8px;">Descrição</label>
-            <input type="text" id="ins_descricao" placeholder="Ex: TNMG 160404" style="width: 100%; background: #1f2937; border: 1px solid #374151; color: white; padding: 12px; border-radius: 6px; margin-bottom: 20px;">
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                <div>
-                    <label style="display: block; color: #38bdf8; margin-bottom: 8px;">Marca</label>
-                    <input type="text" id="ins_marca" style="width: 100%; background: #1f2937; border: 1px solid #374151; color: white; padding: 12px; border-radius: 6px;">
-                </div>
-                <div>
-                    <label style="display: block; color: #38bdf8; margin-bottom: 8px;">Qtd Inicial</label>
-                    <input type="number" id="ins_quantidade" value="0" style="width: 100%; background: #1f2937; border: 1px solid #374151; color: white; padding: 12px; border-radius: 6px;">
-                </div>
+    <main class="main">
+      <div style="max-width: 600px; margin: 0 auto;">
+        <h1 style="color: var(--primary-color); margin-bottom: 20px;">Cadastrar Novo Inserto</h1>
+        <div style="background: var(--bg-card); padding: 30px; border-radius: 10px; border: 1px solid var(--border-color);">
+          <div style="margin-bottom: 20px;">
+            <label style="color: var(--primary-color); display: block; margin-bottom: 8px;">Descrição do Inserto</label>
+            <input type="text" id="ins_descricao" placeholder="Ex: TNMG 160404" style="width:100%; padding:12px; background:#1f2937; color:white; border:1px solid #374151; border-radius:6px;">
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+              <label style="color: var(--primary-color); display: block; margin-bottom: 8px;">Marca</label>
+              <input type="text" id="ins_marca" style="width:100%; padding:12px; background:#1f2937; color:white; border:1px solid #374151; border-radius:6px;">
             </div>
-
-            <button id="btnSalvarInserto" style="width: 100%; background: #38bdf8; color: #0b0e14; border: none; padding: 15px; border-radius: 8px; font-weight: bold; margin-top: 30px; cursor: pointer;">Salvar Inserto</button>
+            <div>
+              <label style="color: var(--primary-color); display: block; margin-bottom: 8px;">Quantidade Inicial</label>
+              <input type="number" id="ins_quantidade" value="0" style="width:100%; padding:12px; background:#1f2937; color:white; border:1px solid #374151; border-radius:6px;">
+            </div>
+          </div>
+          <button id="btnSalvarInserto" style="width:100%; margin-top:30px; padding:15px; background:var(--primary-color); color:#000; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Salvar no Estoque</button>
         </div>
-    </div>
+      </div>
+    </main>
+  </div>
 </body>
 </html>
