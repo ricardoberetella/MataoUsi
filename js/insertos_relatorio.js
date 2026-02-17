@@ -1,54 +1,29 @@
 import { supabase } from "./auth.js";
 
-document.addEventListener("DOMContentLoaded", () => {
-    carregarHistorico();
-});
+document.addEventListener("DOMContentLoaded", carregarRelatorio);
 
-async function carregarHistorico() {
+async function carregarRelatorio() {
     const tbody = document.getElementById("corpoRelatorio");
-    if (!tbody) return;
-
     try {
-        // Busca as movimentações ordenadas pela data mais recente
-        const { data: movimentacoes, error: errMov } = await supabase
+        const { data, error } = await supabase
             .from('insertos_movimentacoes')
-            .select(`
-                id,
-                tipo,
-                quantidade,
-                data,
-                observacao,
-                inserto_id,
-                insertos ( descricao )
-            `)
+            .select('*, insertos(descricao)')
             .order('data', { ascending: false });
 
-        if (errMov) throw errMov;
+        if (error) throw error;
 
-        if (!movimentacoes || movimentacoes.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Nenhuma movimentação encontrada.</td></tr>`;
-            return;
-        }
-
-        tbody.innerHTML = movimentacoes.map(mov => {
-            const dataFormatada = new Date(mov.data).toLocaleDateString('pt-BR');
-            const classeTipo = mov.tipo === 'entrada' ? 'entrada' : 'saida';
-            const sinal = mov.tipo === 'entrada' ? '+' : '-';
-            const nomeInserto = mov.insertos ? mov.insertos.descricao : "Inserto Removido";
-
-            return `
-                <tr>
-                    <td>${dataFormatada}</td>
-                    <td><strong style="color: #38bdf8;">${nomeInserto}</strong></td>
-                    <td class="${classeTipo}">${sinal} ${mov.quantidade}</td>
-                    <td style="text-transform: capitalize;">${mov.tipo}</td>
-                    <td style="color: #9ca3af; font-size: 0.9em;">${mov.observacao || '-'}</td>
-                </tr>
-            `;
-        }).join('');
-
+        tbody.innerHTML = data.map(mov => `
+            <tr>
+                <td>${new Date(mov.data).toLocaleDateString('pt-BR')}</td>
+                <td style="color: #38bdf8; font-weight: bold;">${mov.insertos?.descricao || 'N/A'}</td>
+                <td style="text-transform: capitalize; color: ${mov.tipo === 'entrada' ? '#10b981' : '#f59e0b'}">
+                    ${mov.tipo}
+                </td>
+                <td style="font-weight: bold;">${mov.tipo === 'entrada' ? '+' : '-'}${mov.quantidade}</td>
+                <td style="color: #9ca3af;">${mov.observacao || '-'}</td>
+            </tr>
+        `).join('');
     } catch (error) {
-        console.error("Erro ao carregar relatório:", error);
-        tbody.innerHTML = `<tr><td colspan="5" style="color:red; text-align:center;">Erro ao carregar dados: ${error.message}</td></tr>`;
+        console.error("Erro ao carregar relatório:", error.message);
     }
 }
