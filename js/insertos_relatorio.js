@@ -1,114 +1,119 @@
-import { supabase, verificarLogin, obterRole } from "./auth.js";
+import { supabase } from "./auth.js";
 
-let role = "viewer";
+document.addEventListener("DOMContentLoaded", () => {
+    const path = window.location.pathname;
+    if (path.endsWith("insertos_lista.html")) carregarInsertos();
+    
+    // Vincula o evento de salvar se estiver na página de novo inserto
+    const btnSalvar = document.getElementById("btnSalvarInserto");
+    if (btnSalvar) {
+        btnSalvar.onclick = salvarNovoInserto;
+    }
+});
 
-// --- FUNÇÕES GLOBAIS ---
-window.abrirEdicao = (id, insertoId, tipo, qtdAtual, obs) => {
-    document.getElementById("edit_id").value = id;
-    document.getElementById("edit_inserto_id").value = insertoId;
-    document.getElementById("edit_tipo").value = tipo;
-    document.getElementById("edit_qtd_antiga").value = qtdAtual;
-    document.getElementById("edit_qtd").value = qtdAtual;
-    document.getElementById("edit_obs").value = obs || "";
-    document.getElementById("modalEditMov").style.display = "flex";
-};
+// --- FUNÇÃO PARA GRAVAR O PRIMEIRO INSERTO ---
+async function salvarNovoInserto() {
+    const descricao = document.getElementById("ins_descricao").value;
+    const marca = document.getElementById("ins_marca").value;
+    const qtdInicial = parseInt(document.getElementById("ins_quantidade").value) || 0;
 
-window.fecharModal = () => { document.getElementById("modalEditMov").style.display = "none"; };
-
-// --- SALVAR ALTERAÇÃO (CORRIGIDO) ---
-async function salvarAlteracoes() {
-    const id = document.getElementById("edit_id").value;
-    const insertoId = document.getElementById("edit_inserto_id").value;
-    const tipo = document.getElementById("edit_tipo").value;
-    const qtdAntiga = Number(document.getElementById("edit_qtd_antiga").value);
-    const qtdNova = Number(document.getElementById("edit_qtd").value);
-    const obs = document.getElementById("edit_obs").value;
+    if (!descricao) {
+        alert("Por favor, preencha a descrição.");
+        return;
+    }
 
     try {
-        const diferenca = qtdNova - qtdAntiga;
-
-        // 1. Buscar estoque usando o UUID correto (insertoId)
-        const { data: ins, error: errFetch } = await supabase
+        const { data, error } = await supabase
             .from('insertos')
-            .select('quantidade') // Verifique se no seu banco o nome é 'quantidade' ou 'estoque_atual'
-            .eq('id', insertoId)
-            .single();
+            .insert([
+                { 
+                    descricao: descricao, 
+                    marca: marca, 
+                    quantidade: qtdInicial // Nome exato da coluna na sua imagem
+                }
+            ]);
 
-        if (errFetch || !ins) throw new Error("Inserto não encontrado no estoque principal.");
+        if (error) throw error;
 
-        // 2. Calcular novo saldo
-        let saldoAtual = Number(ins.quantidade);
-        let novoSaldo = (tipo.toLowerCase() === 'entrada') 
-            ? saldoAtual + diferenca 
-            : saldoAtual - diferenca;
-
-        // 3. Update na Movimentação
-        const { error: errMov } = await supabase
-            .from('insertos_movimentacoes')
-            .update({ quantidade: qtdNova, observacao: obs })
-            .eq('id', id);
-
-        if (errMov) throw errMov;
-
-        // 4. Update no Estoque Principal
-        const { error: errIns } = await supabase
-            .from('insertos')
-            .update({ quantidade: novoSaldo })
-            .eq('id', insertoId);
-
-        if (errIns) throw errIns;
-
-        alert("Atualizado com sucesso!");
-        window.fecharModal();
-        carregarRelatorio();
+        alert("Inserto cadastrado com sucesso!");
+        window.location.href = "insertos_lista.html";
     } catch (error) {
-        alert("Erro: " + error.message);
+        console.error("Erro ao salvar:", error);
+        alert("Erro ao salvar: " + error.message);
     }
 }
 
-// --- CARREGAR RELATÓRIO ---
-async function carregarRelatorio() {
-    const dataInicio = document.getElementById("data_inicio").value;
-    const dataFim = document.getElementById("data_fim").value;
-    const tbody = document.getElementById("corpoRelatorio");
-
+// --- LISTAGEM ---
+async function carregarInsertos() {
     const { data, error } = await supabase
-        .from('insertos_movimentacoes')
-        .select(`*, insertos(id, descricao)`)
-        .gte('data', dataInicio)
-        .lte('data', dataFim)
-        .order('data', { ascending: false });
+        .from('insertos')
+        .select('*')
+        .order('descricao');
 
-    if (error) return;
+    const tbody = document.getElementById("corpoTabelaInsertos");
+    if (!tbody) return;
 
-    const isAdmin = (role === "admin");
-    tbody.innerHTML = data.map(mov => `
+    if (error) {
+        console.error("Erro ao carregar:", error);
+        return;
+    }
+
+    tbody.innerHTML = data.map(ins => `
         <tr>
-            <td>${new Date(mov.data).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</td>
-            <td>${mov.insertos?.descricao || 'N/A'}</td>
-            <td><span class="badge ${mov.tipo.toLowerCase() === 'entrada' ? 'badge-entrada' : 'badge-saida'}">${mov.tipo.toUpperCase()}</span></td>
-            <td><b>${mov.quantidade}</b></td>
-            <td>${mov.observacao || '-'}</td>
-            <td style="display: ${isAdmin ? 'table-cell' : 'none'}">
-                <button class="btn-mini btn-edit" onclick="window.abrirEdicao('${mov.id}', '${mov.inserto_id}', '${mov.tipo}', ${mov.quantidade}, '${mov.observacao || ''}')">Editar</button>
+            <td>${ins.descricao}</td>
+            <td>${ins.marca || '-'}</td>
+            <td><b>${ins.quantidade}</b> un</td>
+            <td style="text-align: center;">
+                <button class="btn-mini btn-entrada" onclick="window.abrirModal('${ins.id}', 'entrada')">Entrada</button>
+                <button class="btn-mini btn-saida" onclick="window.abrirModal('${ins.id}', 'saida')">Baixa</button>
             </td>
         </tr>
     `).join('');
 }
 
-// --- INICIALIZAÇÃO ---
-document.addEventListener("DOMContentLoaded", async () => {
-    const user = await verificarLogin();
-    if (!user) return;
-    role = await obterRole();
+// --- MOVIMENTAÇÃO (AJUSTADO PARA COLUNA 'QUANTIDADE') ---
+window.abrirModal = (id, tipo) => {
+    document.getElementById("modalMovimentacao").style.display = "flex";
+    document.getElementById("modalId").value = id;
+    document.getElementById("modalTipo").value = tipo;
+    document.getElementById("modalTitulo").innerText = tipo === 'entrada' ? "Registrar Entrada" : "Registrar Baixa";
+    document.getElementById("mov_data").value = new Date().toISOString().split('T')[0];
+};
 
-    document.getElementById("btnFiltrar").onclick = carregarRelatorio;
-    document.getElementById("btnSalvarEdit").onclick = salvarAlteracoes;
+window.confirmarMovimento = async () => {
+    const id = document.getElementById("modalId").value;
+    const tipo = document.getElementById("modalTipo").value;
+    const qtdMov = parseInt(document.getElementById("mov_qtd").value);
+    const dataMov = document.getElementById("mov_data").value;
+    const obs = document.getElementById("mov_obs").value;
 
-    // Datas padrão
-    const hoje = new Date();
-    document.getElementById("data_inicio").valueAsDate = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-    document.getElementById("data_fim").valueAsDate = hoje;
-    
-    carregarRelatorio();
-});
+    if (!qtdMov || qtdMov <= 0) return alert("Informe uma quantidade válida.");
+
+    try {
+        // 1. Busca saldo atual
+        const { data: ins } = await supabase.from('insertos').select('quantidade').eq('id', id).single();
+        
+        // 2. Calcula novo saldo
+        let novaQtd = tipo === 'entrada' ? ins.quantidade + qtdMov : ins.quantidade - qtdMov;
+        if (novaQtd < 0) return alert("Estoque insuficiente!");
+
+        // 3. Grava Movimentação
+        await supabase.from('insertos_movimentacoes').insert([{
+            inserto_id: id,
+            tipo: tipo,
+            quantidade: qtdMov,
+            data: dataMov,
+            observacao: obs
+        }]);
+
+        // 4. Atualiza saldo principal
+        const { error } = await supabase.from('insertos').update({ quantidade: novaQtd }).eq('id', id);
+
+        if (!error) {
+            alert("Movimentação registrada!");
+            location.reload();
+        }
+    } catch (error) {
+        alert("Erro na operação.");
+    }
+};
