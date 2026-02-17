@@ -1,31 +1,42 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Relatórios - MataoUsi</title>
-    <link rel="stylesheet" href="css/style.css">
-    <script type="module" src="js/auth.js"></script>
-    <script type="module" src="js/insertos_relatorios.js"></script>
+  <meta charset="UTF-8">
+  <title>Relatórios - Matão Usinagem</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/auth.js"></script>
+  <script type="module" src="js/insertos_relatorios.js"></script>
+  <style>
+    body { background: #0b0e14; color: white; font-family: sans-serif; padding: 20px; }
+    .container { max-width: 1000px; margin: 0 auto; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+    .btn-voltar { background: #1f2937; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; border: 1px solid #374151; }
+    table { width: 100%; border-collapse: collapse; background: #111827; border-radius: 10px; overflow: hidden; }
+    th { background: #1f2937; color: #38bdf8; padding: 15px; text-align: left; }
+    td { padding: 15px; border-bottom: 1px solid #1f2937; }
+    .entrada { color: #34d399; font-weight: bold; }
+    .saida { color: #fb923c; font-weight: bold; }
+  </style>
 </head>
-<body style="background: #0b0e14; color: white; font-family: sans-serif;">
-    <div style="max-width: 1000px; margin: 20px auto; padding: 20px;">
-        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-            <a href="menu.html" style="background: #1f2937; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; border: 1px solid #374151;">← Voltar ao Menu</a>
-            <h1 style="color: #38bdf8;">Histórico de Movimentações</h1>
-        </header>
+<body>
+  <div class="container">
+    <header>
+      <a href="insertos_lista.html" class="btn-voltar">← Voltar para Lista</a>
+      <h1>Histórico de Movimentações</h1>
+    </header>
 
-        <table style="width: 100%; border-collapse: collapse; background: #111827; border-radius: 10px; overflow: hidden; border: 1px solid #1f2937;">
-            <thead>
-                <tr style="background: #1f2937; color: #38bdf8; text-align: left;">
-                    <th style="padding: 15px;">Data</th>
-                    <th style="padding: 15px;">Tipo</th>
-                    <th style="padding: 15px;">Qtd</th>
-                    <th style="padding: 15px;">Observação</th>
-                </tr>
-            </thead>
-            <tbody id="corpoRelatorio">
-                </tbody>
-        </table>
-    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Tipo</th>
+          <th>Quantidade</th>
+          <th>Observação</th>
+        </tr>
+      </thead>
+      <tbody id="corpoRelatorio">
+        </tbody>
+    </table>
+  </div>
 </body>
 </html>
