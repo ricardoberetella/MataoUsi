@@ -1,108 +1,54 @@
-import { supabase } from "./auth.js";
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Novo Inserto - Matão Usinagem</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/produtos.css">
+</head>
+<body>
+    <header class="topbar">
+        <a href="insertos_lista.html" class="btn-voltar-menu">⬅ Voltar</a>
+        <h1 class="titulo-pagina">Cadastrar Novo Inserto</h1>
+    </header>
 
-document.addEventListener("DOMContentLoaded", async () => {
-    const path = window.location.pathname;
-    if (path.endsWith("insertos_lista.html")) carregarInsertos();
-    if (path.endsWith("insertos_novo.html")) carregarDadosEdicao();
-});
+    <main class="page-container">
+        <section class="card-form">
+            <div class="form-grid">
+                <div class="form-group full">
+                    <label>Descrição (Ex: SUMITOMO ACABAM.)</label>
+                    <input type="text" id="ins_descricao">
+                </div>
+                <div class="form-group">
+                    <label>Marca</label>
+                    <input type="text" id="ins_marca">
+                </div>
+                <div class="form-group">
+                    <label>Cor de Identificação</label>
+                    <select id="ins_cor" style="background: #1e293b; color: white; padding: 10px; border-radius: 8px; width: 100%;">
+                        <option value="#1e293b">Padrão Escuro</option>
+                        <option value="#ffff00" style="color: black; background: #ffff00;">Amarelo</option>
+                        <option value="#5b9bd5" style="color: white; background: #5b9bd5;">Azul</option>
+                        <option value="#f4b084" style="color: black; background: #f4b084;">Laranja</option>
+                        <option value="#e6b8af" style="color: black; background: #e6b8af;">Rosa</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Qtd. Inicial</label>
+                    <input type="number" id="ins_qtd" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Estoque Mínimo</label>
+                    <input type="number" id="ins_minimo" value="5">
+                </div>
+                <div class="form-group full">
+                    <button id="btnSalvarInserto" class="btn-primario" style="width: 100%;">Salvar Inserto</button>
+                </div>
+            </div>
+        </section>
+    </main>
 
-// LISTAGEM
-export async function carregarInsertos() {
-    const { data } = await supabase.from('insertos').select('*').order('descricao');
-    const tbody = document.getElementById("listaInsertos");
-    if(!tbody) return;
-
-    tbody.innerHTML = data.map(ins => `
-        <tr>
-            <td>${ins.descricao}</td>
-            <td>${ins.marca || '-'}</td>
-            <td class="${ins.quantidade <= ins.estoque_minimo ? 'qtd-alerta' : ''}">${ins.quantidade}</td>
-            <td>${ins.estoque_minimo}</td>
-            <td>
-                <button class="btn-controle btn-entrada" onclick="abrirModal('${ins.id}', 'entrada')">+ Inclusão</button>
-                <button class="btn-controle btn-baixa" onclick="abrirModal('${ins.id}', 'baixa')">- Baixa</button>
-            </td>
-            <td>
-                <button class="btn-controle" style="background:#3b82f6; color:white;" onclick="location.href='insertos_novo.html?id=${ins.id}'">Editar</button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-// MODAL DE MOVIMENTAÇÃO
-window.abrirModal = (id, tipo) => {
-    document.getElementById("modalMovimento").style.display = "flex";
-    document.getElementById("mov_id").value = id;
-    document.getElementById("mov_tipo").value = tipo;
-    document.getElementById("modalTitulo").innerText = tipo === 'entrada' ? "Registrar Entrada" : "Registrar Baixa";
-    document.getElementById("mov_data").value = new Date().toISOString().split('T')[0];
-};
-
-window.fecharModal = () => document.getElementById("modalMovimento").style.display = "none";
-
-window.confirmarMovimento = async () => {
-    const id = document.getElementById("mov_id").value;
-    const tipo = document.getElementById("mov_tipo").value;
-    const qtd = parseInt(document.getElementById("mov_qtd").value);
-    const dataMov = document.getElementById("mov_data").value;
-
-    if (!qtd || qtd <= 0) return alert("Informe uma quantidade válida.");
-
-    const { data: ins } = await supabase.from('insertos').select('quantidade').eq('id', id).single();
-    let novaQtd = tipo === 'entrada' ? ins.quantidade + qtd : ins.quantidade - qtd;
-
-    if (novaQtd < 0) return alert("Estoque insuficiente!");
-
-    const { error } = await supabase.from('insertos').update({ quantidade: novaQtd }).eq('id', id);
-    if (!error) {
-        alert("Movimentação registrada!");
-        fecharModal();
-        carregarInsertos();
-    }
-};
-
-// SALVAR / EDITAR / EXCLUIR
-async function carregarDadosEdicao() {
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get("id");
-    if (!id) return;
-
-    document.getElementById("page_title").innerText = "Editar Inserto";
-    document.getElementById("btnExcluir").style.display = "block";
-
-    const { data } = await supabase.from('insertos').select('*').eq('id', id).single();
-    if (data) {
-        document.getElementById("ins_descricao").value = data.descricao;
-        document.getElementById("ins_marca").value = data.marca;
-        document.getElementById("ins_minimo").value = data.estoque_minimo;
-    }
-
-    document.getElementById("btnSalvar").onclick = () => salvar(id);
-    document.getElementById("btnExcluir").onclick = () => excluir(id);
-}
-
-async function salvar(id = null) {
-    const obj = {
-        descricao: document.getElementById("ins_descricao").value,
-        marca: document.getElementById("ins_marca").value,
-        estoque_minimo: parseInt(document.getElementById("ins_minimo").value)
-    };
-
-    const { error } = id 
-        ? await supabase.from('insertos').update(obj).eq('id', id)
-        : await supabase.from('insertos').insert([obj]);
-
-    if (!error) location.href = 'insertos_lista.html';
-}
-
-async function excluir(id) {
-    if (confirm("Deseja realmente excluir este inserto?")) {
-        await supabase.from('insertos').delete().eq('id', id);
-        location.href = 'insertos_lista.html';
-    }
-}
-
-// Atribui o salvar para novos registros
-if(document.getElementById("btnSalvar") && !new URLSearchParams(window.location.search).get("id")) {
-    document.getElementById("btnSalvar").onclick = () => salvar();
-}
+    <script type="module" src="js/insertos.js"></script>
+</body>
+</html>
