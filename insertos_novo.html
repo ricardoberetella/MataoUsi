@@ -1,44 +1,44 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Novo Inserto - Matão Usinagem</title>
-  <link rel="stylesheet" href="css/dashboard.css">
-  <script type="module" src="js/auth.js"></script>
-  <script type="module" src="js/insertos.js"></script>
+    <meta charset="UTF-8">
+    <title>Novo Inserto - Matão Usinagem</title>
+    <link rel="stylesheet" href="css/dashboard.css">
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/insertos.js"></script>
+    <style>
+        .card-cadastro { max-width: 600px; margin: 50px auto; background: #111827; padding: 40px; border-radius: 16px; border: 1px solid #1f2937; }
+        .form-control { margin-bottom: 20px; }
+        .form-control label { display: block; color: #38bdf8; margin-bottom: 10px; font-weight: bold; }
+        .form-control input { width: 100%; background: #1f2937; border: 1px solid #374151; color: white; padding: 15px; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        .btn-salvar { width: 100%; background: #38bdf8; color: #0b0e14; border: none; padding: 18px; border-radius: 8px; font-weight: bold; font-size: 18px; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .btn-salvar:hover { background: #0ea5e9; transform: translateY(-2px); }
+    </style>
 </head>
-<body>
-  <div class="layout">
-    <aside class="sidebar">
-      <div class="logo-sistema">MATÃO USINAGEM</div>
-      <nav class="menu">
-        <a href="dashboard.html" class="menu-item">🏠 Dashboard</a>
-        <a href="insertos_lista.html" class="menu-item">📦 Estoque de Insertos</a>
-      </nav>
-    </aside>
+<body style="background: #0b0e14; padding: 20px;">
+    <div class="card-cadastro">
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <h2 style="color: white; margin: 0;">Cadastrar Novo Inserto</h2>
+            <a href="insertos_lista.html" style="color: #9ca3af; text-decoration: none;">← Voltar</a>
+        </header>
 
-    <main class="main">
-      <div style="max-width: 600px; margin: 0 auto;">
-        <h1 style="color: var(--primary-color); margin-bottom: 20px;">Cadastrar Novo Inserto</h1>
-        <div style="background: var(--bg-card); padding: 30px; border-radius: 10px; border: 1px solid var(--border-color);">
-          <div style="margin-bottom: 20px;">
-            <label style="color: var(--primary-color); display: block; margin-bottom: 8px;">Descrição do Inserto</label>
-            <input type="text" id="ins_descricao" placeholder="Ex: TNMG 160404" style="width:100%; padding:12px; background:#1f2937; color:white; border:1px solid #374151; border-radius:6px;">
-          </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-            <div>
-              <label style="color: var(--primary-color); display: block; margin-bottom: 8px;">Marca</label>
-              <input type="text" id="ins_marca" style="width:100%; padding:12px; background:#1f2937; color:white; border:1px solid #374151; border-radius:6px;">
-            </div>
-            <div>
-              <label style="color: var(--primary-color); display: block; margin-bottom: 8px;">Quantidade Inicial</label>
-              <input type="number" id="ins_quantidade" value="0" style="width:100%; padding:12px; background:#1f2937; color:white; border:1px solid #374151; border-radius:6px;">
-            </div>
-          </div>
-          <button id="btnSalvarInserto" style="width:100%; margin-top:30px; padding:15px; background:var(--primary-color); color:#000; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Salvar no Estoque</button>
+        <div class="form-control">
+            <label>Descrição do Inserto</label>
+            <input type="text" id="ins_descricao" placeholder="Ex: TNMG 160404">
         </div>
-      </div>
-    </main>
-  </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="form-control">
+                <label>Marca</label>
+                <input type="text" id="ins_marca" placeholder="Ex: Sandvik">
+            </div>
+            <div class="form-control">
+                <label>Qtd Inicial em Estoque</label>
+                <input type="number" id="ins_quantidade" value="0">
+            </div>
+        </div>
+
+        <button id="btnSalvarInserto" class="btn-salvar">Salvar no Sistema</button>
+    </div>
 </body>
 </html>
