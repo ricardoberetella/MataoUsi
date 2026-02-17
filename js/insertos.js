@@ -12,7 +12,7 @@ export async function carregarInsertos() {
         <tr>
             <td>${ins.descricao}</td>
             <td>${ins.marca || '-'}</td>
-            <td style="font-size: 1.1rem; font-weight: bold; color: ${ins.quantidade < 5 ? '#ef4444' : '#fff'}">
+            <td style="font-size: 1.1rem; font-weight: bold;">
                 ${ins.quantidade} un
             </td>
             <td style="text-align: center;">
@@ -45,13 +45,12 @@ async function processarMovimentacao() {
 
     if (!qtd || qtd <= 0) return alert("Quantidade inválida");
 
-    // Pegar saldo atual
     const { data: inserto } = await supabase.from('insertos').select('quantidade').eq('id', id).single();
     let novoSaldo = tipo === 'entrada' ? inserto.quantidade + qtd : inserto.quantidade - qtd;
 
     if (novoSaldo < 0) return alert("Saldo insuficiente para essa baixa!");
 
-    // A: Registrar no Histórico
+    // Registrar no Histórico
     await supabase.from('insertos_movimentacoes').insert([{
         inserto_id: id,
         tipo: tipo,
@@ -60,7 +59,7 @@ async function processarMovimentacao() {
         observacao: obs
     }]);
 
-    // B: Atualizar Saldo na tabela principal
+    // Atualizar Saldo
     await supabase.from('insertos').update({ quantidade: novoSaldo }).eq('id', id);
 
     fecharModal();
@@ -72,19 +71,4 @@ document.addEventListener("DOMContentLoaded", () => {
     carregarInsertos();
     const btnConfirmar = document.getElementById("btnConfirmarMov");
     if (btnConfirmar) btnConfirmar.onclick = processarMovimentacao;
-    
-    // Configuração para a página de Novo Inserto (se estiver nela)
-    const btnSalvarNovo = document.getElementById("btnSalvarInserto");
-    if (btnSalvarNovo) {
-        btnSalvarNovo.onclick = async () => {
-            const desc = document.getElementById("ins_descricao").value;
-            const marca = document.getElementById("ins_marca").value;
-            const qtd = parseInt(document.getElementById("ins_qtd").value) || 0;
-            
-            if(!desc) return alert("Descrição obrigatória");
-
-            const { error } = await supabase.from('insertos').insert([{ descricao: desc, marca, quantidade: qtd }]);
-            if(!error) window.location.href = "insertos_lista.html";
-        };
-    }
 });
