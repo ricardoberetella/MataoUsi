@@ -1,40 +1,57 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Novo Inserto - Matão Usinagem</title>
-    <link rel="stylesheet" href="css/global.css">
-    <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/produtos.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastrar Novo Inserto - MataoUsi</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/insertos.js"></script>
 </head>
 <body>
-    <header class="topbar">
-        <a href="insertos_lista.html" class="btn-voltar-menu">⬅ Voltar</a>
-        <h1 class="titulo-pagina">Cadastrar Novo Inserto</h1>
-    </header>
+    <div class="container">
+        <header>
+            <button class="btn-voltar" onclick="window.location.href='insertos_lista.html'">← Voltar</button>
+            <h1>Cadastrar Novo Inserto</h1>
+        </header>
 
-    <main class="page-container">
-        <section class="card-form">
-            <div class="form-grid">
-                <div class="form-group full">
-                    <label>Descrição do Inserto</label>
-                    <input type="text" id="ins_descricao" placeholder="Ex: WNMG 080408">
+        <main class="form-card">
+            <div class="form-group">
+                <label for="ins_descricao">Descrição do Inserto</label>
+                <input type="text" id="ins_descricao" placeholder="Ex: TNMG 160404" required>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="ins_marca">Marca</label>
+                    <input type="text" id="ins_marca" placeholder="Ex: SUMITOMO">
                 </div>
                 <div class="form-group">
-                    <label>Marca</label>
-                    <input type="text" id="ins_marca" placeholder="Ex: Sandvik">
-                </div>
-                <div class="form-group">
-                    <label>Quantidade em Estoque</label>
-                    <input type="number" id="ins_qtd" value="0">
-                </div>
-                <div class="form-group full">
-                    <button id="btnSalvarInserto" class="btn-primario" style="width: 100%;">Salvar Inserto</button>
+                    <label for="ins_quantidade">Quantidade em Estoque</label>
+                    <input type="number" id="ins_quantidade" value="0" min="0">
                 </div>
             </div>
-        </section>
-    </main>
 
-    <script type="module" src="js/insertos.js"></script>
+            <div class="form-actions">
+                <button id="btnSalvarInserto" class="btn-principal">Salvar Inserto</button>
+            </div>
+        </main>
+    </div>
+
+    <style>
+        /* Estilização rápida para garantir o visual das suas fotos */
+        body { background-color: #0b0e14; color: white; font-family: sans-serif; }
+        .container { max-width: 800px; margin: 20px auto; padding: 20px; }
+        header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; }
+        .btn-voltar { background: none; border: 1px solid #38bdf8; color: #38bdf8; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
+        .form-card { background: #111827; padding: 25px; border-radius: 10px; border: 1px solid #1f2937; }
+        .form-group { margin-bottom: 20px; display: flex; flex-direction: column; }
+        .form-group label { color: #38bdf8; margin-bottom: 8px; font-weight: bold; }
+        .form-group input { background: #1f2937; border: 1px solid #374151; color: white; padding: 12px; border-radius: 5px; outline: none; }
+        .form-group input:focus { border-color: #38bdf8; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .btn-principal { width: 100%; background: #38bdf8; color: #0b0e14; border: none; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.3s; }
+        .btn-principal:hover { background: #0ea5e9; }
+    </style>
 </body>
 </html>
