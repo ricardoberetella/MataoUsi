@@ -1,78 +1,89 @@
 import { supabase } from "./auth.js";
 
+// Inicialização ao carregar a página
 document.addEventListener("DOMContentLoaded", () => {
-    const path = window.location.pathname;
-
-    // Vincula o botão de salvar novo inserto
-    const btnSalvarNovo = document.getElementById("btnSalvarInserto");
-    if (btnSalvarNovo) {
-        btnSalvarNovo.onclick = salvarNovoInserto;
+    // Se estiver na página de lista
+    if (document.getElementById("corpoTabelaInsertos")) {
+        carregarInsertos();
     }
 
-    if (path.includes("insertos_lista.html")) {
-        carregarInsertos();
+    // Se estiver na página de novo cadastro
+    const btnSalvar = document.getElementById("btnSalvarInserto");
+    if (btnSalvar) {
+        btnSalvar.addEventListener("click", salvarNovoInserto);
     }
 });
 
-// --- FUNÇÃO PARA SALVAR NOVO INSERTO ---
-async function salvarNovoInserto() {
-    // Captura os elementos do DOM
-    const elDesc = document.getElementById("ins_descricao");
-    const elMarca = document.getElementById("ins_marca");
-    const elQtd = document.getElementById("ins_quantidade");
+// --- FUNÇÕES DE LISTAGEM ---
 
-    // Verifica se os elementos existem para evitar o erro de 'null'
-    if (!elDesc || !elMarca || !elQtd) {
-        console.error("Erro: Um ou mais campos de entrada não foram encontrados no HTML.");
-        alert("Erro técnico: Campos do formulário não encontrados.");
-        return;
+async function carregarInsertos() {
+    const tbody = document.getElementById("corpoTabelaInsertos");
+    try {
+        const { data, error } = await supabase
+            .from('insertos')
+            .select('*')
+            .order('descricao', { ascending: true });
+
+        if (error) throw error;
+
+        tbody.innerHTML = data.map(ins => `
+            <tr>
+                <td>${ins.descricao}</td>
+                <td>${ins.marca || '-'}</td>
+                <td style="font-weight: bold; color: ${ins.quantidade <= 2 ? '#ef4444' : '#34d399'}">
+                    ${ins.quantidade}
+                </td>
+                <td style="text-align: center;">
+                    <button class="btn-mini btn-entrada" onclick="window.abrirModal('${ins.id}', 'entrada', '${ins.descricao}')">↑ Entrada</button>
+                    <button class="btn-mini btn-saida" onclick="window.abrirModal('${ins.id}', 'saida', '${ins.descricao}')">↓ Saída</button>
+                    <button class="btn-mini btn-del" onclick="window.excluirInserto('${ins.id}')">Excluir</button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        console.error("Erro ao carregar:", error.message);
     }
+}
 
-    const descricao = elDesc.value.trim();
-    const marca = elMarca.value.trim();
-    const quantidade = parseInt(elQtd.value) || 0;
+// --- FUNÇÕES DE CADASTRO ---
+
+async function salvarNovoInserto() {
+    // IDs sincronizados com o insertos_novo.html para evitar erro de 'null'
+    const descricao = document.getElementById("ins_descricao").value;
+    const marca = document.getElementById("ins_marca").value;
+    const quantidade = parseInt(document.getElementById("ins_quantidade").value) || 0;
 
     if (!descricao) {
-        alert("Por favor, preencha a Descrição do Inserto.");
+        alert("A descrição é obrigatória!");
         return;
     }
 
     try {
         const { error } = await supabase
             .from('insertos')
-            .insert([{ 
-                descricao: descricao, 
-                marca: marca, 
-                quantidade: quantidade 
-            }]);
+            .insert([{ descricao, marca, quantidade }]);
 
         if (error) throw error;
 
         alert("Inserto cadastrado com sucesso!");
         window.location.href = "insertos_lista.html";
     } catch (error) {
-        console.error("Erro ao salvar:", error);
         alert("Erro ao salvar: " + error.message);
     }
 }
 
-// --- FUNÇÕES DO MODAL (ENTRADA/BAIXA) ---
-window.abrirModalMov = (id, tipo) => {
-    const modal = document.getElementById("modalMovimentacao");
-    if (!modal) return;
+// --- FUNÇÕES DO MODAL (ENTRADA/SAÍDA) ---
 
+window.abrirModal = (id, tipo, descricao) => {
     document.getElementById("modalId").value = id;
     document.getElementById("modalTipo").value = tipo;
-    document.getElementById("modalTitulo").innerText = tipo === 'entrada' ? "Registrar Entrada" : "Registrar Baixa";
+    document.getElementById("modalTitulo").innerText = tipo === 'entrada' ? `Entrada: ${descricao}` : `Saída: ${descricao}`;
     document.getElementById("mov_data").value = new Date().toISOString().split('T')[0];
-    
-    modal.style.display = "flex";
+    document.getElementById("modalMovimentacao").style.display = "flex";
 };
 
-// Corrige o erro 'fecharModal is not defined'
 window.fecharModalMov = () => {
-    const modal = document.getElementById("modalMovimentacao");
-    if (modal) modal.style.display = "none";
+    document.getElementById("modalMovimentacao").style.display = "none";
 };
 
 window.confirmarMovimento = async () => {
@@ -82,20 +93,19 @@ window.confirmarMovimento = async () => {
     const dataMov = document.getElementById("mov_data").value;
     const obs = document.getElementById("mov_obs").value;
 
-    if (!qtdMov || qtdMov <= 0) return alert("Informe uma quantidade válida.");
+    if (qtdMov <= 0) return alert("Quantidade inválida");
 
     try {
-        const { data: ins, error: errFetch } = await supabase
-            .from('insertos')
-            .select('quantidade')
-            .eq('id', id)
-            .single();
+        // 1. Busca quantidade atual
+        const { data: ins } = await supabase.from('insertos').select('quantidade').eq('id', id).single();
+        const novaQtd = tipo === 'entrada' ? ins.quantidade + qtdMov : ins.quantidade - qtdMov;
 
-        if (errFetch) throw errFetch;
+        if (novaQtd < 0) return alert("Saldo insuficiente para esta saída!");
 
-        let novaQtd = tipo === 'entrada' ? Number(ins.quantidade) + qtdMov : Number(ins.quantidade) - qtdMov;
-        if (novaQtd < 0) return alert("Estoque insuficiente!");
+        // 2. Atualiza estoque principal
+        await supabase.from('insertos').update({ quantidade: novaQtd }).eq('id', id);
 
+        // 3. Registra no histórico (Relatórios)
         await supabase.from('insertos_movimentacoes').insert([{
             inserto_id: id,
             tipo: tipo,
@@ -104,32 +114,19 @@ window.confirmarMovimento = async () => {
             observacao: obs
         }]);
 
-        await supabase.from('insertos').update({ quantidade: novaQtd }).eq('id', id);
-
-        alert("Operação realizada!");
-        location.reload();
+        window.fecharModalMov();
+        carregarInsertos();
     } catch (error) {
-        alert("Erro: " + error.message);
+        alert("Erro na movimentação: " + error.message);
     }
 };
 
-// --- LISTAGEM ---
-async function carregarInsertos() {
-    const tbody = document.getElementById("corpoTabelaInsertos");
-    if (!tbody) return;
-
-    const { data, error } = await supabase.from('insertos').select('*').order('descricao');
-    if (error) return;
-
-    tbody.innerHTML = data.map(ins => `
-        <tr>
-            <td>${ins.descricao}</td>
-            <td>${ins.marca || '-'}</td>
-            <td><b style="color: #38bdf8;">${ins.quantidade} un</b></td>
-            <td style="text-align: center;">
-                <button class="btn-mini btn-entrada" onclick="window.abrirModalMov('${ins.id}', 'entrada')">Entrada</button>
-                <button class="btn-mini btn-saida" onclick="window.abrirModalMov('${ins.id}', 'saida')">Baixa</button>
-            </td>
-        </tr>
-    `).join('');
-}
+window.excluirInserto = async (id) => {
+    if (!confirm("Deseja realmente excluir este inserto?")) return;
+    try {
+        await supabase.from('insertos').delete().eq('id', id);
+        carregarInsertos();
+    } catch (error) {
+        alert("Erro ao excluir: " + error.message);
+    }
+};
