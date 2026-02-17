@@ -1,141 +1,54 @@
-import { supabase, verificarLogin, obterRole } from "./auth.js";
+import { supabase } from "./auth.js";
 
-let role = "viewer";
+document.addEventListener("DOMContentLoaded", () => {
+    carregarHistorico();
+});
 
-// --- 1. FUNÇÕES GLOBAIS PARA O HTML ---
-window.abrirEdicao = (id, insertoId, tipo, qtdAtual, obs) => {
-    document.getElementById("edit_id").value = id;
-    document.getElementById("edit_inserto_id").value = insertoId;
-    document.getElementById("edit_tipo").value = tipo;
-    document.getElementById("edit_qtd_antiga").value = qtdAtual;
-    document.getElementById("edit_qtd").value = qtdAtual;
-    document.getElementById("edit_obs").value = obs || "";
-    document.getElementById("modalEditMov").style.display = "flex";
-};
-
-window.fecharModal = () => {
-    document.getElementById("modalEditMov").style.display = "none";
-};
-
-// --- 2. EXCLUIR COM REVERSÃO DE ESTOQUE ---
-window.excluirMov = async (id, insertoId, tipo, quantidade) => {
-    if (!confirm("Deseja excluir esta movimentação? O saldo do estoque será ajustado.")) return;
+async function carregarHistorico() {
+    const tbody = document.getElementById("corpoRelatorio");
+    if (!tbody) return;
 
     try {
-        // Buscar saldo atual usando a coluna correta 'quantidade'
-        const { data: ins, error: errFetch } = await supabase
-            .from('insertos')
-            .select('quantidade')
-            .eq('id', insertoId)
-            .single();
-
-        if (errFetch) throw errFetch;
-
-        // Inverter a operação: se entrou, retira; se saiu, devolve
-        let novoSaldo = (tipo.toLowerCase() === 'entrada') 
-            ? Number(ins.quantidade) - Number(quantidade) 
-            : Number(ins.quantidade) + Number(quantidade);
-
-        // Deletar movimentação e atualizar estoque
-        await supabase.from('insertos_movimentacoes').delete().eq('id', id);
-        await supabase.from('insertos').update({ quantidade: novoSaldo }).eq('id', insertoId);
-
-        alert("Movimentação removida e estoque atualizado!");
-        carregarRelatorio();
-    } catch (error) {
-        alert("Erro ao excluir: " + error.message);
-    }
-};
-
-// --- 3. SALVAR EDIÇÃO COM AJUSTE DE DIFERENÇA ---
-async function processarEdicao() {
-    const id = document.getElementById("edit_id").value;
-    const insertoId = document.getElementById("edit_inserto_id").value;
-    const tipo = document.getElementById("edit_tipo").value;
-    const qtdAntiga = Number(document.getElementById("edit_qtd_antiga").value);
-    const qtdNova = Number(document.getElementById("edit_qtd").value);
-    const obs = document.getElementById("edit_obs").value;
-
-    try {
-        const diferenca = qtdNova - qtdAntiga;
-        
-        // Buscar saldo atual
-        const { data: ins, error: errFetch } = await supabase
-            .from('insertos')
-            .select('quantidade')
-            .eq('id', insertoId)
-            .single();
-
-        if (errFetch) throw errFetch;
-
-        let novoSaldo = (tipo.toLowerCase() === 'entrada') 
-            ? Number(ins.quantidade) + diferenca 
-            : Number(ins.quantidade) - diferenca;
-
-        // Atualizar ambos os registros
-        const { error: errMov } = await supabase
+        // Busca as movimentações ordenadas pela data mais recente
+        const { data: movimentacoes, error: errMov } = await supabase
             .from('insertos_movimentacoes')
-            .update({ quantidade: qtdNova, observacao: obs })
-            .eq('id', id);
+            .select(`
+                id,
+                tipo,
+                quantidade,
+                data,
+                observacao,
+                inserto_id,
+                insertos ( descricao )
+            `)
+            .order('data', { ascending: false });
 
         if (errMov) throw errMov;
 
-        await supabase.from('insertos').update({ quantidade: novoSaldo }).eq('id', insertoId);
+        if (!movimentacoes || movimentacoes.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Nenhuma movimentação encontrada.</td></tr>`;
+            return;
+        }
 
-        alert("Alteração salva com sucesso!");
-        window.fecharModal();
-        carregarRelatorio();
+        tbody.innerHTML = movimentacoes.map(mov => {
+            const dataFormatada = new Date(mov.data).toLocaleDateString('pt-BR');
+            const classeTipo = mov.tipo === 'entrada' ? 'entrada' : 'saida';
+            const sinal = mov.tipo === 'entrada' ? '+' : '-';
+            const nomeInserto = mov.insertos ? mov.insertos.descricao : "Inserto Removido";
+
+            return `
+                <tr>
+                    <td>${dataFormatada}</td>
+                    <td><strong style="color: #38bdf8;">${nomeInserto}</strong></td>
+                    <td class="${classeTipo}">${sinal} ${mov.quantidade}</td>
+                    <td style="text-transform: capitalize;">${mov.tipo}</td>
+                    <td style="color: #9ca3af; font-size: 0.9em;">${mov.observacao || '-'}</td>
+                </tr>
+            `;
+        }).join('');
+
     } catch (error) {
-        alert("Erro ao salvar: " + error.message);
+        console.error("Erro ao carregar relatório:", error);
+        tbody.innerHTML = `<tr><td colspan="5" style="color:red; text-align:center;">Erro ao carregar dados: ${error.message}</td></tr>`;
     }
 }
-
-// --- 4. CARREGAR TABELA ---
-async function carregarRelatorio() {
-    const dataInicio = document.getElementById("data_inicio").value;
-    const dataFim = document.getElementById("data_fim").value;
-    const tbody = document.getElementById("corpoRelatorio");
-
-    const { data, error } = await supabase
-        .from('insertos_movimentacoes')
-        .select(`*, insertos(id, descricao)`)
-        .gte('data', dataInicio)
-        .lte('data', dataFim)
-        .order('data', { ascending: false });
-
-    if (error) return console.error(error);
-
-    const isAdmin = (role === "admin");
-
-    tbody.innerHTML = data.map(mov => `
-        <tr>
-            <td>${new Date(mov.data).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</td>
-            <td>${mov.insertos?.descricao || 'N/A'}</td>
-            <td><span class="badge ${mov.tipo.toLowerCase() === 'entrada' ? 'badge-entrada' : 'badge-saida'}">${mov.tipo.toUpperCase()}</span></td>
-            <td><b>${mov.quantidade}</b></td>
-            <td>${mov.observacao || '-'}</td>
-            <td style="display: ${isAdmin ? 'table-cell' : 'none'}">
-                <button class="btn-mini btn-edit" onclick="window.abrirEdicao('${mov.id}', '${mov.inserto_id}', '${mov.tipo}', ${mov.quantidade}, '${mov.observacao || ''}')">Editar</button>
-                <button class="btn-mini btn-del" onclick="window.excluirMov('${mov.id}', '${mov.inserto_id}', '${mov.tipo}', ${mov.quantidade})">Excluir</button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-// --- 5. INICIALIZAÇÃO ---
-document.addEventListener("DOMContentLoaded", async () => {
-    const user = await verificarLogin();
-    if (!user) return;
-    role = await obterRole();
-
-    // Datas padrão
-    const hoje = new Date();
-    document.getElementById("data_inicio").valueAsDate = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-    document.getElementById("data_fim").valueAsDate = hoje;
-
-    // Vincular botões
-    document.getElementById("btnFiltrar").onclick = carregarRelatorio;
-    document.getElementById("btnSalvarEdit").onclick = processarEdicao;
-
-    carregarRelatorio();
-});
