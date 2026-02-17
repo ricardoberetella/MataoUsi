@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Novo Inserto - Matão Usinagem</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/produtos.css">
+</head>
+<body>
+    <header class="topbar">
+        <a href="insertos_lista.html" class="btn-voltar-menu">⬅ Voltar</a>
+        <h1 class="titulo-pagina">Cadastrar Novo Inserto</h1>
+    </header>
+
+    <main class="page-container">
+        <section class="card-form">
+            <div class="form-grid">
+                <div class="form-group full">
+                    <label>Descrição (Ex: SUMITOMO ACABAM.)</label>
+                    <input type="text" id="ins_descricao">
+                </div>
+                <div class="form-group">
+                    <label>Marca</label>
+                    <input type="text" id="ins_marca">
+                </div>
+                <div class="form-group">
+                    <label>Cor de Identificação</label>
+                    <select id="ins_cor" style="background: #1e293b; color: white; padding: 10px; border-radius: 8px; width: 100%;">
+                        <option value="">Sem Cor</option>
+                        <option value="#ffff00" style="color: black; background: #ffff00;">Amarelo</option>
+                        <option value="#5b9bd5" style="color: white; background: #5b9bd5;">Azul Escuro</option>
+                        <option value="#f4b084" style="color: black; background: #f4b084;">Laranja</option>
+                        <option value="#e6b8af" style="color: black; background: #e6b8af;">Rosa</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Qtd. Inicial</label>
+                    <input type="number" id="ins_qtd" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Estoque Mínimo</label>
+                    <input type="number" id="ins_minimo" value="5">
+                </div>
+                <div class="form-group full">
+                    <button onclick="salvarNovoInserto()" class="btn-primario" style="width: 100%;">Salvar Inserto</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script type="module" src="js/insertos.js"></script>
+</body>
+</html>
