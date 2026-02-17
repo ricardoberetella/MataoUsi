@@ -2,9 +2,9 @@ import { supabase, verificarLogin, obterRole } from "./auth.js";
 
 let role = "viewer";
 
-// --- 1. FUNÇÕES GLOBAIS (Acessíveis pelo HTML) ---
+// 1. TORNAR AS FUNÇÕES DISPONÍVEIS NO NAVEGADOR (Escopo Global)
 window.abrirEdicao = (id, insertoId, tipo, qtdAtual, obs) => {
-    console.log("Abrindo edição para ID:", id);
+    console.log("Abrindo modal para ID:", id);
     document.getElementById("edit_id").value = id;
     document.getElementById("edit_inserto_id").value = insertoId;
     document.getElementById("edit_tipo").value = tipo;
@@ -18,28 +18,11 @@ window.fecharModal = () => {
     document.getElementById("modalEditMov").style.display = "none";
 };
 
-window.excluirMov = async (id, insertoId, tipo, quantidade) => {
-    if (!confirm("Deseja excluir esta movimentação? O stock será ajustado.")) return;
-    try {
-        const { data: ins } = await supabase.from('insertos').select('estoque_atual').eq('id', insertoId).single();
-        let novoSaldo = (tipo.toLowerCase() === 'entrada') 
-            ? Number(ins.estoque_atual) - Number(quantidade) 
-            : Number(ins.estoque_atual) + Number(quantidade);
+// 2. FUNÇÃO DE SALVAMENTO (REVISADA)
+async function salvarAlteracoes() {
+    console.log("Iniciando processo de salvamento...");
 
-        await supabase.from('insertos_movimentacoes').delete().eq('id', id);
-        await supabase.from('insertos').update({ estoque_atual: novoSaldo }).eq('id', insertoId);
-
-        alert("Excluído com sucesso!");
-        carregarRelatorio();
-    } catch (e) {
-        alert("Erro ao excluir: " + e.message);
-    }
-};
-
-// --- 2. LOGICA DE SALVAR (CORRIGIDA E TESTADA) ---
-async function processarSalvar() {
-    console.log("Botão Salvar clicado!"); // Log para teste
-
+    // Captura os valores dos inputs
     const id = document.getElementById("edit_id").value;
     const insertoId = document.getElementById("edit_inserto_id").value;
     const tipo = document.getElementById("edit_tipo").value;
@@ -48,60 +31,67 @@ async function processarSalvar() {
     const obs = document.getElementById("edit_obs").value;
 
     if (!id) {
-        alert("Erro: ID da movimentação não encontrado.");
+        alert("Erro crítico: ID não encontrado.");
         return;
     }
 
     try {
-        // 1. Calcular diferença
-        const diferenca = qtdNova - qtdAntiga;
-        console.log("Diferença calculada:", diferenca);
+        // Bloquear botão para evitar cliques duplos
+        const btn = document.getElementById("btnSalvarEdit");
+        if(btn) btn.disabled = true;
 
-        // 2. Buscar stock atual
+        // A. Calcular a diferença
+        const diferenca = qtdNova - qtdAntiga;
+
+        // B. Buscar estoque atual para o cálculo
         const { data: ins, error: errFetch } = await supabase
             .from('insertos')
             .select('estoque_atual')
             .eq('id', insertoId)
             .single();
 
-        if (errFetch) throw errFetch;
+        if (errFetch) throw new Error("Erro ao buscar estoque: " + errFetch.message);
 
-        // 3. Calcular novo saldo do inserto
-        let novoSaldoPrincipal = (tipo.toLowerCase() === 'entrada') 
+        // C. Calcular novo saldo (Se entrada: soma a diferença | Se saída: subtrai a diferença)
+        let novoSaldo = (tipo.toLowerCase() === 'entrada') 
             ? Number(ins.estoque_atual) + diferenca 
             : Number(ins.estoque_atual) - diferenca;
 
-        // 4. Atualizar Movimentação
-        const { error: errUpdMov } = await supabase
+        // D. Atualizar registro da movimentação
+        const { error: errMov } = await supabase
             .from('insertos_movimentacoes')
             .update({ quantidade: qtdNova, observacao: obs })
             .eq('id', id);
 
-        if (errUpdMov) throw errUpdMov;
+        if (errMov) throw errMov;
 
-        // 5. Atualizar Stock Principal
-        const { error: errUpdIns } = await supabase
+        // E. Atualizar saldo na tabela principal
+        const { error: errIns } = await supabase
             .from('insertos')
-            .update({ estoque_atual: novoSaldoPrincipal })
+            .update({ estoque_atual: novoSaldo })
             .eq('id', insertoId);
 
-        if (errUpdIns) throw errUpdIns;
+        if (errIns) throw errIns;
 
-        alert("Atualizado com sucesso!");
+        alert("Alterações salvas com sucesso!");
         window.fecharModal();
         carregarRelatorio();
 
     } catch (error) {
-        console.error("Erro completo:", error);
-        alert("Erro ao salvar: " + (error.message || "Erro desconhecido"));
+        console.error("Erro ao salvar:", error);
+        alert("Falha ao salvar: " + error.message);
+    } finally {
+        const btn = document.getElementById("btnSalvarEdit");
+        if(btn) btn.disabled = false;
     }
 }
 
-// --- 3. CARREGAR TABELA ---
+// 3. CARREGAR DADOS NA TABELA
 async function carregarRelatorio() {
     const dataInicio = document.getElementById("data_inicio").value;
     const dataFim = document.getElementById("data_fim").value;
     const tbody = document.getElementById("corpoRelatorio");
+
     if (!tbody) return;
 
     const { data, error } = await supabase
@@ -111,10 +101,7 @@ async function carregarRelatorio() {
         .lte('data', dataFim)
         .order('data', { ascending: false });
 
-    if (error) {
-        console.error("Erro ao carregar lista:", error);
-        return;
-    }
+    if (error) return;
 
     const isAdmin = (role === "admin");
 
@@ -127,30 +114,28 @@ async function carregarRelatorio() {
             <td>${mov.observacao || '-'}</td>
             <td class="col-acoes" style="display: ${isAdmin ? 'table-cell' : 'none'}">
                 <button class="btn-mini btn-edit" onclick="window.abrirEdicao('${mov.id}', '${mov.inserto_id}', '${mov.tipo}', ${mov.quantidade}, '${mov.observacao || ''}')">Editar</button>
-                <button class="btn-mini btn-del" onclick="window.excluirMov('${mov.id}', '${mov.inserto_id}', '${mov.tipo}', ${mov.quantidade})">Excluir</button>
             </td>
         </tr>
     `).join('');
 }
 
-// --- 4. INICIALIZAÇÃO ---
+// 4. INICIALIZAÇÃO E VINCULAÇÃO DE EVENTOS
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
     role = await obterRole();
 
-    // Configura datas iniciais
+    // Configuração de datas
     const hoje = new Date();
     document.getElementById("data_inicio").valueAsDate = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
     document.getElementById("data_fim").valueAsDate = hoje;
 
-    // Vincular cliques
-    document.getElementById("btnFiltrar").onclick = carregarRelatorio;
-    
+    // VINCULAÇÃO FORÇADA DOS BOTÕES
+    const btnFiltrar = document.getElementById("btnFiltrar");
+    if (btnFiltrar) btnFiltrar.onclick = carregarRelatorio;
+
     const btnSalvar = document.getElementById("btnSalvarEdit");
-    if (btnSalvar) {
-        btnSalvar.onclick = processarSalvar;
-    }
+    if (btnSalvar) btnSalvar.onclick = salvarAlteracoes;
 
     carregarRelatorio();
 });
