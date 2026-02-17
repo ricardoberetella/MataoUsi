@@ -2,9 +2,8 @@ import { supabase, verificarLogin, obterRole } from "./auth.js";
 
 let role = "viewer";
 
-// 1. TORNAR AS FUNÇÕES DISPONÍVEIS NO NAVEGADOR (Escopo Global)
+// --- FUNÇÕES GLOBAIS ---
 window.abrirEdicao = (id, insertoId, tipo, qtdAtual, obs) => {
-    console.log("Abrindo modal para ID:", id);
     document.getElementById("edit_id").value = id;
     document.getElementById("edit_inserto_id").value = insertoId;
     document.getElementById("edit_tipo").value = tipo;
@@ -14,15 +13,10 @@ window.abrirEdicao = (id, insertoId, tipo, qtdAtual, obs) => {
     document.getElementById("modalEditMov").style.display = "flex";
 };
 
-window.fecharModal = () => {
-    document.getElementById("modalEditMov").style.display = "none";
-};
+window.fecharModal = () => { document.getElementById("modalEditMov").style.display = "none"; };
 
-// 2. FUNÇÃO DE SALVAMENTO (REVISADA)
+// --- SALVAR ALTERAÇÃO (CORRIGIDO) ---
 async function salvarAlteracoes() {
-    console.log("Iniciando processo de salvamento...");
-
-    // Captura os valores dos inputs
     const id = document.getElementById("edit_id").value;
     const insertoId = document.getElementById("edit_inserto_id").value;
     const tipo = document.getElementById("edit_tipo").value;
@@ -30,34 +24,25 @@ async function salvarAlteracoes() {
     const qtdNova = Number(document.getElementById("edit_qtd").value);
     const obs = document.getElementById("edit_obs").value;
 
-    if (!id) {
-        alert("Erro crítico: ID não encontrado.");
-        return;
-    }
-
     try {
-        // Bloquear botão para evitar cliques duplos
-        const btn = document.getElementById("btnSalvarEdit");
-        if(btn) btn.disabled = true;
-
-        // A. Calcular a diferença
         const diferenca = qtdNova - qtdAntiga;
 
-        // B. Buscar estoque atual para o cálculo
+        // 1. Buscar estoque usando o UUID correto (insertoId)
         const { data: ins, error: errFetch } = await supabase
             .from('insertos')
-            .select('estoque_atual')
+            .select('quantidade') // Verifique se no seu banco o nome é 'quantidade' ou 'estoque_atual'
             .eq('id', insertoId)
             .single();
 
-        if (errFetch) throw new Error("Erro ao buscar estoque: " + errFetch.message);
+        if (errFetch || !ins) throw new Error("Inserto não encontrado no estoque principal.");
 
-        // C. Calcular novo saldo (Se entrada: soma a diferença | Se saída: subtrai a diferença)
+        // 2. Calcular novo saldo
+        let saldoAtual = Number(ins.quantidade);
         let novoSaldo = (tipo.toLowerCase() === 'entrada') 
-            ? Number(ins.estoque_atual) + diferenca 
-            : Number(ins.estoque_atual) - diferenca;
+            ? saldoAtual + diferenca 
+            : saldoAtual - diferenca;
 
-        // D. Atualizar registro da movimentação
+        // 3. Update na Movimentação
         const { error: errMov } = await supabase
             .from('insertos_movimentacoes')
             .update({ quantidade: qtdNova, observacao: obs })
@@ -65,34 +50,27 @@ async function salvarAlteracoes() {
 
         if (errMov) throw errMov;
 
-        // E. Atualizar saldo na tabela principal
+        // 4. Update no Estoque Principal
         const { error: errIns } = await supabase
             .from('insertos')
-            .update({ estoque_atual: novoSaldo })
+            .update({ quantidade: novoSaldo })
             .eq('id', insertoId);
 
         if (errIns) throw errIns;
 
-        alert("Alterações salvas com sucesso!");
+        alert("Atualizado com sucesso!");
         window.fecharModal();
         carregarRelatorio();
-
     } catch (error) {
-        console.error("Erro ao salvar:", error);
-        alert("Falha ao salvar: " + error.message);
-    } finally {
-        const btn = document.getElementById("btnSalvarEdit");
-        if(btn) btn.disabled = false;
+        alert("Erro: " + error.message);
     }
 }
 
-// 3. CARREGAR DADOS NA TABELA
+// --- CARREGAR RELATÓRIO ---
 async function carregarRelatorio() {
     const dataInicio = document.getElementById("data_inicio").value;
     const dataFim = document.getElementById("data_fim").value;
     const tbody = document.getElementById("corpoRelatorio");
-
-    if (!tbody) return;
 
     const { data, error } = await supabase
         .from('insertos_movimentacoes')
@@ -104,7 +82,6 @@ async function carregarRelatorio() {
     if (error) return;
 
     const isAdmin = (role === "admin");
-
     tbody.innerHTML = data.map(mov => `
         <tr>
             <td>${new Date(mov.data).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</td>
@@ -112,30 +89,26 @@ async function carregarRelatorio() {
             <td><span class="badge ${mov.tipo.toLowerCase() === 'entrada' ? 'badge-entrada' : 'badge-saida'}">${mov.tipo.toUpperCase()}</span></td>
             <td><b>${mov.quantidade}</b></td>
             <td>${mov.observacao || '-'}</td>
-            <td class="col-acoes" style="display: ${isAdmin ? 'table-cell' : 'none'}">
+            <td style="display: ${isAdmin ? 'table-cell' : 'none'}">
                 <button class="btn-mini btn-edit" onclick="window.abrirEdicao('${mov.id}', '${mov.inserto_id}', '${mov.tipo}', ${mov.quantidade}, '${mov.observacao || ''}')">Editar</button>
             </td>
         </tr>
     `).join('');
 }
 
-// 4. INICIALIZAÇÃO E VINCULAÇÃO DE EVENTOS
+// --- INICIALIZAÇÃO ---
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
     role = await obterRole();
 
-    // Configuração de datas
+    document.getElementById("btnFiltrar").onclick = carregarRelatorio;
+    document.getElementById("btnSalvarEdit").onclick = salvarAlteracoes;
+
+    // Datas padrão
     const hoje = new Date();
     document.getElementById("data_inicio").valueAsDate = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
     document.getElementById("data_fim").valueAsDate = hoje;
-
-    // VINCULAÇÃO FORÇADA DOS BOTÕES
-    const btnFiltrar = document.getElementById("btnFiltrar");
-    if (btnFiltrar) btnFiltrar.onclick = carregarRelatorio;
-
-    const btnSalvar = document.getElementById("btnSalvarEdit");
-    if (btnSalvar) btnSalvar.onclick = salvarAlteracoes;
-
+    
     carregarRelatorio();
 });
