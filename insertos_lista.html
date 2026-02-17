@@ -13,33 +13,20 @@
         .btn-acao-topo { padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 8px; transition: 0.3s; border: none; cursor: pointer; }
         .btn-primario { background: #38bdf8; color: #0b0e14; }
         .btn-secundario { background: #1f2937; color: white; border: 1px solid #374151; }
-        .btn-primario:hover { background: #0ea5e9; }
-        
         .tabela-estilizada { width: 100%; border-collapse: collapse; background: #111827; border-radius: 12px; overflow: hidden; border: 1px solid #1f2937; }
-        .tabela-estilizada th { background: #1f2937; color: #38bdf8; padding: 18px; text-align: left; font-size: 14px; text-transform: uppercase; }
+        .tabela-estilizada th { background: #1f2937; color: #38bdf8; padding: 18px; text-align: left; }
         .tabela-estilizada td { padding: 18px; border-bottom: 1px solid #1f2937; color: #e5e7eb; }
-        
         .badge-qtd { padding: 6px 12px; border-radius: 20px; font-weight: bold; background: #064e3b; color: #34d399; }
         .qtd-baixa { background: #7f1d1d; color: #f87171; }
-
-        .btn-tabela { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; margin-right: 8px; transition: 0.2s; }
-        .btn-entrada { background: #10b981; color: white; }
-        .btn-saida { background: #f59e0b; color: white; }
-        .btn-excluir { background: #ef4444; color: white; }
-
-        /* Modal padrão do sistema */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { background: #111827; padding: 40px; border-radius: 16px; width: 450px; border: 1px solid #38bdf8; box-shadow: 0 0 30px rgba(56, 189, 248, 0.2); }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; color: #38bdf8; margin-bottom: 8px; font-weight: bold; }
-        .form-group input, .form-group textarea { width: 100%; background: #1f2937; border: 1px solid #374151; color: white; padding: 12px; border-radius: 8px; box-sizing: border-box; }
+        .modal-content { background: #111827; padding: 40px; border-radius: 16px; width: 450px; border: 1px solid #38bdf8; }
     </style>
 </head>
 <body>
     <div class="container-insertos">
         <header class="header-pagina">
             <a href="dashboard.html" class="btn-acao-topo btn-secundario">← Voltar ao Menu</a>
-            <h1 style="color: white; margin: 0; font-size: 32px;">Estoque de Insertos</h1>
+            <h1 style="color: white; margin: 0;">Estoque de Insertos</h1>
             <div style="display: flex; gap: 12px;">
                 <a href="insertos_relatorios.html" class="btn-acao-topo btn-secundario">📊 Relatórios</a>
                 <a href="insertos_novo.html" class="btn-acao-topo btn-primario">+ Novo Inserto</a>
@@ -55,33 +42,22 @@
                     <th style="text-align: center;">Ações</th>
                 </tr>
             </thead>
-            <tbody id="corpoTabelaInsertos">
-                </tbody>
+            <tbody id="corpoTabelaInsertos"></tbody>
         </table>
     </div>
 
     <div id="modalMovimentacao" class="modal">
         <div class="modal-content">
-            <h2 id="modalTitulo" style="color: #38bdf8; margin-top: 0; margin-bottom: 25px;">Registrar Movimento</h2>
+            <h2 id="modalTitulo" style="color: #38bdf8; margin-top: 0;">Registrar Movimento</h2>
             <input type="hidden" id="modalId">
             <input type="hidden" id="modalTipo">
-            
-            <div class="form-group">
-                <label>Data</label>
-                <input type="date" id="mov_data">
+            <div style="margin-bottom: 15px;">
+                <label style="color: #38bdf8; display: block; margin-bottom: 8px;">Quantidade</label>
+                <input type="number" id="mov_qtd" value="1" min="1" style="width: 100%; padding: 12px; background: #1f2937; color: white; border: 1px solid #374151; border-radius: 8px;">
             </div>
-            <div class="form-group">
-                <label>Quantidade</label>
-                <input type="number" id="mov_qtd" value="1" min="1">
-            </div>
-            <div class="form-group">
-                <label>Observação (Opcional)</label>
-                <textarea id="mov_obs" rows="3" placeholder="Ex: Máquina 04 ou NF-452"></textarea>
-            </div>
-
             <div style="display: flex; gap: 15px; margin-top: 30px;">
-                <button onclick="window.confirmarMovimento()" class="btn-tabela btn-entrada" style="flex: 2; padding: 15px;">Confirmar</button>
-                <button onclick="window.fecharModalMov()" class="btn-tabela btn-secundario" style="flex: 1; padding: 15px;">Cancelar</button>
+                <button onclick="window.confirmarMovimento()" style="flex: 2; background: #38bdf8; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">Confirmar</button>
+                <button onclick="window.fecharModalMov()" style="flex: 1; background: #1f2937; color: white; border: 1px solid #374151; padding: 15px; border-radius: 8px; cursor: pointer;">Cancelar</button>
             </div>
         </div>
     </div>
