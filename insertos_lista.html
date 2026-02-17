@@ -11,13 +11,13 @@
     body { background: #0b0e14; color: white; font-family: sans-serif; margin: 0; padding: 20px; }
     .container { max-width: 1000px; margin: 0 auto; }
     header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-    .btn { padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; cursor: pointer; border: none; }
+    .btn { padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; cursor: pointer; border: none; display: inline-block; }
     .btn-voltar { background: #1f2937; color: white; border: 1px solid #374151; }
     .btn-novo { background: #38bdf8; color: #000; }
     table { width: 100%; border-collapse: collapse; background: #111827; border-radius: 10px; overflow: hidden; }
     th { background: #1f2937; color: #38bdf8; padding: 15px; text-align: left; }
     td { padding: 15px; border-bottom: 1px solid #1f2937; }
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 999; }
     .modal-content { background: #111827; padding: 30px; border-radius: 12px; width: 400px; border: 1px solid #38bdf8; }
     input, textarea { width: 100%; background: #1f2937; border: 1px solid #374151; color: white; padding: 10px; border-radius: 6px; margin-top: 10px; box-sizing: border-box; }
   </style>
@@ -25,7 +25,7 @@
 <body>
   <div class="container">
     <header>
-      <a href="dashboard.html" class="btn btn-voltar">← Voltar</a>
+      <a href="dashboard.html" class="btn btn-voltar">← Voltar ao Menu</a>
       <h1>Estoque de Insertos</h1>
       <div style="display: flex; gap: 10px;">
         <a href="insertos_relatorios.html" class="btn btn-voltar">📊 Relatórios</a>
@@ -55,8 +55,8 @@
       <input type="date" id="mov_data">
       <label style="display:block; margin-top:15px;">Quantidade</label>
       <input type="number" id="mov_qtd" value="1" min="1">
-      <label style="display:block; margin-top:15px;">Observação</label>
-      <textarea id="mov_obs" rows="3"></textarea>
+      <label style="display:block; margin-top:15px;">Observação (Opcional)</label>
+      <textarea id="mov_obs" rows="3" placeholder="Ex: NF 123 ou Máquina 02"></textarea>
       <div style="margin-top: 25px; display: flex; gap: 10px;">
         <button onclick="window.confirmarMovimento()" style="flex: 2; background: #38bdf8; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">Confirmar</button>
         <button onclick="window.fecharModalMov()" style="flex: 1; background: #374151; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer;">Cancelar</button>
