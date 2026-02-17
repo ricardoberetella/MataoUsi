@@ -7,31 +7,27 @@
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <style>
-        .filtros-relatorio {
-            display: flex;
-            gap: 15px;
-            align-items: flex-end;
-            margin-bottom: 20px;
-            background: #1e293b;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid rgba(56, 189, 248, 0.2);
-        }
+        .filtros-relatorio { display: flex; gap: 15px; align-items: flex-end; margin-bottom: 20px; background: #1e293b; padding: 20px; border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.2); }
         .grupo-filtro { display: flex; flex-direction: column; gap: 5px; }
         .grupo-filtro label { font-size: 13px; color: #94a3b8; }
-        .grupo-filtro input { 
-            padding: 8px; 
-            border-radius: 6px; 
-            border: 1px solid #334155; 
-            background: #0f172a; 
-            color: white; 
-        }
+        .grupo-filtro input { padding: 8px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; }
+        
         .tabela-relatorio { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 8px; overflow: hidden; }
         .tabela-relatorio th { padding: 12px; text-align: left; background: #0f172a; color: #38bdf8; border-bottom: 2px solid #38bdf8; }
         .tabela-relatorio td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
+        
         .badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; }
         .badge-entrada { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
         .badge-saida { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+
+        .btn-mini { padding: 5px 10px; border-radius: 4px; border: none; cursor: pointer; font-size: 12px; font-weight: bold; margin-right: 5px; }
+        .btn-edit { background: #38bdf8; color: #000; }
+        .btn-del { background: #ef4444; color: #fff; }
+        
+        /* Modal */
+        .modal { display: none; position: fixed; z-index: 1000; inset: 0; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; }
+        .modal-content { background: #1e293b; padding: 25px; border-radius: 12px; width: 350px; border: 1px solid #38bdf8; }
+        .col-acoes { display: none; } /* Escondido por padrão, JS mostra para admin */
     </style>
 </head>
 <body>
@@ -54,7 +50,6 @@
                 <input type="date" id="data_fim">
             </div>
             <button class="btn-primario" id="btnFiltrar">Filtrar</button>
-            <button class="btn-acao" onclick="window.print()" style="background:#64748b; color:white; padding: 10px 15px; border-radius: 8px; font-weight: bold;">Imprimir</button>
         </div>
 
         <section class="card">
@@ -62,17 +57,34 @@
                 <thead>
                     <tr>
                         <th>Data</th>
-                        <th>Inserto / Descrição</th>
+                        <th>Inserto</th>
                         <th>Tipo</th>
                         <th>Qtd</th>
-                        <th>Observação</th>
+                        <th>Obs.</th>
+                        <th class="col-acoes">Ações</th>
                     </tr>
                 </thead>
-                <tbody id="corpoRelatorio">
-                    <tr><td colspan="5" style="text-align:center; padding:20px;">Selecione as datas para filtrar.</td></tr>
-                </tbody>
+                <tbody id="corpoRelatorio"></tbody>
             </table>
         </section>
+    </div>
+
+    <div id="modalEditMov" class="modal">
+        <div class="modal-content">
+            <h3 style="color:#38bdf8; margin-top:0;">Editar Movimentação</h3>
+            <input type="hidden" id="edit_id">
+            
+            <label style="color:#94a3b8; font-size:12px;">Quantidade</label>
+            <input type="number" id="edit_qtd" style="width:100%; padding:10px; margin:10px 0; background:#0f172a; color:#fff; border:1px solid #334155; border-radius:6px;">
+            
+            <label style="color:#94a3b8; font-size:12px;">Observação</label>
+            <input type="text" id="edit_obs" style="width:100%; padding:10px; margin:10px 0; background:#0f172a; color:#fff; border:1px solid #334155; border-radius:6px;">
+
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button id="btnSalvarEdit" class="btn-primario" style="flex:1">Salvar</button>
+                <button onclick="document.getElementById('modalEditMov').style.display='none'" class="btn-del" style="flex:1; background:#64748b;">Cancelar</button>
+            </div>
+        </div>
     </div>
 
     <script type="module" src="js/insertos_relatorio.js"></script>
