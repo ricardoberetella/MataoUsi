@@ -1,50 +1,100 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Relatórios - Matão Usinagem</title>
-    <link rel="stylesheet" href="css/dashboard.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatórios de Movimentação - Matão Usinagem</title>
 
-    <!-- AUTH -->
-    <script type="module" src="js/auth.js"></script>
+<link rel="stylesheet" href="css/dashboard.css">
+<script type="module" src="js/auth.js"></script>
 
-    <style>
-        body{
-            background:#0b0e14;
-            padding:20px;
-            font-family:Segoe UI,Arial;
-        }
-        table{
-            width:100%;
-            border-collapse:collapse;
-            background:#111827;
-            border-radius:12px;
-            overflow:hidden;
-            border:1px solid #1f2937;
-        }
-        thead tr{
-            background:#1f2937;
-            color:#38bdf8;
-            text-align:left;
-        }
-        th,td{
-            padding:18px;
-        }
-    </style>
+<style>
+body{
+    background:#0b0e14;
+    font-family:Segoe UI,Arial;
+    margin:0;
+}
+
+.container{
+    padding:30px;
+    max-width:1200px;
+    margin:auto;
+}
+
+/* HEADER PADRÃO SISTEMA */
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:25px;
+    flex-wrap:wrap;
+    gap:15px;
+}
+
+.btn{
+    padding:12px 18px;
+    border-radius:12px;
+    font-weight:800;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    border:1px solid rgba(255,255,255,0.12);
+    cursor:pointer;
+    transition:.18s;
+}
+.btn:hover{ filter:brightness(1.05); }
+
+.btn-sec{
+    background:#1f2937;
+    color:#fff;
+}
+
+.btn-pri{
+    background:#38bdf8;
+    color:#0b0e14;
+}
+
+/* TABELA */
+.table{
+    width:100%;
+    border-collapse:collapse;
+    background:#111827;
+    border-radius:16px;
+    overflow:hidden;
+    border:1px solid #1f2937;
+}
+
+.table th{
+    background:#1f2937;
+    color:#38bdf8;
+    padding:18px;
+    text-align:left;
+}
+
+.table td{
+    padding:18px;
+    border-bottom:1px solid #1f2937;
+    color:#e5e7eb;
+}
+</style>
 </head>
 
 <body>
 
-<div style="max-width:1000px;margin:0 auto;">
-    <header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:40px;">
-        <a href="insertos_lista.html"
-           style="background:#1f2937;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;border:1px solid #374151;">
-           ← Voltar para Lista
-        </a>
-        <h1 style="color:white;">Relatórios de Movimentação</h1>
-    </header>
+<div class="container">
 
-    <table>
+    <div class="header">
+        <a href="insertos_lista.html" class="btn btn-sec">← Voltar para Lista</a>
+
+        <h1 style="color:white;margin:0;font-size:36px;">
+            Relatórios de Movimentação
+        </h1>
+
+        <a href="insertos_novo.html" class="btn btn-pri">+ Novo Inserto</a>
+    </div>
+
+    <table class="table">
         <thead>
             <tr>
                 <th>Data</th>
@@ -56,6 +106,7 @@
         </thead>
         <tbody id="corpoRelatorio"></tbody>
     </table>
+
 </div>
 
 <script type="module">
@@ -111,8 +162,8 @@ async function carregarRelatorio(){
         <tr>
             <td>${formatarDataHoraBR(mov.data)}</td>
             <td style="color:#38bdf8;font-weight:bold;">${desc}</td>
-            <td style="text-transform:capitalize;color:${cor};font-weight:700;">${tipo}</td>
-            <td style="font-weight:bold;">${sinal}${Number(mov.quantidade ?? 0)}</td>
+            <td style="color:${cor};font-weight:800;text-transform:capitalize;">${tipo}</td>
+            <td style="font-weight:900;">${sinal}${Number(mov.quantidade)}</td>
             <td style="color:#9ca3af;">${obs}</td>
         </tr>
         `;
