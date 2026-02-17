@@ -2,67 +2,44 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Controle de Insertos - Matão Usinagem</title>
+    <title>Estoque de Insertos - Matão Usinagem</title>
     <link rel="stylesheet" href="css/global.css">
-    <link rel="stylesheet" href="css/pedidos_lista.css"> <style>
-        .qtd-alerta { color: #ff4444; font-weight: bold; }
-        .btn-controle { padding: 5px 10px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; }
-        .btn-baixa { background: #ef4444; color: white; }
-        .btn-entrada { background: #22c55e; color: black; }
-        .btn-historico { background: #64748b; color: white; margin-left: 5px; }
+    <link rel="stylesheet" href="css/dashboard.css">
+    <style>
+        .tabela-limpa { width: 100%; border-collapse: collapse; margin-top: 15px; background: #1e293b; border-radius: 8px; }
+        .tabela-limpa th { padding: 15px; text-align: left; border-bottom: 2px solid #38bdf8; color: #38bdf8; }
+        .tabela-limpa td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .btn-acao { padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; }
+        .btn-mais { background: #22c55e; color: #000; margin-right: 5px; }
+        .btn-menos { background: #ef4444; color: #fff; }
     </style>
 </head>
 <body>
+    <div class="layout">
+        <main class="main">
+            <header class="topbar">
+                <a href="dashboard.html" class="btn-voltar-menu">⬅ Menu</a>
+                <h1 class="topbar-title">Controle de Insertos</h1>
+                <button class="btn-primario" onclick="location.href='insertos_novo.html'">+ Novo</button>
+            </header>
 
-<header class="topbar">
-    <a href="dashboard.html">
-        <button class="btn-voltar-menu">← Voltar ao Menu</button>
-    </a>
-    <h1 class="topbar-title">Estoque de Insertos</h1>
-</header>
-
-<div class="container">
-    <div class="acoes" style="margin-bottom: 20px; display: flex; gap: 10px;">
-        <button onclick="location.href='insertos_novo.html'" class="btn-primario">Cadastrar Novo Inserto</button>
+            <div class="container">
+                <section class="card">
+                    <table class="tabela-limpa">
+                        <thead>
+                            <tr>
+                                <th>Descrição</th>
+                                <th>Marca</th>
+                                <th>Quantidade</th>
+                                <th style="text-align: center;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="corpoTabelaInsertos"></tbody>
+                    </table>
+                </section>
+            </div>
+        </main>
     </div>
-
-    <section class="card">
-        <table class="tabela-futurista">
-            <thead>
-                <tr>
-                    <th>Descrição</th>
-                    <th>Marca</th>
-                    <th>Qtd Atual</th>
-                    <th>Mínimo</th>
-                    <th>Ações de Estoque</th>
-                    <th style="width: 150px;">Gerenciamento</th>
-                </tr>
-            </thead>
-            <tbody id="listaInsertos">
-                </tbody>
-        </table>
-    </section>
-</div>
-
-<div id="modalMovimento" class="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:1000; justify-content:center; align-items:center;">
-    <div class="card" style="width: 350px; background: #1e293b;">
-        <h3 id="modalTitulo" style="color:#38bdf8">Movimentar Estoque</h3>
-        <input type="hidden" id="mov_id">
-        <input type="hidden" id="mov_tipo">
-        
-        <label>Quantidade</label>
-        <input type="number" id="mov_qtd" style="width:100%; margin:10px 0; padding:8px; background:#0f172a; color:white; border:1px solid #38bdf8; border-radius:5px;">
-        
-        <label>Data da Movimentação</label>
-        <input type="date" id="mov_data" style="width:100%; margin:10px 0; padding:8px; background:#0f172a; color:white; border:1px solid #38bdf8; border-radius:5px;">
-
-        <div style="display:flex; gap:10px; margin-top:15px;">
-            <button class="btn-primario" onclick="confirmarMovimento()" style="flex:1">Confirmar</button>
-            <button onclick="fecharModal()" style="flex:1; background:#475569; color:white; border-radius:5px; border:none; cursor:pointer;">Cancelar</button>
-        </div>
-    </div>
-</div>
-
-<script type="module" src="js/insertos.js"></script>
+    <script type="module" src="js/insertos.js"></script>
 </body>
 </html>
