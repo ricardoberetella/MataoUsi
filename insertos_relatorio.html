@@ -2,106 +2,30 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatórios de Movimentação - MataoUsi</title>
+    <title>Relatórios - MataoUsi</title>
     <link rel="stylesheet" href="css/style.css">
-    
-    <style>
-        body { background: #0b0e14; color: white; font-family: sans-serif; }
-        .container { max-width: 1100px; margin: 20px auto; padding: 20px; }
-        
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #1f2937; padding-bottom: 20px; }
-        .btn-voltar { background: #1f2937; color: white; border: 1px solid #374151; padding: 10px 20px; border-radius: 6px; text-decoration: none; cursor: pointer; }
-
-        /* Filtros */
-        .filtros-card { background: #111827; padding: 20px; border-radius: 10px; border: 1px solid #1f2937; margin-bottom: 20px; display: flex; gap: 15px; align-items: flex-end; }
-        .filtro-group { display: flex; flex-direction: column; gap: 5px; }
-        .filtro-group label { color: #38bdf8; font-size: 12px; font-weight: bold; }
-        .filtros-card input { background: #1f2937; border: 1px solid #374151; color: white; padding: 8px; border-radius: 5px; }
-        .btn-filtrar { background: #38bdf8; color: #0b0e14; border: none; padding: 9px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; }
-
-        /* Tabela */
-        table { width: 100%; border-collapse: collapse; background: #111827; border-radius: 10px; overflow: hidden; border: 1px solid #1f2937; }
-        th { background: #1f2937; color: #38bdf8; text-align: left; padding: 15px; font-size: 13px; text-transform: uppercase; }
-        td { padding: 15px; border-bottom: 1px solid #1f2937; font-size: 14px; }
-        
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-        .badge-entrada { background: #065f46; color: #34d399; }
-        .badge-saida { background: #7c2d12; color: #fb923c; }
-
-        .btn-mini { padding: 5px 10px; border-radius: 4px; border: none; cursor: pointer; font-size: 12px; font-weight: bold; margin-left: 5px; }
-        .btn-edit { background: #38bdf8; color: #0b0e14; }
-        .btn-del { background: #ef4444; color: white; }
-
-        /* Modal de Edição */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 2000; }
-        .modal-content { background: #111827; padding: 25px; border-radius: 12px; width: 400px; border: 1px solid #38bdf8; }
-    </style>
-
     <script type="module" src="js/auth.js"></script>
     <script type="module" src="js/insertos_relatorios.js"></script>
 </head>
-<body>
-
-    <div class="container">
-        <header>
-            <a href="menu.html" class="btn-voltar">← Voltar ao Menu</a>
-            <h1 style="margin: 0; font-size: 24px;">Relatórios de Movimentação</h1>
+<body style="background: #0b0e14; color: white; font-family: sans-serif;">
+    <div style="max-width: 1000px; margin: 20px auto; padding: 20px;">
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <a href="menu.html" style="background: #1f2937; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; border: 1px solid #374151;">← Voltar ao Menu</a>
+            <h1 style="color: #38bdf8;">Histórico de Movimentações</h1>
         </header>
 
-        <section class="filtros-card">
-            <div class="filtro-group">
-                <label>Data Início</label>
-                <input type="date" id="data_inicio">
-            </div>
-            <div class="filtro-group">
-                <label>Data Fim</label>
-                <input type="date" id="data_fim">
-            </div>
-            <button id="btnFiltrar" class="btn-filtrar">Filtrar Histórico</button>
-        </section>
-
-        <table>
+        <table style="width: 100%; border-collapse: collapse; background: #111827; border-radius: 10px; overflow: hidden; border: 1px solid #1f2937;">
             <thead>
-                <tr>
-                    <th>Data</th>
-                    <th>Inserto</th>
-                    <th>Tipo</th>
-                    <th>Qtd</th>
-                    <th>Observação</th>
-                    <th style="text-align: center;">Ações</th>
+                <tr style="background: #1f2937; color: #38bdf8; text-align: left;">
+                    <th style="padding: 15px;">Data</th>
+                    <th style="padding: 15px;">Tipo</th>
+                    <th style="padding: 15px;">Qtd</th>
+                    <th style="padding: 15px;">Observação</th>
                 </tr>
             </thead>
             <tbody id="corpoRelatorio">
                 </tbody>
         </table>
     </div>
-
-    <div id="modalEditMov" class="modal">
-        <div class="modal-content">
-            <h2 style="color: #38bdf8; margin-top: 0;">Editar Movimento</h2>
-            
-            <input type="hidden" id="edit_id">
-            <input type="hidden" id="edit_inserto_id">
-            <input type="hidden" id="edit_tipo">
-            <input type="hidden" id="edit_qtd_antiga">
-
-            <div style="margin-bottom: 15px;">
-                <label style="display:block; color:#9ca3af; margin-bottom:5px;">Nova Quantidade</label>
-                <input type="number" id="edit_qtd" style="width:100%; padding:10px; background:#1f2937; border:1px solid #374151; color:white; border-radius:5px;">
-            </div>
-
-            <div style="margin-bottom: 20px;">
-                <label style="display:block; color:#9ca3af; margin-bottom:5px;">Observação</label>
-                <textarea id="edit_obs" rows="3" style="width:100%; padding:10px; background:#1f2937; border:1px solid #374151; color:white; border-radius:5px;"></textarea>
-            </div>
-
-            <div style="display: flex; gap: 10px;">
-                <button id="btnSalvarEdit" style="flex:2; background:#38bdf8; border:none; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer;">Salvar Alteração</button>
-                <button onclick="window.fecharModal()" style="flex:1; background:#374151; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer;">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
 </body>
 </html>
