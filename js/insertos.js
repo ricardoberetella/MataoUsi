@@ -6,6 +6,9 @@ const verificarLogin = typeof auth.verificarLogin === "function" ? auth.verifica
 let ROLE_ATUAL = "viewer"; // padrão seguro
 
 document.addEventListener("DOMContentLoaded", async () => {
+  // garante que não fica preso como viewer por cache/exec anterior
+  document.body.classList.remove("role-viewer");
+
   ROLE_ATUAL = await descobrirRole();
   aplicarPermissaoNoLayout();
 
@@ -24,7 +27,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // Delegação de eventos na tabela (só admin)
+  // Delegação de eventos (só admin)
   const tbody = document.getElementById("corpoTabelaInsertos");
   if (tbody) {
     tbody.addEventListener("click", (e) => {
@@ -52,55 +55,51 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // =========================
-// ROLE (AGORA PEGA O PADRÃO DO SEU SISTEMA)
+// ROLE (MUITO MAIS FORTE)
 // =========================
 async function descobrirRole() {
-  // 0) se seu auth.js já colocou algo global (muito comum)
+  // 1) variáveis globais
   try {
     if (window.roleUsuario) return normalizarRole(window.roleUsuario);
     if (window.tipoUsuario) return normalizarRole(window.tipoUsuario);
   } catch (_) {}
 
-  // 1) localStorage / sessionStorage (muito comum no seu projeto)
+  // 2) chaves comuns
   const storageKeys = [
-    "roleUsuario",
-    "tipoUsuario",
-    "userRole",
-    "role",
-    "tipo",
-    "perfil",
-    "perfilUsuario",
-    "usuario_role"
+    "roleUsuario", "tipoUsuario", "userRole", "role", "tipo", "perfil",
+    "perfilUsuario", "usuario_role", "usuario", "usuarioLogado", "user", "auth",
+    "session", "login", "currentUser"
   ];
 
   for (const k of storageKeys) {
-    try {
-      const v1 = localStorage.getItem(k);
-      if (v1) return normalizarRole(v1);
-    } catch (_) {}
-    try {
-      const v2 = sessionStorage.getItem(k);
-      if (v2) return normalizarRole(v2);
-    } catch (_) {}
+    const vLS = safeGet(localStorage, k);
+    const roleLS = extrairRoleDeQualquerCoisa(vLS);
+    if (roleLS) return roleLS;
+
+    const vSS = safeGet(sessionStorage, k);
+    const roleSS = extrairRoleDeQualquerCoisa(vSS);
+    if (roleSS) return roleSS;
   }
 
-  // 2) verificarLogin (se existir)
+  // 3) varrer TODO localStorage/sessionStorage (pega JSON escondido em qualquer chave)
+  const roleVarreduraLS = varrerStorage(localStorage);
+  if (roleVarreduraLS) return roleVarreduraLS;
+
+  const roleVarreduraSS = varrerStorage(sessionStorage);
+  if (roleVarreduraSS) return roleVarreduraSS;
+
+  // 4) verificarLogin (se existir)
   try {
     if (verificarLogin) {
       const u = await verificarLogin();
-      const role =
-        u?.role ||
-        u?.tipo ||
-        u?.perfil ||
-        u?.user_metadata?.role ||
-        u?.user_metadata?.tipo ||
-        u?.user_metadata?.perfil;
-
-      if (role) return normalizarRole(role);
+      const role = u?.role || u?.tipo || u?.perfil ||
+        u?.user_metadata?.role || u?.user_metadata?.tipo || u?.user_metadata?.perfil;
+      const r = extrairRoleDeQualquerCoisa(role);
+      if (r) return r;
     }
   } catch (_) {}
 
-  // 3) supabase auth metadata
+  // 5) supabase metadata
   try {
     const { data } = await supabase.auth.getUser();
     const role =
@@ -109,31 +108,85 @@ async function descobrirRole() {
       data?.user?.user_metadata?.perfil ||
       data?.user?.app_metadata?.role;
 
-    if (role) return normalizarRole(role);
+    const r = extrairRoleDeQualquerCoisa(role);
+    if (r) return r;
   } catch (_) {}
 
-  // 4) fallback seguro
+  // fallback seguro
   return "viewer";
+}
+
+function safeGet(storage, key) {
+  try { return storage.getItem(key); } catch (_) { return null; }
+}
+
+function varrerStorage(storage) {
+  try {
+    for (let i = 0; i < storage.length; i++) {
+      const k = storage.key(i);
+      const v = storage.getItem(k);
+
+      // procura no nome da chave também
+      const rk = extrairRoleDeQualquerCoisa(k);
+      if (rk) return rk;
+
+      const rv = extrairRoleDeQualquerCoisa(v);
+      if (rv) return rv;
+    }
+  } catch (_) {}
+  return null;
+}
+
+function extrairRoleDeQualquerCoisa(valor) {
+  if (!valor) return null;
+
+  // se já vier como role simples
+  const direto = normalizarRole(valor);
+  if (direto) return direto;
+
+  // se vier JSON
+  const txt = String(valor);
+
+  // tenta JSON.parse
+  if (txt.trim().startsWith("{") || txt.trim().startsWith("[")) {
+    try {
+      const obj = JSON.parse(txt);
+      const possiveis = [
+        obj?.role, obj?.tipo, obj?.perfil,
+        obj?.user?.role, obj?.user?.tipo, obj?.user?.perfil,
+        obj?.user_metadata?.role, obj?.user_metadata?.tipo, obj?.user_metadata?.perfil,
+        obj?.app_metadata?.role,
+        obj?.data?.role, obj?.data?.tipo, obj?.data?.perfil
+      ];
+
+      for (const p of possiveis) {
+        const r = normalizarRole(p);
+        if (r) return r;
+      }
+    } catch (_) {}
+  }
+
+  // procura por substring em qualquer texto (pega JSON/string)
+  const lower = txt.toLowerCase();
+  if (lower.includes("admin")) return "admin";
+  if (lower.includes("viewer") || lower.includes("visualizador") || lower.includes("visual")) return "viewer";
+  if (lower.includes("operador") || lower.includes("oper")) return "operador";
+
+  return null;
 }
 
 function normalizarRole(role) {
-  const r = String(role || "").toLowerCase().trim();
+  if (!role) return null;
+  const r = String(role).toLowerCase().trim();
 
-  // admin
   if (r === "admin" || r.includes("admin")) return "admin";
-
-  // viewer / visualizador
   if (r === "viewer" || r.includes("viewer") || r.includes("visual")) return "viewer";
-
-  // operador (se existir no seu sistema)
   if (r.includes("oper")) return "operador";
 
-  // qualquer coisa desconhecida = viewer (seguro)
-  return "viewer";
+  return null;
 }
 
 function aplicarPermissaoNoLayout() {
-  // só viewer recebe classe que esconde ações no HTML
   if (ROLE_ATUAL === "viewer") document.body.classList.add("role-viewer");
   else document.body.classList.remove("role-viewer");
 }
@@ -179,47 +232,32 @@ async function carregarInsertos() {
 
     const isViewer = ROLE_ATUAL === "viewer";
 
-    tbody.innerHTML = data
-      .map((ins) => {
-        const descricao = escapeHtml(ins.descricao);
-        const marca = escapeHtml(ins.marca || "-");
-        const qtd = Number(ins.quantidade ?? 0);
-        const qtdClass = qtd <= 2 ? "qtd-baixa" : "";
+    tbody.innerHTML = data.map((ins) => {
+      const descricao = escapeHtml(ins.descricao);
+      const marca = escapeHtml(ins.marca || "-");
+      const qtd = Number(ins.quantidade ?? 0);
+      const qtdClass = qtd <= 2 ? "qtd-baixa" : "";
 
-        const acoesHtml = isViewer
-          ? `<td class="col-acoes" style="text-align:center;">—</td>`
-          : `
-            <td class="col-acoes" style="text-align: center;">
-              <button class="btn-tabela btn-editar"
-                      data-acao="editar"
-                      data-id="${ins.id}">✏ Editar</button>
-
-              <button class="btn-tabela btn-entrada"
-                      data-acao="entrada"
-                      data-id="${ins.id}"
-                      data-descricao="${descricao}">↑ Entrada</button>
-
-              <button class="btn-tabela btn-saida"
-                      data-acao="saida"
-                      data-id="${ins.id}"
-                      data-descricao="${descricao}">↓ Saída</button>
-
-              <button class="btn-tabela btn-excluir"
-                      data-acao="excluir"
-                      data-id="${ins.id}">Excluir</button>
-            </td>
-          `;
-
-        return `
-          <tr>
-            <td style="font-weight: bold;">${descricao}</td>
-            <td>${marca}</td>
-            <td><span class="badge-qtd ${qtdClass}">${qtd}</span></td>
-            ${acoesHtml}
-          </tr>
+      const acoesHtml = isViewer
+        ? `<td class="col-acoes" style="text-align:center;">—</td>`
+        : `
+          <td class="col-acoes" style="text-align:center;">
+            <button class="btn-tabela btn-editar" data-acao="editar" data-id="${ins.id}">✏ Editar</button>
+            <button class="btn-tabela btn-entrada" data-acao="entrada" data-id="${ins.id}" data-descricao="${descricao}">↑ Entrada</button>
+            <button class="btn-tabela btn-saida" data-acao="saida" data-id="${ins.id}" data-descricao="${descricao}">↓ Saída</button>
+            <button class="btn-tabela btn-excluir" data-acao="excluir" data-id="${ins.id}">Excluir</button>
+          </td>
         `;
-      })
-      .join("");
+
+      return `
+        <tr>
+          <td style="font-weight:bold;">${descricao}</td>
+          <td>${marca}</td>
+          <td><span class="badge-qtd ${qtdClass}">${qtd}</span></td>
+          ${acoesHtml}
+        </tr>
+      `;
+    }).join("");
 
     aplicarPermissaoNoLayout();
   } catch (err) {
@@ -232,10 +270,7 @@ async function carregarInsertos() {
 // NOVO CADASTRO (admin)
 // =========================
 async function salvarNovoInserto() {
-  if (ROLE_ATUAL === "viewer") {
-    alert("Visualizador não tem permissão.");
-    return;
-  }
+  if (ROLE_ATUAL === "viewer") return alert("Visualizador não tem permissão.");
 
   const descricao = String(document.getElementById("ins_descricao")?.value || "").trim();
   const marca = String(document.getElementById("ins_marca")?.value || "").trim();
@@ -264,10 +299,7 @@ async function salvarNovoInserto() {
 // MODAL (admin)
 // =========================
 window.abrirModal = (id, tipo, descricao) => {
-  if (ROLE_ATUAL === "viewer") {
-    alert("Visualizador não tem permissão.");
-    return;
-  }
+  if (ROLE_ATUAL === "viewer") return alert("Visualizador não tem permissão.");
 
   const modal = document.getElementById("modalMovimentacao");
   if (!modal) return alert("Modal não encontrado (id=modalMovimentacao).");
@@ -291,10 +323,7 @@ window.fecharModalMov = () => {
 };
 
 window.confirmarMovimento = async () => {
-  if (ROLE_ATUAL === "viewer") {
-    alert("Visualizador não tem permissão.");
-    return;
-  }
+  if (ROLE_ATUAL === "viewer") return alert("Visualizador não tem permissão.");
 
   const id = document.getElementById("modalId")?.value;
   const tipo = document.getElementById("modalTipo")?.value;
@@ -315,26 +344,21 @@ window.confirmarMovimento = async () => {
 
     const atual = Number(ins?.quantidade ?? 0);
     const novaQtd = tipo === "entrada" ? atual + qtdMov : atual - qtdMov;
-
     if (novaQtd < 0) return alert("Estoque insuficiente!");
 
     const { error: e2 } = await supabase
       .from("insertos")
       .update({ quantidade: novaQtd })
       .eq("id", id);
-
     if (e2) throw e2;
 
-    const { error: e3 } = await supabase.from("insertos_movimentacoes").insert([
-      {
-        inserto_id: id,
-        tipo,
-        quantidade: qtdMov,
-        data: new Date().toISOString(),
-        observacao: null,
-      },
-    ]);
-
+    const { error: e3 } = await supabase.from("insertos_movimentacoes").insert([{
+      inserto_id: id,
+      tipo,
+      quantidade: qtdMov,
+      data: new Date().toISOString(),
+      observacao: null
+    }]);
     if (e3) throw e3;
 
     window.fecharModalMov();
@@ -346,14 +370,10 @@ window.confirmarMovimento = async () => {
 };
 
 // =========================
-// EXCLUIR (admin)
+// EXCLUIR / EDITAR (admin)
 // =========================
 window.excluirInserto = async (id) => {
-  if (ROLE_ATUAL === "viewer") {
-    alert("Visualizador não tem permissão.");
-    return;
-  }
-
+  if (ROLE_ATUAL === "viewer") return alert("Visualizador não tem permissão.");
   if (!confirm("Excluir inserto?")) return;
 
   try {
@@ -365,13 +385,7 @@ window.excluirInserto = async (id) => {
   }
 };
 
-// =========================
-// EDITAR (admin)
-// =========================
 window.editarInserto = (id) => {
-  if (ROLE_ATUAL === "viewer") {
-    alert("Visualizador não tem permissão.");
-    return;
-  }
+  if (ROLE_ATUAL === "viewer") return alert("Visualizador não tem permissão.");
   window.location.href = `insertos_editar.html?id=${encodeURIComponent(id)}`;
 };
