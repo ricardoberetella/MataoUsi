@@ -1,16 +1,33 @@
-import { supabase } from "./auth.js";
+import * as auth from "./auth.js";
 
-document.addEventListener("DOMContentLoaded", () => {
+const supabase = auth.supabase;
+
+// tenta usar verificarLogin se existir no seu auth.js
+const verificarLogin = typeof auth.verificarLogin === "function" ? auth.verificarLogin : null;
+
+let ROLE_ATUAL = "viewer"; // padrão seguro: se não descobrir, vira viewer (sem ações)
+
+document.addEventListener("DOMContentLoaded", async () => {
+  // Descobre role
+  ROLE_ATUAL = await descobrirRole();
+  document.body.dataset.role = ROLE_ATUAL;
+
   // LISTA
   if (document.getElementById("corpoTabelaInsertos")) {
     carregarInsertos();
   }
 
-  // NOVO CADASTRO
+  // NOVO CADASTRO (viewer não pode)
   const btnSalvar = document.getElementById("btnSalvarInserto");
-  if (btnSalvar) btnSalvar.addEventListener("click", salvarNovoInserto);
+  if (btnSalvar) {
+    if (ROLE_ATUAL === "viewer") {
+      btnSalvar.style.display = "none";
+    } else {
+      btnSalvar.addEventListener("click", salvarNovoInserto);
+    }
+  }
 
-  // Delegação de eventos na tabela
+  // Delegação de eventos na tabela (só vale para admin)
   const tbody = document.getElementById("corpoTabelaInsertos");
   if (tbody) {
     tbody.addEventListener("click", (e) => {
@@ -23,6 +40,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!id) return;
 
+      // ✅ bloqueio total para viewer
+      if (ROLE_ATUAL === "viewer") {
+        alert("Visualizador não tem permissão para alterar estoque.");
+        return;
+      }
+
       if (acao === "editar") window.editarInserto(id);
       if (acao === "entrada") window.abrirModal(id, "entrada", descricao);
       if (acao === "saida") window.abrirModal(id, "saida", descricao);
@@ -31,6 +54,62 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
+// =========================
+// ROLE (ROBUSTO)
+// =========================
+async function descobrirRole() {
+  // 1) tenta via verificarLogin (se seu sistema usa isso)
+  try {
+    if (verificarLogin) {
+      const u = await verificarLogin();
+      const role =
+        u?.role ||
+        u?.tipo ||
+        u?.perfil ||
+        u?.user_metadata?.role ||
+        u?.user_metadata?.tipo ||
+        u?.user_metadata?.perfil;
+
+      if (role) return normalizarRole(role);
+    }
+  } catch (_) {}
+
+  // 2) tenta via supabase auth metadata
+  try {
+    const { data } = await supabase.auth.getUser();
+    const role =
+      data?.user?.user_metadata?.role ||
+      data?.user?.user_metadata?.tipo ||
+      data?.user?.app_metadata?.role;
+
+    if (role) return normalizarRole(role);
+  } catch (_) {}
+
+  // 3) tenta via localStorage (muitos projetos salvam assim)
+  try {
+    const keys = ["role", "userRole", "tipo", "perfil", "tipoUsuario", "roleUsuario"];
+    for (const k of keys) {
+      const v = localStorage.getItem(k);
+      if (v) return normalizarRole(v);
+    }
+  } catch (_) {}
+
+  // padrão seguro
+  return "viewer";
+}
+
+function normalizarRole(role) {
+  const r = String(role || "").toLowerCase().trim();
+  if (r.includes("admin")) return "admin";
+  if (r.includes("viewer") || r.includes("visual")) return "viewer";
+  if (r.includes("oper")) return "operador";
+  // se vier algo desconhecido, não arrisca
+  return "viewer";
+}
+
+// =========================
+// Helpers
+// =========================
 function escapeHtml(str) {
   return String(str ?? "")
     .replaceAll("&", "&amp;")
@@ -67,6 +146,8 @@ async function carregarInsertos() {
       return;
     }
 
+    const isViewer = ROLE_ATUAL === "viewer";
+
     tbody.innerHTML = data
       .map((ins) => {
         const descricao = escapeHtml(ins.descricao);
@@ -74,13 +155,11 @@ async function carregarInsertos() {
         const qtd = Number(ins.quantidade ?? 0);
         const qtdClass = qtd <= 2 ? "qtd-baixa" : "";
 
-        return `
-          <tr>
-            <td style="font-weight: bold;">${descricao}</td>
-            <td>${marca}</td>
-            <td><span class="badge-qtd ${qtdClass}">${qtd}</span></td>
-            <td style="text-align: center;">
-              <!-- ✅ NOVO: EDITAR -->
+        // ✅ Viewer: não renderiza botões
+        const acoesHtml = isViewer
+          ? `<td class="col-acoes" style="text-align:center;">—</td>`
+          : `
+            <td class="col-acoes" style="text-align: center;">
               <button class="btn-tabela btn-editar"
                       data-acao="editar"
                       data-id="${ins.id}">✏ Editar</button>
@@ -99,10 +178,25 @@ async function carregarInsertos() {
                       data-acao="excluir"
                       data-id="${ins.id}">Excluir</button>
             </td>
+          `;
+
+        return `
+          <tr>
+            <td style="font-weight: bold;">${descricao}</td>
+            <td>${marca}</td>
+            <td><span class="badge-qtd ${qtdClass}">${qtd}</span></td>
+            ${acoesHtml}
           </tr>
         `;
       })
       .join("");
+
+    // ✅ se for viewer: esconde a coluna inteira (sem mudar o resto)
+    if (isViewer) {
+      document.body.classList.add("role-viewer");
+    } else {
+      document.body.classList.remove("role-viewer");
+    }
   } catch (err) {
     console.error("Erro ao carregar:", err?.message || err);
     tbody.innerHTML = `<tr><td colspan="4">Erro ao carregar insertos.</td></tr>`;
@@ -110,9 +204,14 @@ async function carregarInsertos() {
 }
 
 // =========================
-// NOVO CADASTRO
+// NOVO CADASTRO (admin)
 // =========================
 async function salvarNovoInserto() {
+  if (ROLE_ATUAL === "viewer") {
+    alert("Visualizador não tem permissão.");
+    return;
+  }
+
   const descricao = String(document.getElementById("ins_descricao")?.value || "").trim();
   const marca = String(document.getElementById("ins_marca")?.value || "").trim();
   const qtdRaw = toInt(document.getElementById("ins_quantidade")?.value);
@@ -137,9 +236,14 @@ async function salvarNovoInserto() {
 }
 
 // =========================
-// MODAL
+// MODAL (admin)
 // =========================
 window.abrirModal = (id, tipo, descricao) => {
+  if (ROLE_ATUAL === "viewer") {
+    alert("Visualizador não tem permissão.");
+    return;
+  }
+
   const modal = document.getElementById("modalMovimentacao");
   if (!modal) return alert("Modal não encontrado (id=modalMovimentacao).");
 
@@ -162,6 +266,11 @@ window.fecharModalMov = () => {
 };
 
 window.confirmarMovimento = async () => {
+  if (ROLE_ATUAL === "viewer") {
+    alert("Visualizador não tem permissão.");
+    return;
+  }
+
   const id = document.getElementById("modalId")?.value;
   const tipo = document.getElementById("modalTipo")?.value;
   const qtdMov = toInt(document.getElementById("mov_qtd")?.value);
@@ -212,9 +321,14 @@ window.confirmarMovimento = async () => {
 };
 
 // =========================
-// EXCLUIR
+// EXCLUIR (admin)
 // =========================
 window.excluirInserto = async (id) => {
+  if (ROLE_ATUAL === "viewer") {
+    alert("Visualizador não tem permissão.");
+    return;
+  }
+
   if (!confirm("Excluir inserto?")) return;
 
   try {
@@ -227,8 +341,12 @@ window.excluirInserto = async (id) => {
 };
 
 // =========================
-// ✅ NOVO: EDITAR
+// EDITAR (admin)
 // =========================
 window.editarInserto = (id) => {
+  if (ROLE_ATUAL === "viewer") {
+    alert("Visualizador não tem permissão.");
+    return;
+  }
   window.location.href = `insertos_editar.html?id=${encodeURIComponent(id)}`;
 };
