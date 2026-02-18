@@ -155,6 +155,11 @@
             display:none !important;
         }
 
+        /* ✅ viewer: some com o botão "+ Novo Inserto" */
+        body.role-viewer .btn-novo-inserto{
+            display:none !important;
+        }
+
         /* MODAL */
         .modal {
             display: none;
@@ -201,7 +206,9 @@
 
             <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: flex-end;">
                 <a href="insertos_relatorios.html" class="btn-acao-topo btn-secundario">📊 Relatórios</a>
-                <a href="insertos_novo.html" class="btn-acao-topo btn-primario">+ Novo Inserto</a>
+
+                <!-- ✅ NOVO INSERTO: some somente no viewer -->
+                <a href="insertos_novo.html" class="btn-acao-topo btn-primario btn-novo-inserto">+ Novo Inserto</a>
             </div>
         </header>
 
