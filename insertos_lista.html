@@ -51,7 +51,7 @@
         }
         .btn-secundario:hover { background: rgba(31,41,55,0.95); }
 
-        /* ✅ BOTÃO VOLTAR (IGUAL PRINT 2) */
+        /* BOTÃO VOLTAR PADRÃO PRINT 2 */
         .btn-voltar{
             background: transparent;
             color:#38bdf8;
@@ -85,7 +85,6 @@
             color: #e5e7eb;
         }
 
-        /* ===== BOTÕES DA TABELA (PADRÃO SISTEMA) ===== */
         .acoes-wrap{
             display:flex;
             gap:10px;
@@ -111,35 +110,27 @@
         .btn-tabela:active{ transform: translateY(1px); }
         .btn-tabela:hover{ filter: brightness(1.06); }
 
-        /* ✅ NOVO: Editar (azul) */
         .btn-editar{
             background: rgba(59,130,246,0.92);
             color:#061022;
             border-color: rgba(59,130,246,0.35);
         }
-
-        /* Entrada (verde) */
         .btn-entrada{
             background: rgba(16,185,129,0.92);
             color:#04110b;
             border-color: rgba(16,185,129,0.35);
         }
-
-        /* Saída (laranja) */
         .btn-saida{
             background: rgba(245,158,11,0.92);
             color:#1a0e00;
             border-color: rgba(245,158,11,0.35);
         }
-
-        /* Excluir (vermelho) */
         .btn-excluir{
             background: rgba(239,68,68,0.92);
             color:#190404;
             border-color: rgba(239,68,68,0.35);
         }
 
-        /* badge quantidade */
         .badge-qtd{
             display:inline-flex;
             align-items:center;
@@ -158,7 +149,13 @@
             color: #fecaca;
         }
 
-        /* ===== MODAL ===== */
+        /* ✅ viewer: some com a coluna ações inteira */
+        body.role-viewer th.col-acoes,
+        body.role-viewer td.col-acoes{
+            display:none !important;
+        }
+
+        /* MODAL */
         .modal {
             display: none;
             position: fixed;
@@ -196,7 +193,6 @@
 <body>
     <div class="container-insertos">
         <header class="header-pagina">
-            <!-- ✅ ALTERADO: botão voltar padrão print 2 -->
             <a href="dashboard.html" class="btn-acao-topo btn-voltar">← Voltar ao Menu</a>
 
             <h1 style="color: white; margin: 0; font-size: 40px; letter-spacing: .3px;">
@@ -215,12 +211,10 @@
                     <th>Descrição</th>
                     <th>Marca</th>
                     <th>Quantidade</th>
-                    <th style="text-align: center;">Ações</th>
+                    <th class="col-acoes" style="text-align: center;">Ações</th>
                 </tr>
             </thead>
-            <tbody id="corpoTabelaInsertos">
-                <!-- JS preenche -->
-            </tbody>
+            <tbody id="corpoTabelaInsertos"></tbody>
         </table>
     </div>
 
@@ -253,7 +247,7 @@
         </div>
     </div>
 
-    <!-- mantém a centralização dos botões em "Ações" -->
+    <!-- centraliza botões em Ações (admin) -->
     <script>
       const observer = new MutationObserver(() => {
         const rows = document.querySelectorAll("#corpoTabelaInsertos tr");
