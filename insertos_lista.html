@@ -51,6 +51,17 @@
         }
         .btn-secundario:hover { background: rgba(31,41,55,0.95); }
 
+        /* ✅ BOTÃO VOLTAR (IGUAL PRINT 2) */
+        .btn-voltar{
+            background: transparent;
+            color:#38bdf8;
+            border: 1px solid rgba(56,189,248,0.95);
+            box-shadow: 0 0 12px rgba(56,189,248,0.25);
+        }
+        .btn-voltar:hover{
+            background: rgba(56,189,248,0.08);
+        }
+
         .tabela-estilizada {
             width: 100%;
             border-collapse: collapse;
@@ -100,6 +111,13 @@
         .btn-tabela:active{ transform: translateY(1px); }
         .btn-tabela:hover{ filter: brightness(1.06); }
 
+        /* ✅ NOVO: Editar (azul) */
+        .btn-editar{
+            background: rgba(59,130,246,0.92);
+            color:#061022;
+            border-color: rgba(59,130,246,0.35);
+        }
+
         /* Entrada (verde) */
         .btn-entrada{
             background: rgba(16,185,129,0.92);
@@ -140,7 +158,7 @@
             color: #fecaca;
         }
 
-        /* ===== MODAL (mantém seu layout, só melhora botão) ===== */
+        /* ===== MODAL ===== */
         .modal {
             display: none;
             position: fixed;
@@ -178,7 +196,8 @@
 <body>
     <div class="container-insertos">
         <header class="header-pagina">
-            <a href="dashboard.html" class="btn-acao-topo btn-secundario">← Voltar ao Menu</a>
+            <!-- ✅ ALTERADO: botão voltar padrão print 2 -->
+            <a href="dashboard.html" class="btn-acao-topo btn-voltar">← Voltar ao Menu</a>
 
             <h1 style="color: white; margin: 0; font-size: 40px; letter-spacing: .3px;">
                 Estoque de Insertos
@@ -234,9 +253,8 @@
         </div>
     </div>
 
-    <!-- Ajuste visual: centraliza os botões na coluna ações mesmo com HTML gerado pelo JS -->
+    <!-- mantém a centralização dos botões em "Ações" -->
     <script>
-      // Este script não mexe no sistema; apenas adiciona uma classe visual no TD das ações após renderizar.
       const observer = new MutationObserver(() => {
         const rows = document.querySelectorAll("#corpoTabelaInsertos tr");
         rows.forEach(r => {
