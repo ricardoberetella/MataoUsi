@@ -1,16 +1,13 @@
 import * as auth from "./auth.js";
 
 const supabase = auth.supabase;
-
-// tenta usar verificarLogin se existir no seu auth.js
 const verificarLogin = typeof auth.verificarLogin === "function" ? auth.verificarLogin : null;
 
-let ROLE_ATUAL = "viewer"; // padrão seguro: se não descobrir, vira viewer (sem ações)
+let ROLE_ATUAL = "viewer"; // padrão seguro
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // Descobre role
   ROLE_ATUAL = await descobrirRole();
-  document.body.dataset.role = ROLE_ATUAL;
+  aplicarPermissaoNoLayout();
 
   // LISTA
   if (document.getElementById("corpoTabelaInsertos")) {
@@ -27,7 +24,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // Delegação de eventos na tabela (só vale para admin)
+  // Delegação de eventos na tabela (só admin)
   const tbody = document.getElementById("corpoTabelaInsertos");
   if (tbody) {
     tbody.addEventListener("click", (e) => {
@@ -55,10 +52,39 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // =========================
-// ROLE (ROBUSTO)
+// ROLE (AGORA PEGA O PADRÃO DO SEU SISTEMA)
 // =========================
 async function descobrirRole() {
-  // 1) tenta via verificarLogin (se seu sistema usa isso)
+  // 0) se seu auth.js já colocou algo global (muito comum)
+  try {
+    if (window.roleUsuario) return normalizarRole(window.roleUsuario);
+    if (window.tipoUsuario) return normalizarRole(window.tipoUsuario);
+  } catch (_) {}
+
+  // 1) localStorage / sessionStorage (muito comum no seu projeto)
+  const storageKeys = [
+    "roleUsuario",
+    "tipoUsuario",
+    "userRole",
+    "role",
+    "tipo",
+    "perfil",
+    "perfilUsuario",
+    "usuario_role"
+  ];
+
+  for (const k of storageKeys) {
+    try {
+      const v1 = localStorage.getItem(k);
+      if (v1) return normalizarRole(v1);
+    } catch (_) {}
+    try {
+      const v2 = sessionStorage.getItem(k);
+      if (v2) return normalizarRole(v2);
+    } catch (_) {}
+  }
+
+  // 2) verificarLogin (se existir)
   try {
     if (verificarLogin) {
       const u = await verificarLogin();
@@ -74,37 +100,42 @@ async function descobrirRole() {
     }
   } catch (_) {}
 
-  // 2) tenta via supabase auth metadata
+  // 3) supabase auth metadata
   try {
     const { data } = await supabase.auth.getUser();
     const role =
       data?.user?.user_metadata?.role ||
       data?.user?.user_metadata?.tipo ||
+      data?.user?.user_metadata?.perfil ||
       data?.user?.app_metadata?.role;
 
     if (role) return normalizarRole(role);
   } catch (_) {}
 
-  // 3) tenta via localStorage (muitos projetos salvam assim)
-  try {
-    const keys = ["role", "userRole", "tipo", "perfil", "tipoUsuario", "roleUsuario"];
-    for (const k of keys) {
-      const v = localStorage.getItem(k);
-      if (v) return normalizarRole(v);
-    }
-  } catch (_) {}
-
-  // padrão seguro
+  // 4) fallback seguro
   return "viewer";
 }
 
 function normalizarRole(role) {
   const r = String(role || "").toLowerCase().trim();
-  if (r.includes("admin")) return "admin";
-  if (r.includes("viewer") || r.includes("visual")) return "viewer";
+
+  // admin
+  if (r === "admin" || r.includes("admin")) return "admin";
+
+  // viewer / visualizador
+  if (r === "viewer" || r.includes("viewer") || r.includes("visual")) return "viewer";
+
+  // operador (se existir no seu sistema)
   if (r.includes("oper")) return "operador";
-  // se vier algo desconhecido, não arrisca
+
+  // qualquer coisa desconhecida = viewer (seguro)
   return "viewer";
+}
+
+function aplicarPermissaoNoLayout() {
+  // só viewer recebe classe que esconde ações no HTML
+  if (ROLE_ATUAL === "viewer") document.body.classList.add("role-viewer");
+  else document.body.classList.remove("role-viewer");
 }
 
 // =========================
@@ -155,7 +186,6 @@ async function carregarInsertos() {
         const qtd = Number(ins.quantidade ?? 0);
         const qtdClass = qtd <= 2 ? "qtd-baixa" : "";
 
-        // ✅ Viewer: não renderiza botões
         const acoesHtml = isViewer
           ? `<td class="col-acoes" style="text-align:center;">—</td>`
           : `
@@ -191,12 +221,7 @@ async function carregarInsertos() {
       })
       .join("");
 
-    // ✅ se for viewer: esconde a coluna inteira (sem mudar o resto)
-    if (isViewer) {
-      document.body.classList.add("role-viewer");
-    } else {
-      document.body.classList.remove("role-viewer");
-    }
+    aplicarPermissaoNoLayout();
   } catch (err) {
     console.error("Erro ao carregar:", err?.message || err);
     tbody.innerHTML = `<tr><td colspan="4">Erro ao carregar insertos.</td></tr>`;
