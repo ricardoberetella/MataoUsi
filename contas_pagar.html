@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contas a Pagar - Matão Usinagem</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/pedidos_lista.css">
+    <style>
+        .status-pendente { background: #f59e0b; color: #000; padding: 4px 8px; border-radius: 4px; font-size: 11px; }
+        .status-pago { background: #10b981; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 11px; }
+        .vencido { color: #ef4444; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<header class="topbar">
+    <h1 class="topbar-title">💸 Contas a Pagar</h1>
+    <a href="dashboard.html"><button class="btn-voltar">← Menu Principal</button></a>
+</header>
+
+<div class="container">
+    <section class="card">
+        <h2 class="card-title">Agendar Novo Pagamento</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+            <div>
+                <label>Fornecedor / Descrição</label>
+                <input type="text" id="fornecedor" placeholder="Ex: Fornecedor de Aço">
+            </div>
+            <div>
+                <label>Valor (R$)</label>
+                <input type="number" id="valorConta" step="0.01">
+            </div>
+            <div>
+                <label>Vencimento</label>
+                <input type="date" id="vencimento">
+            </div>
+            <div style="display: flex; align-items: flex-end;">
+                <button class="btn-primario" onclick="salvarConta()" style="width: 100%; height: 42px;">Agendar</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="card">
+        <h2 class="card-title">Compromissos Agendados</h2>
+        <table class="tabela-futurista">
+            <thead>
+                <tr>
+                    <th>Vencimento</th>
+                    <th>Descrição</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="listaPagar">
+                </tbody>
+        </table>
+    </section>
+</div>
+
+<script type="module">
+    import { supabase, verificarLogin } from "./js/auth.js";
+
+    async function carregarContas() {
+        const user = await verificarLogin();
+        if (!user) return;
+
+        const { data, error } = await supabase
+            .from('contas_pagar')
+            .select('*')
+            .order('vencimento', { ascending: true });
+
+        if (error) return console.error(error);
+        renderizar(data);
+    }
+
+    function renderizar(dados) {
+        const tbody = document.getElementById("listaPagar");
+        const hoje = new Date().toISOString().split('T')[0];
+
+        tbody.innerHTML = dados.map(item => {
+            const isVencido = item.status === 'pendente' && item.vencimento < hoje;
+            return `
+                <tr>
+                    <td class="${isVencido ? 'vencido' : ''}">${new Date(item.vencimento).toLocaleDateString('pt-BR')}</td>
+                    <td>${item.descricao}</td>
+                    <td>R$ ${item.valor.toFixed(2)}</td>
+                    <td>
+                        <span class="${item.status === 'pago' ? 'status-pago' : 'status-pendente'}">
+                            ${item.status.toUpperCase()}
+                        </span>
+                    </td>
+                    <td>
+                        ${item.status === 'pendente' 
+                            ? `<button onclick="baixarConta(${item.id}, ${item.valor}, '${item.descricao}')" class="btn-primario" style="padding: 2px 10px; font-size: 10px;">Pagar</button>` 
+                            : '✅'}
+                        <button onclick="excluirConta(${item.id})" style="background:none; border:none; margin-left:10px; cursor:pointer;">🗑️</button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    window.salvarConta = async () => {
+        const desc = document.getElementById("fornecedor").value;
+        const valor = parseFloat(document.getElementById("valorConta").value);
+        const venc = document.getElementById("vencimento").value;
+
+        if(!desc || !valor || !venc) return alert("Preencha todos os campos!");
+
+        const { error } = await supabase.from('contas_pagar').insert([{ descricao: desc, valor, vencimento: venc, status: 'pendente' }]);
+        if(error) alert(error.message);
+        else { location.reload(); }
+    };
+
+    window.baixarConta = async (id, valor, desc) => {
+        if(!confirm("Confirmar pagamento desta conta?")) return;
+
+        // 1. Marcar como pago no Contas a Pagar
+        const { error: err1 } = await supabase.from('contas_pagar').update({ status: 'pago' }).eq('id', id);
+        
+        // 2. Lançar automaticamente no Caixa como Saída
+        const { error: err2 } = await supabase.from('caixa').insert([{ 
+            descricao: `PAGTO: ${desc}`, 
+            valor: valor, 
+            tipo: 'saida' 
+        }]);
+
+        if(!err1 && !err2) {
+            alert("Pagamento registrado e lançado no caixa!");
+            carregarContas();
+        }
+    };
+
+    window.excluirConta = async (id) => {
+        if(confirm("Excluir este agendamento?")) {
+            await supabase.from('contas_pagar').delete().eq('id', id);
+            carregarContas();
+        }
+    }
+
+    window.onload = carregarContas;
+</script>
+</body>
+</html>
