@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Caixa - Matão Usinagem</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/pedidos_lista.css">
+    <style>
+        /* Estilos específicos para o financeiro */
+        .resumo-caixa {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .card-financeiro {
+            padding: 20px;
+            border-radius: 12px;
+            background: #0f172a;
+            border: 1px solid rgba(56, 189, 248, 0.1);
+            text-align: center;
+        }
+        .valor-grande { font-size: 28px; font-weight: bold; margin-top: 10px; }
+        .texto-entrada { color: #10b981; }
+        .texto-saida { color: #ef4444; }
+        .texto-saldo { color: #38bdf8; }
+        
+        .form-caixa {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 10px;
+            align-items: flex-end;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<header class="topbar">
+    <h1 class="topbar-title">💰 Fluxo de Caixa</h1>
+    <a href="dashboard.html"><button class="btn-voltar">← Menu Principal</button></a>
+</header>
+
+<div class="container">
+    <div class="resumo-caixa">
+        <div class="card-financeiro">
+            <div style="color: #94a3b8;">Saldo Atual</div>
+            <div id="saldoAtual" class="valor-grande texto-saldo">R$ 0,00</div>
+        </div>
+        <div class="card-financeiro">
+            <div style="color: #94a3b8;">Entradas (Mês)</div>
+            <div id="totalEntradas" class="valor-grande texto-entrada">R$ 0,00</div>
+        </div>
+        <div class="card-financeiro">
+            <div style="color: #94a3b8;">Saídas (Mês)</div>
+            <div id="totalSaidas" class="valor-grande texto-saida">R$ 0,00</div>
+        </div>
+    </div>
+
+    <section class="card">
+        <h2 class="card-title">Novo Lançamento</h2>
+        <div class="form-caixa">
+            <div>
+                <label>Descrição</label>
+                <input type="text" id="desc" placeholder="Ex: Pagto Fornecedor Aço">
+            </div>
+            <div>
+                <label>Valor (R$)</label>
+                <input type="number" id="valor" step="0.01">
+            </div>
+            <div>
+                <label>Tipo</label>
+                <select id="tipo">
+                    <option value="entrada">Entrada (+)</option>
+                    <option value="saida">Saída (-)</option>
+                </select>
+            </div>
+            <button class="btn-primario" onclick="salvarLancamento()" style="height: 40px;">Lançar</button>
+        </div>
+    </section>
+
+    <section class="card">
+        <h2 class="card-title">Histórico Recente</h2>
+        <table class="tabela-futurista">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Descrição</th>
+                    <th>Tipo</th>
+                    <th>Valor</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="listaCaixa">
+                </tbody>
+        </table>
+    </section>
+</div>
+
+<script type="module">
+    import { supabase, verificarLogin } from "./js/auth.js";
+
+    async function carregarDados() {
+        const user = await verificarLogin();
+        if (!user) return;
+
+        // Aqui buscaremos os dados da tabela 'caixa' no Supabase
+        const { data, error } = await supabase
+            .from('caixa')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error("Erro ao carregar caixa:", error);
+            return;
+        }
+
+        renderizarTabela(data);
+        calcularTotais(data);
+    }
+
+    function renderizarTabela(dados) {
+        const tbody = document.getElementById("listaCaixa");
+        tbody.innerHTML = dados.map(item => `
+            <tr>
+                <td>${new Date(item.created_at).toLocaleDateString('pt-BR')}</td>
+                <td>${item.descricao}</td>
+                <td>
+                    <span class="status-badge ${item.tipo === 'entrada' ? 'status-pago' : 'status-atrasado'}">
+                        ${item.tipo.toUpperCase()}
+                    </span>
+                </td>
+                <td class="${item.tipo === 'entrada' ? 'texto-entrada' : 'texto-saida'}">
+                    ${item.tipo === 'entrada' ? '+' : '-'} R$ ${item.valor.toFixed(2)}
+                </td>
+                <td>
+                    <button onclick="excluirLancamento(${item.id})" style="background:none; border:none; cursor:pointer;">🗑️</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function calcularTotais(dados) {
+        let e = 0; let s = 0;
+        dados.forEach(i => {
+            if(i.tipo === 'entrada') e += i.valor;
+            else s += i.valor;
+        });
+        document.getElementById("saldoAtual").innerText = `R$ ${(e - s).toLocaleString('pt-BR')}`;
+        document.getElementById("totalEntradas").innerText = `R$ ${e.toLocaleString('pt-BR')}`;
+        document.getElementById("totalSaidas").innerText = `R$ ${s.toLocaleString('pt-BR')}`;
+    }
+
+    window.salvarLancamento = async () => {
+        const desc = document.getElementById("desc").value;
+        const valor = parseFloat(document.getElementById("valor").value);
+        const tipo = document.getElementById("tipo").value;
+
+        if(!desc || !valor) return alert("Preencha tudo!");
+
+        const { error } = await supabase.from('caixa').insert([{ descricao: desc, valor: valor, tipo: tipo }]);
+        
+        if(error) alert("Erro: " + error.message);
+        else {
+            document.getElementById("desc").value = "";
+            document.getElementById("valor").value = "";
+            carregarDados();
+        }
+    };
+
+    window.onload = carregarDados;
+</script>
+</body>
+</html>
