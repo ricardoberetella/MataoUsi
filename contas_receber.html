@@ -2,8 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contas a Receber - Matão Usinagem</title>
+    <title>Contas a Receber</title>
 
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/pedidos_lista.css">
@@ -11,13 +10,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
-/* ==============================================================
-   ESTILOS PARA O PDF (Ativado via classe .modo-pdf no body)
-============================================================== */
+/* =========================
+   PDF – RELATÓRIO FINAL
+========================= */
 body.modo-pdf header,
 body.modo-pdf .card:first-child,
-body.modo-pdf button,
-body.modo-pdf .btn-voltar {
+body.modo-pdf button {
     display: none !important;
 }
 
@@ -42,7 +40,7 @@ body.modo-pdf .cabecalho-pdf { display: block; margin-bottom: 10px; }
     justify-content: space-between;
 }
 
-.logo-pdf img { height: 90px; }
+.logo-pdf img { height: 70px; }
 
 .data-pdf {
     font-size: 10px;
@@ -50,86 +48,75 @@ body.modo-pdf .cabecalho-pdf { display: block; margin-bottom: 10px; }
     margin-top: 4px;
 }
 
-.titulo-pdf { text-align: center; flex-grow: 1; margin-right: 90px; }
-.titulo-pdf h2 { margin: 0; font-size: 18px; color: #000; }
-.titulo-pdf p { margin: 0; font-size: 12px; color: #333; }
+.titulo-pdf h2 { margin: 0; font-size: 15px; }
+.titulo-pdf p { margin: 0; font-size: 11px; }
 
 body.modo-pdf table {
     width: 100%;
     border-collapse: collapse;
     font-size: 10px;
-    margin-top: 15px;
 }
+body.modo-pdf thead { display: table-header-group; }
+body.modo-pdf tr { page-break-inside: avoid; }
 
 body.modo-pdf thead th {
-    background: #e5e7eb !important;
-    color: #000 !important;
-    border: 1px solid #000;
-    padding: 8px;
-    text-align: center;
-}
-
-body.modo-pdf td {
+    background: #e5e7eb;
+    color: #000;
     border: 1px solid #000;
     padding: 6px;
     text-align: center;
+}
+body.modo-pdf td {
+    border: 1px solid #000;
+    padding: 5px;
+    text-align: center;
+}
+body.modo-pdf tr.vencido td {
+    background: #fff !important;
     color: #000 !important;
+    font-weight: bold !important;
 }
 
-/* Ocultar coluna de ações no PDF */
 body.modo-pdf th:last-child,
-body.modo-pdf td:last-child { 
-    display: none !important; 
-}
+body.modo-pdf td:last-child { display: none !important; }
 
-/* ==============================================================
-   ESTILOS DO MODAL E INTERFACE
-============================================================== */
+body.modo-pdf .logo-pdf img { height: 90px; }
+
+body.modo-pdf .cabecalho-linha {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    column-gap: 20px;
+}
+body.modo-pdf .titulo-pdf { text-align: center; margin-right: 90px; }
+
 .modal {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,.75);
+    background: rgba(0,0,0,.65);
     z-index: 9999;
     padding: 16px;
-    align-items: center;
-    justify-content: center;
 }
-.modal.ativo { display: flex; }
+.modal.ativo { display: flex; align-items: center; justify-content: center; }
 
 .modal-conteudo {
-    width: min(500px, 96vw);
-    background: #0f172a;
-    border: 1px solid rgba(56,189,248,.3);
+    width: min(520px, 96vw);
+    background: rgba(15, 23, 42, .98);
+    border: 1px solid rgba(56,189,248,.25);
     border-radius: 14px;
-    padding: 24px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    padding: 16px;
 }
-
-.modal-conteudo h3 { margin: 0 0 15px 0; color: #38bdf8; font-size: 1.4rem; }
-.modal-conteudo label { display:block; margin: 12px 0 6px 0; color: #94a3b8; font-size: 14px; }
+.modal-conteudo h3 { margin: 0 0 12px 0; color: #38bdf8; }
+.modal-conteudo label { display:block; margin: 10px 0 6px 0; opacity: .9; }
 .modal-conteudo input {
-    width: 100%; 
-    padding: 12px; 
-    border-radius: 8px;
-    border: 1px solid #1e293b; 
-    background: #020617; 
-    color: #fff;
-    outline: none;
+    width: 100%; padding: 10px 12px; border-radius: 10px;
+    border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.06); color: #fff;
 }
-.modal-conteudo input:focus { border-color: #38bdf8; }
+.modal-acoes { display:flex; gap:10px; justify-content:flex-end; margin-top: 14px; }
 
-.modal-acoes { display:flex; gap:10px; justify-content:flex-end; margin-top: 25px; }
-
-.td-acoes { display:flex; gap:8px; justify-content:center; }
-.btn-pagar { background: #10b981 !important; color: #fff !important; }
-.btn-excluir-mini { background: #ef4444 !important; color: #fff !important; }
-
-/* Status Cores */
-.status-pago { color: #10b981; font-weight: bold; }
-.status-aberto { color: #38bdf8; font-weight: bold; }
-.status-vencido { color: #ef4444; font-weight: bold; text-decoration: underline; }
-
+.td-acoes { display:flex; gap:8px; justify-content:center; align-items:center; }
+.btn-pagar { background: #ef4444 !important; color: #fff !important; }
 </style>
 </head>
 
@@ -147,19 +134,19 @@ body.modo-pdf td:last-child {
     <div class="cabecalho-pdf">
         <div class="cabecalho-linha">
             <div class="logo-pdf">
-                <img src="img/logo-mataousi.png" alt="Matão Usinagem">
-                <div class="data-pdf">Gerado em: <span id="dataHoraPdf"></span></div>
+                <img src="img/logo-mataousi2.png" alt="Matão Usinagem">
+                <div class="data-pdf"><span id="dataHoraPdf"></span></div>
             </div>
             <div class="titulo-pdf">
                 <h2>MATÃO USINAGEM</h2>
-                <p>Relatório Gerencial de Contas a Receber</p>
+                <p>Relatório de Contas a Receber</p>
             </div>
         </div>
-        <hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">
+        <hr>
     </div>
 
     <section class="card">
-        <h2 class="card-title">Filtros de Busca</h2>
+        <h2 class="card-title">Filtros</h2>
         <div class="form-grid">
             <div class="form-group">
                 <label>Status</label>
@@ -176,34 +163,29 @@ body.modo-pdf td:last-child {
             </div>
         </div>
 
-        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top: 15px;">
-            <button id="btnFiltrar" class="btn-azul">🔍 Filtrar</button>
-            <button id="btnNovoManual" class="btn-verde">➕ Lançamento Manual</button>
-            <button id="btnGerarPDF" class="btn-primario" style="background: #6366f1;">📄 Gerar PDF</button>
+        <div style="display:flex; gap:10px; flex-wrap:wrap">
+            <button id="btnFiltrar" class="btn-azul">Filtrar</button>
+            <button id="btnNovoManual" class="btn-verde">+ Lançamento Manual</button>
+            <button id="btnGerarPDF" class="btn-azul">Gerar PDF</button>
         </div>
     </section>
 
     <section class="card">
-        <h2 class="card-title">Lançamentos Encontrados</h2>
-        <div style="overflow-x: auto;">
-            <table class="tabela-futurista">
-                <thead>
-                    <tr>
-                        <th>NF / Origem</th>
-                        <th>Valor</th>
-                        <th>Vencimento</th>
-                        <th>Status</th>
-                        <th class="col-acoes">Ações</th>
-                    </tr>
-                </thead>
-                <tbody id="listaReceber">
-                    </tbody>
-            </table>
-        </div>
-        
-        <div style="margin-top:20px; padding: 15px; background: rgba(56,189,248,0.05); border-radius: 10px; text-align: right;">
-            <span style="color: #94a3b8; font-size: 14px;">Total Filtrado:</span>
-            <div id="totalReceber" style="font-size: 24px; font-weight: bold; color: #38bdf8;">R$ 0,00</div>
+        <h2 class="card-title">Lançamentos</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>NF / Origem</th>
+                    <th>Valor</th>
+                    <th>Vencimento</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="listaReceber"></tbody>
+        </table>
+        <div style="margin-top:10px; font-weight:bold">
+            Total filtrado: <span id="totalReceber">R$ 0,00</span>
         </div>
     </section>
 </div>
@@ -211,24 +193,19 @@ body.modo-pdf td:last-child {
 <div id="modalManual" class="modal">
     <div class="modal-conteudo">
         <h3 id="tituloModal">Novo Lançamento Manual</h3>
-        
-        <label>NF / Origem / Cliente</label>
-        <input type="text" id="origemManual" placeholder="Ex.: NF 5521 - Cliente X">
-        
-        <label>Valor (R$)</label>
-        <input type="number" id="valorManual" step="0.01" placeholder="0.00">
-        
-        <label>Data de Vencimento</label>
+        <label>NF / Origem</label>
+        <input type="text" id="origemManual" placeholder="Ex.: 6155C...">
+        <label>Valor</label>
+        <input type="number" id="valorManual" step="0.01">
+        <label>Vencimento</label>
         <input type="date" id="vencimentoManual">
-        
         <div class="modal-acoes">
-            <button id="btnCancelarManual" class="btn-vermelho" style="background: #475569;">Cancelar</button>
-            <button id="btnSalvarManual" class="btn-verde">Salvar Lançamento</button>
+            <button id="btnSalvarManual" class="btn-verde">Salvar</button>
+            <button id="btnCancelarManual" class="btn-vermelho">Cancelar</button>
         </div>
     </div>
 </div>
 
 <script type="module" src="js/contas_receber.js"></script>
-
 </body>
 </html>
