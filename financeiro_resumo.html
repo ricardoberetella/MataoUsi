@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Saldo Líquido - Matão Usinagem</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <style>
+        .grid-resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 30px; }
+        .card-valor { padding: 30px; border-radius: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+        .v-positivo { color: #10b981; font-size: 2rem; font-weight: bold; }
+        .v-negativo { color: #f87171; font-size: 2rem; font-weight: bold; }
+        .v-liquido { color: #38bdf8; font-size: 2.5rem; font-weight: bold; text-shadow: 0 0 15px rgba(56,189,248,0.4); }
+    </style>
+</head>
+<body>
+<header class="topbar">
+    <a href="dashboard.html"><button class="btn-voltar">⬅ Voltar ao Menu</button></a>
+    <h1 class="topbar-title">Fluxo de Caixa / Saldo Líquido</h1>
+</header>
+
+<div class="container">
+    <div class="grid-resumo">
+        <div class="card-valor">
+            <h3>Previsão de Recebimento</h3>
+            <p id="totalReceber" class="v-positivo">R$ 0,00</p>
+            <small>Status: ABERTO</small>
+        </div>
+        <div class="card-valor">
+            <h3>Contas a Pagar</h3>
+            <p id="totalPagar" class="v-negativo">R$ 0,00</p>
+            <small>Status: ABERTO</small>
+        </div>
+    </div>
+
+    <div class="card-valor" style="margin-top: 20px; background: rgba(56,189,248,0.05); border: 1px solid #38bdf8;">
+        <h3>Saldo Líquido Projetado (Disponível após pagar tudo)</h3>
+        <p id="saldoLiquido" class="v-liquido">R$ 0,00</p>
+    </div>
+</div>
+
+<script type="module">
+    import { supabase, verificarLogin } from "./js/auth.js";
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        await verificarLogin();
+        
+        // Buscar Contas a Receber (Aberto)
+        const { data: rec } = await supabase.from("contas_receber").select("valor").eq("status", "ABERTO");
+        // Buscar Contas a Pagar (Aberto)
+        const { data: pag } = await supabase.from("contas_pagar").select("valor").eq("status", "ABERTO");
+
+        const totalRec = rec ? rec.reduce((acc, i) => acc + parseFloat(i.valor), 0) : 0;
+        const totalPag = pag ? pag.reduce((acc, i) => acc + parseFloat(i.valor), 0) : 0;
+        const liquido = totalRec - totalPag;
+
+        document.getElementById("totalReceber").innerText = totalRec.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        document.getElementById("totalPagar").innerText = totalPag.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        document.getElementById("saldoLiquido").innerText = liquido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    });
+</script>
+</body>
+</html>
