@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Contas a Pagar - Matão Usinagem</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/pedidos_lista.css">
+    <style>
+        .btn-pagar { background: #f87171 !important; color: #fff !important; padding: 5px 10px; border-radius: 4px; border:none; cursor:pointer; }
+        .total-box-pagar { color: #f87171; font-weight: bold; font-size: 1.2rem; }
+        .badge-pago { background: #059669; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+        .badge-aberto { background: #dc2626; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+    </style>
+</head>
+<body>
+<header class="topbar">
+    <a href="dashboard.html"><button class="btn-voltar">⬅ Voltar ao Menu</button></a>
+    <h1 class="topbar-title">Contas a Pagar</h1>
+</header>
+
+<div class="container">
+    <section class="card">
+        <h2 class="card-title">Novo Lançamento / Filtro</h2>
+        <div style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+            <button id="btnNovoPagar" class="btn-primario" style="background: #10b981;">+ Nova Conta</button>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="filtroStatus" style="padding: 8px; border-radius: 5px; background: #0f172a; color: white; border: 1px solid #334155;">
+                    <option value="">Todos</option>
+                    <option value="ABERTO">Em Aberto</option>
+                    <option value="PAGO">Pago</option>
+                </select>
+            </div>
+        </div>
+    </section>
+
+    <section class="card">
+        <h2 class="card-title">Listagem de Despesas</h2>
+        <table class="tabela-futurista">
+            <thead>
+                <tr>
+                    <th>Descrição</th>
+                    <th>Vencimento</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="listaPagar"></tbody>
+        </table>
+        <div style="margin-top:20px; text-align: right; border-top: 1px solid #334155; padding-top: 10px;">
+            <span style="color: #94a3b8;">Total em Aberto:</span> 
+            <span id="totalPagar" class="total-box-pagar">R$ 0,00</span>
+        </div>
+    </section>
+</div>
+
+<script type="module" src="js/contas_pagar.js"></script>
+</body>
+</html>
