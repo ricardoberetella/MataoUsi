@@ -1,75 +1,65 @@
-import { supabase } from "./auth.js";
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Contas a Pagar - Matão Usinagem</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <style>
+        .modal-financeiro { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: #0f172a; border: 2px solid #38bdf8; padding: 25px; border-radius: 15px; width: 420px; color: white; }
+        .modal-content input, .modal-content select { width: 100%; padding: 12px; margin: 10px 0; background: #1e293b; border: 1px solid #334155; color: white; border-radius: 8px; }
+        .label-futuro { color: #38bdf8; font-family: 'Orbitron', sans-serif; font-size: 0.75rem; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <a href="dashboard.html"><button class="btn-acao">← Voltar</button></a>
+            <h1 style="color: #38bdf8; font-family: 'Orbitron';">CONTAS A PAGAR</h1>
+        </header>
 
-document.addEventListener("DOMContentLoaded", () => {
-    // Configura os eventos dos botões
-    document.getElementById("btnNovoPagar").onclick = abrirModal;
-    document.getElementById("btnFecharModal").onclick = () => {
-        document.getElementById("modalLancamento").style.display = "none";
-    };
-    document.getElementById("btnSalvarModal").onclick = salvarDados;
-    document.getElementById("btnTransferir").onclick = realizarTransferencia;
+        <div id="cardsBancos" style="display: flex; gap: 15px; margin-bottom: 25px;"></div>
 
-    atualizarTela();
-});
+        <div style="background: rgba(30, 41, 59, 0.6); padding: 20px; border-radius: 12px; display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
+            <button id="btnNovoPagar" class="btn-acao" style="background: #10b981;">+ Novo Lançamento</button>
+            <button id="btnTransferir" class="btn-acao" style="background: #8b5cf6;">Transferências</button>
+        </div>
 
-// ESTA É A FUNÇÃO QUE RESOLVE O PROBLEMA DO SELECT VAZIO
-async function carregarBancosNoSelect() {
-    const select = document.getElementById("m_banco");
-    
-    // Busca os bancos cadastrados no seu Supabase
-    const { data: bancos, error } = await supabase.from("bancos").select("*").order("nome");
+        <div style="margin-top: 30px; overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #38bdf8; color: #38bdf8;">
+                        <th>Origem</th>
+                        <th>Banco</th>
+                        <th>Valor</th>
+                        <th>Vencimento</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="listaPagar"></tbody> </table>
+        </div>
+    </div>
 
-    if (error) {
-        console.error("Erro ao buscar bancos:", error.message);
-        return;
-    }
+    <div id="modalLancamento" class="modal-financeiro">
+        <div class="modal-content">
+            <h2 class="label-futuro">Novo Lançamento</h2>
+            <input type="text" id="m_descricao" placeholder="Descrição / NF">
+            <input type="text" id="m_valor" placeholder="Valor (0.00)">
+            <input type="date" id="m_data">
+            
+            <label class="label-futuro">Banco para Débito</label>
+            <select id="m_banco">
+                <option value="">Carregando bancos...</option>
+            </select>
 
-    if (bancos) {
-        // Limpa e preenche o select
-        select.innerHTML = '<option value="">Selecione o Banco...</option>';
-        bancos.forEach(banco => {
-            const option = document.createElement("option");
-            option.value = banco.id;
-            option.textContent = banco.nome;
-            select.appendChild(option);
-        });
-        console.log("Bancos carregados no seletor.");
-    }
-}
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="btnSalvarModal" class="btn-acao" style="background: #10b981; flex: 1;">Confirmar</button>
+                <button id="btnFecharModal" class="btn-acao" style="background: #f87171; flex: 1;">Cancelar</button>
+            </div>
+        </div>
+    </div>
 
-async function abrirModal() {
-    // IMPORTANTE: Primeiro carrega os bancos, depois mostra o modal
-    await carregarBancosNoSelect();
-    document.getElementById("modalLancamento").style.display = "flex";
-}
-
-async function salvarDados() {
-    const desc = document.getElementById("m_descricao").value;
-    const valor = document.getElementById("m_valor").value.replace(',', '.');
-    const data = document.getElementById("m_data").value;
-    const bancoId = document.getElementById("m_banco").value;
-
-    if (!desc || !valor || !data || !bancoId) {
-        alert("Por favor, preencha todos os campos e selecione um banco!");
-        return;
-    }
-
-    const { error } = await supabase.from("contas_pagar").insert([
-        { descricao: desc, valor: parseFloat(valor), vencimento: data, banco_id: bancoId, status: "ABERTO" }
-    ]);
-
-    if (!error) {
-        document.getElementById("modalLancamento").style.display = "none";
-        atualizarTela();
-    } else {
-        alert("Erro ao salvar: " + error.message);
-    }
-}
-
-async function atualizarTela() {
-    // Aqui vai sua lógica de carregar a tabela 'listaPagar' e os 'cardsBancos'
-}
-
-async function realizarTransferencia() {
-    // Lógica de prompt para transferência (conforme conversas anteriores)
-}
+    <script type="module" src="js/contas_pagar.js"></script>
+</body>
+</html>
