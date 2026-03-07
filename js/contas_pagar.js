@@ -3,14 +3,14 @@ import { supabase, verificarLogin } from "./auth.js";
 document.addEventListener("DOMContentLoaded", async () => {
     await verificarLogin();
     
-    // Define a data atual no filtro de vencimento
+    // Define a data atual no filtro de vencimento da tela principal
     const dataHoje = new Date().toISOString().split('T')[0];
     const filtroData = document.getElementById("filtroDataAte");
     if(filtroData) filtroData.value = dataHoje;
 
     carregarDados();
 
-    // Eventos dos botões baseados no seu layout
+    // Eventos dos botões da interface
     document.getElementById("btnFiltrar").addEventListener("click", carregarDados);
     document.getElementById("btnNovoPagar").addEventListener("click", agendarSaida);
     document.getElementById("btnTransferir").addEventListener("click", transferirEntreBancos);
@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 async function carregarDados() {
-    // Busca os saldos reais para os cards futuristas
+    // Busca os saldos reais para os cards futuristas (SICOOB, CAIXA, APLICAÇÃO)
     const { data: bancos } = await supabase.from("bancos").select("*").order("nome");
     const containerBancos = document.getElementById("cardsBancos");
     
@@ -33,7 +33,7 @@ async function carregarDados() {
         `).join('');
     }
 
-    // Filtros de busca
+    // Filtros de busca da tabela
     const status = document.getElementById("filtroStatus").value;
     const dataAte = document.getElementById("filtroDataAte").value;
     
@@ -62,59 +62,97 @@ async function carregarDados() {
     `).join('');
 }
 
-// Lançamento Manual restrito a SICOOB e CAIXA FEDERAL
+// Lançamento Manual com melhorias de UX solicitadas
 async function agendarSaida() {
-    // Filtra para remover a 'APLICAÇÃO' da lista de escolha de débito
+    // Filtra para exibir apenas bancos de débito (SICOOB e CAIXA FEDERAL)
     const { data: bancos } = await supabase.from("bancos")
         .select("*")
         .neq("nome", "APLICAÇÃO") 
         .order("nome");
     
-    const desc = prompt("NF / Origem da Despesa:");
-    const valor = prompt("Valor (Ex: 1500.50):");
-    const data = prompt("Data de Vencimento (AAAA-MM-DD):");
+    // 1. Apenas Origem da Despesa (sem NF)
+    const desc = prompt("Origem da Despesa:");
     
-    // Monta o menu de escolha excluindo a Aplicação
+    // 2. Aceita vírgula e converte para ponto
+    const valorInput = prompt("Valor (Ex: 1500,50):");
+    
+    // 3. Padrão de data brasileiro DD/MM/AAAA
+    const dataInput = prompt("Data de Vencimento (DD/MM/AAAA):");
+
+    // 4. Seleção por número (apenas SICOOB ou CAIXA)
     const menuBancos = bancos.map((b, i) => `${i + 1}: ${b.nome}`).join('\n');
     const escolha = prompt("Selecione o Banco para o Débito:\n" + menuBancos);
 
-    const bancoSelecionado = bancos[parseInt(escolha) - 1];
+    if (desc && valorInput && dataInput && escolha) {
+        try {
+            // Conversão de valor (vírgula para ponto)
+            const valorFormatado = parseFloat(valorInput.replace(',', '.'));
+            
+            // Conversão de data (DD/MM/AAAA para AAAA-MM-DD para o banco de dados)
+            const partesData = dataInput.split('/');
+            const dataISO = `${partesData[2]}-${partesData[1]}-${partesData[0]}`;
 
-    if (desc && valor && data && bancoSelecionado) {
-        await supabase.from("contas_pagar").insert([{
-            descricao: desc,
-            valor: parseFloat(valor.replace(',', '.')),
-            vencimento: data,
-            banco_id: bancoSelecionado.id,
-            status: "ABERTO"
-        }]);
-        carregarDados();
+            const bancoSelecionado = bancos[parseInt(escolha) - 1];
+
+            if (bancoSelecionado) {
+                const { error } = await supabase.from("contas_pagar").insert([{
+                    descricao: desc,
+                    valor: valorFormatado,
+                    vencimento: dataISO,
+                    banco_id: bancoSelecionado.id,
+                    status: "ABERTO"
+                }]);
+
+                if (error) throw error;
+                carregarDados();
+            } else {
+                alert("Opção de banco inválida.");
+            }
+        } catch (err) {
+            alert("Erro ao processar dados. Verifique o formato da data (DD/MM/AAAA) e do valor.");
+        }
     }
 }
 
-// Transferência entre contas (Pode incluir a Aplicação aqui para resgate)
+// Transferência entre contas (Incluindo a APLICAÇÃO)
 async function transferirEntreBancos() {
     const { data: bancos } = await supabase.from("bancos").select("*").order("nome");
-    const menu = bancos.map((b, i) => `${i + 1}: ${b.nome} (R$ ${parseFloat(b.saldo).toFixed(2)})`).join('\n');
+    const menu = bancos.map((b, i) => `${i + 1}: ${b.nome} (Saldo: R$ ${parseFloat(b.saldo).toFixed(2)})`).join('\n');
     
     const de = prompt("Sair de qual conta?\n" + menu);
     const para = prompt("Entrar em qual conta?\n" + menu);
-    const valor = parseFloat(prompt("Valor da transferência:").replace(',', '.'));
+    const valorInput = prompt("Valor da transferência (Ex: 500,00):");
 
     const bancoDe = bancos[parseInt(de) - 1];
     const bancoPara = bancos[parseInt(para) - 1];
 
-    if (bancoDe && bancoPara && valor > 0 && bancoDe.saldo >= valor) {
-        await supabase.from("bancos").update({ saldo: bancoDe.saldo - valor }).eq("id", bancoDe.id);
-        await supabase.from("bancos").update({ saldo: bancoPara.saldo + valor }).eq("id", bancoPara.id);
-        alert("Transferência realizada!");
-        carregarDados();
-    } else {
-        alert("Dados inválidos ou saldo insuficiente.");
+    if (bancoDe && bancoPara && valorInput) {
+        const valor = parseFloat(valorInput.replace(',', '.'));
+        if (valor > 0 && bancoDe.saldo >= valor) {
+            await supabase.from("bancos").update({ saldo: bancoDe.saldo - valor }).eq("id", bancoDe.id);
+            await supabase.from("bancos").update({ saldo: bancoPara.saldo + valor }).eq("id", bancoPara.id);
+            alert("Transferência realizada com sucesso!");
+            carregarDados();
+        } else {
+            alert("Operação cancelada: Saldo insuficiente ou valor inválido.");
+        }
     }
 }
 
-// Extrato PDF com o seu padrão de cores
+// Baixa de pagamento no banco selecionado
+window.baixarConta = async (id, valor, bancoId) => {
+    if(!bancoId) return alert("Banco não definido para esta conta.");
+    if(!confirm("Confirmar pagamento? O valor será debitado do saldo do banco.")) return;
+    
+    const { data: b } = await supabase.from("bancos").select("saldo").eq("id", bancoId).single();
+    
+    await supabase.from("contas_pagar").update({ status: 'PAGO' }).eq("id", id);
+    await supabase.from("bancos").update({ saldo: b.saldo - valor }).eq("id", bancoId);
+    
+    carregarDados();
+};
+
+// Gerar Extrato PDF
 async function gerarExtratoPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
@@ -147,14 +185,5 @@ async function gerarExtratoPDF() {
         y = doc.lastAutoTable.finalY + 15;
     });
 
-    doc.save("Extrato_Financeiro.pdf");
+    doc.save("Extrato_Financeiro_Matao.pdf");
 }
-
-window.baixarConta = async (id, valor, bancoId) => {
-    if(!bancoId) return alert("Banco não definido.");
-    if(!confirm("Confirmar pagamento?")) return;
-    const { data: b } = await supabase.from("bancos").select("saldo").eq("id", bancoId).single();
-    await supabase.from("contas_pagar").update({ status: 'PAGO' }).eq("id", id);
-    await supabase.from("bancos").update({ saldo: b.saldo - valor }).eq("id", bancoId);
-    carregarDados();
-};
