@@ -2,33 +2,49 @@ import { supabase, verificarLogin } from "./auth.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
     await verificarLogin();
+    
+    // Define data de hoje no filtro por padrão
+    const dataPadrao = new Date().toISOString().split('T')[0];
+    const filtroData = document.getElementById("filtroDataAte");
+    if(filtroData) filtroData.value = dataPadrao;
+
     carregarDados();
 
+    // Eventos dos botões
     document.getElementById("btnFiltrar").addEventListener("click", carregarDados);
     document.getElementById("btnNovoPagar").addEventListener("click", agendarSaida);
-    document.getElementById("btnTransferir").addEventListener("click", transferirBancos);
+    document.getElementById("btnTransferir").addEventListener("click", transferirEntreBancos);
     document.getElementById("btnGerarPDF").addEventListener("click", gerarExtratoPDF);
 });
 
 async function carregarDados() {
+    // 1. Atualizar Painéis de Bancos (SICOOB, CAIXA, APLICAÇÃO)
     const { data: bancos } = await supabase.from("bancos").select("*").order("nome");
     const containerBancos = document.getElementById("cardsBancos");
-    containerBancos.innerHTML = bancos.map(b => `
-        <div class="card-banco">
-            <small style="color: #94a3b8; font-weight: bold;">${b.nome}</small>
-            <div class="saldo-valor">${parseFloat(b.saldo).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
-        </div>
-    `).join('');
+    
+    if (containerBancos) {
+        containerBancos.innerHTML = bancos.map(b => `
+            <div class="card-banco">
+                <small style="color: #94a3b8; font-weight: bold; text-transform: uppercase;">${b.nome}</small>
+                <div class="saldo-valor" style="color: ${b.nome === 'APLICAÇÃO' ? '#a855f7' : '#38bdf8'}">
+                    ${parseFloat(b.saldo).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </div>
+            </div>
+        `).join('');
+    }
 
+    // 2. Aplicar Filtros na Tabela
     const status = document.getElementById("filtroStatus").value;
     const dataAte = document.getElementById("filtroDataAte").value;
     
     let query = supabase.from("contas_pagar").select(`*, bancos(nome)`).order("vencimento", { ascending: true });
+
     if (status) query = query.eq("status", status);
     if (dataAte) query = query.lte("vencimento", dataAte);
 
     const { data: contas } = await query;
     const tbody = document.getElementById("listaPagar");
+    
     tbody.innerHTML = contas.map(item => `
         <tr>
             <td style="color: #f87171; font-weight: bold;">${item.descricao}</td>
@@ -37,82 +53,113 @@ async function carregarDados() {
             <td>${new Date(item.vencimento).toLocaleDateString('pt-BR')}</td>
             <td><span class="${item.status === 'PAGO' ? 'badge-pago' : 'badge-aberto'}">${item.status}</span></td>
             <td>
-                ${item.status !== 'PAGO' ? `<button class="btn-acao" style="background: #ef4444; padding: 5px 12px; font-size: 11px;" onclick="baixarConta('${item.id}', ${item.valor}, '${item.banco_id}')">Pagar</button>` : '✅'}
+                ${item.status !== 'PAGO' ? `
+                    <button class="btn-acao" style="background: #ef4444; padding: 5px 12px; font-size: 11px;" 
+                    onclick="baixarConta('${item.id}', ${item.valor}, '${item.banco_id}')">Pagar</button>
+                ` : '✅'}
             </td>
         </tr>
     `).join('');
 }
 
+// Função para dar baixa no pagamento
 window.baixarConta = async (id, valor, bancoId) => {
-    if(!bancoId) return alert("Vincule um banco a esta conta antes de pagar!");
-    if(!confirm("Confirmar baixa bancária?")) return;
+    if(!bancoId) return alert("Erro: Esta conta não possui um banco de origem definido.");
+    if(!confirm("Confirmar pagamento? O valor será debitado do saldo do banco selecionado.")) return;
 
     const { data: banco } = await supabase.from("bancos").select("saldo").eq("id", bancoId).single();
+    
+    if (banco.saldo < valor) {
+        if(!confirm("Saldo insuficiente no banco. Deseja prosseguir mesmo assim?")) return;
+    }
+
     await supabase.from("contas_pagar").update({ status: 'PAGO' }).eq("id", id);
     await supabase.from("bancos").update({ saldo: banco.saldo - valor }).eq("id", bancoId);
     
     carregarDados();
 };
 
+// Lançamento Manual (Restrito a SICOOB e CAIXA)
 async function agendarSaida() {
-    const { data: bancos } = await supabase.from("bancos").select("*");
-    const desc = prompt("NF / Origem:");
-    const valor = prompt("Valor:");
-    const data = prompt("Vencimento (AAAA-MM-DD):");
-    const bSel = prompt("Banco Destino:\n1: SICOOB\n2: CAIXA FEDERAL");
+    const { data: bancos } = await supabase.from("bancos").select("*").neq("nome", "APLICAÇÃO").order("nome");
+    
+    const desc = prompt("NF / Origem da Despesa:");
+    const valor = prompt("Valor (Ex: 1500.50):");
+    const data = prompt("Data de Vencimento (AAAA-MM-DD):");
+    const menuBancos = bancos.map((b, i) => `${i + 1}: ${b.nome}`).join('\n');
+    const escolha = prompt("Selecione o Banco para o Débito:\n" + menuBancos);
 
-    if(desc && valor && data && bancos[bSel-1]) {
+    const bancoSelecionado = bancos[parseInt(escolha) - 1];
+
+    if (desc && valor && data && bancoSelecionado) {
         await supabase.from("contas_pagar").insert([{
-            descricao: desc, valor: parseFloat(valor), vencimento: data, banco_id: bancos[bSel-1].id, status: 'ABERTO'
+            descricao: desc,
+            valor: parseFloat(valor),
+            vencimento: data,
+            banco_id: bancoSelecionado.id,
+            status: "ABERTO"
         }]);
         carregarDados();
     }
 }
 
-async function transferirBancos() {
+// Lógica de Transferência (Inclui Resgate da Aplicação)
+async function transferirEntreBancos() {
     const { data: bancos } = await supabase.from("bancos").select("*").order("nome");
-    const de = prompt("Sair de:\n1: " + bancos[0].nome + "\n2: " + bancos[1].nome);
-    const para = (de == "1") ? "2" : "1";
-    const valor = parseFloat(prompt("Valor da Transferência:"));
+    const menu = bancos.map((b, i) => `${i + 1}: ${b.nome} (Saldo: R$ ${b.saldo})`).join('\n');
+    
+    const de = prompt("Sair de qual conta?\n" + menu);
+    const para = prompt("Entrar em qual conta?\n" + menu);
+    const valor = parseFloat(prompt("Valor da transferência:"));
 
-    if(bancos[de-1] && valor > 0 && bancos[de-1].saldo >= valor) {
-        await supabase.from("bancos").update({ saldo: bancos[de-1].saldo - valor }).eq("id", bancos[de-1].id);
-        await supabase.from("bancos").update({ saldo: bancos[para-1].saldo + valor }).eq("id", bancos[para-1].id);
+    const bancoDe = bancos[parseInt(de) - 1];
+    const bancoPara = bancos[parseInt(para) - 1];
+
+    if (bancoDe && bancoPara && valor > 0 && bancoDe.saldo >= valor) {
+        await supabase.from("bancos").update({ saldo: bancoDe.saldo - valor }).eq("id", bancoDe.id);
+        await supabase.from("bancos").update({ saldo: bancoPara.saldo + valor }).eq("id", bancoPara.id);
+        alert("Transferência realizada com sucesso!");
         carregarDados();
+    } else {
+        alert("Operação cancelada: Verifique os dados ou saldo insuficiente.");
     }
 }
 
+// Geração de Extrato PDF Futurista
 async function gerarExtratoPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const { data: bancos } = await supabase.from("bancos").select("*").order("nome");
     const { data: movs } = await supabase.from("contas_pagar").select(`*, bancos(nome)`).order("vencimento");
 
-    doc.setFontSize(14);
-    doc.text("EXTRATO DE MOVIMENTAÇÃO - MATÃO USINAGEM", 14, 15);
+    doc.setFontSize(16);
+    doc.setTextColor(15, 23, 42);
+    doc.text("MATÃO USINAGEM - RELATÓRIO FINANCEIRO", 14, 15);
     
     let y = 25;
     bancos.forEach(banco => {
-        doc.setFontSize(11);
+        doc.setFontSize(12);
         doc.setTextColor(56, 189, 248);
-        doc.text(`BANCO: ${banco.nome} | SALDO: R$ ${parseFloat(banco.saldo).toFixed(2)}`, 14, y);
+        doc.text(`BANCO: ${banco.nome} | SALDO ATUAL: R$ ${parseFloat(banco.saldo).toLocaleString('pt-BR')}`, 14, y);
         
-        const rows = movs.filter(m => m.banco_id === banco.id).map(m => [
+        const linhas = movs.filter(m => m.banco_id === banco.id).map(m => [
             new Date(m.vencimento).toLocaleDateString('pt-BR'),
             m.descricao,
-            `-R$ ${parseFloat(m.valor).toFixed(2)}`,
+            `- R$ ${parseFloat(m.valor).toFixed(2)}`,
             m.status
         ]);
 
         doc.autoTable({
             startY: y + 5,
-            head: [['Data', 'Descrição', 'Valor Saída', 'Status']],
-            body: rows,
+            head: [['Data', 'Descrição', 'Valor', 'Status']],
+            body: linhas,
             theme: 'grid',
-            headStyles: { fillColor: [15, 23, 42] }
+            headStyles: { fillColor: [15, 23, 42] },
+            styles: { fontSize: 9 }
         });
-        y = doc.lastAutoTable.finalY + 12;
+        y = doc.lastAutoTable.finalY + 15;
+        if (y > 270) { doc.addPage(); y = 20; }
     });
 
-    doc.save("Extrato_Bancario_Matao.pdf");
+    doc.save("Extrato_Matao_Usinagem.pdf");
 }
