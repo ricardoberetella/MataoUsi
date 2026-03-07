@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurar Bancos - Matão Usinagem</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/pedidos_lista.css">
+</head>
+<body>
+<header class="topbar">
+    <a href="dashboard.html"><button class="btn-voltar">⬅ Voltar ao Menu</button></a>
+    <h1 class="topbar-title">Gerenciar Contas Bancárias</h1>
+</header>
+
+<div class="container">
+    <section class="card">
+        <h2 class="card-title">Bancos Cadastrados</h2>
+        <div style="overflow-x: auto;">
+            <table class="tabela-futurista">
+                <thead>
+                    <tr>
+                        <th>Nome do Banco</th>
+                        <th>Saldo Atual</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="listaBancosConfig">
+                    </tbody>
+            </table>
+        </div>
+        <div style="margin-top: 20px;">
+            <button id="btnAdicionarBanco" class="btn-primario" style="background: #10b981;">+ Adicionar Novo Banco</button>
+        </div>
+    </section>
+</div>
+
+<script type="module">
+    import { supabase, verificarLogin } from "./js/auth.js";
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        await verificarLogin();
+        carregarBancos();
+
+        document.getElementById("btnAdicionarBanco").addEventListener("click", adicionarBanco);
+    });
+
+    async function carregarBancos() {
+        const { data: bancos } = await supabase.from("bancos").select("*").order("nome");
+        const tbody = document.getElementById("listaBancosConfig");
+        tbody.innerHTML = bancos.map(b => `
+            <tr>
+                <td>${b.nome}</td>
+                <td style="color: #38bdf8; font-weight: bold;">
+                    ${parseFloat(b.saldo).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </td>
+                <td>
+                    <button class="btn-primario" style="background: #38bdf8; padding: 5px 10px;" onclick="editarBanco('${b.id}', '${b.nome}', ${b.saldo})">Editar</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    window.editarBanco = async (id, nomeAntigo, saldoAntigo) => {
+        const novoNome = prompt("Novo nome do banco:", nomeAntigo);
+        const novoSaldo = prompt("Novo saldo inicial:", saldoAntigo);
+
+        if (novoNome && novoSaldo !== null) {
+            await supabase.from("bancos").update({ 
+                nome: novoNome, 
+                saldo: parseFloat(novoSaldo) 
+            }).eq("id", id);
+            carregarBancos();
+            alert("Banco atualizado!");
+        }
+    };
+
+    async function adicionarBanco() {
+        const nome = prompt("Nome do novo banco:");
+        const saldo = prompt("Saldo inicial:");
+
+        if (nome && saldo) {
+            await supabase.from("bancos").insert([{ 
+                nome: nome, 
+                saldo: parseFloat(saldo) 
+            }]);
+            carregarBancos();
+        }
+    }
+</script>
+</body>
+</html>
