@@ -3,19 +3,23 @@
         </div>
 
     <section class="card">
-        <h2 class="card-title">Novo Lançamento / Agendamento</h2>
-        <div style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
-            <button id="btnNovoPagar" class="btn-primario" style="background: #10b981;">+ Agendar Conta</button>
-            
+        <h2 class="card-title">Ações de Caixa</h2>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button id="btnNovoPagar" class="btn-primario" style="background: #f87171;">- Agendar Conta (Saída)</button>
+            <button id="btnReceitaManual" class="btn-primario" style="background: #10b981;">+ Recebimento Manual (Entrada)</button>
+            <button id="btnTransferir" class="btn-primario" style="background: #6366f1;">⇄ Transferir entre Bancos</button>
+        </div>
+        
+        <div style="margin-top: 20px; display: flex; gap: 15px; align-items: flex-end;">
             <div class="form-group">
-                <label>Filtrar Mês</label>
-                <input type="month" id="filtroMes" class="input-dark">
+                <label>Filtrar Relatório (Mês)</label>
+                <input type="month" id="filtroMes" class="input-dark" style="padding: 8px; background: #0f172a; color: white; border: 1px solid #334155;">
             </div>
         </div>
     </section>
 
     <section class="card">
-        <h2 class="card-title">Relatório de Contas por Banco</h2>
+        <h2 class="card-title">Relatório de Contas Agendadas</h2>
         <table class="tabela-futurista">
             <thead>
                 <tr>
@@ -31,3 +35,5 @@
         </table>
     </section>
 </div>
+
+<script type="module" src="js/contas_pagar.js"></script>
