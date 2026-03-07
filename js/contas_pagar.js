@@ -3,14 +3,14 @@ import { supabase, verificarLogin } from "./auth.js";
 document.addEventListener("DOMContentLoaded", async () => {
     await verificarLogin();
     
-    // Define a data atual no filtro de vencimento da tela principal
-    const dataHoje = new Date().toISOString().split('T')[0];
+    // Define a data de hoje no filtro por padrão
+    const dataPadrao = new Date().toISOString().split('T')[0];
     const filtroData = document.getElementById("filtroDataAte");
-    if(filtroData) filtroData.value = dataHoje;
+    if(filtroData) filtroData.value = dataPadrao;
 
     carregarDados();
 
-    // Eventos dos botões da interface
+    // Eventos dos botões da tela
     document.getElementById("btnFiltrar").addEventListener("click", carregarDados);
     document.getElementById("btnNovoPagar").addEventListener("click", agendarSaida);
     document.getElementById("btnTransferir").addEventListener("click", transferirEntreBancos);
@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 async function carregarDados() {
-    // Busca os saldos reais para os cards futuristas (SICOOB, CAIXA, APLICAÇÃO)
+    // 1. Atualizar Painéis de Bancos com visual futurista
     const { data: bancos } = await supabase.from("bancos").select("*").order("nome");
     const containerBancos = document.getElementById("cardsBancos");
     
@@ -33,7 +33,7 @@ async function carregarDados() {
         `).join('');
     }
 
-    // Filtros de busca da tabela
+    // 2. Aplicar Filtros na Tabela
     const status = document.getElementById("filtroStatus").value;
     const dataAte = document.getElementById("filtroDataAte").value;
     
@@ -62,33 +62,33 @@ async function carregarDados() {
     `).join('');
 }
 
-// Lançamento Manual com melhorias de UX solicitadas
+// Lançamento Manual - AGORA COM SELEÇÃO DE BANCO POR OPÇÃO
 async function agendarSaida() {
-    // Filtra para exibir apenas bancos de débito (SICOOB e CAIXA FEDERAL)
+    // Busca apenas os bancos permitidos para débito (SICOOB e CAIXA FEDERAL)
     const { data: bancos } = await supabase.from("bancos")
         .select("*")
         .neq("nome", "APLICAÇÃO") 
         .order("nome");
     
-    // 1. Apenas Origem da Despesa (sem NF)
+    // Print 1: Origem da Despesa (sem NF)
     const desc = prompt("Origem da Despesa:");
     
-    // 2. Aceita vírgula e converte para ponto
+    // Print 2: Aceita vírgula e converte para ponto
     const valorInput = prompt("Valor (Ex: 1500,50):");
     
-    // 3. Padrão de data brasileiro DD/MM/AAAA
+    // Print 3: Padrão de data brasileiro DD/MM/AAAA
     const dataInput = prompt("Data de Vencimento (DD/MM/AAAA):");
 
-    // 4. Seleção por número (apenas SICOOB ou CAIXA)
+    // Print 4: Seleção por número das opções existentes
     const menuBancos = bancos.map((b, i) => `${i + 1}: ${b.nome}`).join('\n');
-    const escolha = prompt("Selecione o Banco para o Débito:\n" + menuBancos);
+    const escolha = prompt("Selecione o número do Banco para o Débito:\n" + menuBancos);
 
     if (desc && valorInput && dataInput && escolha) {
         try {
             // Conversão de valor (vírgula para ponto)
             const valorFormatado = parseFloat(valorInput.replace(',', '.'));
             
-            // Conversão de data (DD/MM/AAAA para AAAA-MM-DD para o banco de dados)
+            // Conversão de data (DD/MM/AAAA para AAAA-MM-DD para o Supabase)
             const partesData = dataInput.split('/');
             const dataISO = `${partesData[2]}-${partesData[1]}-${partesData[0]}`;
 
@@ -109,12 +109,12 @@ async function agendarSaida() {
                 alert("Opção de banco inválida.");
             }
         } catch (err) {
-            alert("Erro ao processar dados. Verifique o formato da data (DD/MM/AAAA) e do valor.");
+            alert("Erro ao processar os dados. Verifique os formatos de data e valor.");
         }
     }
 }
 
-// Transferência entre contas (Incluindo a APLICAÇÃO)
+// Transferência entre bancos
 async function transferirEntreBancos() {
     const { data: bancos } = await supabase.from("bancos").select("*").order("nome");
     const menu = bancos.map((b, i) => `${i + 1}: ${b.nome} (Saldo: R$ ${parseFloat(b.saldo).toFixed(2)})`).join('\n');
@@ -123,26 +123,26 @@ async function transferirEntreBancos() {
     const para = prompt("Entrar em qual conta?\n" + menu);
     const valorInput = prompt("Valor da transferência (Ex: 500,00):");
 
-    const bancoDe = bancos[parseInt(de) - 1];
-    const bancoPara = bancos[parseInt(para) - 1];
-
-    if (bancoDe && bancoPara && valorInput) {
+    if (de && para && valorInput) {
+        const bancoDe = bancos[parseInt(de) - 1];
+        const bancoPara = bancos[parseInt(para) - 1];
         const valor = parseFloat(valorInput.replace(',', '.'));
-        if (valor > 0 && bancoDe.saldo >= valor) {
+
+        if (bancoDe && bancoPara && valor > 0 && bancoDe.saldo >= valor) {
             await supabase.from("bancos").update({ saldo: bancoDe.saldo - valor }).eq("id", bancoDe.id);
             await supabase.from("bancos").update({ saldo: bancoPara.saldo + valor }).eq("id", bancoPara.id);
             alert("Transferência realizada com sucesso!");
             carregarDados();
         } else {
-            alert("Operação cancelada: Saldo insuficiente ou valor inválido.");
+            alert("Erro: Verifique os dados ou saldo insuficiente.");
         }
     }
 }
 
-// Baixa de pagamento no banco selecionado
+// Dar baixa no pagamento
 window.baixarConta = async (id, valor, bancoId) => {
-    if(!bancoId) return alert("Banco não definido para esta conta.");
-    if(!confirm("Confirmar pagamento? O valor será debitado do saldo do banco.")) return;
+    if(!bancoId) return alert("Banco não definido.");
+    if(!confirm("Confirmar pagamento?")) return;
     
     const { data: b } = await supabase.from("bancos").select("saldo").eq("id", bancoId).single();
     
@@ -152,7 +152,7 @@ window.baixarConta = async (id, valor, bancoId) => {
     carregarDados();
 };
 
-// Gerar Extrato PDF
+// Gerar PDF
 async function gerarExtratoPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
@@ -160,13 +160,13 @@ async function gerarExtratoPDF() {
     const { data: movs } = await supabase.from("contas_pagar").select(`*, bancos(nome)`).order("vencimento");
 
     doc.setFontSize(16);
-    doc.text("MATÃO USINAGEM - EXTRATO FINANCEIRO", 14, 15);
+    doc.text("MATÃO USINAGEM - RELATÓRIO DE PAGAMENTOS", 14, 15);
     
     let y = 25;
     bancos.forEach(banco => {
         doc.setFontSize(12);
         doc.setTextColor(56, 189, 248);
-        doc.text(`BANCO: ${banco.nome} | SALDO: R$ ${parseFloat(banco.saldo).toLocaleString('pt-BR')}`, 14, y);
+        doc.text(`BANCO: ${banco.nome} | SALDO ATUAL: R$ ${parseFloat(banco.saldo).toLocaleString('pt-BR')}`, 14, y);
         
         const rows = movs.filter(m => m.banco_id === banco.id).map(m => [
             new Date(m.vencimento).toLocaleDateString('pt-BR'),
@@ -185,5 +185,5 @@ async function gerarExtratoPDF() {
         y = doc.lastAutoTable.finalY + 15;
     });
 
-    doc.save("Extrato_Financeiro_Matao.pdf");
+    doc.save("Financeiro_Matao.pdf");
 }
