@@ -1,39 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contas a Pagar - Matão Usinagem</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/pedidos_lista.css">
+    <style>
+        .resumo-bancos { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .card-banco { background: #1e293b; padding: 15px; border-radius: 8px; border: 1px solid #334155; text-align: center; }
+        .saldo-valor { font-size: 1.4rem; font-weight: bold; color: #38bdf8; margin-top: 5px; }
+        .badge-pago { background: #059669; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+        .badge-aberto { background: #dc2626; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+        .input-dark { width: 100%; padding: 10px; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 5px; margin-top: 5px; }
+    </style>
+</head>
+<body>
+<header class="topbar">
+    <a href="dashboard.html"><button class="btn-voltar">← Voltar ao Menu</button></a>
+    <h1 class="topbar-title">Contas a Pagar</h1>
+</header>
+
 <div class="container">
-    <div class="resumo-financeiro" id="cardsBancos">
-        </div>
+    <div class="resumo-bancos" id="cardsBancos"></div>
 
     <section class="card">
-        <h2 class="card-title">Ações de Caixa</h2>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <button id="btnNovoPagar" class="btn-primario" style="background: #f87171;">- Agendar Conta (Saída)</button>
-            <button id="btnReceitaManual" class="btn-primario" style="background: #10b981;">+ Recebimento Manual (Entrada)</button>
-            <button id="btnTransferir" class="btn-primario" style="background: #6366f1;">⇄ Transferir entre Bancos</button>
-        </div>
-        
-        <div style="margin-top: 20px; display: flex; gap: 15px; align-items: flex-end;">
+        <h2 class="card-title">Filtros</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
             <div class="form-group">
-                <label>Filtrar Relatório (Mês)</label>
-                <input type="month" id="filtroMes" class="input-dark" style="padding: 8px; background: #0f172a; color: white; border: 1px solid #334155;">
+                <label>Status</label>
+                <select id="filtroStatus" class="input-dark">
+                    <option value="">Todos</option>
+                    <option value="ABERTO">Em Aberto</option>
+                    <option value="PAGO">Pago</option>
+                </select>
             </div>
+            <div class="form-group">
+                <label>Vencimento Mês</label>
+                <input type="month" id="filtroMes" class="input-dark">
+            </div>
+        </div>
+        <div style="margin-top: 15px; display: flex; gap: 10px;">
+            <button id="btnNovoPagar" class="btn-primario" style="background: #ef4444;">- Lançamento de Saída</button>
+            <button id="btnReceitaManual" class="btn-primario" style="background: #10b981;">+ Recebimento Manual</button>
+            <button id="btnTransferir" class="btn-primario" style="background: #6366f1;">⇄ Transferir Bancos</button>
         </div>
     </section>
 
     <section class="card">
-        <h2 class="card-title">Relatório de Contas Agendadas</h2>
-        <table class="tabela-futurista">
-            <thead>
-                <tr>
-                    <th>Descrição</th>
-                    <th>Banco Destino</th>
-                    <th>Vencimento</th>
-                    <th>Valor</th>
-                    <th>Status</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody id="listaPagar"></tbody>
-        </table>
+        <h2 class="card-title">Lançamentos</h2>
+        <div style="overflow-x: auto;">
+            <table class="tabela-futurista">
+                <thead>
+                    <tr>
+                        <th>Descrição / Origem</th>
+                        <th>Banco</th>
+                        <th>Valor</th>
+                        <th>Vencimento</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="listaPagar"></tbody>
+            </table>
+        </div>
     </section>
 </div>
 
 <script type="module" src="js/contas_pagar.js"></script>
+</body>
+</html>
