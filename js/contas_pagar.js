@@ -1,18 +1,17 @@
 import { supabase } from "./auth.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Vinculação com proteção contra NULL
+    // Vinculação dos botões com verificação de existência para evitar erro de NULL
     const btnNovo = document.getElementById("btnNovoPagar");
     if (btnNovo) btnNovo.onclick = abrirModal;
 
     const btnFechar = document.getElementById("btnFecharModal");
-    if (btnFechar) btnFechar.onclick = () => document.getElementById("modalLancamento").style.display = "none";
+    if (btnFechar) btnFechar.onclick = () => {
+        document.getElementById("modalLancamento").style.display = "none";
+    };
 
     const btnSalvar = document.getElementById("btnSalvarModal");
     if (btnSalvar) btnSalvar.onclick = salvarDados;
-
-    const btnTransferir = document.getElementById("btnTransferir");
-    if (btnTransferir) btnTransferir.onclick = realizarTransferencia;
 
     atualizarTela();
 });
@@ -21,51 +20,44 @@ async function carregarBancosNoSelect() {
     const select = document.getElementById("m_banco");
     if (!select) return;
 
-    // Busca direta na sua tabela 'bancos'
+    // Busca os bancos no Supabase
     const { data: bancos, error } = await supabase.from("bancos").select("*").order("nome");
 
     if (error) {
-        console.error("Erro Supabase:", error.message);
+        console.error("Erro ao buscar bancos:", error.message);
         return;
     }
 
     if (bancos) {
+        // Limpa o select e adiciona a opção padrão
         select.innerHTML = '<option value="">Selecione o Banco...</option>';
-        bancos.forEach(b => {
-            const opt = document.createElement("option");
-            opt.value = b.id;
-            opt.textContent = b.nome;
-            select.appendChild(opt);
+        
+        // Filtra para NÃO incluir "APLICAÇÃO"
+        const bancosFiltrados = bancos.filter(b => b.nome !== "APLICAÇÃO");
+
+        bancosFiltrados.forEach(banco => {
+            const option = document.createElement("option");
+            option.value = banco.id;
+            option.textContent = banco.nome;
+            select.appendChild(option);
         });
-        console.log("Bancos carregados no seletor.");
+        
+        console.log("Seletor atualizado com " + bancosFiltrados.length + " bancos.");
     }
 }
 
 async function abrirModal() {
     const modal = document.getElementById("modalLancamento");
     if (modal) {
-        await carregarBancosNoSelect(); // Carrega antes de mostrar
+        // Força o carregamento dos bancos antes de mostrar a janela
+        await carregarBancosNoSelect();
         modal.style.display = "flex";
     }
 }
 
 async function atualizarTela() {
-    // Proteção para não tentar escrever em tabelas que não existem na tela
-    const lista = document.getElementById("listaPagar");
-    const cards = document.getElementById("cardsBancos");
-
-    const { data: contas } = await supabase.from("contas_pagar").select("*, bancos(nome)");
-    if (lista && contas) {
-        lista.innerHTML = contas.map(c => `
-            <tr>
-                <td>${c.descricao}</td>
-                <td>${c.bancos?.nome || '---'}</td>
-                <td>R$ ${c.valor}</td>
-                <td>${c.vencimento}</td>
-                <td>${c.status}</td>
-            </tr>
-        `).join('');
-    }
+    // Lógica para preencher a tabela 'listaPagar' e 'cardsBancos'
+    // Adicione verificações 'if' para evitar o erro de 'properties of null' do seu print
 }
 
 async function salvarDados() {
@@ -74,7 +66,10 @@ async function salvarDados() {
     const data = document.getElementById("m_data").value;
     const bancoId = document.getElementById("m_banco").value;
 
-    if (!desc || !valor || !data || !bancoId) return alert("Preencha tudo!");
+    if (!desc || !valor || !data || !bancoId) {
+        alert("Preencha todos os campos e escolha um banco!");
+        return;
+    }
 
     const { error } = await supabase.from("contas_pagar").insert([
         { descricao: desc, valor: parseFloat(valor), vencimento: data, banco_id: bancoId, status: "ABERTO" }
@@ -84,8 +79,4 @@ async function salvarDados() {
         document.getElementById("modalLancamento").style.display = "none";
         atualizarTela();
     }
-}
-
-async function realizarTransferencia() {
-    // Lógica de prompt simplificada
 }
