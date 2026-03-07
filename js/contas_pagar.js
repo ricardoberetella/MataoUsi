@@ -2,72 +2,86 @@ import { supabase, verificarLogin } from "./auth.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
     await verificarLogin();
-    carregarDados();
+    
+    // Vinculação segura dos botões para evitar o erro de 'null'
+    const btnNovo = document.getElementById("btnNovoPagar");
+    if (btnNovo) btnNovo.onclick = abrirModalPagar;
 
-    document.getElementById("btnFiltrar").addEventListener("click", carregarDados);
-    document.getElementById("btnNovoReceber").addEventListener("click", abrirModalReceber);
-    document.getElementById("btnSalvarModal").addEventListener("click", salvarLancamentoReceber);
-    document.getElementById("btnGerarPDF").addEventListener("click", gerarExtratoPDF);
+    const btnFiltrar = document.getElementById("btnFiltrar");
+    if (btnFiltrar) btnFiltrar.onclick = carregarDados;
+
+    const btnSalvar = document.getElementById("btnSalvarModal");
+    if (btnSalvar) btnSalvar.onclick = salvarLancamento;
+
+    carregarDados();
 });
 
 async function carregarDados() {
-    const status = document.getElementById("filtroStatus").value;
-    const { data: contas } = await supabase.from("contas_receber").select(`*, bancos(nome)`).order("vencimento");
+    const { data: bancos } = await supabase.from("bancos").select("*").order("nome");
+    const containerBancos = document.getElementById("cardsBancos");
     
-    const tbody = document.getElementById("listaReceber");
+    // Só tenta definir o HTML se o container existir
+    if (containerBancos) {
+        containerBancos.innerHTML = (bancos || []).map(b => `
+            <div class="card-banco-futuro">
+                <small>${b.nome}</small>
+                <div>${parseFloat(b.saldo).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
+            </div>
+        `).join('');
+    }
+
+    const tbody = document.getElementById("listaPagar");
+    if (!tbody) return; // Evita erro se a tabela não estiver na tela
+
+    const status = document.getElementById("filtroStatus")?.value || "Todos";
+    const dataAte = document.getElementById("filtroDataAte")?.value;
+
+    let query = supabase.from("contas_pagar").select(`*, bancos(nome)`).order("vencimento");
+    if (status !== "Todos") query = query.eq("status", status);
+    if (dataAte) query = query.lte("vencimento", dataAte);
+
+    const { data: contas } = await query;
     tbody.innerHTML = (contas || []).map(item => `
         <tr>
-            <td style="color: #22c55e; font-weight: bold;">${item.descricao}</td>
+            <td>${item.descricao}</td>
             <td>${item.bancos?.nome || '--'}</td>
-            <td style="color: #22c55e;">+${parseFloat(item.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+            <td>R$ ${item.valor}</td>
             <td>${new Date(item.vencimento).toLocaleDateString('pt-BR')}</td>
-            <td><span class="badge-${item.status.toLowerCase()}">${item.status}</span></td>
-            <td>
-                ${item.status !== 'RECEBIDO' ? `<button onclick="receberConta('${item.id}', ${item.valor}, '${item.banco_id}')" class="btn-acao" style="background: #22c55e;">Receber</button>` : '✅'}
-            </td>
+            <td>${item.status}</td>
+            <td><button onclick="baixarConta('${item.id}', ${item.valor}, '${item.banco_id}')">Pagar</button></td>
         </tr>
     `).join('');
 }
 
-async function abrirModalReceber() {
-    const { data: bancos } = await supabase.from("bancos").select("*").order("nome");
-    const selectBanco = document.getElementById("m_banco");
-    selectBanco.innerHTML = bancos.map(b => `<option value="${b.id}">${b.nome}</option>`).join('');
-    document.getElementById("m_data").min = new Date().toISOString().split('T')[0];
+async function abrirModalPagar() {
+    const { data: bancos } = await supabase.from("bancos").select("*").neq("nome", "APLICAÇÃO");
+    const select = document.getElementById("m_banco");
+    if (select) {
+        select.innerHTML = bancos.map(b => `<option value="${b.id}">${b.nome}</option>`).join('');
+    }
     document.getElementById("modalLancamento").style.display = "flex";
 }
 
-async function salvarLancamentoReceber() {
-    const desc = document.getElementById("m_descricao").value;
-    const valorRaw = document.getElementById("m_valor").value;
-    const data = document.getElementById("m_data").value;
-    const bancoId = document.getElementById("m_banco").value;
-
-    const valor = parseFloat(valorRaw.replace(',', '.'));
-    await supabase.from("contas_receber").insert([{
-        descricao: desc, valor: valor, vencimento: data, banco_id: bancoId, status: "ABERTO"
-    }]);
+window.fecharModal = () => {
     document.getElementById("modalLancamento").style.display = "none";
-    carregarDados();
-}
-
-window.receberConta = async (id, valor, bancoId) => {
-    if(!confirm("Confirmar recebimento?")) return;
-    const { data: b } = await supabase.from("bancos").select("saldo").eq("id", bancoId).single();
-    await supabase.from("contas_receber").update({ status: 'RECEBIDO' }).eq("id", id);
-    await supabase.from("bancos").update({ saldo: b.saldo + valor }).eq("id", bancoId);
-    carregarDados();
 };
 
-async function gerarExtratoPDF() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    const { data: movs } = await supabase.from("contas_receber").select(`*, bancos(nome)`).order("vencimento");
-    doc.text("MATÃO USINAGEM - CONTAS A RECEBER", 14, 15);
-    doc.autoTable({
-        startY: 20,
-        head: [['Data', 'Descrição', 'Banco', 'Valor']],
-        body: movs.map(m => [new Date(m.vencimento).toLocaleDateString('pt-BR'), m.descricao, m.bancos?.nome, `R$ ${m.valor}`]),
-    });
-    doc.save("Receber_Matao.pdf");
+window.validarMoeda = (input) => {
+    input.value = input.value.replace(/[^0-9,]/g, '');
+};
+
+async function salvarLancamento() {
+    const desc = document.getElementById("m_descricao").value;
+    const valor = parseFloat(document.getElementById("m_valor").value.replace(',', '.'));
+    const data = document.getElementById("m_data").value;
+    const banco = document.getElementById("m_banco").value;
+
+    if (!desc || isNaN(valor) || !data) return alert("Preencha tudo!");
+
+    await supabase.from("contas_pagar").insert([{
+        descricao: desc, valor, vencimento: data, banco_id: banco, status: "ABERTO"
+    }]);
+
+    fecharModal();
+    carregarDados();
 }
