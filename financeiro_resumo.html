@@ -6,7 +6,6 @@
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <style>
-        /* Estilização Neon/Futurista baseada no seu padrão visual */
         :root {
             --neon-blue: #38bdf8;
             --neon-green: #10b981;
@@ -14,12 +13,12 @@
             --bg-card: rgba(15, 23, 42, 0.8);
         }
 
-        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
 
         .grid-futurista {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
             margin-bottom: 25px;
         }
 
@@ -31,12 +30,8 @@
             text-align: center;
             backdrop-filter: blur(10px);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-            transition: transform 0.3s ease;
         }
 
-        .card-neon:hover { transform: translateY(-5px); }
-
-        /* Estilo específico para os Bancos SICOOB e CAIXA */
         .card-banco-futuro {
             border: 1px solid rgba(56, 189, 248, 0.3);
             background: linear-gradient(145deg, rgba(15,23,42,1) 0%, rgba(30,41,59,0.5) 100%);
@@ -52,35 +47,20 @@
         }
 
         .valor-principal {
-            font-size: 2.2rem;
+            font-size: 2rem;
             font-weight: 800;
             margin: 10px 0;
-            font-family: 'Inter', sans-serif;
         }
 
-        /* Cores Neon */
         .txt-receber { color: var(--neon-green); text-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
         .txt-pagar { color: var(--neon-red); text-shadow: 0 0 15px rgba(248, 113, 113, 0.4); }
         .txt-banco { color: var(--neon-blue); text-shadow: 0 0 15px rgba(56, 189, 248, 0.4); }
 
-        /* Card de Saldo Líquido com destaque total */
         .card-final {
             grid-column: 1 / -1;
             border: 2px solid var(--neon-blue);
             background: rgba(56, 189, 248, 0.03);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card-final::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(56,189,248,0.1) 0%, transparent 70%);
-            pointer-events: none;
+            text-align: center;
         }
     </style>
 </head>
@@ -110,19 +90,21 @@
         <div class="card-neon card-banco-futuro">
             <span class="label-futuro">Disponível SICOOB</span>
             <p id="saldoSicoob" class="valor-principal txt-banco">R$ 0,00</p>
-            <button onclick="ajustarSaldo('SICOOB')" style="background:none; border:1px solid #334155; color:#94a3b8; border-radius:4px; cursor:pointer; font-size:10px; padding:2px 8px;">Ajustar Saldo</button>
         </div>
         <div class="card-neon card-banco-futuro">
             <span class="label-futuro">Disponível CAIXA FEDERAL</span>
             <p id="saldoCaixa" class="valor-principal txt-banco">R$ 0,00</p>
-            <button onclick="ajustarSaldo('CAIXA FEDERAL')" style="background:none; border:1px solid #334155; color:#94a3b8; border-radius:4px; cursor:pointer; font-size:10px; padding:2px 8px;">Ajustar Saldo</button>
+        </div>
+        <div class="card-neon card-banco-futuro" style="border-color: rgba(168, 85, 247, 0.4);">
+            <span class="label-futuro">Reserva APLICAÇÃO</span>
+            <p id="saldoAplicacao" class="valor-principal" style="color: #a855f7; text-shadow: 0 0 15px rgba(168, 85, 247, 0.4);">R$ 0,00</p>
         </div>
     </div>
 
     <div class="card-neon card-final">
         <span class="label-futuro" style="color: var(--neon-blue); font-weight: bold;">Saldo Líquido Projetado</span>
-        <p id="saldoLiquido" class="valor-principal txt-banco" style="font-size: 4rem;">R$ 0,00</p>
-        <p style="color: #94a3b8; font-size: 0.85rem;">(Soma dos Bancos + Recebimentos - Dívidas em Aberto)</p>
+        <p id="saldoLiquido" class="valor-principal txt-banco" style="font-size: 3.5rem;">R$ 0,00</p>
+        <p style="color: #94a3b8; font-size: 0.85rem;">(Bancos + Aplicação + Recebimentos - Dívidas)</p>
     </div>
 
 </div>
@@ -132,46 +114,29 @@
 
     document.addEventListener("DOMContentLoaded", async () => {
         await verificarLogin();
-        carregarFluxoCaixa();
-    });
-
-    async function carregarFluxoCaixa() {
-        // 1. Buscar Saldos Reais (SICOOB e CAIXA)
         const { data: bancos } = await supabase.from("bancos").select("*");
-        let sicoob = 0, caixa = 0;
-        
-        bancos?.forEach(b => {
-            if(b.nome === 'SICOOB') sicoob = parseFloat(b.saldo);
-            if(b.nome === 'CAIXA FEDERAL') caixa = parseFloat(b.saldo);
-        });
-
-        // 2. Buscar Contas a Receber e Pagar (Apenas Abertas)
         const { data: rec } = await supabase.from("contas_receber").select("valor").eq("status", "ABERTO");
         const { data: pag } = await supabase.from("contas_pagar").select("valor").eq("status", "ABERTO");
 
+        let sicoob = 0, caixa = 0, aplicacao = 0;
+        bancos?.forEach(b => {
+            if(b.nome === 'SICOOB') sicoob = parseFloat(b.saldo);
+            if(b.nome === 'CAIXA FEDERAL') caixa = parseFloat(b.saldo);
+            if(b.nome === 'APLICAÇÃO') aplicacao = parseFloat(b.saldo);
+        });
+
         const tRec = rec?.reduce((acc, v) => acc + parseFloat(v.valor), 0) || 0;
         const tPag = pag?.reduce((acc, v) => acc + parseFloat(v.valor), 0) || 0;
-        
-        // Cálculo do Saldo Líquido
-        const liquido = (sicoob + caixa + tRec) - tPag;
+        const liquido = (sicoob + caixa + aplicacao + tRec) - tPag;
 
-        // 3. Atualizar Interface com Formatação Brasileira
         const f = { style: 'currency', currency: 'BRL' };
         document.getElementById("totalReceber").innerText = tRec.toLocaleString('pt-BR', f);
         document.getElementById("totalPagar").innerText = tPag.toLocaleString('pt-BR', f);
         document.getElementById("saldoSicoob").innerText = sicoob.toLocaleString('pt-BR', f);
         document.getElementById("saldoCaixa").innerText = caixa.toLocaleString('pt-BR', f);
+        document.getElementById("saldoAplicacao").innerText = aplicacao.toLocaleString('pt-BR', f);
         document.getElementById("saldoLiquido").innerText = liquido.toLocaleString('pt-BR', f);
-    }
-
-    // Função para ajuste rápido de saldo sem precisar ir na outra tela
-    window.ajustarSaldo = async (nomeBanco) => {
-        const novoValor = prompt(`Informe o saldo atual real no ${nomeBanco}:`);
-        if(novoValor !== null && !isNaN(novoValor)) {
-            await supabase.from("bancos").update({ saldo: parseFloat(novoValor) }).eq("nome", nomeBanco);
-            location.reload();
-        }
-    }
+    });
 </script>
 </body>
 </html>
