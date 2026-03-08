@@ -69,7 +69,10 @@ async function carregarBancos() {
         return;
     }
 
-    bancosCache = data || [];
+    bancosCache = (data || []).filter((banco) => {
+        const nome = String(banco.nome || "").trim().toUpperCase();
+        return nome === "SICOOB" || nome === "CAIXA FEDERAL";
+    });
 
     if (!bancosCache.length) {
         m_banco.innerHTML = `<option value="">Nenhum banco encontrado</option>`;
