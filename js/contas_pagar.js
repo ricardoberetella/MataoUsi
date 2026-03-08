@@ -5,6 +5,7 @@ const cardsBancos = document.getElementById("cardsBancos");
 const filtroDataAte = document.getElementById("filtroDataAte");
 const btnFiltrar = document.getElementById("btnFiltrar");
 const btnNovoPagar = document.getElementById("btnNovoPagar");
+const btnTransferir = document.getElementById("btnTransferir");
 
 const modalLancamento = document.getElementById("modalLancamento");
 const btnSalvarModal = document.getElementById("btnSalvarModal");
@@ -146,6 +147,30 @@ async function carregarContasPagar() {
     listaPagar.innerHTML = registros.map((item) => {
         const banco = bancosCache.find((b) => b.id === item.banco_id);
         const bancoNome = banco ? banco.nome : "—";
+        const status = item.status || "ABERTO";
+        const statusUpper = String(status).toUpperCase();
+
+        let acoesHtml = "-";
+
+        if (statusUpper !== "PAGO") {
+            acoesHtml = `
+                <button
+                    class="btn-pagar-conta"
+                    data-id="${item.id}"
+                    style="
+                        background:#10b981;
+                        color:#fff;
+                        border:none;
+                        border-radius:8px;
+                        padding:8px 14px;
+                        cursor:pointer;
+                        font-weight:bold;
+                    "
+                >
+                    Pagar
+                </button>
+            `;
+        }
 
         return `
             <tr>
@@ -153,11 +178,18 @@ async function carregarContasPagar() {
                 <td style="padding:12px;">${bancoNome}</td>
                 <td style="padding:12px;">${formatarMoeda(item.valor)}</td>
                 <td style="padding:12px;">${formatarDataBR(item.vencimento)}</td>
-                <td style="padding:12px;">${item.status || "ABERTO"}</td>
-                <td style="padding:12px;">-</td>
+                <td style="padding:12px;">${statusUpper}</td>
+                <td style="padding:12px;">${acoesHtml}</td>
             </tr>
         `;
     }).join("");
+
+    document.querySelectorAll(".btn-pagar-conta").forEach((botao) => {
+        botao.addEventListener("click", async () => {
+            const contaId = botao.dataset.id;
+            await pagarConta(contaId);
+        });
+    });
 }
 
 async function salvarLancamento() {
@@ -206,6 +238,85 @@ async function salvarLancamento() {
     await carregarContasPagar();
 }
 
+async function pagarConta(contaId) {
+    const confirmar = window.confirm("Confirmar pagamento desta conta?");
+    if (!confirmar) return;
+
+    const { data: conta, error: erroConta } = await supabase
+        .from("contas_pagar")
+        .select("id, valor, status, banco_id, descricao")
+        .eq("id", contaId)
+        .single();
+
+    if (erroConta || !conta) {
+        console.error("Erro ao buscar conta:", erroConta);
+        alert("Erro ao localizar a conta.");
+        return;
+    }
+
+    const statusAtual = String(conta.status || "").toUpperCase();
+    if (statusAtual === "PAGO") {
+        alert("Esta conta já está paga.");
+        return;
+    }
+
+    const valorConta = Number(conta.valor || 0);
+    const bancoId = conta.banco_id;
+
+    if (!bancoId) {
+        alert("Esta conta não possui banco vinculado.");
+        return;
+    }
+
+    const { data: banco, error: erroBanco } = await supabase
+        .from("bancos")
+        .select("id, nome, saldo")
+        .eq("id", bancoId)
+        .single();
+
+    if (erroBanco || !banco) {
+        console.error("Erro ao buscar banco:", erroBanco);
+        alert("Erro ao localizar o banco da conta.");
+        return;
+    }
+
+    const saldoAtual = Number(banco.saldo || 0);
+    const novoSaldo = saldoAtual - valorConta;
+
+    const { error: erroUpdateBanco } = await supabase
+        .from("bancos")
+        .update({ saldo: novoSaldo })
+        .eq("id", bancoId);
+
+    if (erroUpdateBanco) {
+        console.error("Erro ao atualizar banco:", erroUpdateBanco);
+        alert("Erro ao baixar valor do banco.");
+        return;
+    }
+
+    const { error: erroUpdateConta } = await supabase
+        .from("contas_pagar")
+        .update({ status: "PAGO" })
+        .eq("id", contaId);
+
+    if (erroUpdateConta) {
+        console.error("Erro ao atualizar conta:", erroUpdateConta);
+
+        await supabase
+            .from("bancos")
+            .update({ saldo: saldoAtual })
+            .eq("id", bancoId);
+
+        alert("Erro ao marcar conta como paga.");
+        return;
+    }
+
+    await carregarBancos();
+    await carregarContasPagar();
+
+    alert(`Conta paga com sucesso.\nBanco: ${banco.nome}\nValor: ${formatarMoeda(valorConta)}`);
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
     await verificarLogin();
     await carregarBancos();
@@ -216,6 +327,10 @@ btnNovoPagar?.addEventListener("click", abrirModal);
 btnFecharModal?.addEventListener("click", fecharModal);
 btnSalvarModal?.addEventListener("click", salvarLancamento);
 btnFiltrar?.addEventListener("click", carregarContasPagar);
+
+btnTransferir?.addEventListener("click", () => {
+    alert("Tela de transferências ainda será implementada.");
+});
 
 modalLancamento?.addEventListener("click", (e) => {
     if (e.target === modalLancamento) {
