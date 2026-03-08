@@ -1,129 +1,235 @@
-import { supabase } from "./auth.js";
+import { supabase, verificarLogin } from "./auth.js";
 
-document.addEventListener("DOMContentLoaded", async () => {
-    // Configuração de cliques com proteção contra elementos inexistentes
-    const btnNovo = document.getElementById("btnNovoPagar");
-    if (btnNovo) btnNovo.onclick = abrirModal;
+const listaPagar = document.getElementById("listaPagar");
+const cardsBancos = document.getElementById("cardsBancos");
+const filtroDataAte = document.getElementById("filtroDataAte");
+const btnFiltrar = document.getElementById("btnFiltrar");
+const btnNovoPagar = document.getElementById("btnNovoPagar");
+const btnTransferir = document.getElementById("btnTransferir");
 
-    const btnFechar = document.getElementById("btnFecharModal");
-    if (btnFechar) btnFechar.onclick = () => {
-        document.getElementById("modalLancamento").style.display = "none";
-    };
+const modalLancamento = document.getElementById("modalLancamento");
+const btnSalvarModal = document.getElementById("btnSalvarModal");
+const btnFecharModal = document.getElementById("btnFecharModal");
 
-    const btnSalvar = document.getElementById("btnSalvarModal");
-    if (btnSalvar) btnSalvar.onclick = salvarDados;
+const m_descricao = document.getElementById("m_descricao");
+const m_valor = document.getElementById("m_valor");
+const m_data = document.getElementById("m_data");
+const m_banco = document.getElementById("m_banco");
 
-    const btnFiltrar = document.getElementById("btnFiltrar");
-    if (btnFiltrar) btnFiltrar.onclick = carregarDados;
+let bancosCache = [];
 
-    const btnTransferir = document.getElementById("btnTransferir");
-    if (btnTransferir) btnTransferir.onclick = realizarTransferencia;
+function formatarMoeda(valor) {
+    const numero = Number(valor || 0);
+    return numero.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+    });
+}
 
-    carregarDados();
-});
+function formatarDataBR(dataISO) {
+    if (!dataISO) return "—";
+    const partes = dataISO.split("-");
+    if (partes.length !== 3) return dataISO;
+    return `${partes[2]}/${partes[1]}/${partes[0]}`;
+}
 
-// Busca bancos e remove a "APLICAÇÃO"
-async function carregarBancosNoSelect() {
-    const select = document.getElementById("m_banco");
-    if (!select) return;
+function parseValorBR(valor) {
+    if (!valor) return 0;
 
-    const { data: bancos, error } = await supabase.from("bancos").select("*").order("nome");
+    return Number(
+        String(valor)
+            .replace(/\./g, "")
+            .replace(",", ".")
+            .replace(/[^\d.-]/g, "")
+    ) || 0;
+}
+
+function abrirModal() {
+    modalLancamento.style.display = "flex";
+}
+
+function fecharModal() {
+    modalLancamento.style.display = "none";
+    m_descricao.value = "";
+    m_valor.value = "";
+    m_data.value = "";
+    m_banco.value = "";
+}
+
+async function carregarBancos() {
+    const { data, error } = await supabase
+        .from("bancos")
+        .select("id, nome, saldo")
+        .in("nome", ["SICOOB", "CAIXA FEDERAL"])
+        .order("nome", { ascending: true });
 
     if (error) {
-        console.error("Erro Supabase:", error.message);
+        console.error("Erro ao carregar bancos:", error);
         return;
     }
 
-    if (bancos) {
-        // Filtra para remover a APLICAÇÃO do seletor
-        const filtrados = bancos.filter(b => b.nome !== "APLICAÇÃO");
-        
-        select.innerHTML = '<option value="">Selecione o Banco...</option>' + 
-            filtrados.map(b => `<option value="${b.id}">${b.nome}</option>`).join('');
-        
-        console.log("Bancos carregados (Aplicação removida).");
-    }
-}
+    bancosCache = data || [];
 
-async function abrirModal() {
-    const modal = document.getElementById("modalLancamento");
-    if (modal) {
-        await carregarBancosNoSelect(); // Carrega os bancos ANTES de mostrar
-        modal.style.display = "flex";
-    }
-}
+    m_banco.innerHTML = `
+        <option value="">Selecione o Banco...</option>
+    `;
 
-async function carregarDados() {
-    const lista = document.getElementById("listaPagar");
-    const cards = document.getElementById("cardsBancos");
+    bancosCache.forEach((banco) => {
+        const option = document.createElement("option");
+        option.value = banco.id;
+        option.textContent = banco.nome;
+        m_banco.appendChild(option);
+    });
 
-    // Carrega Cards de Saldo
-    const { data: bancos } = await supabase.from("bancos").select("*").order("nome");
-    if (cards && bancos) {
-        cards.innerHTML = bancos.map(b => `
-            <div style="background: rgba(30, 41, 59, 0.5); padding: 15px; border-radius: 10px; border-left: 4px solid #38bdf8; flex: 1;">
-                <div class="label-futuro" style="font-size: 0.6rem;">${b.nome}</div>
-                <div style="color: white; font-weight: bold;">R$ ${b.saldo.toFixed(2)}</div>
+    cardsBancos.innerHTML = "";
+
+    bancosCache.forEach((banco) => {
+        const card = document.createElement("div");
+        card.style.flex = "1";
+        card.style.minWidth = "220px";
+        card.style.background = "rgba(30, 41, 59, 0.75)";
+        card.style.border = "1px solid rgba(56, 189, 248, 0.25)";
+        card.style.borderRadius = "12px";
+        card.style.padding = "16px";
+        card.innerHTML = `
+            <div style="color:#38bdf8; font-size:12px; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">
+                ${banco.nome}
             </div>
-        `).join('');
+            <div style="color:white; font-size:24px; font-weight:bold;">
+                ${formatarMoeda(banco.saldo)}
+            </div>
+        `;
+        cardsBancos.appendChild(card);
+    });
+}
+
+async function carregarContasPagar() {
+    let query = supabase
+        .from("contas_pagar")
+        .select(`
+            id,
+            descricao,
+            valor,
+            vencimento,
+            status,
+            banco_id,
+            bancos (
+                nome
+            )
+        `)
+        .order("vencimento", { ascending: true });
+
+    if (filtroDataAte.value) {
+        query = query.lte("vencimento", filtroDataAte.value);
     }
 
-    // Carrega Tabela
-    const { data: contas } = await supabase.from("contas_pagar").select("*, bancos(nome)").order("vencimento");
-    if (lista && contas) {
-        lista.innerHTML = contas.map(c => `
-            <tr style="border-bottom: 1px solid #1e293b;">
-                <td style="padding: 12px;">${c.descricao}</td>
-                <td>${c.bancos?.nome || '---'}</td>
-                <td>R$ ${c.valor.toFixed(2)}</td>
-                <td>${new Date(c.vencimento).toLocaleDateString('pt-BR')}</td>
-                <td><span style="color: ${c.status === 'PAGO' ? '#10b981' : '#facc15'}">${c.status}</span></td>
-                <td>${c.status !== 'PAGO' ? `<button onclick="baixar('${c.id}', ${c.valor}, '${c.banco_id}')" class="btn-acao" style="background:#38bdf8; font-size:10px;">Pagar</button>` : '✅'}</td>
+    const { data, error } = await query;
+
+    if (error) {
+        console.error("Erro ao carregar contas a pagar:", error);
+        listaPagar.innerHTML = `
+            <tr>
+                <td colspan="6" style="padding:20px; color:#f87171;">
+                    Erro ao carregar contas a pagar.
+                </td>
             </tr>
-        `).join('');
+        `;
+        return;
     }
+
+    const registros = data || [];
+
+    if (!registros.length) {
+        listaPagar.innerHTML = `
+            <tr>
+                <td colspan="6" style="padding:20px; color:#94a3b8;">
+                    Nenhum lançamento encontrado.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    listaPagar.innerHTML = registros.map((item) => {
+        const bancoNome = item.bancos?.nome || "—";
+        const status = item.status || "ABERTO";
+
+        return `
+            <tr style="border-bottom:1px solid rgba(148,163,184,0.15);">
+                <td style="padding:12px;">${item.descricao || "—"}</td>
+                <td style="padding:12px;">${bancoNome}</td>
+                <td style="padding:12px;">${formatarMoeda(item.valor)}</td>
+                <td style="padding:12px;">${formatarDataBR(item.vencimento)}</td>
+                <td style="padding:12px;">${status}</td>
+                <td style="padding:12px;">—</td>
+            </tr>
+        `;
+    }).join("");
 }
 
-async function salvarDados() {
-    const desc = document.getElementById("m_descricao").value;
-    const valor = document.getElementById("m_valor").value.replace(',', '.');
-    const data = document.getElementById("m_data").value;
-    const bancoId = document.getElementById("m_banco").value;
+async function salvarLancamento() {
+    const descricao = m_descricao.value.trim();
+    const valor = parseValorBR(m_valor.value);
+    const vencimento = m_data.value;
+    const banco_id = m_banco.value;
 
-    if (!desc || isNaN(parseFloat(valor)) || !data || !bancoId) return alert("Preencha tudo!");
-
-    const { error } = await supabase.from("contas_pagar").insert([{
-        descricao: desc, valor: parseFloat(valor), vencimento: data, banco_id: bancoId, status: "ABERTO"
-    }]);
-
-    if (!error) {
-        document.getElementById("modalLancamento").style.display = "none";
-        carregarDados();
+    if (!descricao) {
+        alert("Preencha a descrição.");
+        return;
     }
+
+    if (!valor || valor <= 0) {
+        alert("Preencha um valor válido.");
+        return;
+    }
+
+    if (!vencimento) {
+        alert("Preencha a data de vencimento.");
+        return;
+    }
+
+    if (!banco_id) {
+        alert("Selecione o banco.");
+        return;
+    }
+
+    const { error } = await supabase
+        .from("contas_pagar")
+        .insert([{
+            descricao,
+            valor,
+            vencimento,
+            status: "ABERTO",
+            banco_id
+        }]);
+
+    if (error) {
+        console.error("Erro ao salvar lançamento:", error);
+        alert("Erro ao salvar lançamento.");
+        return;
+    }
+
+    fecharModal();
+    await carregarContasPagar();
 }
 
-async function realizarTransferencia() {
-    const { data: bancos } = await supabase.from("bancos").select("*");
-    const lista = bancos.map((b, i) => `${i + 1} - ${b.nome} (R$ ${b.saldo})`).join('\n');
-    const de = prompt("Origem:\n" + lista);
-    const para = prompt("Destino:\n" + lista);
-    const valor = prompt("Valor:");
+document.addEventListener("DOMContentLoaded", async () => {
+    await verificarLogin();
+    await carregarBancos();
+    await carregarContasPagar();
+});
 
-    if (de && para && valor) {
-        const bDe = bancos[parseInt(de)-1];
-        const bPara = bancos[parseInt(para)-1];
-        const vNum = parseFloat(valor.replace(',', '.'));
+btnFiltrar?.addEventListener("click", carregarContasPagar);
+btnNovoPagar?.addEventListener("click", abrirModal);
+btnFecharModal?.addEventListener("click", fecharModal);
+btnSalvarModal?.addEventListener("click", salvarLancamento);
 
-        await supabase.from("bancos").update({ saldo: bDe.saldo - vNum }).eq("id", bDe.id);
-        await supabase.from("bancos").update({ saldo: bPara.saldo + vNum }).eq("id", bPara.id);
-        alert("Transferência concluída!");
-        carregarDados();
+btnTransferir?.addEventListener("click", () => {
+    alert("Tela de transferências ainda será implementada.");
+});
+
+modalLancamento?.addEventListener("click", (e) => {
+    if (e.target === modalLancamento) {
+        fecharModal();
     }
-}
-
-window.baixar = async (id, valor, bancoId) => {
-    const { data: b } = await supabase.from("bancos").select("saldo").eq("id", bancoId).single();
-    await supabase.from("contas_pagar").update({ status: 'PAGO' }).eq("id", id);
-    await supabase.from("bancos").update({ saldo: b.saldo - valor }).eq("id", bancoId);
-    carregarDados();
-};
+});
