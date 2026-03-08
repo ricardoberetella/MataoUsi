@@ -5,7 +5,6 @@ const cardsBancos = document.getElementById("cardsBancos");
 const filtroDataAte = document.getElementById("filtroDataAte");
 const btnFiltrar = document.getElementById("btnFiltrar");
 const btnNovoPagar = document.getElementById("btnNovoPagar");
-const btnTransferir = document.getElementById("btnTransferir");
 
 const modalLancamento = document.getElementById("modalLancamento");
 const btnSalvarModal = document.getElementById("btnSalvarModal");
@@ -27,8 +26,9 @@ function formatarMoeda(valor) {
 
 function formatarDataBR(dataISO) {
     if (!dataISO) return "—";
-    const p = dataISO.split("-");
-    return `${p[2]}/${p[1]}/${p[0]}`;
+    const [ano, mes, dia] = String(dataISO).split("-");
+    if (!ano || !mes || !dia) return dataISO;
+    return `${dia}/${mes}/${ano}`;
 }
 
 function parseValorBR(valor) {
@@ -48,7 +48,6 @@ function abrirModal() {
 
 function fecharModal() {
     modalLancamento.style.display = "none";
-
     m_descricao.value = "";
     m_valor.value = "";
     m_data.value = "";
@@ -56,54 +55,38 @@ function fecharModal() {
 }
 
 async function carregarBancos() {
-
-    m_banco.innerHTML = `<option>Carregando bancos...</option>`;
+    m_banco.innerHTML = `<option value="">Carregando bancos...</option>`;
+    cardsBancos.innerHTML = "";
 
     const { data, error } = await supabase
         .from("bancos")
-        .select("*");
+        .select("id, nome, saldo")
+        .order("nome", { ascending: true });
 
     if (error) {
-        console.error("Erro bancos:", error);
-        m_banco.innerHTML = `<option>Erro ao carregar</option>`;
+        console.error("Erro ao carregar bancos:", error);
+        m_banco.innerHTML = `<option value="">Erro ao carregar bancos</option>`;
         return;
     }
 
-    const todosBancos = data || [];
-
-    bancosCache = todosBancos.filter(banco => {
-
-        const nome = String(banco.nome || "")
-            .trim()
-            .toUpperCase();
-
-        return nome.includes("SICOOB") || nome.includes("CAIXA");
-    });
-
-    m_banco.innerHTML = `<option value="">Selecione o Banco...</option>`;
+    bancosCache = data || [];
 
     if (!bancosCache.length) {
-
         m_banco.innerHTML = `<option value="">Nenhum banco encontrado</option>`;
         return;
     }
 
-    bancosCache.forEach(banco => {
+    m_banco.innerHTML = `<option value="">Selecione o Banco...</option>`;
 
+    bancosCache.forEach((banco) => {
         const option = document.createElement("option");
-
         option.value = banco.id;
         option.textContent = banco.nome;
-
         m_banco.appendChild(option);
     });
 
-    cardsBancos.innerHTML = "";
-
-    bancosCache.forEach(banco => {
-
+    bancosCache.forEach((banco) => {
         const card = document.createElement("div");
-
         card.style.flex = "1";
         card.style.minWidth = "220px";
         card.style.background = "rgba(30, 41, 59, 0.75)";
@@ -115,7 +98,6 @@ async function carregarBancos() {
             <div style="color:#38bdf8;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">
                 ${banco.nome}
             </div>
-
             <div style="color:white;font-size:24px;font-weight:bold;">
                 ${formatarMoeda(banco.saldo)}
             </div>
@@ -126,10 +108,9 @@ async function carregarBancos() {
 }
 
 async function carregarContasPagar() {
-
     let query = supabase
         .from("contas_pagar")
-        .select("*")
+        .select("id, descricao, valor, vencimento, status, banco_id")
         .order("vencimento", { ascending: true });
 
     if (filtroDataAte.value) {
@@ -139,72 +120,66 @@ async function carregarContasPagar() {
     const { data, error } = await query;
 
     if (error) {
-
-        console.error(error);
-
+        console.error("Erro ao carregar contas:", error);
         listaPagar.innerHTML = `
-        <tr>
-        <td colspan="6">Erro ao carregar contas</td>
-        </tr>`;
-
+            <tr>
+                <td colspan="6" style="padding:12px;">Erro ao carregar contas</td>
+            </tr>
+        `;
         return;
     }
 
     const registros = data || [];
 
     if (!registros.length) {
-
         listaPagar.innerHTML = `
-        <tr>
-        <td colspan="6">Nenhum lançamento encontrado</td>
-        </tr>`;
-
+            <tr>
+                <td colspan="6" style="padding:12px;">Nenhum lançamento encontrado</td>
+            </tr>
+        `;
         return;
     }
 
-    listaPagar.innerHTML = registros.map(item => {
-
-        const banco = bancosCache.find(b => b.id === item.banco_id);
-
+    listaPagar.innerHTML = registros.map((item) => {
+        const banco = bancosCache.find((b) => b.id === item.banco_id);
         const bancoNome = banco ? banco.nome : "—";
 
         return `
-        <tr>
-            <td>${item.descricao}</td>
-            <td>${bancoNome}</td>
-            <td>${formatarMoeda(item.valor)}</td>
-            <td>${formatarDataBR(item.vencimento)}</td>
-            <td>${item.status}</td>
-            <td>-</td>
-        </tr>
+            <tr>
+                <td style="padding:12px;">${item.descricao || "—"}</td>
+                <td style="padding:12px;">${bancoNome}</td>
+                <td style="padding:12px;">${formatarMoeda(item.valor)}</td>
+                <td style="padding:12px;">${formatarDataBR(item.vencimento)}</td>
+                <td style="padding:12px;">${item.status || "ABERTO"}</td>
+                <td style="padding:12px;">-</td>
+            </tr>
         `;
     }).join("");
 }
 
 async function salvarLancamento() {
-
     const descricao = m_descricao.value.trim();
     const valor = parseValorBR(m_valor.value);
     const vencimento = m_data.value;
     const banco_id = m_banco.value;
 
     if (!descricao) {
-        alert("Informe a descrição");
+        alert("Informe a descrição.");
         return;
     }
 
-    if (!valor) {
-        alert("Informe o valor");
+    if (!valor || valor <= 0) {
+        alert("Informe um valor válido.");
         return;
     }
 
     if (!vencimento) {
-        alert("Informe a data");
+        alert("Informe a data de vencimento.");
         return;
     }
 
     if (!banco_id) {
-        alert("Selecione o banco");
+        alert("Selecione o banco.");
         return;
     }
 
@@ -219,24 +194,18 @@ async function salvarLancamento() {
         }]);
 
     if (error) {
-
-        console.error(error);
-        alert("Erro ao salvar");
-
+        console.error("Erro ao salvar:", error);
+        alert("Erro ao salvar lançamento.");
         return;
     }
 
     fecharModal();
-
     await carregarContasPagar();
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-
     await verificarLogin();
-
     await carregarBancos();
-
     await carregarContasPagar();
 });
 
@@ -245,7 +214,7 @@ btnFecharModal?.addEventListener("click", fecharModal);
 btnSalvarModal?.addEventListener("click", salvarLancamento);
 btnFiltrar?.addEventListener("click", carregarContasPagar);
 
-modalLancamento?.addEventListener("click", e => {
+modalLancamento?.addEventListener("click", (e) => {
     if (e.target === modalLancamento) {
         fecharModal();
     }
