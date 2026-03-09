@@ -11,31 +11,31 @@
 <style>
 
 .page-wrap{
-max-width:1200px;
-margin:20px auto;
-padding:0 15px 25px;
+max-width:1100px;
+margin:10px auto;
+padding:0 12px 20px;
 }
 
 .container{
 width:100%;
-padding:25px;
-border-radius:18px;
+padding:18px;
+border-radius:16px;
 background:rgba(2,6,23,.95);
 border:1px solid rgba(56,189,248,.35);
-box-shadow:0 0 20px rgba(56,189,248,.15);
+box-shadow:0 0 15px rgba(56,189,248,.15);
 }
 
 .topo-contas-pagar{
 display:flex;
 justify-content:space-between;
 align-items:center;
-margin-bottom:25px;
+margin-bottom:15px;
 flex-wrap:wrap;
 }
 
 .titulo-contas-pagar{
 color:#38bdf8;
-font-size:30px;
+font-size:24px;
 margin:0;
 flex:1;
 text-align:center;
@@ -45,10 +45,10 @@ text-align:center;
 background:transparent;
 color:#38bdf8;
 border:2px solid #38bdf8;
-border-radius:14px;
-padding:12px 22px;
+border-radius:12px;
+padding:8px 16px;
 font-weight:700;
-font-size:16px;
+font-size:14px;
 cursor:pointer;
 transition:.2s;
 }
@@ -59,27 +59,27 @@ background:rgba(56,189,248,.08);
 
 .cards-bancos{
 display:flex;
-gap:15px;
-margin-bottom:20px;
+gap:10px;
+margin-bottom:15px;
 flex-wrap:wrap;
 }
 
 .bloco-filtros{
 background:rgba(30,41,59,.65);
-padding:18px;
+padding:14px;
 border-radius:12px;
 }
 
 .filtros-linha{
 display:flex;
 flex-direction:column;
-gap:16px;
+gap:12px;
 }
 
 .campos-linha{
 display:grid;
-grid-template-columns:160px 180px 180px 160px 160px;
-gap:16px;
+grid-template-columns:140px 160px 160px 140px 140px;
+gap:12px;
 align-items:end;
 }
 
@@ -87,55 +87,54 @@ align-items:end;
 display:flex;
 justify-content:flex-end;
 align-items:center;
-gap:12px;
+gap:10px;
 flex-wrap:wrap;
-padding-top:4px;
 }
 
 .campo-filtro{
 display:flex;
 flex-direction:column;
-gap:6px;
+gap:4px;
 }
 
 .campo-filtro input,
 .campo-filtro select{
-padding:12px 14px;
-border-radius:10px;
+padding:8px 10px;
+border-radius:8px;
 background:#1e293b;
 color:white;
 border:1px solid #334155;
-height:48px;
-font-size:16px;
+height:38px;
+font-size:14px;
 }
 
 .btn-acao{
 cursor:pointer;
 border:none;
-padding:0 20px;
-border-radius:10px;
+padding:0 16px;
+border-radius:8px;
 font-weight:bold;
 color:white;
-height:48px;
-font-size:16px;
+height:38px;
+font-size:14px;
 }
 
 .label-futuro{
 color:#38bdf8;
-font-size:.78rem;
+font-size:.70rem;
 letter-spacing:1px;
 text-transform:uppercase;
 }
 
 .tabela-wrapper{
-margin-top:25px;
+margin-top:15px;
 overflow-x:auto;
 }
 
 .tabela-pagar{
 width:100%;
 border-collapse:collapse;
-min-width:1100px;
+min-width:1000px;
 }
 
 .tabela-pagar thead tr{
@@ -145,7 +144,8 @@ color:#38bdf8;
 
 .tabela-pagar th,
 .tabela-pagar td{
-padding:12px;
+padding:10px;
+font-size:14px;
 }
 
 .tabela-pagar tbody tr{
@@ -176,10 +176,10 @@ padding:20px;
 .modal-content{
 background:#0f172a;
 border:2px solid #38bdf8;
-padding:25px;
-border-radius:15px;
+padding:22px;
+border-radius:14px;
 width:100%;
-max-width:460px;
+max-width:420px;
 color:white;
 }
 
@@ -187,8 +187,8 @@ color:white;
 .modal-content select,
 .modal-content textarea{
 width:100%;
-padding:12px;
-margin:10px 0;
+padding:10px;
+margin:8px 0;
 background:#1e293b;
 border:1px solid #334155;
 color:white;
@@ -198,22 +198,25 @@ border-radius:8px;
 .acoes-modal{
 display:flex;
 gap:10px;
-margin-top:20px;
+margin-top:15px;
 }
 
 .grid-2{
 display:grid;
 grid-template-columns:1fr 1fr;
-gap:14px;
+gap:12px;
 }
 
-@media (max-width: 1100px){
+@media (max-width:900px){
+
 .campos-linha{
-grid-template-columns:repeat(2, minmax(180px, 1fr));
-}
+grid-template-columns:1fr 1fr;
 }
 
-@media (max-width: 700px){
+}
+
+@media (max-width:600px){
+
 .campos-linha{
 grid-template-columns:1fr;
 }
@@ -225,6 +228,7 @@ justify-content:stretch;
 .btn-acao{
 width:100%;
 }
+
 }
 
 </style>
@@ -243,7 +247,7 @@ width:100%;
 
 <h1 class="titulo-contas-pagar">FINANCEIRO</h1>
 
-<div style="width:170px;"></div>
+<div style="width:120px;"></div>
 
 </header>
 
