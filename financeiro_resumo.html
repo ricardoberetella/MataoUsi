@@ -16,15 +16,33 @@
             --bg-card: rgba(15, 23, 42, 0.8);
         }
 
+        .page-wrap{
+            max-width: 1080px;
+            margin: 22px auto;
+            padding: 0 14px 24px;
+        }
+
+        .topbar-box{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:16px;
+            padding: 10px 0 20px;
+            flex-wrap: wrap;
+        }
+
         .container {
-            max-width: 1120px;
-            margin: 0 auto;
+            width: 100%;
             padding: 18px 18px 26px;
+            border-radius: 18px;
+            background: rgba(2, 6, 23, 0.94);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            box-shadow: 0 0 22px rgba(6, 182, 212, 0.18);
         }
 
         .grid-futurista {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 18px;
             margin-bottom: 22px;
         }
@@ -59,20 +77,9 @@
             margin: 10px 0;
         }
 
-        .txt-receber {
-            color: var(--neon-green);
-            text-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
-        }
-
-        .txt-pagar {
-            color: var(--neon-red);
-            text-shadow: 0 0 15px rgba(248, 113, 113, 0.4);
-        }
-
-        .txt-banco {
-            color: var(--neon-blue);
-            text-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
-        }
+        .txt-receber { color: var(--neon-green); text-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+        .txt-pagar { color: var(--neon-red); text-shadow: 0 0 15px rgba(248, 113, 113, 0.4); }
+        .txt-banco { color: var(--neon-blue); text-shadow: 0 0 15px rgba(56, 189, 248, 0.4); }
 
         .card-final {
             grid-column: 1 / -1;
@@ -104,7 +111,20 @@
             text-shadow: 0 0 12px rgba(250, 204, 21, 0.35);
         }
 
+        .titulo-resumo{
+            color:#38bdf8;
+            margin:0;
+            font-size: 26px;
+            text-align:right;
+            flex:1;
+        }
+
         @media (max-width: 768px) {
+            .page-wrap{
+                margin: 12px auto;
+                padding: 0 10px 18px;
+            }
+
             .container {
                 padding: 14px 14px 22px;
             }
@@ -116,56 +136,65 @@
             #saldoLiquido {
                 font-size: 2.2rem !important;
             }
+
+            .topbar-box{
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .titulo-resumo{
+                text-align:center;
+            }
         }
     </style>
 </head>
 <body>
 
-<header class="topbar">
-    <a href="dashboard.html"><button class="btn-voltar">← Voltar ao Menu</button></a>
-    <h1 class="topbar-title">Fluxo de Caixa / Saldo Líquido</h1>
-</header>
-
-<div class="container">
-
-    <div class="grid-futurista">
-        <div class="card-neon">
-            <span class="label-futuro">Previsão de Recebimento</span>
-            <p id="totalReceber" class="valor-principal txt-receber">R$ 0,00</p>
-            <small id="statusReceber" style="color: #4ade80;">Status: ABERTO</small>
-        </div>
-
-        <div class="card-neon">
-            <span class="label-futuro">Contas a Pagar</span>
-            <p id="totalPagar" class="valor-principal txt-pagar">R$ 0,00</p>
-            <small id="statusPagar" style="color: #f87171;">Status: ABERTO</small>
-        </div>
+<div class="page-wrap">
+    <div class="topbar-box">
+        <a href="dashboard.html"><button class="btn-voltar">← Voltar ao Menu</button></a>
+        <h1 class="titulo-resumo">Fluxo de Caixa / Saldo Líquido</h1>
     </div>
 
-    <div class="grid-futurista">
-        <div class="card-neon card-banco-futuro">
-            <span class="label-futuro">Disponível SICOOB</span>
-            <p id="saldoSicoob" class="valor-principal txt-banco">R$ 0,00</p>
+    <div class="container">
+        <div class="grid-futurista">
+            <div class="card-neon">
+                <span class="label-futuro">Previsão de Recebimento</span>
+                <p id="totalReceber" class="valor-principal txt-receber">R$ 0,00</p>
+                <small id="statusReceber" style="color: #4ade80;">Status: ABERTO</small>
+            </div>
+
+            <div class="card-neon">
+                <span class="label-futuro">Contas a Pagar</span>
+                <p id="totalPagar" class="valor-principal txt-pagar">R$ 0,00</p>
+                <small id="statusPagar" style="color: #f87171;">Status: ABERTO</small>
+            </div>
         </div>
 
-        <div class="card-neon card-banco-futuro">
-            <span class="label-futuro">Disponível CAIXA FEDERAL</span>
-            <p id="saldoCaixa" class="valor-principal txt-banco">R$ 0,00</p>
+        <div class="grid-futurista">
+            <div class="card-neon card-banco-futuro">
+                <span class="label-futuro">Disponível SICOOB</span>
+                <p id="saldoSicoob" class="valor-principal txt-banco">R$ 0,00</p>
+            </div>
+
+            <div class="card-neon card-banco-futuro">
+                <span class="label-futuro">Disponível CAIXA FEDERAL</span>
+                <p id="saldoCaixa" class="valor-principal txt-banco">R$ 0,00</p>
+            </div>
+
+            <div class="card-neon card-banco-futuro" style="border-color: rgba(168, 85, 247, 0.4);">
+                <span class="label-futuro">Reserva APLICAÇÃO</span>
+                <p id="saldoAplicacao" class="valor-principal" style="color: #a855f7; text-shadow: 0 0 15px rgba(168, 85, 247, 0.4);">R$ 0,00</p>
+            </div>
         </div>
 
-        <div class="card-neon card-banco-futuro" style="border-color: rgba(168, 85, 247, 0.4);">
-            <span class="label-futuro">Reserva APLICAÇÃO</span>
-            <p id="saldoAplicacao" class="valor-principal" style="color: #a855f7; text-shadow: 0 0 15px rgba(168, 85, 247, 0.4);">R$ 0,00</p>
+        <div class="card-neon card-final">
+            <span class="label-futuro" style="color: var(--neon-blue); font-weight: bold;">Saldo Líquido Projetado</span>
+            <p id="saldoLiquido" class="valor-principal txt-banco" style="font-size: 3.1rem;">R$ 0,00</p>
+            <p style="color: #94a3b8; font-size: 0.85rem;">(Bancos + Aplicação + Recebimentos - Dívidas)</p>
+            <div id="statusLiquido" class="status-final status-neutro">STATUS: EQUILIBRADO</div>
         </div>
     </div>
-
-    <div class="card-neon card-final">
-        <span class="label-futuro" style="color: var(--neon-blue); font-weight: bold;">Saldo Líquido Projetado</span>
-        <p id="saldoLiquido" class="valor-principal txt-banco" style="font-size: 3.1rem;">R$ 0,00</p>
-        <p style="color: #94a3b8; font-size: 0.85rem;">(Bancos + Aplicação + Recebimentos - Dívidas)</p>
-        <div id="statusLiquido" class="status-final status-neutro">STATUS: EQUILIBRADO</div>
-    </div>
-
 </div>
 
 <script type="module">
@@ -216,11 +245,7 @@
         try {
             await verificarLogin();
 
-            const [
-                bancosResp,
-                receberResp,
-                pagarResp
-            ] = await Promise.all([
+            const [bancosResp, receberResp, pagarResp] = await Promise.all([
                 supabase.from("bancos").select("id, nome, saldo"),
                 supabase.from("contas_receber").select("valor").eq("status", "ABERTO"),
                 supabase.from("contas_pagar").select("valor").eq("status", "ABERTO")
