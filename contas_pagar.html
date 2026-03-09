@@ -81,7 +81,7 @@
 
 .campos-linha{
     display:grid;
-    grid-template-columns: 170px 200px 200px;
+    grid-template-columns: 170px 200px 200px 170px;
     gap:16px;
     align-items:end;
 }
@@ -152,7 +152,7 @@
 .tabela-pagar{
     width:100%;
     border-collapse:collapse;
-    min-width:850px;
+    min-width:1080px;
 }
 
 .tabela-pagar thead tr{
@@ -236,18 +236,36 @@
     color:#38bdf8;
 }
 
-@media(max-width: 1180px){
+.acoes-tabela{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap:wrap;
+}
+
+.btn-tabela{
+    border:none;
+    padding:6px 10px;
+    border-radius:6px;
+    cursor:pointer;
+    font-weight:bold;
+    color:#fff;
+}
+
+@media(max-width: 1320px){
     .filtros-linha{
         grid-template-columns: 1fr;
-    }
-
-    .campos-linha{
-        grid-template-columns: 170px 200px 200px;
     }
 
     .botoes-linha{
         justify-content:flex-start;
         flex-wrap:wrap;
+    }
+}
+
+@media(max-width: 900px){
+    .campos-linha{
+        grid-template-columns: 1fr 1fr;
     }
 }
 
@@ -272,7 +290,7 @@
     }
 
     .btn-voltar-topo{
-        width: 100%;
+        width:100%;
     }
 }
 </style>
@@ -314,6 +332,15 @@
             <div class="campo-filtro">
                 <label class="label-futuro" for="filtroMes">Mês</label>
                 <input type="month" id="filtroMes">
+            </div>
+
+            <div class="campo-filtro">
+                <label class="label-futuro" for="filtroStatus">Status</label>
+                <select id="filtroStatus">
+                    <option value="ABERTO" selected>Não pagos</option>
+                    <option value="PAGO">Pagos</option>
+                    <option value="TODOS">Todos</option>
+                </select>
             </div>
         </div>
 
@@ -359,13 +386,15 @@
 
 <div id="modalLancamento" class="modal-financeiro">
     <div class="modal-content">
-        <h2 class="label-futuro">Novo Lançamento Manual</h2>
+        <h2 id="tituloModalLancamento" class="label-futuro" style="font-size:1rem; margin-bottom:16px;">
+            Novo Lançamento Manual
+        </h2>
 
         <label class="label-futuro">Descrição / NF</label>
         <input type="text" id="m_descricao">
 
         <label class="label-futuro">Valor (R$)</label>
-        <input type="text" id="m_valor">
+        <input type="text" id="m_valor" oninput="validarMoeda(this)">
 
         <label class="label-futuro">Data de Vencimento</label>
         <input type="date" id="m_data">
@@ -387,7 +416,7 @@
 
 <div id="modalTransferencia" class="modal-financeiro">
     <div class="modal-content modal-transferencia">
-        <h2 class="label-futuro">Transferências</h2>
+        <h2 class="label-futuro" style="font-size:1rem; margin-bottom:16px;">Transferências</h2>
 
         <div class="grid-2">
             <div>
@@ -402,7 +431,7 @@
 
             <div>
                 <label class="label-futuro">Valor</label>
-                <input type="text" id="t_valor">
+                <input type="text" id="t_valor" oninput="validarMoeda(this)">
             </div>
 
             <div>
