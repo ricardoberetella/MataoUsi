@@ -41,6 +41,7 @@ const btnLimparTransferencias = document.getElementById("btnLimparTransferencias
 let bancos = [];
 let bancosLancamento = [];
 let bancosTransferencia = [];
+let roleUsuario = "admin";
 
 function moeda(v) {
     return Number(v || 0).toLocaleString("pt-BR", {
@@ -83,6 +84,101 @@ function normalizarNomeBanco(nome) {
         .toUpperCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "");
+}
+
+function normalizarRole(role) {
+    return String(role || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+}
+
+function ehVisualizador() {
+    const role = normalizarRole(roleUsuario);
+    return role === "viewer" || role === "visualizador";
+}
+
+function aplicarPermissoesUI() {
+    const ocultar = ehVisualizador();
+
+    if (btnTransferir) {
+        btnTransferir.style.display = ocultar ? "none" : "inline-flex";
+    }
+
+    if (btnNovo) {
+        btnNovo.style.display = ocultar ? "none" : "inline-flex";
+    }
+}
+
+async function carregarRoleUsuario() {
+    try {
+        const { data: userData } = await supabase.auth.getUser();
+        const user = userData?.user;
+
+        const possiveisRoles = [
+            localStorage.getItem("role"),
+            localStorage.getItem("user_role"),
+            localStorage.getItem("perfil"),
+            localStorage.getItem("tipo_usuario"),
+            user?.user_metadata?.role,
+            user?.user_metadata?.perfil,
+            user?.app_metadata?.role
+        ];
+
+        for (const item of possiveisRoles) {
+            const role = normalizarRole(item);
+            if (role) {
+                roleUsuario = role;
+                aplicarPermissoesUI();
+                return;
+            }
+        }
+
+        if (user?.id) {
+            const tentativas = [
+                {
+                    tabela: "usuarios",
+                    colunas: "role, perfil, tipo",
+                    filtro: { campo: "auth_user_id", valor: user.id }
+                },
+                {
+                    tabela: "usuarios",
+                    colunas: "role, perfil, tipo",
+                    filtro: { campo: "id", valor: user.id }
+                },
+                {
+                    tabela: "profiles",
+                    colunas: "role, perfil, tipo",
+                    filtro: { campo: "id", valor: user.id }
+                }
+            ];
+
+            for (const tentativa of tentativas) {
+                const { data, error } = await supabase
+                    .from(tentativa.tabela)
+                    .select(tentativa.colunas)
+                    .eq(tentativa.filtro.campo, tentativa.filtro.valor)
+                    .maybeSingle();
+
+                if (!error && data) {
+                    const role = normalizarRole(data.role || data.perfil || data.tipo);
+                    if (role) {
+                        roleUsuario = role;
+                        aplicarPermissoesUI();
+                        return;
+                    }
+                }
+            }
+        }
+
+        roleUsuario = "admin";
+        aplicarPermissoesUI();
+    } catch (erro) {
+        console.error("Erro ao carregar role do usuário:", erro);
+        roleUsuario = "admin";
+        aplicarPermissoesUI();
+    }
 }
 
 function preencherSelect(select, itens, placeholder) {
@@ -199,7 +295,7 @@ async function carregarContas() {
         const banco = bancos.find((b) => b.id === l.banco_id);
 
         let botao = "-";
-        if (String(l.status || "").toUpperCase() !== "PAGO") {
+        if (!ehVisualizador() && String(l.status || "").toUpperCase() !== "PAGO") {
             botao = `<button onclick="pagar('${l.id}')" style="background:#10b981;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-weight:bold;">Pagar</button>`;
         }
 
@@ -217,6 +313,8 @@ async function carregarContas() {
 }
 
 window.pagar = async (id) => {
+    if (ehVisualizador()) return;
+
     const { data: conta, error: erroConta } = await supabase
         .from("contas_pagar")
         .select("*")
@@ -264,6 +362,8 @@ window.pagar = async (id) => {
 };
 
 async function salvarConta() {
+    if (ehVisualizador()) return;
+
     const descricao = m_descricao.value.trim();
     const valor = parseValor(m_valor.value);
     const vencimento = m_data.value;
@@ -315,6 +415,8 @@ async function salvarConta() {
 }
 
 async function transferir() {
+    if (ehVisualizador()) return;
+
     const origemId = t_origem.value;
     const destinoId = t_destino.value;
     const valor = parseValor(t_valor.value);
@@ -465,6 +567,7 @@ btnLimpar.onclick = () => {
 };
 
 btnNovo.onclick = () => {
+    if (ehVisualizador()) return;
     modalLancamento.style.display = "flex";
 };
 
@@ -475,6 +578,7 @@ btnFecharModal.onclick = () => {
 btnSalvarModal.onclick = salvarConta;
 
 btnTransferir.onclick = async () => {
+    if (ehVisualizador()) return;
     modalTransferencia.style.display = "flex";
     t_data.value = new Date().toISOString().slice(0, 10);
     await carregarTransferencias();
@@ -496,6 +600,7 @@ btnLimparTransferencias?.addEventListener("click", () => {
 
 document.addEventListener("DOMContentLoaded", async () => {
     await verificarLogin();
+    await carregarRoleUsuario();
     await carregarBancos();
     await carregarContas();
 });
