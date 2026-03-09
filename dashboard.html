@@ -1,267 +1,123 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard - Matão Usinagem</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - Matão Usinagem</title>
 
-<link rel="stylesheet" href="css/dashboard.css">
-
-<style>
-
-.cards-financeiros{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-gap:20px;
-margin-bottom:30px;
-}
-
-.card-financeiro{
-background:#0f172a;
-border:1px solid rgba(56,189,248,.25);
-border-radius:14px;
-padding:20px;
-text-align:center;
-box-shadow:0 0 10px rgba(56,189,248,.1);
-}
-
-.card-financeiro-titulo{
-font-size:12px;
-letter-spacing:1px;
-text-transform:uppercase;
-color:#38bdf8;
-margin-bottom:10px;
-}
-
-.card-financeiro-valor{
-font-size:28px;
-font-weight:bold;
-}
-
-.card-verde{color:#10b981;}
-.card-vermelho{color:#ef4444;}
-.card-azul{color:#38bdf8;}
-.card-roxo{color:#a855f7;}
-
-</style>
-
+  <link rel="stylesheet" href="css/dashboard.css" />
 </head>
 
 <body>
 
-<div class="layout">
-
-<!-- MENU LATERAL -->
-<aside class="sidebar">
-
-<div class="logo-sistema">MATÃO USINAGEM</div>
-
-<nav class="menu">
-
-<div class="menu-titulo">Módulos</div>
-
-<a href="clientes.html" class="menu-item">👤 Clientes</a>
-<a href="pedidos_lista.html" class="menu-item">📑 Pedidos</a>
-<a href="pedidos_abertos.html" class="menu-item">📌 Pedidos em Aberto</a>
-<a href="produtos_lista.html" class="menu-item">📦 Produtos</a>
-<a href="notas_lista.html" class="menu-item">🧾 Notas Fiscais</a>
-<a href="contas_receber.html" class="menu-item">💰 Contas a Receber</a>
-<a href="contas_pagar.html" class="menu-item">💸 Contas a Pagar</a>
-<a href="financeiro_resumo.html" class="menu-item">📊 Saldo Líquido</a>
-
-<a href="zincagem.html" class="menu-item">⚙️ Zincagem / Tratamento</a>
-
-</nav>
-
-<button id="btnLogout" class="menu-item botao-sair">
-🚪 Sair
-</button>
-
-</aside>
-
-<!-- CONTEÚDO -->
-<main class="main">
-
-<section class="secao-painel">
-
-<!-- LOGO -->
-<div class="logo-painel">
-<img src="img/logo-mataousi.png">
-</div>
-
-<!-- CARDS FINANCEIROS -->
-
-<div class="cards-financeiros">
-
-<div class="card-financeiro">
-<div class="card-financeiro-titulo">Disponível SICOOB</div>
-<div id="saldoSicoob" class="card-financeiro-valor card-azul">R$ 0,00</div>
-</div>
-
-<div class="card-financeiro">
-<div class="card-financeiro-titulo">Disponível Caixa Federal</div>
-<div id="saldoCaixa" class="card-financeiro-valor card-azul">R$ 0,00</div>
-</div>
-
-<div class="card-financeiro">
-<div class="card-financeiro-titulo">Reserva Aplicação</div>
-<div id="saldoAplicacao" class="card-financeiro-valor card-roxo">R$ 0,00</div>
-</div>
-
-<div class="card-financeiro">
-<div class="card-financeiro-titulo">Contas a Pagar</div>
-<div id="totalPagar" class="card-financeiro-valor card-vermelho">R$ 0,00</div>
-</div>
-
-<div class="card-financeiro">
-<div class="card-financeiro-titulo">Previsão de Recebimento</div>
-<div id="totalReceber" class="card-financeiro-valor card-verde">R$ 0,00</div>
-</div>
-
-<div class="card-financeiro">
-<div class="card-financeiro-titulo">Saldo Líquido Projetado</div>
-<div id="saldoLiquido" class="card-financeiro-valor card-azul">R$ 0,00</div>
-</div>
-
-</div>
-
-<!-- CARDS DO SISTEMA -->
-
-<div class="cards-grid">
-
-<a class="card" href="clientes.html">
-<div class="card-titulo">Clientes</div>
-<div class="card-legenda">Gerenciar cadastro</div>
-</a>
-
-<a class="card" href="pedidos_lista.html">
-<div class="card-titulo">Pedidos</div>
-<div class="card-legenda">Lista de pedidos</div>
-</a>
-
-<a class="card" href="pedidos_abertos.html">
-<div class="card-titulo">Pedidos em Aberto</div>
-<div class="card-legenda">Saldos pendentes</div>
-</a>
-
-<a class="card" href="produtos_lista.html">
-<div class="card-titulo">Produtos</div>
-<div class="card-legenda">Cadastro de peças</div>
-</a>
-
-<a class="card" href="notas_lista.html">
-<div class="card-titulo">Notas Fiscais</div>
-<div class="card-legenda">Lançamento e baixa automática</div>
-</a>
-
-<a class="card" href="contas_receber.html">
-<div class="card-titulo">Contas a Receber</div>
-<div class="card-legenda">Boletos e recebimentos</div>
-</a>
-
-<a class="card" href="zincagem.html">
-<div class="card-titulo">Zincagem / Tratamento</div>
-<div class="card-legenda">Lançar e acompanhar OPs</div>
-</a>
-
-<a class="card" href="insertos_lista.html">
-<div class="card-titulo">Estoque de Insertos</div>
-<div class="card-legenda">Controle, baixas e inclusões</div>
-</a>
-
-</div>
-
-</section>
-
-</main>
-
-</div>
-
-<script type="module">
-
-import { verificarLogin, supabase } from "./js/auth.js";
-
-function moeda(v){
-return Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-}
-
-async function carregarFinanceiro(){
-
-/* BANCOS */
-
-const {data:bancos}=await supabase
-.from("bancos")
-.select("*")
-
-let sicoob=0
-let caixa=0
-let aplicacao=0
-
-bancos.forEach(b=>{
-
-const nome=b.nome.toUpperCase()
-
-if(nome.includes("SICOOB")) sicoob=b.saldo
-if(nome.includes("CAIXA")) caixa=b.saldo
-if(nome.includes("APLIC")) aplicacao=b.saldo
-
-})
-
-document.getElementById("saldoSicoob").innerText=moeda(sicoob)
-document.getElementById("saldoCaixa").innerText=moeda(caixa)
-document.getElementById("saldoAplicacao").innerText=moeda(aplicacao)
-
-/* CONTAS PAGAR */
-
-const {data:pagar}=await supabase
-.from("contas_pagar")
-.select("valor")
-.eq("status","ABERTO")
-
-let totalPagar=0
-pagar?.forEach(p=>totalPagar+=Number(p.valor||0))
-
-document.getElementById("totalPagar").innerText=moeda(totalPagar)
-
-/* CONTAS RECEBER */
-
-const {data:receber}=await supabase
-.from("contas_receber")
-.select("valor")
-.eq("status","ABERTO")
-
-let totalReceber=0
-receber?.forEach(r=>totalReceber+=Number(r.valor||0))
-
-document.getElementById("totalReceber").innerText=moeda(totalReceber)
-
-/* SALDO LIQUIDO */
-
-const saldoLiquido=(sicoob+caixa+aplicacao+totalReceber)-totalPagar
-
-document.getElementById("saldoLiquido").innerText=moeda(saldoLiquido)
-
-}
-
-document.addEventListener("DOMContentLoaded",async()=>{
-
-const user=await verificarLogin()
-if(!user) return
-
-carregarFinanceiro()
-
-document
-.getElementById("btnLogout")
-.addEventListener("click",async()=>{
-
-await supabase.auth.signOut()
-window.location.href="index.html"
-
-})
-
-})
-
-</script>
+  <div class="layout">
+
+    <!-- MENU LATERAL -->
+    <aside class="sidebar">
+      <div class="logo-sistema">MATÃO USINAGEM</div>
+
+      <nav class="menu">
+        <div class="menu-titulo">Módulos</div>
+
+        <a href="clientes.html" class="menu-item">👤 Clientes</a>
+        <a href="pedidos_lista.html" class="menu-item">📑 Pedidos</a>
+        <a href="pedidos_abertos.html" class="menu-item">📌 Pedidos em Aberto</a>
+        <a href="produtos_lista.html" class="menu-item">📦 Produtos</a>
+        <a href="notas_lista.html" class="menu-item">🧾 Notas Fiscais</a>
+        <a href="contas_receber.html" class="menu-item">💰 Contas a Receber</a>
+        <a href="contas_pagar.html" class="menu-item">💸 Contas a Pagar</a>
+        <a href="financeiro_resumo.html" class="menu-item">📊 Saldo Líquido</a>
+        <a href="zincagem.html" class="menu-item">⚙️ Zincagem / Tratamento</a>
+      </nav>
+
+      <button id="btnLogout" class="menu-item botao-sair">
+        🚪 Sair
+      </button>
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="main">
+      <section class="secao-painel">
+
+        <!-- LOGO CENTRAL -->
+        <div class="logo-painel">
+          <img src="img/logo-mataousi.png" alt="Matão Usinagem">
+        </div>
+
+        <div class="cards-grid">
+
+          <a class="card" href="clientes.html">
+            <div class="card-titulo">Clientes</div>
+            <div class="card-legenda">Gerenciar cadastro</div>
+          </a>
+
+          <a class="card" href="pedidos_lista.html">
+            <div class="card-titulo">Pedidos</div>
+            <div class="card-legenda">Lista de pedidos</div>
+          </a>
+
+          <a class="card" href="pedidos_abertos.html">
+            <div class="card-titulo">Pedidos em Aberto</div>
+            <div class="card-legenda">Saldos pendentes</div>
+          </a>
+
+          <a class="card" href="produtos_lista.html">
+            <div class="card-titulo">Produtos</div>
+            <div class="card-legenda">Cadastro de peças</div>
+          </a>
+
+          <a class="card" href="notas_lista.html">
+            <div class="card-titulo">Notas Fiscais</div>
+            <div class="card-legenda">Lançamento e baixa automática</div>
+          </a>
+
+          <a class="card" href="contas_receber.html">
+            <div class="card-titulo">Contas a Receber</div>
+            <div class="card-legenda">Boletos e recebimentos</div>
+          </a>
+
+          <a class="card" href="contas_pagar.html">
+            <div class="card-titulo">Contas a Pagar</div>
+            <div class="card-legenda">Controle de pagamentos</div>
+          </a>
+
+          <a class="card" href="financeiro_resumo.html">
+            <div class="card-titulo">Saldo Líquido</div>
+            <div class="card-legenda">Resumo financeiro</div>
+          </a>
+
+          <a class="card" href="zincagem.html">
+            <div class="card-titulo">Zincagem / Tratamento</div>
+            <div class="card-legenda">Lançar e acompanhar OPs</div>
+          </a>
+
+          <a class="card" href="insertos_lista.html">
+            <div class="card-titulo">Estoque de Insertos</div>
+            <div class="card-legenda">Controle, baixas e inclusões</div>
+          </a>
+
+        </div>
+      </section>
+    </main>
+
+  </div>
+
+  <!-- AUTENTICAÇÃO -->
+  <script type="module">
+    import { verificarLogin, supabase } from "./js/auth.js";
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const user = await verificarLogin();
+      if (!user) return;
+
+      document
+        .getElementById("btnLogout")
+        .addEventListener("click", async () => {
+          await supabase.auth.signOut();
+          window.location.href = "index.html";
+        });
+    });
+  </script>
 
 </body>
 </html>
