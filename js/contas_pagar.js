@@ -13,11 +13,20 @@ const btnLimpar = document.getElementById("btnLimparFiltros");
 
 const btnNovo = document.getElementById("btnNovoPagar");
 const btnTransferir = document.getElementById("btnTransferir");
+const btnNfEntrada = document.getElementById("btnNfEntrada");
 
 const modalLancamento = document.getElementById("modalLancamento");
 const btnSalvarModal = document.getElementById("btnSalvarModal");
 const btnFecharModal = document.getElementById("btnFecharModal");
 const tituloModalLancamento = document.getElementById("tituloModalLancamento");
+
+const modalNfEntrada = document.getElementById("modalNfEntrada");
+const btnSalvarNfEntrada = document.getElementById("btnSalvarNfEntrada");
+const btnFecharNfEntrada = document.getElementById("btnFecharNfEntrada");
+const nf_descricao = document.getElementById("nf_descricao");
+const nf_valor = document.getElementById("nf_valor");
+const nf_data = document.getElementById("nf_data");
+const nf_banco = document.getElementById("nf_banco");
 
 const modalTransferencia = document.getElementById("modalTransferencia");
 const btnSalvarTransferencia = document.getElementById("btnSalvarTransferencia");
@@ -108,13 +117,9 @@ function ehVisualizador() {
 function aplicarPermissoesUI() {
     const ocultar = ehVisualizador();
 
-    if (btnTransferir) {
-        btnTransferir.style.display = ocultar ? "none" : "inline-flex";
-    }
-
-    if (btnNovo) {
-        btnNovo.style.display = ocultar ? "none" : "inline-flex";
-    }
+    if (btnTransferir) btnTransferir.style.display = ocultar ? "none" : "inline-flex";
+    if (btnNovo) btnNovo.style.display = ocultar ? "none" : "inline-flex";
+    if (btnNfEntrada) btnNfEntrada.style.display = ocultar ? "none" : "inline-flex";
 }
 
 async function carregarRoleUsuario() {
@@ -138,43 +143,6 @@ async function carregarRoleUsuario() {
                 roleUsuario = role;
                 aplicarPermissoesUI();
                 return;
-            }
-        }
-
-        if (user?.id) {
-            const tentativas = [
-                {
-                    tabela: "usuarios",
-                    colunas: "role, perfil, tipo",
-                    filtro: { campo: "auth_user_id", valor: user.id }
-                },
-                {
-                    tabela: "usuarios",
-                    colunas: "role, perfil, tipo",
-                    filtro: { campo: "id", valor: user.id }
-                },
-                {
-                    tabela: "profiles",
-                    colunas: "role, perfil, tipo",
-                    filtro: { campo: "id", valor: user.id }
-                }
-            ];
-
-            for (const tentativa of tentativas) {
-                const { data, error } = await supabase
-                    .from(tentativa.tabela)
-                    .select(tentativa.colunas)
-                    .eq(tentativa.filtro.campo, tentativa.filtro.valor)
-                    .maybeSingle();
-
-                if (!error && data) {
-                    const role = normalizarRole(data.role || data.perfil || data.tipo);
-                    if (role) {
-                        roleUsuario = role;
-                        aplicarPermissoesUI();
-                        return;
-                    }
-                }
             }
         }
 
@@ -232,6 +200,13 @@ function limparModalLancamento() {
     m_valor.value = "";
     m_data.value = "";
     m_banco.value = "";
+}
+
+function limparModalNfEntrada() {
+    nf_descricao.value = "";
+    nf_valor.value = "";
+    nf_data.value = "";
+    nf_banco.value = "";
 }
 
 function abrirModalNovo() {
@@ -295,6 +270,7 @@ async function carregarBancos() {
     });
 
     preencherSelect(m_banco, bancosLancamento, "Selecione o Banco...");
+    preencherSelect(nf_banco, bancosTransferencia, "Selecione o Banco...");
     preencherSelect(t_origem, bancosTransferencia, "Origem...");
     preencherSelect(t_destino, bancosTransferencia, "Destino...");
 
@@ -307,19 +283,12 @@ async function carregarContas() {
         .select("*")
         .order("vencimento", { ascending: true });
 
-    if (filtroBanco.value) {
-        query = query.eq("banco_id", filtroBanco.value);
-    }
-
-    if (filtroData.value) {
-        query = query.eq("vencimento", filtroData.value);
-    }
+    if (filtroBanco.value) query = query.eq("banco_id", filtroBanco.value);
+    if (filtroData.value) query = query.eq("vencimento", filtroData.value);
 
     if (filtroMes.value) {
         const faixa = getFaixaMes(filtroMes.value);
-        if (faixa) {
-            query = query.gte("vencimento", faixa.inicio).lte("vencimento", faixa.fim);
-        }
+        if (faixa) query = query.gte("vencimento", faixa.inicio).lte("vencimento", faixa.fim);
     }
 
     if (filtroStatus.value && filtroStatus.value !== "TODOS") {
@@ -350,28 +319,20 @@ async function carregarContas() {
 
             if (statusAtual !== "PAGO") {
                 botoes.push(`
-                    <button onclick="pagar('${l.id}')" class="btn-tabela" style="background:#10b981;">
-                        Pagar
-                    </button>
+                    <button onclick="pagar('${l.id}')" class="btn-tabela" style="background:#10b981;">Pagar</button>
                 `);
             } else {
                 botoes.push(`
-                    <button onclick="reabrirConta('${l.id}')" class="btn-tabela" style="background:#3b82f6;">
-                        Reabrir
-                    </button>
+                    <button onclick="reabrirConta('${l.id}')" class="btn-tabela" style="background:#3b82f6;">Reabrir</button>
                 `);
             }
 
             botoes.push(`
-                <button onclick="editarConta('${l.id}')" class="btn-tabela" style="background:#f59e0b;">
-                    Editar
-                </button>
+                <button onclick="editarConta('${l.id}')" class="btn-tabela" style="background:#f59e0b;">Editar</button>
             `);
 
             botoes.push(`
-                <button onclick="excluirConta('${l.id}')" class="btn-tabela" style="background:#ef4444;">
-                    Excluir
-                </button>
+                <button onclick="excluirConta('${l.id}')" class="btn-tabela" style="background:#ef4444;">Excluir</button>
             `);
 
             acoes = `<div class="acoes-tabela">${botoes.join("")}</div>`;
@@ -472,24 +433,6 @@ window.excluirConta = async (id) => {
     const confirmar = window.confirm("Deseja realmente excluir esta conta?");
     if (!confirmar) return;
 
-    const { data: conta, error: erroConta } = await supabase
-        .from("contas_pagar")
-        .select("id, status")
-        .eq("id", id)
-        .single();
-
-    if (erroConta || !conta) {
-        console.error("Erro ao localizar conta:", erroConta);
-        alert("Erro ao localizar conta.");
-        return;
-    }
-
-    const statusAtual = String(conta.status || "").toUpperCase();
-    if (statusAtual === "PAGO") {
-        const confirmarPago = window.confirm("Esta conta está PAGA. Excluir mesmo assim?");
-        if (!confirmarPago) return;
-    }
-
     const { error } = await supabase
         .from("contas_pagar")
         .delete()
@@ -568,8 +511,75 @@ async function salvarConta() {
 
     modalLancamento.style.display = "none";
     limparModalLancamento();
-
     await carregarContas();
+}
+
+async function salvarNfEntrada() {
+    if (ehVisualizador()) return;
+
+    const descricao = nf_descricao.value.trim();
+    const valor = parseValor(nf_valor.value);
+    const dataRecebimento = nf_data.value;
+    const bancoId = nf_banco.value;
+
+    if (!descricao) {
+        alert("Informe a descrição / NF.");
+        return;
+    }
+
+    if (!valor || valor <= 0) {
+        alert("Informe um valor válido.");
+        return;
+    }
+
+    if (!dataRecebimento) {
+        alert("Informe a data.");
+        return;
+    }
+
+    if (!bancoId) {
+        alert("Selecione o banco.");
+        return;
+    }
+
+    const banco = bancos.find((b) => b.id === bancoId);
+    if (!banco) {
+        alert("Banco não encontrado.");
+        return;
+    }
+
+    const saldoAtual = Number(banco.saldo || 0);
+    const novoSaldo = saldoAtual + valor;
+
+    const { error: erroBanco } = await supabase
+        .from("bancos")
+        .update({ saldo: novoSaldo })
+        .eq("id", bancoId);
+
+    if (erroBanco) {
+        console.error("Erro ao atualizar saldo do banco:", erroBanco);
+        alert("Erro ao somar valor no banco.");
+        return;
+    }
+
+    const { error: erroReceber } = await supabase
+        .from("contas_receber_manual")
+        .insert({
+            descricao,
+            valor,
+            data_recebimento: dataRecebimento,
+            banco_id: bancoId
+        });
+
+    if (erroReceber) {
+        console.error("Erro ao salvar NF entrada:", erroReceber);
+        alert("Erro ao gravar NF Entrada.");
+        return;
+    }
+
+    modalNfEntrada.style.display = "none";
+    limparModalNfEntrada();
+    await carregarBancos();
 }
 
 async function transferir() {
@@ -717,12 +727,26 @@ btnNovo.onclick = () => {
     abrirModalNovo();
 };
 
+btnNfEntrada.onclick = () => {
+    if (ehVisualizador()) return;
+    limparModalNfEntrada();
+    nf_data.value = new Date().toISOString().slice(0, 10);
+    modalNfEntrada.style.display = "flex";
+};
+
 btnFecharModal.onclick = () => {
     modalLancamento.style.display = "none";
     limparModalLancamento();
 };
 
 btnSalvarModal.onclick = salvarConta;
+
+btnFecharNfEntrada.onclick = () => {
+    modalNfEntrada.style.display = "none";
+    limparModalNfEntrada();
+};
+
+btnSalvarNfEntrada.onclick = salvarNfEntrada;
 
 btnTransferir.onclick = async () => {
     if (ehVisualizador()) return;
