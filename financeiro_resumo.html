@@ -2,9 +2,12 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fluxo de Caixa Futurista - Matão Usinagem</title>
+
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/dashboard.css">
+
     <style>
         :root {
             --neon-blue: #38bdf8;
@@ -13,20 +16,24 @@
             --bg-card: rgba(15, 23, 42, 0.8);
         }
 
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .container {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 18px 18px 26px;
+        }
 
         .grid-futurista {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 25px;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 18px;
+            margin-bottom: 22px;
         }
 
         .card-neon {
             background: var(--bg-card);
             border: 1px solid #1e293b;
             border-radius: 16px;
-            padding: 25px;
+            padding: 22px;
             text-align: center;
             backdrop-filter: blur(10px);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
@@ -47,20 +54,68 @@
         }
 
         .valor-principal {
-            font-size: 2rem;
+            font-size: 1.95rem;
             font-weight: 800;
             margin: 10px 0;
         }
 
-        .txt-receber { color: var(--neon-green); text-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
-        .txt-pagar { color: var(--neon-red); text-shadow: 0 0 15px rgba(248, 113, 113, 0.4); }
-        .txt-banco { color: var(--neon-blue); text-shadow: 0 0 15px rgba(56, 189, 248, 0.4); }
+        .txt-receber {
+            color: var(--neon-green);
+            text-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .txt-pagar {
+            color: var(--neon-red);
+            text-shadow: 0 0 15px rgba(248, 113, 113, 0.4);
+        }
+
+        .txt-banco {
+            color: var(--neon-blue);
+            text-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+        }
 
         .card-final {
             grid-column: 1 / -1;
             border: 2px solid var(--neon-blue);
             background: rgba(56, 189, 248, 0.03);
             text-align: center;
+            padding: 26px 22px;
+        }
+
+        .status-final {
+            margin-top: 10px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .status-positivo {
+            color: #4ade80;
+            text-shadow: 0 0 12px rgba(74, 222, 128, 0.35);
+        }
+
+        .status-negativo {
+            color: #f87171;
+            text-shadow: 0 0 12px rgba(248, 113, 113, 0.35);
+        }
+
+        .status-neutro {
+            color: #facc15;
+            text-shadow: 0 0 12px rgba(250, 204, 21, 0.35);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 14px 14px 22px;
+            }
+
+            .valor-principal {
+                font-size: 1.6rem;
+            }
+
+            #saldoLiquido {
+                font-size: 2.2rem !important;
+            }
         }
     </style>
 </head>
@@ -72,17 +127,18 @@
 </header>
 
 <div class="container">
-    
+
     <div class="grid-futurista">
         <div class="card-neon">
             <span class="label-futuro">Previsão de Recebimento</span>
             <p id="totalReceber" class="valor-principal txt-receber">R$ 0,00</p>
-            <small style="color: #4ade80;">Status: ABERTO</small>
+            <small id="statusReceber" style="color: #4ade80;">Status: ABERTO</small>
         </div>
+
         <div class="card-neon">
             <span class="label-futuro">Contas a Pagar</span>
             <p id="totalPagar" class="valor-principal txt-pagar">R$ 0,00</p>
-            <small style="color: #f87171;">Status: ABERTO</small>
+            <small id="statusPagar" style="color: #f87171;">Status: ABERTO</small>
         </div>
     </div>
 
@@ -91,10 +147,12 @@
             <span class="label-futuro">Disponível SICOOB</span>
             <p id="saldoSicoob" class="valor-principal txt-banco">R$ 0,00</p>
         </div>
+
         <div class="card-neon card-banco-futuro">
             <span class="label-futuro">Disponível CAIXA FEDERAL</span>
             <p id="saldoCaixa" class="valor-principal txt-banco">R$ 0,00</p>
         </div>
+
         <div class="card-neon card-banco-futuro" style="border-color: rgba(168, 85, 247, 0.4);">
             <span class="label-futuro">Reserva APLICAÇÃO</span>
             <p id="saldoAplicacao" class="valor-principal" style="color: #a855f7; text-shadow: 0 0 15px rgba(168, 85, 247, 0.4);">R$ 0,00</p>
@@ -103,8 +161,9 @@
 
     <div class="card-neon card-final">
         <span class="label-futuro" style="color: var(--neon-blue); font-weight: bold;">Saldo Líquido Projetado</span>
-        <p id="saldoLiquido" class="valor-principal txt-banco" style="font-size: 3.5rem;">R$ 0,00</p>
+        <p id="saldoLiquido" class="valor-principal txt-banco" style="font-size: 3.1rem;">R$ 0,00</p>
         <p style="color: #94a3b8; font-size: 0.85rem;">(Bancos + Aplicação + Recebimentos - Dívidas)</p>
+        <div id="statusLiquido" class="status-final status-neutro">STATUS: EQUILIBRADO</div>
     </div>
 
 </div>
@@ -112,31 +171,103 @@
 <script type="module">
     import { supabase, verificarLogin } from "./js/auth.js";
 
-    document.addEventListener("DOMContentLoaded", async () => {
-        await verificarLogin();
-        const { data: bancos } = await supabase.from("bancos").select("*");
-        const { data: rec } = await supabase.from("contas_receber").select("valor").eq("status", "ABERTO");
-        const { data: pag } = await supabase.from("contas_pagar").select("valor").eq("status", "ABERTO");
+    function toNumber(valor) {
+        if (valor === null || valor === undefined) return 0;
+        if (typeof valor === "number") return isNaN(valor) ? 0 : valor;
 
-        let sicoob = 0, caixa = 0, aplicacao = 0;
-        bancos?.forEach(b => {
-            if(b.nome === 'SICOOB') sicoob = parseFloat(b.saldo);
-            if(b.nome === 'CAIXA FEDERAL') caixa = parseFloat(b.saldo);
-            if(b.nome === 'APLICAÇÃO') aplicacao = parseFloat(b.saldo);
+        let texto = String(valor).trim();
+
+        texto = texto
+            .replace(/R\$/g, "")
+            .replace(/\s/g, "")
+            .replace(/\./g, "")
+            .replace(",", ".");
+
+        const numero = Number(texto);
+        return isNaN(numero) ? 0 : numero;
+    }
+
+    function formatarMoeda(valor) {
+        return Number(valor || 0).toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL"
         });
+    }
 
-        const tRec = rec?.reduce((acc, v) => acc + parseFloat(v.valor), 0) || 0;
-        const tPag = pag?.reduce((acc, v) => acc + parseFloat(v.valor), 0) || 0;
-        const liquido = (sicoob + caixa + aplicacao + tRec) - tPag;
+    function definirStatusLiquido(liquido) {
+        const el = document.getElementById("statusLiquido");
+        if (!el) return;
 
-        const f = { style: 'currency', currency: 'BRL' };
-        document.getElementById("totalReceber").innerText = tRec.toLocaleString('pt-BR', f);
-        document.getElementById("totalPagar").innerText = tPag.toLocaleString('pt-BR', f);
-        document.getElementById("saldoSicoob").innerText = sicoob.toLocaleString('pt-BR', f);
-        document.getElementById("saldoCaixa").innerText = caixa.toLocaleString('pt-BR', f);
-        document.getElementById("saldoAplicacao").innerText = aplicacao.toLocaleString('pt-BR', f);
-        document.getElementById("saldoLiquido").innerText = liquido.toLocaleString('pt-BR', f);
+        el.classList.remove("status-positivo", "status-negativo", "status-neutro");
+
+        if (liquido > 0) {
+            el.textContent = "STATUS: POSITIVO";
+            el.classList.add("status-positivo");
+        } else if (liquido < 0) {
+            el.textContent = "STATUS: NEGATIVO";
+            el.classList.add("status-negativo");
+        } else {
+            el.textContent = "STATUS: EQUILIBRADO";
+            el.classList.add("status-neutro");
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        try {
+            await verificarLogin();
+
+            const [
+                bancosResp,
+                receberResp,
+                pagarResp
+            ] = await Promise.all([
+                supabase.from("bancos").select("id, nome, saldo"),
+                supabase.from("contas_receber").select("valor").eq("status", "ABERTO"),
+                supabase.from("contas_pagar").select("valor").eq("status", "ABERTO")
+            ]);
+
+            if (bancosResp.error) throw bancosResp.error;
+            if (receberResp.error) throw receberResp.error;
+            if (pagarResp.error) throw pagarResp.error;
+
+            const bancos = bancosResp.data || [];
+            const rec = receberResp.data || [];
+            const pag = pagarResp.data || [];
+
+            let sicoob = 0;
+            let caixa = 0;
+            let aplicacao = 0;
+
+            bancos.forEach((banco) => {
+                const nome = String(banco.nome || "").trim().toUpperCase();
+                const saldo = toNumber(banco.saldo);
+
+                if (nome === "SICOOB") sicoob += saldo;
+                if (nome === "CAIXA FEDERAL") caixa += saldo;
+                if (nome === "APLICAÇÃO" || nome === "APLICACAO") aplicacao += saldo;
+            });
+
+            const totalReceber = rec.reduce((acc, item) => acc + toNumber(item.valor), 0);
+            const totalPagar = pag.reduce((acc, item) => acc + toNumber(item.valor), 0);
+            const saldoLiquido = (sicoob + caixa + aplicacao + totalReceber) - totalPagar;
+
+            document.getElementById("totalReceber").innerText = formatarMoeda(totalReceber);
+            document.getElementById("totalPagar").innerText = formatarMoeda(totalPagar);
+            document.getElementById("saldoSicoob").innerText = formatarMoeda(sicoob);
+            document.getElementById("saldoCaixa").innerText = formatarMoeda(caixa);
+            document.getElementById("saldoAplicacao").innerText = formatarMoeda(aplicacao);
+            document.getElementById("saldoLiquido").innerText = formatarMoeda(saldoLiquido);
+
+            definirStatusLiquido(saldoLiquido);
+        } catch (erro) {
+            console.error("Erro ao carregar fluxo de caixa:", erro);
+
+            document.getElementById("statusLiquido").textContent = "ERRO AO CARREGAR DADOS";
+            document.getElementById("statusLiquido").classList.remove("status-positivo", "status-neutro");
+            document.getElementById("statusLiquido").classList.add("status-negativo");
+        }
     });
 </script>
+
 </body>
 </html>
