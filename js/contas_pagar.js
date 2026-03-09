@@ -1,377 +1,278 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contas a Pagar - Matão Usinagem</title>
+import { supabase, verificarLogin } from "./auth.js";
 
-    <link rel="stylesheet" href="css/global.css">
-    <link rel="stylesheet" href="css/dashboard.css">
+const listaPagar = document.getElementById("listaPagar");
+const cardsBancos = document.getElementById("cardsBancos");
 
-    <style>
-        .modal-financeiro {
-            position: fixed;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.85);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 20px;
-        }
+const filtroBanco = document.getElementById("filtroBanco");
+const filtroData = document.getElementById("filtroData");
+const filtroMes = document.getElementById("filtroMes");
 
-        .modal-content {
-            background: #0f172a;
-            border: 2px solid #38bdf8;
-            padding: 25px;
-            border-radius: 15px;
-            width: 100%;
-            max-width: 460px;
-            color: white;
-            box-shadow: 0 0 30px rgba(56, 189, 248, 0.18);
-        }
+const btnFiltrar = document.getElementById("btnFiltrar");
+const btnLimpar = document.getElementById("btnLimparFiltros");
 
-        .modal-content.modal-transferencia {
-            max-width: 760px;
-        }
+const btnNovo = document.getElementById("btnNovoPagar");
+const btnTransferir = document.getElementById("btnTransferir");
 
-        .modal-content input,
-        .modal-content select,
-        .modal-content textarea {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            background: #1e293b;
-            border: 1px solid #334155;
-            color: white;
-            border-radius: 8px;
-            outline: none;
-        }
+const modalLancamento = document.getElementById("modalLancamento");
+const btnSalvarModal = document.getElementById("btnSalvarModal");
+const btnFecharModal = document.getElementById("btnFecharModal");
 
-        .modal-content input:focus,
-        .modal-content select:focus,
-        .modal-content textarea:focus {
-            border-color: #38bdf8;
-            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
-        }
+const modalTransferencia = document.getElementById("modalTransferencia");
+const btnSalvarTransferencia = document.getElementById("btnSalvarTransferencia");
+const btnFecharTransferencia = document.getElementById("btnFecharTransferencia");
 
-        .label-futuro {
-            color: #38bdf8;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+const m_descricao = document.getElementById("m_descricao");
+const m_valor = document.getElementById("m_valor");
+const m_data = document.getElementById("m_data");
+const m_banco = document.getElementById("m_banco");
 
-        .btn-acao {
-            cursor: pointer;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: bold;
-            color: white;
-            transition: 0.2s ease;
-        }
+const t_origem = document.getElementById("t_origem");
+const t_destino = document.getElementById("t_destino");
+const t_valor = document.getElementById("t_valor");
+const t_data = document.getElementById("t_data");
+const t_obs = document.getElementById("t_obs");
 
-        .btn-acao:hover {
-            transform: translateY(-1px);
-            filter: brightness(1.05);
-        }
+const listaTransferencias = document.getElementById("listaTransferencias");
 
-        .topo-contas-pagar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-        }
+let bancos = [];
 
-        .titulo-contas-pagar {
-            color: #38bdf8;
-            font-family: 'Orbitron', sans-serif;
-            margin: 0;
-            text-align: center;
-            flex: 1;
-        }
+function moeda(v) {
+    return Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+}
 
-        .cards-bancos {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 25px;
-            flex-wrap: wrap;
-        }
+function parseValor(v){
+    return Number(
+        String(v)
+        .replace(/\./g,"")
+        .replace(",",".")
+        .replace(/[^\d.-]/g,"")
+    ) || 0
+}
 
-        .bloco-filtros {
-            background: rgba(30, 41, 59, 0.6);
-            padding: 20px;
-            border-radius: 12px;
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            align-items: flex-end;
-        }
+function formatarDataBR(d){
+    if(!d) return "-"
+    const [a,m,dia]=d.split("-")
+    return `${dia}/${m}/${a}`
+}
 
-        .campo-filtro input,
-        .campo-filtro select {
-            padding: 10px;
-            border-radius: 8px;
-            background: #1e293b;
-            color: white;
-            border: 1px solid #334155;
-            min-width: 180px;
-        }
+async function carregarBancos(){
 
-        .tabela-wrapper {
-            margin-top: 30px;
-            overflow-x: auto;
-        }
+    const {data,error} = await supabase
+    .from("bancos")
+    .select("*")
+    .order("nome")
 
-        .tabela-pagar {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            min-width: 920px;
-        }
+    if(error) return console.log(error)
 
-        .tabela-pagar thead tr {
-            border-bottom: 2px solid #38bdf8;
-            color: #38bdf8;
-        }
+    bancos = data
 
-        .tabela-pagar th,
-        .tabela-pagar td {
-            padding: 12px;
-            vertical-align: middle;
-        }
+    cardsBancos.innerHTML=""
 
-        .tabela-pagar tbody tr {
-            border-bottom: 1px solid rgba(148, 163, 184, 0.18);
-        }
+    filtroBanco.innerHTML=`<option value="">Todos</option>`
+    m_banco.innerHTML=`<option value="">Selecione o Banco...</option>`
+    t_origem.innerHTML=`<option value="">Origem...</option>`
+    t_destino.innerHTML=`<option value="">Destino...</option>`
 
-        .acoes-modal {
-            display: flex;
-            gap: 10px;
-            margin-top: 25px;
-        }
+    bancos.forEach(b=>{
 
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px;
-        }
+        const card=document.createElement("div")
+        card.style.flex="1"
+        card.style.minWidth="220px"
+        card.style.background="rgba(30,41,59,.7)"
+        card.style.padding="15px"
+        card.style.borderRadius="12px"
 
-        .tabela-transferencias {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            font-size: 14px;
-        }
+        card.innerHTML=`
+        <div style="color:#38bdf8;font-size:12px">${b.nome}</div>
+        <div style="font-size:24px">${moeda(b.saldo)}</div>
+        `
 
-        .tabela-transferencias th,
-        .tabela-transferencias td {
-            padding: 10px;
-            border-bottom: 1px solid rgba(148,163,184,0.18);
-            text-align: left;
-        }
+        cardsBancos.appendChild(card)
 
-        .tabela-transferencias thead tr {
-            color: #38bdf8;
-            border-bottom: 2px solid #38bdf8;
-        }
+        const opt=document.createElement("option")
+        opt.value=b.id
+        opt.textContent=b.nome
+        filtroBanco.appendChild(opt)
 
-        .topo-transferencias {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            align-items: end;
-            margin-top: 14px;
-            margin-bottom: 6px;
-        }
+        const opt2=document.createElement("option")
+        opt2.value=b.id
+        opt2.textContent=b.nome
+        m_banco.appendChild(opt2)
 
-        @media (max-width: 768px) {
-            .topo-contas-pagar {
-                flex-direction: column;
-                align-items: stretch;
-            }
+        const o=document.createElement("option")
+        o.value=b.id
+        o.textContent=b.nome
+        t_origem.appendChild(o)
 
-            .titulo-contas-pagar {
-                text-align: center;
-            }
+        const d=document.createElement("option")
+        d.value=b.id
+        d.textContent=b.nome
+        t_destino.appendChild(d)
 
-            .bloco-filtros {
-                flex-direction: column;
-                align-items: stretch;
-            }
+    })
 
-            .campo-filtro input,
-            .campo-filtro select,
-            .btn-acao {
-                width: 100%;
-            }
+}
 
-            .acoes-modal,
-            .grid-2 {
-                flex-direction: column;
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-</head>
-<body>
+async function carregarContas(){
 
-<div class="container">
-    <header class="topo-contas-pagar">
-        <a href="dashboard.html">
-            <button type="button" class="btn-acao" style="background: #334155;">← Voltar</button>
-        </a>
+    let query=supabase
+    .from("contas_pagar")
+    .select("*")
+    .order("vencimento")
 
-        <h1 class="titulo-contas-pagar">CONTAS A PAGAR</h1>
+    if(filtroBanco.value)
+        query=query.eq("banco_id",filtroBanco.value)
 
-        <div style="width: 108px;"></div>
-    </header>
+    if(filtroData.value)
+        query=query.eq("vencimento",filtroData.value)
 
-    <div id="cardsBancos" class="cards-bancos"></div>
+    if(filtroMes.value){
 
-    <div class="bloco-filtros">
-        <div class="campo-filtro">
-            <label for="filtroBanco" class="label-futuro">Banco</label><br>
-            <select id="filtroBanco">
-                <option value="">Todos</option>
-            </select>
-        </div>
+        const [a,m]=filtroMes.value.split("-")
 
-        <div class="campo-filtro">
-            <label for="filtroData" class="label-futuro">Data exata</label><br>
-            <input type="date" id="filtroData">
-        </div>
+        const inicio=`${a}-${m}-01`
+        const fim=`${a}-${m}-31`
 
-        <div class="campo-filtro">
-            <label for="filtroMes" class="label-futuro">Mês</label><br>
-            <input type="month" id="filtroMes">
-        </div>
+        query=query.gte("vencimento",inicio).lte("vencimento",fim)
 
-        <button id="btnFiltrar" class="btn-acao" style="background: #38bdf8;">Filtrar</button>
-        <button id="btnLimparFiltros" class="btn-acao" style="background: #475569;">Limpar</button>
-        <button id="btnNovoPagar" class="btn-acao" style="background: #10b981;">+ Novo Lançamento</button>
-        <button id="btnTransferir" class="btn-acao" style="background: #8b5cf6;">Transferências</button>
-    </div>
-
-    <div class="tabela-wrapper">
-        <table class="tabela-pagar">
-            <thead>
-                <tr>
-                    <th>Origem da Despesa</th>
-                    <th>Banco</th>
-                    <th>Valor</th>
-                    <th>Vencimento</th>
-                    <th>Status</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody id="listaPagar"></tbody>
-        </table>
-    </div>
-</div>
-
-<div id="modalLancamento" class="modal-financeiro">
-    <div class="modal-content">
-        <h2 class="label-futuro" style="margin-bottom: 20px; font-size: 1rem;">Novo Lançamento Manual</h2>
-
-        <label for="m_descricao" class="label-futuro">Descrição / NF</label>
-        <input type="text" id="m_descricao" placeholder="Ex: Compra de Insertos">
-
-        <label for="m_valor" class="label-futuro">Valor (R$)</label>
-        <input type="text" id="m_valor" placeholder="0,00" oninput="validarMoeda(this)">
-
-        <label for="m_data" class="label-futuro">Data de Vencimento</label>
-        <input type="date" id="m_data">
-
-        <label for="m_banco" class="label-futuro">Banco para Débito</label>
-        <select id="m_banco">
-            <option value="">Selecione o Banco...</option>
-        </select>
-
-        <div class="acoes-modal">
-            <button type="button" id="btnSalvarModal" class="btn-acao" style="background: #10b981; flex: 1;">Confirmar</button>
-            <button type="button" id="btnFecharModal" class="btn-acao" style="background: #f87171; flex: 1;">Cancelar</button>
-        </div>
-    </div>
-</div>
-
-<div id="modalTransferencia" class="modal-financeiro">
-    <div class="modal-content modal-transferencia">
-        <h2 class="label-futuro" style="margin-bottom: 20px; font-size: 1rem;">Transferências entre Bancos / Aplicação</h2>
-
-        <div class="grid-2">
-            <div>
-                <label for="t_origem" class="label-futuro">Origem</label>
-                <select id="t_origem"></select>
-            </div>
-
-            <div>
-                <label for="t_destino" class="label-futuro">Destino</label>
-                <select id="t_destino"></select>
-            </div>
-
-            <div>
-                <label for="t_valor" class="label-futuro">Valor (R$)</label>
-                <input type="text" id="t_valor" placeholder="0,00" oninput="validarMoeda(this)">
-            </div>
-
-            <div>
-                <label for="t_data" class="label-futuro">Data</label>
-                <input type="date" id="t_data">
-            </div>
-        </div>
-
-        <label for="t_obs" class="label-futuro">Observação</label>
-        <textarea id="t_obs" rows="3" placeholder="Ex: Transferência para aplicação"></textarea>
-
-        <div class="acoes-modal">
-            <button type="button" id="btnSalvarTransferencia" class="btn-acao" style="background: #8b5cf6; flex: 1;">Confirmar Transferência</button>
-            <button type="button" id="btnFecharTransferencia" class="btn-acao" style="background: #f87171; flex: 1;">Cancelar</button>
-        </div>
-
-        <div class="topo-transferencias">
-            <div class="campo-filtro">
-                <label for="tfFiltroData" class="label-futuro">Data exata</label><br>
-                <input type="date" id="tfFiltroData">
-            </div>
-
-            <div class="campo-filtro">
-                <label for="tfFiltroMes" class="label-futuro">Mês</label><br>
-                <input type="month" id="tfFiltroMes">
-            </div>
-
-            <button id="btnFiltrarTransferencias" class="btn-acao" style="background:#38bdf8;">Filtrar Histórico</button>
-            <button id="btnLimparTransferencias" class="btn-acao" style="background:#475569;">Limpar</button>
-        </div>
-
-        <div style="overflow:auto; max-height: 320px;">
-            <table class="tabela-transferencias">
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Origem</th>
-                        <th>Destino</th>
-                        <th>Valor</th>
-                        <th>Observação</th>
-                    </tr>
-                </thead>
-                <tbody id="listaTransferencias"></tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<script type="module" src="js/contas_pagar.js"></script>
-<script>
-    function validarMoeda(input) {
-        input.value = input.value.replace(/[^0-9,]/g, '');
     }
-</script>
-</body>
-</html>
+
+    const {data,error}=await query
+
+    if(error) return console.log(error)
+
+    if(!data.length){
+        listaPagar.innerHTML=`<tr><td colspan="6">Nenhum lançamento encontrado</td></tr>`
+        return
+    }
+
+    listaPagar.innerHTML=data.map(l=>{
+
+        const banco=bancos.find(b=>b.id==l.banco_id)
+
+        let botao="-"
+
+        if(l.status!="PAGO"){
+            botao=`<button onclick="pagar('${l.id}')" style="background:#10b981;border:none;padding:6px 10px;border-radius:6px">Pagar</button>`
+        }
+
+        return`
+        <tr>
+        <td>${l.descricao}</td>
+        <td>${banco?.nome||"-"}</td>
+        <td>${moeda(l.valor)}</td>
+        <td>${formatarDataBR(l.vencimento)}</td>
+        <td>${l.status}</td>
+        <td>${botao}</td>
+        </tr>
+        `
+
+    }).join("")
+}
+
+window.pagar=async(id)=>{
+
+    const {data:conta}=await supabase
+    .from("contas_pagar")
+    .select("*")
+    .eq("id",id)
+    .single()
+
+    const banco=bancos.find(b=>b.id==conta.banco_id)
+
+    const novoSaldo=banco.saldo-conta.valor
+
+    await supabase.from("bancos").update({saldo:novoSaldo}).eq("id",banco.id)
+
+    await supabase.from("contas_pagar")
+    .update({status:"PAGO"})
+    .eq("id",id)
+
+    await carregarBancos()
+    await carregarContas()
+
+}
+
+async function salvarConta(){
+
+    const valor=parseValor(m_valor.value)
+
+    await supabase
+    .from("contas_pagar")
+    .insert({
+        descricao:m_descricao.value,
+        valor:valor,
+        vencimento:m_data.value,
+        banco_id:m_banco.value,
+        status:"ABERTO"
+    })
+
+    modalLancamento.style.display="none"
+
+    carregarContas()
+
+}
+
+async function transferir(){
+
+    const valor=parseValor(t_valor.value)
+
+    const origem=bancos.find(b=>b.id==t_origem.value)
+    const destino=bancos.find(b=>b.id==t_destino.value)
+
+    await supabase
+    .from("bancos")
+    .update({saldo:origem.saldo-valor})
+    .eq("id",origem.id)
+
+    await supabase
+    .from("bancos")
+    .update({saldo:destino.saldo+valor})
+    .eq("id",destino.id)
+
+    await supabase
+    .from("transferencias_bancarias")
+    .insert({
+        origem_id:origem.id,
+        destino_id:destino.id,
+        valor:valor,
+        data_transferencia:t_data.value,
+        observacao:t_obs.value
+    })
+
+    modalTransferencia.style.display="none"
+
+    carregarBancos()
+
+}
+
+btnFiltrar.onclick=carregarContas
+
+btnLimpar.onclick=()=>{
+    filtroBanco.value=""
+    filtroData.value=""
+    filtroMes.value=""
+    carregarContas()
+}
+
+btnNovo.onclick=()=>modalLancamento.style.display="flex"
+
+btnFecharModal.onclick=()=>modalLancamento.style.display="none"
+
+btnSalvarModal.onclick=salvarConta
+
+btnTransferir.onclick=()=>modalTransferencia.style.display="flex"
+
+btnFecharTransferencia.onclick=()=>modalTransferencia.style.display="none"
+
+btnSalvarTransferencia.onclick=transferir
+
+document.addEventListener("DOMContentLoaded",async()=>{
+
+    await verificarLogin()
+
+    await carregarBancos()
+
+    await carregarContas()
+
+})
