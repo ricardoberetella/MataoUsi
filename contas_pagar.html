@@ -9,381 +9,400 @@
 <link rel="stylesheet" href="css/dashboard.css">
 
 <style>
-
 .page-wrap{
-max-width:1100px;
-margin:20px auto;
-padding:0 15px 25px;
+    max-width: 1100px;
+    margin: 20px auto;
+    padding: 0 15px 25px;
 }
 
 .container{
-width:100%;
-padding:25px;
-border-radius:18px;
-background:rgba(2,6,23,.95);
-border:1px solid rgba(56,189,248,.35);
-box-shadow:0 0 20px rgba(56,189,248,.15);
+    width: 100%;
+    padding: 25px;
+    border-radius: 18px;
+    background: rgba(2,6,23,.95);
+    border: 1px solid rgba(56,189,248,.35);
+    box-shadow: 0 0 20px rgba(56,189,248,.15);
 }
 
 .topo-contas-pagar{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:25px;
-flex-wrap:wrap;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:25px;
+    flex-wrap:wrap;
 }
 
 .titulo-contas-pagar{
-color:#38bdf8;
-font-size:30px;
-margin:0;
-flex:1;
-text-align:center;
+    color:#38bdf8;
+    font-size:30px;
+    margin:0;
+    flex:1;
+    text-align:center;
 }
 
 .cards-bancos{
-display:flex;
-gap:15px;
-margin-bottom:20px;
-flex-wrap:wrap;
+    display:flex;
+    gap:15px;
+    margin-bottom:20px;
+    flex-wrap:wrap;
 }
 
 .bloco-filtros{
-background:rgba(30,41,59,.65);
-padding:18px;
-border-radius:12px;
-display:flex;
-gap:15px;
-flex-wrap:wrap;
-align-items:flex-end;
+    background:rgba(30,41,59,.65);
+    padding:18px;
+    border-radius:12px;
+    display:flex;
+    gap:15px;
+    align-items:flex-end;
+    flex-wrap:wrap;
+}
+
+.filtros-esquerda{
+    display:flex;
+    gap:15px;
+    align-items:flex-end;
+    flex-wrap:wrap;
+    flex:1;
+    min-width:320px;
+}
+
+.botoes-direita{
+    display:flex;
+    gap:12px;
+    align-items:flex-end;
+    flex-wrap:nowrap;
+    margin-left:auto;
 }
 
 .campo-filtro input,
 .campo-filtro select{
-padding:10px;
-border-radius:8px;
-background:#1e293b;
-color:white;
-border:1px solid #334155;
-min-width:150px;
+    padding:10px;
+    border-radius:8px;
+    background:#1e293b;
+    color:white;
+    border:1px solid #334155;
+    min-width:150px;
+    height:46px;
 }
 
 .btn-acao{
-cursor:pointer;
-border:none;
-padding:10px 20px;
-border-radius:8px;
-font-weight:bold;
-color:white;
-transition:.2s;
+    cursor:pointer;
+    border:none;
+    padding:10px 20px;
+    border-radius:8px;
+    font-weight:bold;
+    color:white;
+    transition:.2s;
+    white-space:nowrap;
+    height:42px;
 }
 
 .btn-acao:hover{
-transform:translateY(-1px);
+    transform:translateY(-1px);
 }
 
 .label-futuro{
-color:#38bdf8;
-font-size:.75rem;
-letter-spacing:1px;
-text-transform:uppercase;
+    color:#38bdf8;
+    font-size:.75rem;
+    letter-spacing:1px;
+    text-transform:uppercase;
 }
 
 .tabela-wrapper{
-margin-top:25px;
-overflow-x:auto;
+    margin-top:25px;
+    overflow-x:auto;
 }
 
 .tabela-pagar{
-width:100%;
-border-collapse:collapse;
-min-width:850px;
+    width:100%;
+    border-collapse:collapse;
+    min-width:850px;
 }
 
 .tabela-pagar thead tr{
-border-bottom:2px solid #38bdf8;
-color:#38bdf8;
+    border-bottom:2px solid #38bdf8;
+    color:#38bdf8;
 }
 
 .tabela-pagar th,
 .tabela-pagar td{
-padding:12px;
+    padding:12px;
 }
 
 .tabela-pagar tbody tr{
-border-bottom:1px solid rgba(148,163,184,.18);
+    border-bottom:1px solid rgba(148,163,184,.18);
 }
 
 .modal-financeiro{
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.85);
-display:none;
-align-items:center;
-justify-content:center;
-z-index:1000;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.85);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:1000;
+    padding:20px;
 }
 
 .modal-content{
-background:#0f172a;
-border:2px solid #38bdf8;
-padding:25px;
-border-radius:15px;
-width:100%;
-max-width:460px;
-color:white;
+    background:#0f172a;
+    border:2px solid #38bdf8;
+    padding:25px;
+    border-radius:15px;
+    width:100%;
+    max-width:460px;
+    color:white;
 }
 
 .modal-content input,
 .modal-content select,
 .modal-content textarea{
-width:100%;
-padding:12px;
-margin:10px 0;
-background:#1e293b;
-border:1px solid #334155;
-color:white;
-border-radius:8px;
+    width:100%;
+    padding:12px;
+    margin:10px 0;
+    background:#1e293b;
+    border:1px solid #334155;
+    color:white;
+    border-radius:8px;
 }
 
 .acoes-modal{
-display:flex;
-gap:10px;
-margin-top:20px;
+    display:flex;
+    gap:10px;
+    margin-top:20px;
 }
 
 .grid-2{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:14px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
 }
 
 .modal-transferencia{
-max-width:760px;
+    max-width:760px;
 }
 
 .tabela-transferencias{
-width:100%;
-border-collapse:collapse;
-margin-top:20px;
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
 }
 
 .tabela-transferencias th,
 .tabela-transferencias td{
-padding:10px;
-border-bottom:1px solid rgba(148,163,184,.18);
+    padding:10px;
+    border-bottom:1px solid rgba(148,163,184,.18);
 }
 
 .tabela-transferencias thead tr{
-border-bottom:2px solid #38bdf8;
-color:#38bdf8;
+    border-bottom:2px solid #38bdf8;
+    color:#38bdf8;
+}
+
+@media(max-width: 980px){
+    .bloco-filtros{
+        flex-direction:column;
+        align-items:stretch;
+    }
+
+    .filtros-esquerda{
+        width:100%;
+    }
+
+    .botoes-direita{
+        width:100%;
+        margin-left:0;
+        flex-wrap:wrap;
+        justify-content:flex-start;
+    }
 }
 
 @media(max-width:768px){
+    .campo-filtro input,
+    .campo-filtro select,
+    .btn-acao{
+        width:100%;
+    }
 
-.bloco-filtros{
-flex-direction:column;
-align-items:stretch;
+    .grid-2{
+        grid-template-columns:1fr;
+    }
+
+    .filtros-esquerda,
+    .botoes-direita{
+        flex-direction:column;
+        align-items:stretch;
+    }
 }
-
-.campo-filtro input,
-.campo-filtro select,
-.btn-acao{
-width:100%;
-}
-
-.grid-2{
-grid-template-columns:1fr;
-}
-
-}
-
 </style>
 </head>
 
 <body>
 
 <div class="page-wrap">
-
 <div class="container">
 
 <header class="topo-contas-pagar">
+    <a href="dashboard.html">
+        <button class="btn-acao" style="background:#334155;">← Voltar</button>
+    </a>
 
-<a href="dashboard.html">
-<button class="btn-acao" style="background:#334155;">← Voltar</button>
-</a>
+    <h1 class="titulo-contas-pagar">CONTAS A PAGAR</h1>
 
-<h1 class="titulo-contas-pagar">CONTAS A PAGAR</h1>
-
-<div style="width:100px"></div>
-
+    <div style="width:100px"></div>
 </header>
 
 <div id="cardsBancos" class="cards-bancos"></div>
 
 <div class="bloco-filtros">
 
-<div class="campo-filtro">
-<label class="label-futuro">Banco</label><br>
-<select id="filtroBanco">
-<option value="">Todos</option>
-</select>
-</div>
+    <div class="filtros-esquerda">
+        <div class="campo-filtro">
+            <label class="label-futuro">Banco</label><br>
+            <select id="filtroBanco">
+                <option value="">Todos</option>
+            </select>
+        </div>
 
-<div class="campo-filtro">
-<label class="label-futuro">Data exata</label><br>
-<input type="date" id="filtroData">
-</div>
+        <div class="campo-filtro">
+            <label class="label-futuro">Data exata</label><br>
+            <input type="date" id="filtroData">
+        </div>
 
-<div class="campo-filtro">
-<label class="label-futuro">Mês</label><br>
-<input type="month" id="filtroMes">
-</div>
+        <div class="campo-filtro">
+            <label class="label-futuro">Mês</label><br>
+            <input type="month" id="filtroMes">
+        </div>
+    </div>
 
-<button id="btnTransferir" class="btn-acao" style="background:#8b5cf6;">
-Transferências
-</button>
+    <div class="botoes-direita">
+        <button id="btnTransferir" class="btn-acao" style="background:#8b5cf6;">
+            Transferências
+        </button>
 
-<button id="btnFiltrar" class="btn-acao" style="background:#38bdf8;">
-Filtrar
-</button>
+        <button id="btnFiltrar" class="btn-acao" style="background:#38bdf8;">
+            Filtrar
+        </button>
 
-<button id="btnLimparFiltros" class="btn-acao" style="background:#475569;">
-Limpar
-</button>
+        <button id="btnLimparFiltros" class="btn-acao" style="background:#475569;">
+            Limpar
+        </button>
 
-<button id="btnNovoPagar" class="btn-acao" style="background:#10b981;">
-+ Novo Lançamento
-</button>
+        <button id="btnNovoPagar" class="btn-acao" style="background:#10b981;">
+            + Novo Lançamento
+        </button>
+    </div>
 
 </div>
 
 <div class="tabela-wrapper">
-
-<table class="tabela-pagar">
-
-<thead>
-<tr>
-<th>Origem da Despesa</th>
-<th>Banco</th>
-<th>Valor</th>
-<th>Vencimento</th>
-<th>Status</th>
-<th>Ações</th>
-</tr>
-</thead>
-
-<tbody id="listaPagar"></tbody>
-
-</table>
-
+    <table class="tabela-pagar">
+        <thead>
+            <tr>
+                <th>Origem da Despesa</th>
+                <th>Banco</th>
+                <th>Valor</th>
+                <th>Vencimento</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="listaPagar"></tbody>
+    </table>
 </div>
 
 </div>
 </div>
 
 <div id="modalLancamento" class="modal-financeiro">
+    <div class="modal-content">
+        <h2 class="label-futuro">Novo Lançamento Manual</h2>
 
-<div class="modal-content">
+        <label class="label-futuro">Descrição / NF</label>
+        <input type="text" id="m_descricao">
 
-<h2 class="label-futuro">Novo Lançamento Manual</h2>
+        <label class="label-futuro">Valor (R$)</label>
+        <input type="text" id="m_valor">
 
-<label class="label-futuro">Descrição / NF</label>
-<input type="text" id="m_descricao">
+        <label class="label-futuro">Data de Vencimento</label>
+        <input type="date" id="m_data">
 
-<label class="label-futuro">Valor (R$)</label>
-<input type="text" id="m_valor">
+        <label class="label-futuro">Banco para Débito</label>
+        <select id="m_banco"></select>
 
-<label class="label-futuro">Data de Vencimento</label>
-<input type="date" id="m_data">
+        <div class="acoes-modal">
+            <button id="btnSalvarModal" class="btn-acao" style="background:#10b981;flex:1">
+                Confirmar
+            </button>
 
-<label class="label-futuro">Banco para Débito</label>
-<select id="m_banco"></select>
-
-<div class="acoes-modal">
-<button id="btnSalvarModal" class="btn-acao" style="background:#10b981;flex:1">
-Confirmar
-</button>
-
-<button id="btnFecharModal" class="btn-acao" style="background:#f87171;flex:1">
-Cancelar
-</button>
-</div>
-
-</div>
+            <button id="btnFecharModal" class="btn-acao" style="background:#f87171;flex:1">
+                Cancelar
+            </button>
+        </div>
+    </div>
 </div>
 
 <div id="modalTransferencia" class="modal-financeiro">
+    <div class="modal-content modal-transferencia">
+        <h2 class="label-futuro">Transferências</h2>
 
-<div class="modal-content modal-transferencia">
+        <div class="grid-2">
+            <div>
+                <label class="label-futuro">Origem</label>
+                <select id="t_origem"></select>
+            </div>
 
-<h2 class="label-futuro">Transferências</h2>
+            <div>
+                <label class="label-futuro">Destino</label>
+                <select id="t_destino"></select>
+            </div>
 
-<div class="grid-2">
+            <div>
+                <label class="label-futuro">Valor</label>
+                <input type="text" id="t_valor">
+            </div>
 
-<div>
-<label class="label-futuro">Origem</label>
-<select id="t_origem"></select>
-</div>
+            <div>
+                <label class="label-futuro">Data</label>
+                <input type="date" id="t_data">
+            </div>
+        </div>
 
-<div>
-<label class="label-futuro">Destino</label>
-<select id="t_destino"></select>
-</div>
+        <label class="label-futuro">Observação</label>
+        <textarea id="t_obs"></textarea>
 
-<div>
-<label class="label-futuro">Valor</label>
-<input type="text" id="t_valor">
-</div>
+        <div class="acoes-modal">
+            <button id="btnSalvarTransferencia" class="btn-acao" style="background:#8b5cf6;flex:1">
+                Confirmar
+            </button>
 
-<div>
-<label class="label-futuro">Data</label>
-<input type="date" id="t_data">
-</div>
+            <button id="btnFecharTransferencia" class="btn-acao" style="background:#f87171;flex:1">
+                Cancelar
+            </button>
+        </div>
 
-</div>
-
-<label class="label-futuro">Observação</label>
-<textarea id="t_obs"></textarea>
-
-<div class="acoes-modal">
-<button id="btnSalvarTransferencia" class="btn-acao" style="background:#8b5cf6;flex:1">
-Confirmar
-</button>
-
-<button id="btnFecharTransferencia" class="btn-acao" style="background:#f87171;flex:1">
-Cancelar
-</button>
-</div>
-
-<div style="overflow:auto;max-height:300px">
-
-<table class="tabela-transferencias">
-
-<thead>
-<tr>
-<th>Data</th>
-<th>Origem</th>
-<th>Destino</th>
-<th>Valor</th>
-<th>Observação</th>
-</tr>
-</thead>
-
-<tbody id="listaTransferencias"></tbody>
-
-</table>
-
-</div>
-
-</div>
+        <div style="overflow:auto;max-height:300px">
+            <table class="tabela-transferencias">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Origem</th>
+                        <th>Destino</th>
+                        <th>Valor</th>
+                        <th>Observação</th>
+                    </tr>
+                </thead>
+                <tbody id="listaTransferencias"></tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <script type="module" src="js/contas_pagar.js"></script>
 
 <script>
 function validarMoeda(input){
-input.value=input.value.replace(/[^0-9,]/g,'');
+    input.value = input.value.replace(/[^0-9,]/g,'');
 }
 </script>
 
