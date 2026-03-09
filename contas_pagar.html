@@ -10,7 +10,7 @@
 
 <style>
 .page-wrap{
-    max-width: 1100px;
+    max-width: 1120px;
     margin: 20px auto;
     padding: 0 15px 25px;
 }
@@ -51,59 +51,73 @@
     background:rgba(30,41,59,.65);
     padding:18px;
     border-radius:12px;
-    display:flex;
-    gap:15px;
-    align-items:flex-end;
-    flex-wrap:wrap;
 }
 
-.filtros-esquerda{
-    display:flex;
-    gap:15px;
-    align-items:flex-end;
-    flex-wrap:wrap;
-    flex:1;
-    min-width:320px;
+.filtros-linha{
+    display:grid;
+    grid-template-columns: 180px 230px 230px 1fr;
+    gap:14px;
+    align-items:end;
 }
 
-.botoes-direita{
+.campos-linha{
+    display:grid;
+    grid-template-columns: 180px 230px 230px;
+    gap:14px;
+    align-items:end;
+}
+
+.botoes-linha{
     display:flex;
+    justify-content:flex-end;
+    align-items:end;
     gap:12px;
-    align-items:flex-end;
     flex-wrap:nowrap;
-    margin-left:auto;
+}
+
+.campo-filtro{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
 }
 
 .campo-filtro input,
 .campo-filtro select{
-    padding:10px;
-    border-radius:8px;
+    width:100%;
+    padding:12px 14px;
+    border-radius:10px;
     background:#1e293b;
     color:white;
     border:1px solid #334155;
-    min-width:150px;
-    height:46px;
+    min-width:0;
+    height:48px;
+    font-size:16px;
 }
 
 .btn-acao{
     cursor:pointer;
     border:none;
-    padding:10px 20px;
-    border-radius:8px;
+    padding:0 20px;
+    border-radius:10px;
     font-weight:bold;
     color:white;
     transition:.2s;
     white-space:nowrap;
-    height:42px;
+    height:48px;
+    font-size:16px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
 }
 
 .btn-acao:hover{
     transform:translateY(-1px);
+    filter:brightness(1.05);
 }
 
 .label-futuro{
     color:#38bdf8;
-    font-size:.75rem;
+    font-size:.78rem;
     letter-spacing:1px;
     text-transform:uppercase;
 }
@@ -199,25 +213,31 @@
     color:#38bdf8;
 }
 
-@media(max-width: 980px){
-    .bloco-filtros{
+@media(max-width: 1180px){
+    .filtros-linha{
+        grid-template-columns: 1fr;
+    }
+
+    .campos-linha{
+        grid-template-columns: repeat(3, minmax(160px, 1fr));
+    }
+
+    .botoes-linha{
+        justify-content:flex-start;
+        flex-wrap:wrap;
+    }
+}
+
+@media(max-width: 768px){
+    .campos-linha{
+        grid-template-columns: 1fr;
+    }
+
+    .botoes-linha{
         flex-direction:column;
         align-items:stretch;
     }
 
-    .filtros-esquerda{
-        width:100%;
-    }
-
-    .botoes-direita{
-        width:100%;
-        margin-left:0;
-        flex-wrap:wrap;
-        justify-content:flex-start;
-    }
-}
-
-@media(max-width:768px){
     .campo-filtro input,
     .campo-filtro select,
     .btn-acao{
@@ -226,12 +246,6 @@
 
     .grid-2{
         grid-template-columns:1fr;
-    }
-
-    .filtros-esquerda,
-    .botoes-direita{
-        flex-direction:column;
-        align-items:stretch;
     }
 }
 </style>
@@ -249,50 +263,52 @@
 
     <h1 class="titulo-contas-pagar">CONTAS A PAGAR</h1>
 
-    <div style="width:100px"></div>
+    <div style="width:100px;"></div>
 </header>
 
 <div id="cardsBancos" class="cards-bancos"></div>
 
 <div class="bloco-filtros">
+    <div class="filtros-linha">
 
-    <div class="filtros-esquerda">
-        <div class="campo-filtro">
-            <label class="label-futuro">Banco</label><br>
-            <select id="filtroBanco">
-                <option value="">Todos</option>
-            </select>
+        <div class="campos-linha">
+            <div class="campo-filtro">
+                <label class="label-futuro" for="filtroBanco">Banco</label>
+                <select id="filtroBanco">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+
+            <div class="campo-filtro">
+                <label class="label-futuro" for="filtroData">Data exata</label>
+                <input type="date" id="filtroData">
+            </div>
+
+            <div class="campo-filtro">
+                <label class="label-futuro" for="filtroMes">Mês</label>
+                <input type="month" id="filtroMes">
+            </div>
         </div>
 
-        <div class="campo-filtro">
-            <label class="label-futuro">Data exata</label><br>
-            <input type="date" id="filtroData">
+        <div class="botoes-linha">
+            <button id="btnTransferir" class="btn-acao" style="background:#8b5cf6;">
+                Transferências
+            </button>
+
+            <button id="btnFiltrar" class="btn-acao" style="background:#38bdf8;">
+                Filtrar
+            </button>
+
+            <button id="btnLimparFiltros" class="btn-acao" style="background:#475569;">
+                Limpar
+            </button>
+
+            <button id="btnNovoPagar" class="btn-acao" style="background:#10b981;">
+                + Novo Lançamento
+            </button>
         </div>
 
-        <div class="campo-filtro">
-            <label class="label-futuro">Mês</label><br>
-            <input type="month" id="filtroMes">
-        </div>
     </div>
-
-    <div class="botoes-direita">
-        <button id="btnTransferir" class="btn-acao" style="background:#8b5cf6;">
-            Transferências
-        </button>
-
-        <button id="btnFiltrar" class="btn-acao" style="background:#38bdf8;">
-            Filtrar
-        </button>
-
-        <button id="btnLimparFiltros" class="btn-acao" style="background:#475569;">
-            Limpar
-        </button>
-
-        <button id="btnNovoPagar" class="btn-acao" style="background:#10b981;">
-            + Novo Lançamento
-        </button>
-    </div>
-
 </div>
 
 <div class="tabela-wrapper">
