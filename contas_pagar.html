@@ -40,6 +40,25 @@
     text-align:center;
 }
 
+.btn-voltar-topo{
+    background: transparent;
+    color: #38bdf8;
+    border: 2px solid #38bdf8;
+    border-radius: 14px;
+    padding: 12px 22px;
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+    transition: .2s ease;
+    box-shadow: 0 0 14px rgba(56,189,248,.12);
+}
+
+.btn-voltar-topo:hover{
+    background: rgba(56,189,248,.08);
+    box-shadow: 0 0 18px rgba(56,189,248,.2);
+    transform: translateY(-1px);
+}
+
 .cards-bancos{
     display:flex;
     gap:15px;
@@ -251,6 +270,10 @@
     .grid-2{
         grid-template-columns:1fr;
     }
+
+    .btn-voltar-topo{
+        width: 100%;
+    }
 }
 </style>
 </head>
@@ -262,12 +285,12 @@
 
 <header class="topo-contas-pagar">
     <a href="dashboard.html">
-        <button class="btn-acao" style="background:#334155;">← Voltar</button>
+        <button class="btn-voltar-topo">← Voltar ao Menu</button>
     </a>
 
     <h1 class="titulo-contas-pagar">CONTAS A PAGAR</h1>
 
-    <div style="width:100px;"></div>
+    <div style="width:170px;"></div>
 </header>
 
 <div id="cardsBancos" class="cards-bancos"></div>
