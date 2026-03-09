@@ -6,6 +6,7 @@ const cardsBancos = document.getElementById("cardsBancos");
 const filtroBanco = document.getElementById("filtroBanco");
 const filtroData = document.getElementById("filtroData");
 const filtroMes = document.getElementById("filtroMes");
+const filtroStatus = document.getElementById("filtroStatus");
 
 const btnFiltrar = document.getElementById("btnFiltrar");
 const btnLimpar = document.getElementById("btnLimparFiltros");
@@ -16,6 +17,7 @@ const btnTransferir = document.getElementById("btnTransferir");
 const modalLancamento = document.getElementById("modalLancamento");
 const btnSalvarModal = document.getElementById("btnSalvarModal");
 const btnFecharModal = document.getElementById("btnFecharModal");
+const tituloModalLancamento = document.getElementById("tituloModalLancamento");
 
 const modalTransferencia = document.getElementById("modalTransferencia");
 const btnSalvarTransferencia = document.getElementById("btnSalvarTransferencia");
@@ -33,15 +35,12 @@ const t_data = document.getElementById("t_data");
 const t_obs = document.getElementById("t_obs");
 
 const listaTransferencias = document.getElementById("listaTransferencias");
-const tfFiltroData = document.getElementById("tfFiltroData");
-const tfFiltroMes = document.getElementById("tfFiltroMes");
-const btnFiltrarTransferencias = document.getElementById("btnFiltrarTransferencias");
-const btnLimparTransferencias = document.getElementById("btnLimparTransferencias");
 
 let bancos = [];
 let bancosLancamento = [];
 let bancosTransferencia = [];
 let roleUsuario = "admin";
+let contaEditandoId = null;
 
 function moeda(v) {
     return Number(v || 0).toLocaleString("pt-BR", {
@@ -64,6 +63,13 @@ function formatarDataBR(d) {
     const partes = String(d).split("-");
     if (partes.length !== 3) return d;
     return `${partes[2]}/${partes[1]}/${partes[0]}`;
+}
+
+function formatarValorInput(valor) {
+    return Number(valor || 0).toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
 }
 
 function getFaixaMes(valorMes) {
@@ -219,6 +225,44 @@ function renderCards() {
     });
 }
 
+function limparModalLancamento() {
+    contaEditandoId = null;
+    tituloModalLancamento.textContent = "Novo Lançamento Manual";
+    m_descricao.value = "";
+    m_valor.value = "";
+    m_data.value = "";
+    m_banco.value = "";
+}
+
+function abrirModalNovo() {
+    limparModalLancamento();
+    modalLancamento.style.display = "flex";
+}
+
+async function abrirModalEditar(id) {
+    if (ehVisualizador()) return;
+
+    const { data, error } = await supabase
+        .from("contas_pagar")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+    if (error || !data) {
+        console.error("Erro ao carregar conta para edição:", error);
+        alert("Erro ao carregar conta para edição.");
+        return;
+    }
+
+    contaEditandoId = id;
+    tituloModalLancamento.textContent = "Editar Lançamento";
+    m_descricao.value = data.descricao || "";
+    m_valor.value = formatarValorInput(data.valor || 0);
+    m_data.value = data.vencimento || "";
+    m_banco.value = data.banco_id || "";
+    modalLancamento.style.display = "flex";
+}
+
 async function carregarBancos() {
     const { data, error } = await supabase
         .from("bancos")
@@ -278,6 +322,10 @@ async function carregarContas() {
         }
     }
 
+    if (filtroStatus.value && filtroStatus.value !== "TODOS") {
+        query = query.eq("status", filtroStatus.value);
+    }
+
     const { data, error } = await query;
 
     if (error) {
@@ -293,10 +341,40 @@ async function carregarContas() {
 
     listaPagar.innerHTML = data.map((l) => {
         const banco = bancos.find((b) => b.id === l.banco_id);
+        const statusAtual = String(l.status || "ABERTO").toUpperCase();
 
-        let botao = "-";
-        if (!ehVisualizador() && String(l.status || "").toUpperCase() !== "PAGO") {
-            botao = `<button onclick="pagar('${l.id}')" style="background:#10b981;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-weight:bold;">Pagar</button>`;
+        let acoes = "-";
+
+        if (!ehVisualizador()) {
+            const botoes = [];
+
+            if (statusAtual !== "PAGO") {
+                botoes.push(`
+                    <button onclick="pagar('${l.id}')" class="btn-tabela" style="background:#10b981;">
+                        Pagar
+                    </button>
+                `);
+            } else {
+                botoes.push(`
+                    <button onclick="reabrirConta('${l.id}')" class="btn-tabela" style="background:#3b82f6;">
+                        Reabrir
+                    </button>
+                `);
+            }
+
+            botoes.push(`
+                <button onclick="editarConta('${l.id}')" class="btn-tabela" style="background:#f59e0b;">
+                    Editar
+                </button>
+            `);
+
+            botoes.push(`
+                <button onclick="excluirConta('${l.id}')" class="btn-tabela" style="background:#ef4444;">
+                    Excluir
+                </button>
+            `);
+
+            acoes = `<div class="acoes-tabela">${botoes.join("")}</div>`;
         }
 
         return `
@@ -305,15 +383,22 @@ async function carregarContas() {
                 <td>${banco?.nome || "-"}</td>
                 <td>${moeda(l.valor)}</td>
                 <td>${l.descricao || "-"}</td>
-                <td>${l.status || "ABERTO"}</td>
-                <td>${botao}</td>
+                <td>${statusAtual}</td>
+                <td>${acoes}</td>
             </tr>
         `;
     }).join("");
 }
 
+window.editarConta = async (id) => {
+    await abrirModalEditar(id);
+};
+
 window.pagar = async (id) => {
     if (ehVisualizador()) return;
+
+    const confirmar = window.confirm("Confirmar pagamento desta conta?");
+    if (!confirmar) return;
 
     const { data: conta, error: erroConta } = await supabase
         .from("contas_pagar")
@@ -361,6 +446,64 @@ window.pagar = async (id) => {
     await carregarContas();
 };
 
+window.reabrirConta = async (id) => {
+    if (ehVisualizador()) return;
+
+    const confirmar = window.confirm("Reabrir esta conta paga?");
+    if (!confirmar) return;
+
+    const { error } = await supabase
+        .from("contas_pagar")
+        .update({ status: "ABERTO" })
+        .eq("id", id);
+
+    if (error) {
+        console.error("Erro ao reabrir conta:", error);
+        alert("Erro ao reabrir conta.");
+        return;
+    }
+
+    await carregarContas();
+};
+
+window.excluirConta = async (id) => {
+    if (ehVisualizador()) return;
+
+    const confirmar = window.confirm("Deseja realmente excluir esta conta?");
+    if (!confirmar) return;
+
+    const { data: conta, error: erroConta } = await supabase
+        .from("contas_pagar")
+        .select("id, status")
+        .eq("id", id)
+        .single();
+
+    if (erroConta || !conta) {
+        console.error("Erro ao localizar conta:", erroConta);
+        alert("Erro ao localizar conta.");
+        return;
+    }
+
+    const statusAtual = String(conta.status || "").toUpperCase();
+    if (statusAtual === "PAGO") {
+        const confirmarPago = window.confirm("Esta conta está PAGA. Excluir mesmo assim?");
+        if (!confirmarPago) return;
+    }
+
+    const { error } = await supabase
+        .from("contas_pagar")
+        .delete()
+        .eq("id", id);
+
+    if (error) {
+        console.error("Erro ao excluir conta:", error);
+        alert("Erro ao excluir conta.");
+        return;
+    }
+
+    await carregarContas();
+};
+
 async function salvarConta() {
     if (ehVisualizador()) return;
 
@@ -389,27 +532,42 @@ async function salvarConta() {
         return;
     }
 
-    const { error } = await supabase
-        .from("contas_pagar")
-        .insert({
-            descricao,
-            valor,
-            vencimento,
-            banco_id,
-            status: "ABERTO"
-        });
+    if (contaEditandoId) {
+        const { error } = await supabase
+            .from("contas_pagar")
+            .update({
+                descricao,
+                valor,
+                vencimento,
+                banco_id
+            })
+            .eq("id", contaEditandoId);
 
-    if (error) {
-        console.error("Erro ao salvar conta:", error);
-        alert("Erro ao salvar lançamento.");
-        return;
+        if (error) {
+            console.error("Erro ao editar conta:", error);
+            alert("Erro ao editar lançamento.");
+            return;
+        }
+    } else {
+        const { error } = await supabase
+            .from("contas_pagar")
+            .insert({
+                descricao,
+                valor,
+                vencimento,
+                banco_id,
+                status: "ABERTO"
+            });
+
+        if (error) {
+            console.error("Erro ao salvar conta:", error);
+            alert("Erro ao salvar lançamento.");
+            return;
+        }
     }
 
     modalLancamento.style.display = "none";
-    m_descricao.value = "";
-    m_valor.value = "";
-    m_data.value = "";
-    m_banco.value = "";
+    limparModalLancamento();
 
     await carregarContas();
 }
@@ -512,23 +670,10 @@ async function transferir() {
 async function carregarTransferencias() {
     if (!listaTransferencias) return;
 
-    let query = supabase
+    const { data, error } = await supabase
         .from("transferencias_bancarias")
         .select("*")
         .order("data_transferencia", { ascending: false });
-
-    if (tfFiltroData?.value) {
-        query = query.eq("data_transferencia", tfFiltroData.value);
-    }
-
-    if (tfFiltroMes?.value) {
-        const faixa = getFaixaMes(tfFiltroMes.value);
-        if (faixa) {
-            query = query.gte("data_transferencia", faixa.inicio).lte("data_transferencia", faixa.fim);
-        }
-    }
-
-    const { data, error } = await query;
 
     if (error) {
         console.error("Erro ao carregar transferências:", error);
@@ -563,16 +708,18 @@ btnLimpar.onclick = () => {
     filtroBanco.value = "";
     filtroData.value = "";
     filtroMes.value = "";
+    filtroStatus.value = "ABERTO";
     carregarContas();
 };
 
 btnNovo.onclick = () => {
     if (ehVisualizador()) return;
-    modalLancamento.style.display = "flex";
+    abrirModalNovo();
 };
 
 btnFecharModal.onclick = () => {
     modalLancamento.style.display = "none";
+    limparModalLancamento();
 };
 
 btnSalvarModal.onclick = salvarConta;
@@ -590,17 +737,10 @@ btnFecharTransferencia.onclick = () => {
 
 btnSalvarTransferencia.onclick = transferir;
 
-btnFiltrarTransferencias?.addEventListener("click", carregarTransferencias);
-
-btnLimparTransferencias?.addEventListener("click", () => {
-    if (tfFiltroData) tfFiltroData.value = "";
-    if (tfFiltroMes) tfFiltroMes.value = "";
-    carregarTransferencias();
-});
-
 document.addEventListener("DOMContentLoaded", async () => {
     await verificarLogin();
     await carregarRoleUsuario();
     await carregarBancos();
+    filtroStatus.value = "ABERTO";
     await carregarContas();
 });
