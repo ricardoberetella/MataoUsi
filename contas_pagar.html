@@ -55,15 +55,15 @@
 
 .filtros-linha{
     display:grid;
-    grid-template-columns: 180px 230px 230px 1fr;
+    grid-template-columns: 1fr auto;
     gap:14px;
     align-items:end;
 }
 
 .campos-linha{
     display:grid;
-    grid-template-columns: 180px 230px 230px;
-    gap:14px;
+    grid-template-columns: 170px 200px 200px;
+    gap:16px;
     align-items:end;
 }
 
@@ -79,11 +79,14 @@
     display:flex;
     flex-direction:column;
     gap:6px;
+    min-width:0;
 }
 
 .campo-filtro input,
 .campo-filtro select{
     width:100%;
+    max-width:100%;
+    box-sizing:border-box;
     padding:12px 14px;
     border-radius:10px;
     background:#1e293b;
@@ -178,6 +181,7 @@
     border:1px solid #334155;
     color:white;
     border-radius:8px;
+    box-sizing:border-box;
 }
 
 .acoes-modal{
@@ -219,7 +223,7 @@
     }
 
     .campos-linha{
-        grid-template-columns: repeat(3, minmax(160px, 1fr));
+        grid-template-columns: 170px 200px 200px;
     }
 
     .botoes-linha{
