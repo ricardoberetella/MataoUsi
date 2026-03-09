@@ -9,290 +9,203 @@
 <link rel="stylesheet" href="css/dashboard.css">
 
 <style>
+
 .page-wrap{
-    max-width: 1120px;
-    margin: 20px auto;
-    padding: 0 15px 25px;
+max-width:1200px;
+margin:20px auto;
+padding:0 15px 25px;
 }
 
 .container{
-    width: 100%;
-    padding: 25px;
-    border-radius: 18px;
-    background: rgba(2,6,23,.95);
-    border: 1px solid rgba(56,189,248,.35);
-    box-shadow: 0 0 20px rgba(56,189,248,.15);
+width:100%;
+padding:25px;
+border-radius:18px;
+background:rgba(2,6,23,.95);
+border:1px solid rgba(56,189,248,.35);
+box-shadow:0 0 20px rgba(56,189,248,.15);
 }
 
 .topo-contas-pagar{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:25px;
-    flex-wrap:wrap;
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:25px;
+flex-wrap:wrap;
 }
 
 .titulo-contas-pagar{
-    color:#38bdf8;
-    font-size:30px;
-    margin:0;
-    flex:1;
-    text-align:center;
+color:#38bdf8;
+font-size:30px;
+margin:0;
+flex:1;
+text-align:center;
 }
 
 .btn-voltar-topo{
-    background: transparent;
-    color: #38bdf8;
-    border: 2px solid #38bdf8;
-    border-radius: 14px;
-    padding: 12px 22px;
-    font-weight: 700;
-    font-size: 16px;
-    cursor: pointer;
-    transition: .2s ease;
-    box-shadow: 0 0 14px rgba(56,189,248,.12);
+background:transparent;
+color:#38bdf8;
+border:2px solid #38bdf8;
+border-radius:14px;
+padding:12px 22px;
+font-weight:700;
+font-size:16px;
+cursor:pointer;
+transition:.2s;
 }
 
 .btn-voltar-topo:hover{
-    background: rgba(56,189,248,.08);
-    box-shadow: 0 0 18px rgba(56,189,248,.2);
-    transform: translateY(-1px);
+background:rgba(56,189,248,.08);
 }
 
 .cards-bancos{
-    display:flex;
-    gap:15px;
-    margin-bottom:20px;
-    flex-wrap:wrap;
+display:flex;
+gap:15px;
+margin-bottom:20px;
+flex-wrap:wrap;
 }
 
 .bloco-filtros{
-    background:rgba(30,41,59,.65);
-    padding:18px;
-    border-radius:12px;
+background:rgba(30,41,59,.65);
+padding:18px;
+border-radius:12px;
 }
 
 .filtros-linha{
-    display:grid;
-    grid-template-columns: 1fr auto;
-    gap:14px;
-    align-items:end;
+display:grid;
+grid-template-columns:1fr auto;
+gap:14px;
+align-items:end;
 }
 
 .campos-linha{
-    display:grid;
-    grid-template-columns: 170px 200px 200px 170px;
-    gap:16px;
-    align-items:end;
+display:grid;
+grid-template-columns:160px 180px 180px 160px 160px;
+gap:16px;
+align-items:end;
 }
 
 .botoes-linha{
-    display:flex;
-    justify-content:flex-end;
-    align-items:end;
-    gap:12px;
-    flex-wrap:nowrap;
+display:flex;
+justify-content:flex-end;
+align-items:end;
+gap:12px;
 }
 
 .campo-filtro{
-    display:flex;
-    flex-direction:column;
-    gap:6px;
-    min-width:0;
+display:flex;
+flex-direction:column;
+gap:6px;
 }
 
 .campo-filtro input,
 .campo-filtro select{
-    width:100%;
-    max-width:100%;
-    box-sizing:border-box;
-    padding:12px 14px;
-    border-radius:10px;
-    background:#1e293b;
-    color:white;
-    border:1px solid #334155;
-    min-width:0;
-    height:48px;
-    font-size:16px;
+padding:12px 14px;
+border-radius:10px;
+background:#1e293b;
+color:white;
+border:1px solid #334155;
+height:48px;
+font-size:16px;
 }
 
 .btn-acao{
-    cursor:pointer;
-    border:none;
-    padding:0 20px;
-    border-radius:10px;
-    font-weight:bold;
-    color:white;
-    transition:.2s;
-    white-space:nowrap;
-    height:48px;
-    font-size:16px;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-}
-
-.btn-acao:hover{
-    transform:translateY(-1px);
-    filter:brightness(1.05);
+cursor:pointer;
+border:none;
+padding:0 20px;
+border-radius:10px;
+font-weight:bold;
+color:white;
+height:48px;
+font-size:16px;
 }
 
 .label-futuro{
-    color:#38bdf8;
-    font-size:.78rem;
-    letter-spacing:1px;
-    text-transform:uppercase;
+color:#38bdf8;
+font-size:.78rem;
+letter-spacing:1px;
+text-transform:uppercase;
 }
 
 .tabela-wrapper{
-    margin-top:25px;
-    overflow-x:auto;
+margin-top:25px;
+overflow-x:auto;
 }
 
 .tabela-pagar{
-    width:100%;
-    border-collapse:collapse;
-    min-width:1080px;
+width:100%;
+border-collapse:collapse;
+min-width:1100px;
 }
 
 .tabela-pagar thead tr{
-    border-bottom:2px solid #38bdf8;
-    color:#38bdf8;
+border-bottom:2px solid #38bdf8;
+color:#38bdf8;
 }
 
 .tabela-pagar th,
 .tabela-pagar td{
-    padding:12px;
+padding:12px;
 }
 
 .tabela-pagar tbody tr{
-    border-bottom:1px solid rgba(148,163,184,.18);
+border-bottom:1px solid rgba(148,163,184,.18);
+}
+
+.valor-entrada{
+color:#22c55e;
+font-weight:bold;
+}
+
+.valor-saida{
+color:#ef4444;
+font-weight:bold;
 }
 
 .modal-financeiro{
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,.85);
-    display:none;
-    align-items:center;
-    justify-content:center;
-    z-index:1000;
-    padding:20px;
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.85);
+display:none;
+align-items:center;
+justify-content:center;
+z-index:1000;
+padding:20px;
 }
 
 .modal-content{
-    background:#0f172a;
-    border:2px solid #38bdf8;
-    padding:25px;
-    border-radius:15px;
-    width:100%;
-    max-width:460px;
-    color:white;
+background:#0f172a;
+border:2px solid #38bdf8;
+padding:25px;
+border-radius:15px;
+width:100%;
+max-width:460px;
+color:white;
 }
 
 .modal-content input,
 .modal-content select,
 .modal-content textarea{
-    width:100%;
-    padding:12px;
-    margin:10px 0;
-    background:#1e293b;
-    border:1px solid #334155;
-    color:white;
-    border-radius:8px;
-    box-sizing:border-box;
+width:100%;
+padding:12px;
+margin:10px 0;
+background:#1e293b;
+border:1px solid #334155;
+color:white;
+border-radius:8px;
 }
 
 .acoes-modal{
-    display:flex;
-    gap:10px;
-    margin-top:20px;
+display:flex;
+gap:10px;
+margin-top:20px;
 }
 
 .grid-2{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:14px;
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:14px;
 }
 
-.modal-transferencia{
-    max-width:760px;
-}
-
-.tabela-transferencias{
-    width:100%;
-    border-collapse:collapse;
-    margin-top:20px;
-}
-
-.tabela-transferencias th,
-.tabela-transferencias td{
-    padding:10px;
-    border-bottom:1px solid rgba(148,163,184,.18);
-}
-
-.tabela-transferencias thead tr{
-    border-bottom:2px solid #38bdf8;
-    color:#38bdf8;
-}
-
-.acoes-tabela{
-    display:flex;
-    gap:8px;
-    align-items:center;
-    flex-wrap:wrap;
-}
-
-.btn-tabela{
-    border:none;
-    padding:6px 10px;
-    border-radius:6px;
-    cursor:pointer;
-    font-weight:bold;
-    color:#fff;
-}
-
-@media(max-width: 1320px){
-    .filtros-linha{
-        grid-template-columns: 1fr;
-    }
-
-    .botoes-linha{
-        justify-content:flex-start;
-        flex-wrap:wrap;
-    }
-}
-
-@media(max-width: 900px){
-    .campos-linha{
-        grid-template-columns: 1fr 1fr;
-    }
-}
-
-@media(max-width: 768px){
-    .campos-linha{
-        grid-template-columns: 1fr;
-    }
-
-    .botoes-linha{
-        flex-direction:column;
-        align-items:stretch;
-    }
-
-    .campo-filtro input,
-    .campo-filtro select,
-    .btn-acao{
-        width:100%;
-    }
-
-    .grid-2{
-        grid-template-columns:1fr;
-    }
-
-    .btn-voltar-topo{
-        width: 100%;
-    }
-}
 </style>
 </head>
 
@@ -302,213 +215,120 @@
 <div class="container">
 
 <header class="topo-contas-pagar">
-    <a href="dashboard.html">
-        <button class="btn-voltar-topo">← Voltar ao Menu</button>
-    </a>
 
-    <h1 class="titulo-contas-pagar">CONTAS A PAGAR</h1>
+<a href="dashboard.html">
+<button class="btn-voltar-topo">← Voltar ao Menu</button>
+</a>
 
-    <div style="width:170px;"></div>
+<h1 class="titulo-contas-pagar">FINANCEIRO</h1>
+
+<div style="width:170px;"></div>
+
 </header>
 
 <div id="cardsBancos" class="cards-bancos"></div>
 
 <div class="bloco-filtros">
-    <div class="filtros-linha">
 
-        <div class="campos-linha">
-            <div class="campo-filtro">
-                <label class="label-futuro" for="filtroBanco">Banco</label>
-                <select id="filtroBanco">
-                    <option value="">Todos</option>
-                </select>
-            </div>
+<div class="filtros-linha">
 
-            <div class="campo-filtro">
-                <label class="label-futuro" for="filtroData">Data exata</label>
-                <input type="date" id="filtroData">
-            </div>
+<div class="campos-linha">
 
-            <div class="campo-filtro">
-                <label class="label-futuro" for="filtroMes">Mês</label>
-                <input type="month" id="filtroMes">
-            </div>
+<div class="campo-filtro">
+<label class="label-futuro">Banco</label>
+<select id="filtroBanco">
+<option value="">Todos</option>
+</select>
+</div>
 
-            <div class="campo-filtro">
-                <label class="label-futuro" for="filtroStatus">Status</label>
-                <select id="filtroStatus">
-                    <option value="ABERTO" selected>Não pagos</option>
-                    <option value="PAGO">Pagos</option>
-                    <option value="TODOS">Todos</option>
-                </select>
-            </div>
-        </div>
+<div class="campo-filtro">
+<label class="label-futuro">Data exata</label>
+<input type="date" id="filtroData">
+</div>
 
-        <div class="botoes-linha">
-            <button id="btnTransferir" class="btn-acao" style="background:#8b5cf6;">
-                Transferências
-            </button>
+<div class="campo-filtro">
+<label class="label-futuro">Mês</label>
+<input type="month" id="filtroMes">
+</div>
 
-            <button id="btnFiltrar" class="btn-acao" style="background:#38bdf8;">
-                Filtrar
-            </button>
+<div class="campo-filtro">
+<label class="label-futuro">Status</label>
+<select id="filtroStatus">
+<option value="ABERTO">Não pagos</option>
+<option value="PAGO">Pagos</option>
+<option value="TODOS">Todos</option>
+</select>
+</div>
 
-            <button id="btnLimparFiltros" class="btn-acao" style="background:#475569;">
-                Limpar
-            </button>
+<div class="campo-filtro">
+<label class="label-futuro">Tipo</label>
+<select id="filtroTipo">
+<option value="TODOS">Todos</option>
+<option value="SAIDA">Despesas</option>
+<option value="ENTRADA">NF Entrada</option>
+</select>
+</div>
 
-            <button id="btnNovoPagar" class="btn-acao" style="background:#10b981;">
-                + Novo Lançamento
-            </button>
+</div>
 
-            <button id="btnNfEntrada" class="btn-acao" style="background:#06b6d4;">
-                NF Entrada
-            </button>
-        </div>
+<div class="botoes-linha">
 
-    </div>
+<button id="btnTransferir" class="btn-acao" style="background:#8b5cf6;">
+Transferências
+</button>
+
+<button id="btnFiltrar" class="btn-acao" style="background:#38bdf8;">
+Filtrar
+</button>
+
+<button id="btnLimparFiltros" class="btn-acao" style="background:#475569;">
+Limpar
+</button>
+
+<button id="btnNovoPagar" class="btn-acao" style="background:#10b981;">
++ Novo Lançamento
+</button>
+
+<button id="btnNfEntrada" class="btn-acao" style="background:#06b6d4;">
+NF Entrada
+</button>
+
+</div>
+
+</div>
+
 </div>
 
 <div class="tabela-wrapper">
-    <table class="tabela-pagar">
-        <thead>
-            <tr>
-                <th>Vencimento</th>
-                <th>Banco</th>
-                <th>Valor</th>
-                <th>Origem da Despesa</th>
-                <th>Status</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody id="listaPagar"></tbody>
-    </table>
-</div>
+
+<table class="tabela-pagar">
+
+<thead>
+<tr>
+<th>Data</th>
+<th>Banco</th>
+<th>Descrição</th>
+<th>Entrada</th>
+<th>Saída</th>
+<th>Status</th>
+<th>Ações</th>
+</tr>
+</thead>
+
+<tbody id="listaPagar"></tbody>
+
+</table>
 
 </div>
+
 </div>
-
-<div id="modalLancamento" class="modal-financeiro">
-    <div class="modal-content">
-        <h2 id="tituloModalLancamento" class="label-futuro" style="font-size:1rem; margin-bottom:16px;">
-            Novo Lançamento Manual
-        </h2>
-
-        <label class="label-futuro">Descrição / NF</label>
-        <input type="text" id="m_descricao">
-
-        <label class="label-futuro">Valor (R$)</label>
-        <input type="text" id="m_valor" oninput="validarMoeda(this)">
-
-        <label class="label-futuro">Data de Vencimento</label>
-        <input type="date" id="m_data">
-
-        <label class="label-futuro">Banco para Débito</label>
-        <select id="m_banco"></select>
-
-        <div class="acoes-modal">
-            <button id="btnSalvarModal" class="btn-acao" style="background:#10b981;flex:1">
-                Confirmar
-            </button>
-
-            <button id="btnFecharModal" class="btn-acao" style="background:#f87171;flex:1">
-                Cancelar
-            </button>
-        </div>
-    </div>
-</div>
-
-<div id="modalNfEntrada" class="modal-financeiro">
-    <div class="modal-content">
-        <h2 class="label-futuro" style="font-size:1rem; margin-bottom:16px;">
-            NF Entrada
-        </h2>
-
-        <label class="label-futuro">Descrição / NF</label>
-        <input type="text" id="nf_descricao">
-
-        <label class="label-futuro">Valor (R$)</label>
-        <input type="text" id="nf_valor" oninput="validarMoeda(this)">
-
-        <label class="label-futuro">Data de Entrada</label>
-        <input type="date" id="nf_data">
-
-        <label class="label-futuro">Banco para Crédito</label>
-        <select id="nf_banco"></select>
-
-        <div class="acoes-modal">
-            <button id="btnSalvarNfEntrada" class="btn-acao" style="background:#06b6d4;flex:1">
-                Confirmar
-            </button>
-
-            <button id="btnFecharNfEntrada" class="btn-acao" style="background:#f87171;flex:1">
-                Cancelar
-            </button>
-        </div>
-    </div>
-</div>
-
-<div id="modalTransferencia" class="modal-financeiro">
-    <div class="modal-content modal-transferencia">
-        <h2 class="label-futuro" style="font-size:1rem; margin-bottom:16px;">Transferências</h2>
-
-        <div class="grid-2">
-            <div>
-                <label class="label-futuro">Origem</label>
-                <select id="t_origem"></select>
-            </div>
-
-            <div>
-                <label class="label-futuro">Destino</label>
-                <select id="t_destino"></select>
-            </div>
-
-            <div>
-                <label class="label-futuro">Valor</label>
-                <input type="text" id="t_valor" oninput="validarMoeda(this)">
-            </div>
-
-            <div>
-                <label class="label-futuro">Data</label>
-                <input type="date" id="t_data">
-            </div>
-        </div>
-
-        <label class="label-futuro">Observação</label>
-        <textarea id="t_obs"></textarea>
-
-        <div class="acoes-modal">
-            <button id="btnSalvarTransferencia" class="btn-acao" style="background:#8b5cf6;flex:1">
-                Confirmar
-            </button>
-
-            <button id="btnFecharTransferencia" class="btn-acao" style="background:#f87171;flex:1">
-                Cancelar
-            </button>
-        </div>
-
-        <div style="overflow:auto;max-height:300px">
-            <table class="tabela-transferencias">
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Origem</th>
-                        <th>Destino</th>
-                        <th>Valor</th>
-                        <th>Observação</th>
-                    </tr>
-                </thead>
-                <tbody id="listaTransferencias"></tbody>
-            </table>
-        </div>
-    </div>
 </div>
 
 <script type="module" src="js/contas_pagar.js"></script>
 
 <script>
 function validarMoeda(input){
-    input.value = input.value.replace(/[^0-9,]/g,'');
+input.value=input.value.replace(/[^0-9,]/g,'');
 }
 </script>
 
