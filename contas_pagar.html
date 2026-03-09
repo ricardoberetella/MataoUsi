@@ -71,10 +71,9 @@ border-radius:12px;
 }
 
 .filtros-linha{
-display:grid;
-grid-template-columns:1fr auto;
-gap:14px;
-align-items:end;
+display:flex;
+flex-direction:column;
+gap:16px;
 }
 
 .campos-linha{
@@ -87,8 +86,10 @@ align-items:end;
 .botoes-linha{
 display:flex;
 justify-content:flex-end;
-align-items:end;
+align-items:center;
 gap:12px;
+flex-wrap:wrap;
+padding-top:4px;
 }
 
 .campo-filtro{
@@ -204,6 +205,26 @@ margin-top:20px;
 display:grid;
 grid-template-columns:1fr 1fr;
 gap:14px;
+}
+
+@media (max-width: 1100px){
+.campos-linha{
+grid-template-columns:repeat(2, minmax(180px, 1fr));
+}
+}
+
+@media (max-width: 700px){
+.campos-linha{
+grid-template-columns:1fr;
+}
+
+.botoes-linha{
+justify-content:stretch;
+}
+
+.btn-acao{
+width:100%;
+}
 }
 
 </style>
