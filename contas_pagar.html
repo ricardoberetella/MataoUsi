@@ -290,7 +290,7 @@
     }
 
     .btn-voltar-topo{
-        width:100%;
+        width: 100%;
     }
 }
 </style>
@@ -360,6 +360,10 @@
             <button id="btnNovoPagar" class="btn-acao" style="background:#10b981;">
                 + Novo Lançamento
             </button>
+
+            <button id="btnNfEntrada" class="btn-acao" style="background:#06b6d4;">
+                NF Entrada
+            </button>
         </div>
 
     </div>
@@ -408,6 +412,36 @@
             </button>
 
             <button id="btnFecharModal" class="btn-acao" style="background:#f87171;flex:1">
+                Cancelar
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="modalNfEntrada" class="modal-financeiro">
+    <div class="modal-content">
+        <h2 class="label-futuro" style="font-size:1rem; margin-bottom:16px;">
+            NF Entrada
+        </h2>
+
+        <label class="label-futuro">Descrição / NF</label>
+        <input type="text" id="nf_descricao">
+
+        <label class="label-futuro">Valor (R$)</label>
+        <input type="text" id="nf_valor" oninput="validarMoeda(this)">
+
+        <label class="label-futuro">Data de Entrada</label>
+        <input type="date" id="nf_data">
+
+        <label class="label-futuro">Banco para Crédito</label>
+        <select id="nf_banco"></select>
+
+        <div class="acoes-modal">
+            <button id="btnSalvarNfEntrada" class="btn-acao" style="background:#06b6d4;flex:1">
+                Confirmar
+            </button>
+
+            <button id="btnFecharNfEntrada" class="btn-acao" style="background:#f87171;flex:1">
                 Cancelar
             </button>
         </div>
