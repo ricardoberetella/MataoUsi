@@ -205,10 +205,10 @@ async function carregarContas() {
 
         return `
             <tr>
-                <td>${l.descricao || "-"}</td>
+                <td>${formatarDataBR(l.vencimento)}</td>
                 <td>${banco?.nome || "-"}</td>
                 <td>${moeda(l.valor)}</td>
-                <td>${formatarDataBR(l.vencimento)}</td>
+                <td>${l.descricao || "-"}</td>
                 <td>${l.status || "ABERTO"}</td>
                 <td>${botao}</td>
             </tr>
