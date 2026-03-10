@@ -32,6 +32,7 @@ MODAIS
 
 const modalNovoPagar = document.getElementById("modalNovoPagar");
 const modalNfEntrada = document.getElementById("modalNfEntrada");
+const modalTransferencia = document.getElementById("modalTransferencia");
 
 const btnCancelarNovoPagar = document.getElementById("btnCancelarNovoPagar");
 const btnSalvarNovoPagar = document.getElementById("btnSalvarNovoPagar");
@@ -39,20 +40,34 @@ const btnSalvarNovoPagar = document.getElementById("btnSalvarNovoPagar");
 const btnCancelarNfEntrada = document.getElementById("btnCancelarNfEntrada");
 const btnSalvarNfEntrada = document.getElementById("btnSalvarNfEntrada");
 
+const btnCancelarTransferencia = document.getElementById("btnCancelarTransferencia");
+const btnSalvarTransferencia = document.getElementById("btnSalvarTransferencia");
+
 const novoBanco = document.getElementById("novoBanco");
 const novoDescricao = document.getElementById("novoDescricao");
 const novoValor = document.getElementById("novoValor");
 const novoVencimento = document.getElementById("novoVencimento");
-const novoStatus = document.getElementById("novoStatus");
-const novoTipo = document.getElementById("novoTipo");
 const msgNovoPagar = document.getElementById("msgNovoPagar");
 
 const nfBanco = document.getElementById("nfBanco");
 const nfDescricao = document.getElementById("nfDescricao");
 const nfValor = document.getElementById("nfValor");
 const nfVencimento = document.getElementById("nfVencimento");
-const nfStatus = document.getElementById("nfStatus");
 const msgNfEntrada = document.getElementById("msgNfEntrada");
+
+const transferBancoOrigem = document.getElementById("transferBancoOrigem");
+const transferBancoDestino = document.getElementById("transferBancoDestino");
+const transferDescricao = document.getElementById("transferDescricao");
+const transferValor = document.getElementById("transferValor");
+const transferData = document.getElementById("transferData");
+const msgTransferencia = document.getElementById("msgTransferencia");
+
+/* =========================
+CONFIG BANCOS
+========================= */
+
+const BANCOS_NOVO_LANCAMENTO = ["SICOOB", "CAIXA FEDERAL"];
+const BANCOS_TRANSFERENCIA = ["SICOOB", "CAIXA", "CAIXA FEDERAL"];
 
 /* =========================
 FORMATADORES
@@ -67,7 +82,7 @@ function moeda(v) {
 
 function formatarDataBR(data) {
     if (!data) return "-";
-    const d = new Date(data + "T00:00:00");
+    const d = new Date(`${data}T00:00:00`);
     return d.toLocaleDateString("pt-BR");
 }
 
@@ -82,6 +97,19 @@ function hojeISO() {
     const m = String(hoje.getMonth() + 1).padStart(2, "0");
     const d = String(hoje.getDate()).padStart(2, "0");
     return `${y}-${m}-${d}`;
+}
+
+function normalizarTexto(txt) {
+    return String(txt || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim()
+        .toUpperCase();
+}
+
+function bancoPermitido(nomeBanco, permitidos) {
+    const nome = normalizarTexto(nomeBanco);
+    return permitidos.some((item) => nome === normalizarTexto(item));
 }
 
 /* =========================
@@ -101,8 +129,6 @@ function limparModalNovoPagar() {
     if (novoDescricao) novoDescricao.value = "";
     if (novoValor) novoValor.value = "";
     if (novoVencimento) novoVencimento.value = hojeISO();
-    if (novoStatus) novoStatus.value = "ABERTO";
-    if (novoTipo) novoTipo.value = "SAIDA";
     if (msgNovoPagar) msgNovoPagar.textContent = "";
 }
 
@@ -111,8 +137,16 @@ function limparModalNfEntrada() {
     if (nfDescricao) nfDescricao.value = "NF Entrada";
     if (nfValor) nfValor.value = "";
     if (nfVencimento) nfVencimento.value = hojeISO();
-    if (nfStatus) nfStatus.value = "ABERTO";
     if (msgNfEntrada) msgNfEntrada.textContent = "";
+}
+
+function limparModalTransferencia() {
+    if (transferBancoOrigem) transferBancoOrigem.value = "";
+    if (transferBancoDestino) transferBancoDestino.value = "";
+    if (transferDescricao) transferDescricao.value = "Transferência entre bancos";
+    if (transferValor) transferValor.value = "";
+    if (transferData) transferData.value = hojeISO();
+    if (msgTransferencia) msgTransferencia.textContent = "";
 }
 
 /* =========================
@@ -130,32 +164,65 @@ async function carregarBancos() {
         return;
     }
 
-    if (filtroBanco) filtroBanco.innerHTML = `<option value="">Todos</option>`;
-    if (novoBanco) novoBanco.innerHTML = `<option value="">Selecione</option>`;
-    if (nfBanco) nfBanco.innerHTML = `<option value="">Selecione</option>`;
+    const bancos = data || [];
 
-    (data || []).forEach((b) => {
-        if (filtroBanco) {
-            const opt1 = document.createElement("option");
-            opt1.value = b.id;
-            opt1.textContent = b.nome;
-            filtroBanco.appendChild(opt1);
-        }
+    if (filtroBanco) {
+        filtroBanco.innerHTML = `<option value="">Todos</option>`;
+        bancos.forEach((b) => {
+            const opt = document.createElement("option");
+            opt.value = b.id;
+            opt.textContent = b.nome;
+            filtroBanco.appendChild(opt);
+        });
+    }
 
-        if (novoBanco) {
-            const opt2 = document.createElement("option");
-            opt2.value = b.id;
-            opt2.textContent = b.nome;
-            novoBanco.appendChild(opt2);
-        }
+    if (novoBanco) {
+        novoBanco.innerHTML = `<option value="">Selecione</option>`;
+        bancos
+            .filter((b) => bancoPermitido(b.nome, BANCOS_NOVO_LANCAMENTO))
+            .forEach((b) => {
+                const opt = document.createElement("option");
+                opt.value = b.id;
+                opt.textContent = b.nome;
+                novoBanco.appendChild(opt);
+            });
+    }
 
-        if (nfBanco) {
-            const opt3 = document.createElement("option");
-            opt3.value = b.id;
-            opt3.textContent = b.nome;
-            nfBanco.appendChild(opt3);
-        }
-    });
+    if (nfBanco) {
+        nfBanco.innerHTML = `<option value="">Selecione</option>`;
+        bancos
+            .filter((b) => bancoPermitido(b.nome, BANCOS_NOVO_LANCAMENTO))
+            .forEach((b) => {
+                const opt = document.createElement("option");
+                opt.value = b.id;
+                opt.textContent = b.nome;
+                nfBanco.appendChild(opt);
+            });
+    }
+
+    if (transferBancoOrigem) {
+        transferBancoOrigem.innerHTML = `<option value="">Selecione</option>`;
+        bancos
+            .filter((b) => bancoPermitido(b.nome, BANCOS_TRANSFERENCIA))
+            .forEach((b) => {
+                const opt = document.createElement("option");
+                opt.value = b.id;
+                opt.textContent = b.nome;
+                transferBancoOrigem.appendChild(opt);
+            });
+    }
+
+    if (transferBancoDestino) {
+        transferBancoDestino.innerHTML = `<option value="">Selecione</option>`;
+        bancos
+            .filter((b) => bancoPermitido(b.nome, BANCOS_TRANSFERENCIA))
+            .forEach((b) => {
+                const opt = document.createElement("option");
+                opt.value = b.id;
+                opt.textContent = b.nome;
+                transferBancoDestino.appendChild(opt);
+            });
+    }
 }
 
 /* =========================
@@ -194,7 +261,6 @@ async function carregarContas() {
         const dataFim = new Date(`${filtroMes.value}-01T00:00:00`);
         dataFim.setMonth(dataFim.getMonth() + 1);
         const fim = dataFim.toISOString().slice(0, 10);
-
         query = query.gte("vencimento", inicio).lt("vencimento", fim);
     }
 
@@ -248,7 +314,7 @@ async function carregarContas() {
 }
 
 /* =========================
-SALVAR LANÇAMENTO
+SALVAR NOVO LANÇAMENTO
 ========================= */
 
 async function salvarNovoPagar() {
@@ -256,8 +322,6 @@ async function salvarNovoPagar() {
     const descricao = novoDescricao?.value?.trim() || "";
     const valor = moedaParaNumero(novoValor?.value);
     const vencimento = novoVencimento?.value || "";
-    const status = novoStatus?.value || "ABERTO";
-    const tipo = novoTipo?.value || "SAIDA";
 
     if (!banco_id || !descricao || !valor || !vencimento) {
         if (msgNovoPagar) msgNovoPagar.textContent = "Preencha banco, descrição, valor e vencimento.";
@@ -273,8 +337,8 @@ async function salvarNovoPagar() {
             descricao,
             valor,
             vencimento,
-            status,
-            tipo
+            status: "ABERTO",
+            tipo: "SAIDA"
         }]);
 
     if (error) {
@@ -297,7 +361,6 @@ async function salvarNfEntrada() {
     const descricao = nfDescricao?.value?.trim() || "NF Entrada";
     const valor = moedaParaNumero(nfValor?.value);
     const vencimento = nfVencimento?.value || "";
-    const status = nfStatus?.value || "ABERTO";
 
     if (!banco_id || !descricao || !valor || !vencimento) {
         if (msgNfEntrada) msgNfEntrada.textContent = "Preencha banco, descrição, valor e data.";
@@ -313,7 +376,7 @@ async function salvarNfEntrada() {
             descricao,
             valor,
             vencimento,
-            status,
+            status: "ABERTO",
             tipo: "ENTRADA"
         }]);
 
@@ -325,6 +388,63 @@ async function salvarNfEntrada() {
 
     fecharModal(modalNfEntrada);
     limparModalNfEntrada();
+    await carregarContas();
+}
+
+/* =========================
+SALVAR TRANSFERÊNCIA
+========================= */
+
+async function salvarTransferencia() {
+    const bancoOrigem = transferBancoOrigem?.value || "";
+    const bancoDestino = transferBancoDestino?.value || "";
+    const descricaoBase = transferDescricao?.value?.trim() || "Transferência entre bancos";
+    const valor = moedaParaNumero(transferValor?.value);
+    const vencimento = transferData?.value || "";
+
+    if (!bancoOrigem || !bancoDestino || !valor || !vencimento) {
+        if (msgTransferencia) msgTransferencia.textContent = "Preencha origem, destino, valor e data.";
+        return;
+    }
+
+    if (bancoOrigem === bancoDestino) {
+        if (msgTransferencia) msgTransferencia.textContent = "Origem e destino não podem ser iguais.";
+        return;
+    }
+
+    if (msgTransferencia) msgTransferencia.textContent = "Salvando transferência...";
+
+    const lancamentos = [
+        {
+            banco_id: bancoOrigem,
+            descricao: `${descricaoBase} - saída`,
+            valor,
+            vencimento,
+            status: "PAGO",
+            tipo: "SAIDA"
+        },
+        {
+            banco_id: bancoDestino,
+            descricao: `${descricaoBase} - entrada`,
+            valor,
+            vencimento,
+            status: "PAGO",
+            tipo: "ENTRADA"
+        }
+    ];
+
+    const { error } = await supabase
+        .from("contas_pagar")
+        .insert(lancamentos);
+
+    if (error) {
+        console.error(error);
+        if (msgTransferencia) msgTransferencia.textContent = "Erro ao salvar transferência.";
+        return;
+    }
+
+    fecharModal(modalTransferencia);
+    limparModalTransferencia();
     await carregarContas();
 }
 
@@ -352,13 +472,12 @@ window.marcarPago = marcarPago;
 LIMPAR FILTROS
 ========================= */
 
-function limparFiltros(){
+function limparFiltros() {
     if (filtroBanco) filtroBanco.value = "";
     if (filtroData) filtroData.value = "";
     if (filtroMes) filtroMes.value = "";
     if (filtroStatus) filtroStatus.value = "ABERTO";
     if (filtroTipo) filtroTipo.value = "TODOS";
-
     carregarContas();
 }
 
@@ -375,7 +494,8 @@ if (btnLimparFiltros) btnLimparFiltros.onclick = limparFiltros;
 
 if (btnTransferir) {
     btnTransferir.onclick = () => {
-        alert("Tela de transferências ainda não foi criada.");
+        limparModalTransferencia();
+        abrirModal(modalTransferencia);
     };
 }
 
@@ -394,24 +514,20 @@ if (btnNfEntrada) {
 }
 
 if (btnCancelarNovoPagar) {
-    btnCancelarNovoPagar.onclick = () => {
-        fecharModal(modalNovoPagar);
-    };
+    btnCancelarNovoPagar.onclick = () => fecharModal(modalNovoPagar);
 }
 
 if (btnCancelarNfEntrada) {
-    btnCancelarNfEntrada.onclick = () => {
-        fecharModal(modalNfEntrada);
-    };
+    btnCancelarNfEntrada.onclick = () => fecharModal(modalNfEntrada);
 }
 
-if (btnSalvarNovoPagar) {
-    btnSalvarNovoPagar.onclick = salvarNovoPagar;
+if (btnCancelarTransferencia) {
+    btnCancelarTransferencia.onclick = () => fecharModal(modalTransferencia);
 }
 
-if (btnSalvarNfEntrada) {
-    btnSalvarNfEntrada.onclick = salvarNfEntrada;
-}
+if (btnSalvarNovoPagar) btnSalvarNovoPagar.onclick = salvarNovoPagar;
+if (btnSalvarNfEntrada) btnSalvarNfEntrada.onclick = salvarNfEntrada;
+if (btnSalvarTransferencia) btnSalvarTransferencia.onclick = salvarTransferencia;
 
 if (modalNovoPagar) {
     modalNovoPagar.addEventListener("click", (e) => {
@@ -425,10 +541,17 @@ if (modalNfEntrada) {
     });
 }
 
+if (modalTransferencia) {
+    modalTransferencia.addEventListener("click", (e) => {
+        if (e.target === modalTransferencia) fecharModal(modalTransferencia);
+    });
+}
+
 document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
         fecharModal(modalNovoPagar);
         fecharModal(modalNfEntrada);
+        fecharModal(modalTransferencia);
     }
 });
 
@@ -436,8 +559,8 @@ document.addEventListener("keydown", (e) => {
 INIT
 ========================= */
 
-async function init(){
-    if(!supabase){
+async function init() {
+    if (!supabase) {
         console.error("window.supabaseClient não encontrado");
         return;
     }
@@ -445,6 +568,7 @@ async function init(){
     await carregarBancos();
     limparModalNovoPagar();
     limparModalNfEntrada();
+    limparModalTransferencia();
     await carregarContas();
 }
 
