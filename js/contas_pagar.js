@@ -1,29 +1,28 @@
-// Usamos apenas a referência global para evitar o erro "already been declared"
+// Acessa o cliente já criado no HTML
 var supabase = window.supabaseClient;
 
-// Seleção de Elementos da Interface
+// Referências da Tabela e Modais
 const tabela = document.getElementById("listaPagar");
 const modalNovo = document.getElementById("modalNovoPagar");
 const modalTransfer = document.getElementById("modalTransferencia");
 const modalNF = document.getElementById("modalNfEntrada");
 
-// --- UTILITÁRIOS ---
-
+// Formatação de valores
 function moeda(v) {
     return Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+// Formatação de data (AAAA-MM-DD -> DD/MM/AAAA)
 function dataBR(data) {
     if (!data) return "-";
-    const partes = data.split("-"); // Espera AAAA-MM-DD
+    const partes = data.split("-");
     return `${partes[2]}/${partes[1]}/${partes[0]}`;
 }
 
-// --- FUNÇÕES DE CARREGAMENTO ---
-
+// 1. CARREGAR SELECTS DE BANCOS
 async function carregarBancos() {
     const { data, error } = await supabase.from("bancos").select("id, nome").order("nome");
-    if (error) return console.error("Erro ao carregar bancos:", error);
+    if (error) return console.error("Erro bancos:", error);
 
     const selects = ["novoBanco", "nfBanco", "transferBancoOrigem", "transferBancoDestino"];
     selects.forEach(id => {
@@ -34,110 +33,111 @@ async function carregarBancos() {
     });
 }
 
+// 2. CARREGAR LISTA DE CONTAS
 async function carregarContas() {
-    // Buscamos os dados relacionando com a tabela bancos para pegar o nome
     const { data, error } = await supabase
         .from("contas_pagar")
         .select("*, bancos(nome)")
         .order("vencimento", { ascending: false });
 
-    if (error) return console.error("Erro ao carregar contas:", error);
+    if (error) return console.error("Erro contas:", error);
 
     tabela.innerHTML = "";
-
     if (!data || data.length === 0) {
-        tabela.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 20px;">Nenhum lançamento encontrado</td></tr>`;
+        tabela.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px;">Nenhum registro encontrado.</td></tr>`;
         return;
     }
 
     data.forEach(l => {
         const tr = document.createElement("tr");
-        const valorFormatado = moeda(l.valor);
-        
-        // Na sua tabela MataoUsi, as colunas são: vencimento, bancos.nome, descricao, valor, status
+        const ePago = l.status === 'PAGO';
+
         tr.innerHTML = `
             <td>${dataBR(l.vencimento)}</td>
             <td>${l.bancos?.nome || "-"}</td>
             <td>${l.descricao}</td>
-            <td>-</td> 
-            <td class="valor-saida">${valorFormatado}</td>
-            <td style="font-weight: bold; color: ${l.status === 'PAGO' ? '#22c55e' : '#f39c12'}">${l.status}</td>
+            <td>-</td>
+            <td class="valor-saida">${moeda(l.valor)}</td>
+            <td style="font-weight:bold; color: ${ePago ? '#22c55e' : '#f39c12'}">${l.status}</td>
             <td>
-                ${l.status !== "PAGO" 
+                ${!ePago 
                     ? `<button onclick="marcarPago('${l.id}')" class="btn btn-verde">Pagar</button>` 
-                    : `<span style="color: #22c55e;">✓ Pago</span>`}
+                    : `<span style="color:#22c55e;">✓ Pago</span>`}
             </td>
         `;
         tabela.appendChild(tr);
     });
 }
 
-// --- AÇÕES DO SISTEMA ---
-
+// 3. SALVAR LANÇAMENTO
 async function salvarNovoPagar() {
-    const descricao = document.getElementById("novoDescricao").value;
+    const desc = document.getElementById("novoDescricao").value;
     const valorRaw = document.getElementById("novoValor").value;
     const valor = parseFloat(valorRaw.replace(",", "."));
-    const vencimento = document.getElementById("novoVencimento").value;
-    const banco_id = document.getElementById("novoBanco").value;
+    const venc = document.getElementById("novoVencimento").value;
+    const banco = document.getElementById("novoBanco").value;
 
-    if (!descricao || !valor || !vencimento) {
-        alert("Preencha todos os campos corretamente.");
+    if (!desc || isNaN(valor) || !venc) {
+        alert("Preencha todos os campos!");
         return;
     }
 
     const { error } = await supabase.from("contas_pagar").insert([{
-        descricao,
-        valor,
-        vencimento,
-        banco_id,
-        status: "ABERTO" // Conforme visto no seu banco
+        descricao: desc,
+        valor: valor,
+        vencimento: venc,
+        banco_id: banco,
+        status: "ABERTO"
     }]);
 
     if (error) {
         alert("Erro ao salvar: " + error.message);
     } else {
         modalNovo.style.display = "none";
-        // Limpa campos
+        // Limpar inputs
         document.getElementById("novoDescricao").value = "";
         document.getElementById("novoValor").value = "";
         carregarContas();
     }
 }
 
+// 4. MARCAR COMO PAGO
 async function marcarPago(id) {
     const { error } = await supabase
         .from("contas_pagar")
         .update({ status: "PAGO" })
         .eq("id", id);
 
-    if (error) {
-        alert("Erro ao atualizar pagamento.");
-    } else {
-        carregarContas();
-    }
+    if (error) alert("Erro ao atualizar.");
+    else carregarContas();
 }
 
-// --- CONFIGURAÇÃO DOS EVENTOS (BOTÕES) ---
+// --- EVENTOS DE CLIQUE ---
 
-// Botões que abrem Modais
+// Abrir Modais
 document.getElementById("btnNovoPagar").onclick = () => modalNovo.style.display = "flex";
-document.getElementById("btnTransferir").onclick = () => modalTransfer.style.display = "flex";
-document.getElementById("btnNfEntrada").onclick = () => modalNF.style.display = "flex";
+document.getElementById("btnTransferir").onclick = () => {
+    if(modalTransfer) modalTransfer.style.display = "flex";
+    else alert("Modal de transferência em construção");
+};
+document.getElementById("btnNfEntrada").onclick = () => {
+    if(modalNF) modalNF.style.display = "flex";
+};
 
-// Botões que fecham Modais
+// Fechar Modais
 document.getElementById("btnCancelarNovoPagar").onclick = () => modalNovo.style.display = "none";
-document.getElementById("btnCancelarTransferencia").onclick = () => modalTransfer.style.display = "none";
-document.getElementById("btnCancelarNfEntrada").onclick = () => modalNF.style.display = "none";
 
-// Botão Salvar
+// Salvar
 document.getElementById("btnSalvarNovoPagar").onclick = salvarNovoPagar;
 
-// --- INICIALIZAÇÃO ---
+// Fechar ao clicar fora da caixa
+window.onclick = (e) => {
+    if (e.target.className === "modal") e.target.style.display = "none";
+};
 
-// Expõe funções ao escopo global para os botões do HTML funcionarem
+// Exportar para o escopo global (para o onclick do botão funcionar)
 window.marcarPago = marcarPago;
 
-// Roda ao carregar a página
+// Início
 carregarBancos();
 carregarContas();
