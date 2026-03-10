@@ -1,3 +1,4 @@
+// Uso de var para evitar erro de redeclaração no console
 var supabase = window.supabaseClient;
 const tabela = document.getElementById("listaPagar");
 const modalNovo = document.getElementById("modalNovoPagar");
@@ -59,35 +60,22 @@ async function carregarContas() {
     });
 }
 
-// Lógica de Pagar (Deduz do Banco)
+// Lógica de Pagar (Subtrai do Banco)
 async function pagarConta(id, valor, bancoId) {
-    // 1. Atualiza Status da Conta
     await supabase.from("contas_pagar").update({ status: "PAGO" }).eq("id", id);
-    
-    // 2. Busca Saldo Atual para atualizar o banco
     const { data: banco } = await supabase.from("bancos").select("saldo").eq("id", bancoId).single();
     const novoSaldo = (banco.saldo || 0) - valor;
-
-    // 3. Atualiza Saldo na Tabela Bancos
     await supabase.from("bancos").update({ saldo: novoSaldo }).eq("id", bancoId);
-    
     carregarContas();
 }
 
-// Lógica de Estornar (Devolve ao Banco)
+// Lógica de Estornar (Extorna o boleto e devolve saldo ao banco)
 async function estornarPagamento(id, valor, bancoId) {
-    if (!confirm("Deseja estornar este pagamento? O valor será devolvido ao saldo do banco.")) return;
-
-    // 1. Volta status para ABERTO
+    if (!confirm("Deseja estornar este pagamento? O valor voltará ao saldo do banco.")) return;
     await supabase.from("contas_pagar").update({ status: "ABERTO" }).eq("id", id);
-    
-    // 2. Busca Saldo Atual
     const { data: banco } = await supabase.from("bancos").select("saldo").eq("id", bancoId).single();
     const novoSaldo = (banco.saldo || 0) + valor;
-
-    // 3. Extorna o valor para a coluna 'saldo'
     await supabase.from("bancos").update({ saldo: novoSaldo }).eq("id", bancoId);
-    
     carregarContas();
 }
 
@@ -150,13 +138,10 @@ document.getElementById("btnSalvarNovoPagar").onclick = async () => {
 document.getElementById("btnAtualizarPagar").onclick = atualizarConta;
 window.onclick = (e) => { if (e.target.className === "modal") fecharModais(); };
 
-// Exportando funções para o contexto global
 window.pagarConta = pagarConta; 
 window.estornarPagamento = estornarPagamento;
 window.abrirEditar = abrirEditar; 
 window.excluirConta = excluirConta;
 window.limparFiltros = limparFiltros;
 
-// Inicialização
-carregarBancos(); 
-carregarContas();
+carregarBancos(); carregarContas();
