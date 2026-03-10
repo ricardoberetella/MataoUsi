@@ -60,7 +60,52 @@ async function carregarContas() {
     });
 }
 
-// Ações Financeiras
+// LOGICA DE REVERSÃO CORRIGIDA
+window.estornar = async (id, val, bId, status) => {
+    if(!confirm("Deseja estornar e reverter o saldo no banco?")) return;
+    
+    const { data: b } = await _supabase.from('bancos').select('saldo').eq('id', bId).single();
+    let saldoAtual = b.saldo || 0;
+    let novoSaldo;
+
+    // Se era um crédito (RECEBIDO), o estorno DEBITA (subtrai)
+    if (status === 'RECEBIDO') {
+        novoSaldo = saldoAtual - val;
+    } 
+    // Se era um débito (PAGO), o estorno CREDITA (soma)
+    else {
+        novoSaldo = saldoAtual + val;
+    }
+
+    await _supabase.from('bancos').update({ saldo: novoSaldo }).eq('id', bId);
+    await _supabase.from('contas_pagar').update({ status: 'ABERTO' }).eq('id', id);
+    carregarContas();
+};
+
+window.excluir = async (id, status, val, bId) => {
+    if(!confirm("Excluir permanentemente e ajustar saldo?")) return;
+    
+    // Só mexe no banco se a conta já tivesse sido liquidada (PAGO ou RECEBIDO)
+    if (status !== 'ABERTO') {
+        const { data: b } = await _supabase.from('bancos').select('saldo').eq('id', bId).single();
+        let saldoAtual = b.saldo || 0;
+        let novoSaldo;
+
+        // Se excluiu um crédito, precisa tirar o valor do banco
+        if (status === 'RECEBIDO') {
+            novoSaldo = saldoAtual - val;
+        } 
+        // Se excluiu um débito, precisa devolver o valor ao banco
+        else {
+            novoSaldo = saldoAtual + val;
+        }
+        await _supabase.from('bancos').update({ saldo: novoSaldo }).eq('id', bId);
+    }
+    
+    await _supabase.from('contas_pagar').delete().eq('id', id);
+    carregarContas();
+};
+
 window.baixar = async (id, val, bId) => {
     if(!confirm("Confirmar pagamento?")) return;
     await _supabase.from('contas_pagar').update({ status: 'PAGO' }).eq('id', id);
@@ -69,27 +114,6 @@ window.baixar = async (id, val, bId) => {
     carregarContas();
 };
 
-window.estornar = async (id, val, bId, status) => {
-    if(!confirm("Deseja estornar este lançamento?")) return;
-    const { data: b } = await _supabase.from('bancos').select('saldo').eq('id', bId).single();
-    let novo = (status === 'RECEBIDO') ? (b.saldo - val) : (b.saldo + val);
-    await _supabase.from('bancos').update({ saldo: novo }).eq('id', bId);
-    await _supabase.from('contas_pagar').update({ status: 'ABERTO' }).eq('id', id);
-    carregarContas();
-};
-
-window.excluir = async (id, status, val, bId) => {
-    if(!confirm("Excluir permanentemente?")) return;
-    if (status !== 'ABERTO') {
-        const { data: b } = await _supabase.from('bancos').select('saldo').eq('id', bId).single();
-        let novo = (status === 'RECEBIDO') ? (b.saldo - val) : (b.saldo + val);
-        await _supabase.from('bancos').update({ saldo: novo }).eq('id', bId);
-    }
-    await _supabase.from('contas_pagar').delete().eq('id', id);
-    carregarContas();
-};
-
-// Eventos
 document.getElementById('btnFiltrar').onclick = carregarContas;
 document.getElementById('btnAbrirNovo').onclick = () => abrirM('modalNovo');
 document.getElementById('btnAbrirTransf').onclick = () => abrirM('modalTransferencia');
@@ -99,11 +123,13 @@ document.getElementById('btnSalvarNF').onclick = async () => {
     const val = parseFloat(document.getElementById('nfValor').value);
     const bId = document.getElementById('nfBanco').value;
     if(!val || !bId) return alert("Preencha todos os campos");
+    
     await _supabase.from('contas_pagar').insert([{
         descricao: "NF ENTRADA: " + document.getElementById('nfDescricao').value,
         valor: val, vencimento: document.getElementById('nfVencimento').value,
         banco_id: bId, status: 'RECEBIDO'
     }]);
+    
     const { data: b } = await _supabase.from('bancos').select('saldo').eq('id', bId).single();
     await _supabase.from('bancos').update({ saldo: (b.saldo || 0) + val }).eq('id', bId);
     fecharModais(); carregarContas();
@@ -128,8 +154,8 @@ document.getElementById('btnSalvarTransf').onclick = async () => {
     if(orig === dest) return alert("Bancos devem ser diferentes");
     const { data: bO } = await _supabase.from('bancos').select('saldo').eq('id', orig).single();
     const { data: bD } = await _supabase.from('bancos').select('saldo').eq('id', dest).single();
-    await _supabase.from('bancos').update({ saldo: bO.saldo - val }).eq('id', orig);
-    await _supabase.from('bancos').update({ saldo: bD.saldo + val }).eq('id', dest);
+    await _supabase.from('bancos').update({ saldo: (bO.saldo || 0) - val }).eq('id', orig);
+    await _supabase.from('bancos').update({ saldo: (bD.saldo || 0) + val }).eq('id', dest);
     fecharModais(); carregarContas();
 };
 
