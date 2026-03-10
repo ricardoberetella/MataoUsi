@@ -6,54 +6,35 @@
     <title>Financeiro - Matão Usinagem</title>
     <link rel="stylesheet" href="css/global.css">
     <style>
-        body { background: #020617; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; }
+        body { background: #020617; color: white; font-family: sans-serif; margin: 0; padding: 20px; }
         .container { max-width: 1200px; margin: auto; }
+        .btn-voltar { display: inline-flex; align-items: center; padding: 8px 16px; border: 1px solid #38bdf8; color: #38bdf8; text-decoration: none; border-radius: 8px; margin-bottom: 20px; }
+        h1 { color: #38bdf8; text-align: center; }
         
-        /* Estilo do botão voltar solicitado */
-        .btn-voltar { 
-            display: inline-flex; align-items: center; padding: 8px 16px; 
-            border: 1px solid #38bdf8; color: #38bdf8; text-decoration: none; 
-            border-radius: 8px; margin-bottom: 20px; transition: 0.3s;
-        }
-        .btn-voltar:hover { background: rgba(56, 189, 248, 0.1); }
-
-        h1 { color: #38bdf8; text-align: center; font-size: 2rem; margin-bottom: 30px; }
-        
-        /* Barra de Filtros */
-        .filter-bar { 
-            background: #0f172a; padding: 15px; border-radius: 10px; 
-            display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; 
-            margin-bottom: 20px; border: 1px solid #1e293b; 
-        }
+        .filter-bar { background: #0f172a; padding: 15px; border-radius: 10px; display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 20px; border: 1px solid #1e293b; }
         .filter-group { display: flex; flex-direction: column; gap: 5px; }
-        .filter-group label { font-size: 0.75rem; color: #38bdf8; text-transform: uppercase; font-weight: bold; }
-        .filter-bar input, .filter-bar select { 
-            background: #1e293b; border: 1px solid #334155; color: white; 
-            padding: 8px; border-radius: 6px; outline: none;
-        }
+        .filter-group label { font-size: 0.75rem; color: #38bdf8; text-transform: uppercase; }
+        .filter-bar input, .filter-bar select { background: #1e293b; border: 1px solid #334155; color: white; padding: 8px; border-radius: 6px; }
 
         .flex-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .btn-verde { background: #22c55e; color: white; }
-        .btn-roxo { background: #a855f7; color: white; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; }
+        .btn-verde { background: #22c55e; }
+        .btn-roxo { background: #a855f7; }
         .btn-azul { background: #38bdf8; color: #020617; }
-        .btn-cinza { background: #475569; color: white; }
-        .btn:hover { opacity: 0.8; }
+        .btn-cinza { background: #475569; }
 
-        /* Tabela Estilizada */
         .tabela-container { background: #0f172a; border-radius: 8px; overflow: hidden; border: 1px solid #1e293b; }
         table { width: 100%; border-collapse: collapse; }
         th { background: #1e293b; color: #38bdf8; padding: 15px; text-align: left; text-transform: uppercase; font-size: 0.8rem; border-bottom: 2px solid #38bdf8; }
         td { padding: 15px; border-bottom: 1px solid #334155; }
-        
         .status-aberto { color: #fbbf24; font-weight: bold; }
         .status-pago { color: #22c55e; font-weight: bold; }
         .valor-saida { color: #ef4444; font-weight: bold; }
 
-        /* Modal */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 1000; }
         .modal-content { background: #0f172a; padding: 25px; border-radius: 12px; border: 1px solid #38bdf8; width: 100%; max-width: 400px; }
-        .modal input, .modal select { width: 100%; padding: 12px; margin: 10px 0; background: #1e293b; border: 1px solid #334155; color: white; border-radius: 6px; box-sizing: border-box; }
+        .modal input, .modal select { width: 100%; padding: 10px; margin: 10px 0; background: #1e293b; border: 1px solid #334155; color: white; border-radius: 6px; box-sizing: border-box; }
+        .modal label { font-size: 0.8rem; color: #38bdf8; }
     </style>
 </head>
 <body>
@@ -84,8 +65,8 @@
 
     <div class="flex-buttons">
         <button onclick="abrirModalNovo()" class="btn btn-verde">Novo Lançamento</button>
-        <button class="btn btn-roxo">Transferência</button>
-        <button class="btn btn-azul">NF Entrada</button>
+        <button onclick="abrirModalTransferencia()" class="btn btn-roxo">Transferência</button>
+        <button onclick="abrirModalNF()" class="btn btn-azul">NF Entrada</button>
     </div>
 
     <div class="tabela-container">
@@ -108,9 +89,9 @@
 
 <div id="modalNovo" class="modal">
     <div class="modal-content">
-        <h3 style="color: #38bdf8; margin-top: 0;">Novo Lançamento</h3>
+        <h3 style="color: #22c55e;">Novo Lançamento</h3>
         <input type="text" id="novoDescricao" placeholder="Descrição">
-        <input type="number" id="novoValor" step="0.01" placeholder="Valor (Ex: 150.50)">
+        <input type="number" id="novoValor" placeholder="Valor (0.00)">
         <input type="date" id="novoVencimento">
         <select id="novoBanco"></select>
         <div style="display: flex; gap: 10px; margin-top: 15px;">
@@ -120,11 +101,39 @@
     </div>
 </div>
 
+<div id="modalTransferencia" class="modal">
+    <div class="modal-content">
+        <h3 style="color: #a855f7;">Transferência entre Contas</h3>
+        <label>Origem:</label>
+        <select id="transfOrigem"></select>
+        <label>Destino:</label>
+        <select id="transfDestino"></select>
+        <input type="number" id="transfValor" placeholder="Valor R$">
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button onclick="fecharModais()" class="btn btn-cinza" style="flex: 1;">Cancelar</button>
+            <button onclick="processarTransferencia()" class="btn btn-roxo" style="flex: 1;">Transferir</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalNF" class="modal">
+    <div class="modal-content">
+        <h3 style="color: #38bdf8;">Lançar NF de Entrada</h3>
+        <input type="text" id="nfDescricao" placeholder="NF ou Fornecedor">
+        <input type="number" id="nfValor" placeholder="Valor Total">
+        <input type="date" id="nfVencimento">
+        <select id="nfBanco"></select>
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button onclick="fecharModais()" class="btn btn-cinza" style="flex: 1;">Cancelar</button>
+            <button onclick="salvarNF()" class="btn btn-azul" style="flex: 1;">Lançar NF</button>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
     const SUPABASE_URL = "https://uxtgicfuggpuyjybwawa.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg";
-    // Corrigindo erro de declaração duplicada
     var supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 </script>
 <script src="js/contas_pagar.js"></script>
