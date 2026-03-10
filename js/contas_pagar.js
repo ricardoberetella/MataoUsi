@@ -347,8 +347,6 @@ async function marcarPago(id) {
 
 window.marcarPago = marcarPago;
 
-/* EVENTOS */
-
 if (btnNovoPagar) {
   btnNovoPagar.onclick = () => {
     limparNovoLancamento();
