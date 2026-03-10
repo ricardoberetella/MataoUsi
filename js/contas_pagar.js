@@ -52,13 +52,13 @@ async function carregarContas() {
     });
 }
 
-// Modais
+// Controle de Modais
 function abrirModalNovo() { document.getElementById('modalNovo').style.display = 'flex'; }
 function abrirModalTransferencia() { document.getElementById('modalTransferencia').style.display = 'flex'; }
 function abrirModalNF() { document.getElementById('modalNF').style.display = 'flex'; }
 function fecharModais() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
 
-// Lógica Financeira (Baixa e Estorno)
+// Pagamento e Estorno
 async function baixarConta(id, valor, bancoId) {
     if (!confirm("Confirmar pagamento?")) return;
     await supabase.from('contas_pagar').update({ status: 'PAGO' }).eq('id', id);
@@ -68,16 +68,16 @@ async function baixarConta(id, valor, bancoId) {
 }
 
 async function estornarConta(id, valor, bancoId) {
-    if (!confirm("Estornar pagamento e devolver saldo ao banco?")) return;
+    if (!confirm("Estornar e devolver saldo?")) return;
     await supabase.from('contas_pagar').update({ status: 'ABERTO' }).eq('id', id);
     const { data: b } = await supabase.from('bancos').select('saldo').eq('id', bancoId).single();
     await supabase.from('bancos').update({ saldo: (b.saldo || 0) + valor }).eq('id', bancoId);
     carregarContas();
 }
 
-// Lógica de Exclusão com Inteligência de Saldo
+// Lógica de Exclusão
 async function excluirConta(id, estavaPago, valor, bancoId) {
-    if (!confirm("Excluir este lançamento permanentemente?")) return;
+    if (!confirm("Excluir lançamento permanentemente?")) return;
     if (estavaPago) {
         const { data: b } = await supabase.from('bancos').select('saldo').eq('id', bancoId).single();
         await supabase.from('bancos').update({ saldo: (b.saldo || 0) + valor }).eq('id', bancoId);
@@ -92,22 +92,23 @@ async function processarTransferencia() {
     const dest = document.getElementById('transfDestino').value;
     const val = parseFloat(document.getElementById('transfValor').value);
 
-    if (orig === dest) return alert("Os bancos devem ser diferentes!");
-    if (!val || val <= 0) return alert("Insira um valor válido.");
-
+    if (orig === dest) return alert("Bancos devem ser diferentes!");
+    
     const { data: bOrig } = await supabase.from('bancos').select('saldo').eq('id', orig).single();
     const { data: bDest } = await supabase.from('bancos').select('saldo').eq('id', dest).single();
 
     await supabase.from('bancos').update({ saldo: bOrig.saldo - val }).eq('id', orig);
     await supabase.from('bancos').update({ saldo: bDest.saldo + val }).eq('id', dest);
 
-    await supabase.from('transferencias_bancarias').insert([{ origem_id: orig, destino_id: dest, valor: val, data_transferencia: new Date().toISOString() }]);
-    
-    alert("Transferência realizada!");
+    await supabase.from('transferencias_bancarias').insert([{
+        origem_id: orig, destino_id: dest, valor: val, data_transferencia: new Date().toISOString() 
+    }]);
+
+    alert("Transferência concluída!");
     fecharModais();
 }
 
-// Salvar Lançamentos
+// Salvar Novo Lançamento
 async function salvarNovo() {
     const item = {
         descricao: document.getElementById('novoDescricao').value,
@@ -120,15 +121,26 @@ async function salvarNovo() {
     fecharModais(); carregarContas();
 }
 
+// Salvar NF Entrada - SOMA AO SALDO DO BANCO conforme solicitado
 async function salvarNF() {
+    const valor = parseFloat(document.getElementById('nfValor').value);
+    const bancoId = document.getElementById('nfBanco').value;
+    
+    // 1. Criar o registro financeiro
     const item = {
-        descricao: "NF: " + document.getElementById('nfDescricao').value,
-        valor: parseFloat(document.getElementById('nfValor').value),
+        descricao: "NF ENTRADA: " + document.getElementById('nfDescricao').value,
+        valor: valor,
         vencimento: document.getElementById('nfVencimento').value,
-        banco_id: document.getElementById('nfBanco').value,
-        status: 'ABERTO'
+        banco_id: bancoId,
+        status: 'PAGO' // Definido como PAGO pois o saldo já será alterado agora
     };
     await supabase.from('contas_pagar').insert([item]);
+
+    // 2. Somar ao saldo do banco indicado
+    const { data: b } = await supabase.from('bancos').select('saldo').eq('id', bancoId).single();
+    await supabase.from('bancos').update({ saldo: (b.saldo || 0) + valor }).eq('id', bancoId);
+
+    alert("NF lançada e saldo atualizado!");
     fecharModais(); carregarContas();
 }
 
