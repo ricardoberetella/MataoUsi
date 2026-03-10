@@ -1,147 +1,98 @@
-// Uso de var para evitar erro de redeclaração no console
 var supabase = window.supabaseClient;
-const tabela = document.getElementById("listaPagar");
-const modalNovo = document.getElementById("modalNovoPagar");
-const modalEditar = document.getElementById("modalEditarPagar");
 
-function moeda(v) { return Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }); }
-function dataBR(data) { if (!data) return "-"; const p = data.split("-"); return `${p[2]}/${p[1]}/${p[0]}`; }
-function fecharModais() { modalNovo.style.display = "none"; modalEditar.style.display = "none"; }
+// Formatação
+const moeda = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const dataBR = (d) => d ? d.split('-').reverse().join('/') : '-';
 
 async function carregarBancos() {
-    const { data } = await supabase.from("bancos").select("id, nome").order("nome");
-    const selects = ["novoBanco", "editBanco", "filtroBanco"];
-    selects.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            const options = data.map(b => `<option value="${b.id}">${b.nome}</option>`).join("");
-            el.innerHTML = id === "filtroBanco" ? `<option value="">Todos os Bancos</option>${options}` : options;
-        }
-    });
+    const { data } = await supabase.from('bancos').select('id, nome').order('nome');
+    if (data) {
+        const select = document.getElementById('novoBanco');
+        select.innerHTML = data.map(b => `<option value="${b.id}">${b.nome}</option>`).join('');
+    }
 }
 
 async function carregarContas() {
-    const dataInicio = document.getElementById("filtroDataInicio").value;
-    const dataFim = document.getElementById("filtroDataFim").value;
-    const bancoId = document.getElementById("filtroBanco").value;
-    const statusFiltro = document.getElementById("filtroStatus").value;
+    const statusFiltro = document.getElementById('filtroStatus').value;
+    const dInicio = document.getElementById('filtroDataInicio').value;
+    const dFim = document.getElementById('filtroDataFim').value;
 
-    let query = supabase.from("contas_pagar").select("*, bancos(nome)");
+    let query = supabase.from('contas_pagar').select('*, bancos(nome)');
 
-    if (dataInicio) query = query.gte("vencimento", dataInicio);
-    if (dataFim) query = query.lte("vencimento", dataFim);
-    if (bancoId) query = query.eq("banco_id", bancoId);
-    if (statusFiltro) query = query.eq("status", statusFiltro);
+    if (statusFiltro) query = query.eq('status', statusFiltro);
+    if (dInicio) query = query.gte('vencimento', dInicio);
+    if (dFim) query = query.lte('vencimento', dFim);
 
-    const { data, error } = await query.order("vencimento", { ascending: false });
-
+    const { data, error } = await query.order('vencimento', { ascending: true });
     if (error) return console.error(error);
-    
-    tabela.innerHTML = "";
-    data.forEach(l => {
-        const tr = document.createElement("tr");
-        const ePago = l.status === 'PAGO';
-        tr.innerHTML = `
-            <td>${dataBR(l.vencimento)}</td>
-            <td>${l.bancos?.nome || "-"}</td>
-            <td>${l.descricao}</td>
-            <td>-</td>
-            <td style="color:#ef4444; font-weight:bold">${moeda(l.valor)}</td>
-            <td style="font-weight:bold; color: ${ePago ? '#22c55e' : '#f39c12'}">${l.status}</td>
-            <td>
-                ${!ePago 
-                    ? `<button onclick="pagarConta('${l.id}', ${l.valor}, '${l.banco_id}')" class="btn btn-verde">Pagar</button>` 
-                    : `<button onclick="estornarPagamento('${l.id}', ${l.valor}, '${l.banco_id}')" class="btn btn-cinza">Estornar</button>`}
-                <button onclick="abrirEditar('${l.id}')" class="btn btn-amarelo">Editar</button>
-                <button onclick="excluirConta('${l.id}')" class="btn btn-vermelho">Excluir</button>
-            </td>
+
+    const corpo = document.getElementById('listaPagar');
+    corpo.innerHTML = '';
+
+    data.forEach(item => {
+        const isPago = item.status === 'PAGO';
+        corpo.innerHTML += `
+            <tr>
+                <td>${dataBR(item.vencimento)}</td>
+                <td>${item.bancos?.nome || '-'}</td>
+                <td>${item.descricao}</td>
+                <td>-</td>
+                <td class="valor-saida">${moeda(item.valor)}</td>
+                <td class="${isPago ? 'status-pago' : 'status-aberto'}">${item.status}</td>
+                <td>
+                    ${!isPago 
+                        ? `<button onclick="baixarConta('${item.id}', ${item.valor}, '${item.banco_id}')" class="btn btn-verde">Pagar</button>`
+                        : `<button onclick="estornarConta('${item.id}', ${item.valor}, '${item.banco_id}')" class="btn btn-cinza">Estornar</button>`
+                    }
+                </td>
+            </tr>
         `;
-        tabela.appendChild(tr);
     });
 }
 
-// Lógica de Pagar (Subtrai do Banco)
-async function pagarConta(id, valor, bancoId) {
-    await supabase.from("contas_pagar").update({ status: "PAGO" }).eq("id", id);
-    const { data: banco } = await supabase.from("bancos").select("saldo").eq("id", bancoId).single();
+async function baixarConta(id, valor, bancoId) {
+    // 1. Atualiza status da conta
+    await supabase.from('contas_pagar').update({ status: 'PAGO' }).eq('id', id);
+    
+    // 2. Deduz do saldo do banco
+    const { data: banco } = await supabase.from('bancos').select('saldo').eq('id', bancoId).single();
     const novoSaldo = (banco.saldo || 0) - valor;
-    await supabase.from("bancos").update({ saldo: novoSaldo }).eq("id", bancoId);
+    await supabase.from('bancos').update({ saldo: novoSaldo }).eq('id', bancoId);
+    
     carregarContas();
 }
 
-// Lógica de Estornar (Extorna o boleto e devolve saldo ao banco)
-async function estornarPagamento(id, valor, bancoId) {
-    if (!confirm("Deseja estornar este pagamento? O valor voltará ao saldo do banco.")) return;
-    await supabase.from("contas_pagar").update({ status: "ABERTO" }).eq("id", id);
-    const { data: banco } = await supabase.from("bancos").select("saldo").eq("id", bancoId).single();
+async function estornarConta(id, valor, bancoId) {
+    if (!confirm("Deseja estornar este pagamento? O saldo voltará ao banco.")) return;
+
+    // 1. Volta para ABERTO
+    await supabase.from('contas_pagar').update({ status: 'ABERTO' }).eq('id', id);
+    
+    // 2. Devolve o valor ao saldo do banco
+    const { data: banco } = await supabase.from('bancos').select('saldo').eq('id', bancoId).single();
     const novoSaldo = (banco.saldo || 0) + valor;
-    await supabase.from("bancos").update({ saldo: novoSaldo }).eq("id", bancoId);
+    await supabase.from('bancos').update({ saldo: novoSaldo }).eq('id', bancoId);
+    
     carregarContas();
 }
 
-function limparFiltros() {
-    document.getElementById("filtroDataInicio").value = "";
-    document.getElementById("filtroDataFim").value = "";
-    document.getElementById("filtroBanco").value = "";
-    document.getElementById("filtroStatus").value = "ABERTO";
-    carregarContas();
-}
+// Funções de Modal
+function abrirModalNovo() { document.getElementById('modalNovo').style.display = 'flex'; }
+function fecharModais() { document.getElementById('modalNovo').style.display = 'none'; }
 
-async function abrirEditar(id) {
-    const { data } = await supabase.from("contas_pagar").select("*").eq("id", id).single();
-    if (data) {
-        document.getElementById("editId").value = data.id;
-        document.getElementById("editDescricao").value = data.descricao;
-        document.getElementById("editValor").value = data.valor;
-        document.getElementById("editVencimento").value = data.vencimento;
-        document.getElementById("editBanco").value = data.banco_id;
-        document.getElementById("editStatus").value = data.status;
-        modalEditar.style.display = "flex";
-    }
-}
-
-async function atualizarConta() {
-    const id = document.getElementById("editId").value;
+async function salvarNovo() {
     const dados = {
-        descricao: document.getElementById("editDescricao").value,
-        valor: parseFloat(document.getElementById("editValor").value),
-        vencimento: document.getElementById("editVencimento").value,
-        banco_id: document.getElementById("editBanco").value,
-        status: document.getElementById("editStatus").value
+        descricao: document.getElementById('novoDescricao').value,
+        valor: parseFloat(document.getElementById('novoValor').value),
+        vencimento: document.getElementById('novoVencimento').value,
+        banco_id: document.getElementById('novoBanco').value,
+        status: 'ABERTO'
     };
-    await supabase.from("contas_pagar").update(dados).eq("id", id);
+    await supabase.from('contas_pagar').insert([dados]);
     fecharModais();
     carregarContas();
 }
 
-async function excluirConta(id) {
-    if (confirm("Deseja realmente excluir?")) {
-        await supabase.from("contas_pagar").delete().eq("id", id);
-        carregarContas();
-    }
-}
-
-document.getElementById("btnNovoPagar").onclick = () => modalNovo.style.display = "flex";
-document.getElementById("btnSalvarNovoPagar").onclick = async () => {
-    const item = {
-        descricao: document.getElementById("novoDescricao").value,
-        valor: parseFloat(document.getElementById("novoValor").value.replace(",", ".")),
-        vencimento: document.getElementById("novoVencimento").value,
-        banco_id: document.getElementById("novoBanco").value,
-        status: "ABERTO"
-    };
-    await supabase.from("contas_pagar").insert([item]);
-    fecharModais();
-    carregarContas();
-};
-
-document.getElementById("btnAtualizarPagar").onclick = atualizarConta;
-window.onclick = (e) => { if (e.target.className === "modal") fecharModais(); };
-
-window.pagarConta = pagarConta; 
-window.estornarPagamento = estornarPagamento;
-window.abrirEditar = abrirEditar; 
-window.excluirConta = excluirConta;
-window.limparFiltros = limparFiltros;
-
-carregarBancos(); carregarContas();
+// Inicialização
+carregarBancos();
+carregarContas();
