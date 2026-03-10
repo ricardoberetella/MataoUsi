@@ -9,15 +9,33 @@ function fecharModais() { modalNovo.style.display = "none"; modalEditar.style.di
 
 async function carregarBancos() {
     const { data } = await supabase.from("bancos").select("id, nome").order("nome");
-    ["novoBanco", "editBanco"].forEach(id => {
+    // Preenche os selects de filtros e modais
+    const selects = ["novoBanco", "editBanco", "filtroBanco"];
+    selects.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.innerHTML = data.map(b => `<option value="${b.id}">${b.nome}</option>`).join("");
+        if (el) {
+            const options = data.map(b => `<option value="${b.id}">${b.nome}</option>`).join("");
+            el.innerHTML = id === "filtroBanco" ? `<option value="">Todos os Bancos</option>${options}` : options;
+        }
     });
 }
 
 async function carregarContas() {
-    const { data, error } = await supabase.from("contas_pagar").select("*, bancos(nome)").order("vencimento", { ascending: false });
+    const dataInicio = document.getElementById("filtroDataInicio").value;
+    const dataFim = document.getElementById("filtroDataFim").value;
+    const bancoId = document.getElementById("filtroBanco").value;
+
+    let query = supabase.from("contas_pagar").select("*, bancos(nome)");
+
+    // Aplica filtros se preenchidos
+    if (dataInicio) query = query.gte("vencimento", dataInicio);
+    if (dataFim) query = query.lte("vencimento", dataFim);
+    if (bancoId) query = query.eq("banco_id", bancoId);
+
+    const { data, error } = await query.order("vencimento", { ascending: false });
+
     if (error) return console.error(error);
+    
     tabela.innerHTML = "";
     data.forEach(l => {
         const tr = document.createElement("tr");
@@ -37,6 +55,13 @@ async function carregarContas() {
         `;
         tabela.appendChild(tr);
     });
+}
+
+function limparFiltros() {
+    document.getElementById("filtroDataInicio").value = "";
+    document.getElementById("filtroDataFim").value = "";
+    document.getElementById("filtroBanco").value = "";
+    carregarContas();
 }
 
 async function abrirEditar(id) {
@@ -67,7 +92,7 @@ async function atualizarConta() {
 }
 
 async function excluirConta(id) {
-    if (confirm("Tem certeza que deseja excluir este lançamento?")) {
+    if (confirm("Deseja realmente excluir?")) {
         await supabase.from("contas_pagar").delete().eq("id", id);
         carregarContas();
     }
@@ -95,5 +120,6 @@ document.getElementById("btnSalvarNovoPagar").onclick = async () => {
 document.getElementById("btnAtualizarPagar").onclick = atualizarConta;
 window.onclick = (e) => { if (e.target.className === "modal") fecharModais(); };
 window.marcarPago = marcarPago; window.abrirEditar = abrirEditar; window.excluirConta = excluirConta;
+window.limparFiltros = limparFiltros;
 
 carregarBancos(); carregarContas();
