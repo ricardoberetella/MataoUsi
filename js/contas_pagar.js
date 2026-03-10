@@ -2,195 +2,435 @@ const supabase = window.supabaseClient;
 
 const tabela = document.getElementById("listaPagar");
 
-const modalNovo = document.getElementById("modalNovoPagar");
-const modalNF = document.getElementById("modalNfEntrada");
-const modalTransfer = document.getElementById("modalTransferencia");
+const btnNovoPagar = document.getElementById("btnNovoPagar");
+const btnNfEntrada = document.getElementById("btnNfEntrada");
+const btnTransferir = document.getElementById("btnTransferir");
 
-function moeda(v){
+const modalNovoPagar = document.getElementById("modalNovoPagar");
+const modalNfEntrada = document.getElementById("modalNfEntrada");
+const modalTransferencia = document.getElementById("modalTransferencia");
 
-return Number(v).toLocaleString("pt-BR",{
-style:"currency",
-currency:"BRL"
-})
+const btnCancelarNovoPagar = document.getElementById("btnCancelarNovoPagar");
+const btnSalvarNovoPagar = document.getElementById("btnSalvarNovoPagar");
 
+const btnCancelarNfEntrada = document.getElementById("btnCancelarNfEntrada");
+const btnSalvarNfEntrada = document.getElementById("btnSalvarNfEntrada");
+
+const btnCancelarTransferencia = document.getElementById("btnCancelarTransferencia");
+const btnSalvarTransferencia = document.getElementById("btnSalvarTransferencia");
+
+const novoBanco = document.getElementById("novoBanco");
+const novoDescricao = document.getElementById("novoDescricao");
+const novoValor = document.getElementById("novoValor");
+const novoVencimento = document.getElementById("novoVencimento");
+
+const nfBanco = document.getElementById("nfBanco");
+const nfDescricao = document.getElementById("nfDescricao");
+const nfValor = document.getElementById("nfValor");
+const nfVencimento = document.getElementById("nfVencimento");
+
+const transferBancoOrigem = document.getElementById("transferBancoOrigem");
+const transferBancoDestino = document.getElementById("transferBancoDestino");
+const transferDescricao = document.getElementById("transferDescricao");
+const transferValor = document.getElementById("transferValor");
+const transferData = document.getElementById("transferData");
+
+const BANCOS_NOVO_LANCAMENTO = ["SICOOB", "CAIXA FEDERAL"];
+const BANCOS_TRANSFERENCIA = ["SICOOB", "CAIXA", "CAIXA FEDERAL"];
+
+function moeda(v) {
+  return Number(v || 0).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL"
+  });
 }
 
-function dataBR(data){
-
-return new Date(data).toLocaleDateString("pt-BR")
-
+function dataBR(data) {
+  if (!data) return "-";
+  return new Date(`${data}T00:00:00`).toLocaleDateString("pt-BR");
 }
 
-async function carregarContas(){
-
-const {data,error}=await supabase
-.from("contas_pagar")
-.select("*,bancos(nome)")
-.order("vencimento",{ascending:false})
-
-if(error){
-console.error(error)
-return
+function moedaParaNumero(valor) {
+  if (!valor) return 0;
+  return Number(String(valor).replace(/\./g, "").replace(",", "."));
 }
 
-tabela.innerHTML=""
-
-data.forEach(l=>{
-
-let entrada="-"
-let saida="-"
-
-if(l.tipo==="ENTRADA"){
-entrada=`<span class="valor-entrada">${moeda(l.valor)}</span>`
-}else{
-saida=`<span class="valor-saida">${moeda(l.valor)}</span>`
+function hojeISO() {
+  const hoje = new Date();
+  const y = hoje.getFullYear();
+  const m = String(hoje.getMonth() + 1).padStart(2, "0");
+  const d = String(hoje.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
-const tr=document.createElement("tr")
-
-tr.innerHTML=`
-
-<td>${dataBR(l.vencimento)}</td>
-<td>${l.bancos?.nome||"-"}</td>
-<td>${l.descricao}</td>
-<td>${entrada}</td>
-<td>${saida}</td>
-<td>${l.status}</td>
-<td>
-<button onclick="pagar(${l.id})" class="btn btn-verde">Pagar</button>
-</td>
-
-`
-
-tabela.appendChild(tr)
-
-})
-
+function normalizar(txt) {
+  return String(txt || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toUpperCase();
 }
 
-async function pagar(id){
-
-await supabase
-.from("contas_pagar")
-.update({status:"PAGO"})
-.eq("id",id)
-
-carregarContas()
-
+function bancoPermitido(nomeBanco, permitidos) {
+  const nome = normalizar(nomeBanco);
+  return permitidos.some((item) => nome === normalizar(item));
 }
 
-window.pagar=pagar
-
-/* MODAIS */
-
-document.getElementById("btnNovoPagar").onclick=()=>{
-modalNovo.style.display="flex"
+function abrirModal(modal) {
+  if (modal) modal.style.display = "flex";
 }
 
-document.getElementById("btnNfEntrada").onclick=()=>{
-modalNF.style.display="flex"
+function fecharModal(modal) {
+  if (modal) modal.style.display = "none";
 }
 
-document.getElementById("btnTransferir").onclick=()=>{
-modalTransfer.style.display="flex"
+function limparNovoLancamento() {
+  if (novoBanco) novoBanco.value = "";
+  if (novoDescricao) novoDescricao.value = "";
+  if (novoValor) novoValor.value = "";
+  if (novoVencimento) novoVencimento.value = hojeISO();
 }
 
-document.getElementById("btnCancelarNovoPagar").onclick=()=>{
-modalNovo.style.display="none"
+function limparNfEntrada() {
+  if (nfBanco) nfBanco.value = "";
+  if (nfDescricao) nfDescricao.value = "NF Entrada";
+  if (nfValor) nfValor.value = "";
+  if (nfVencimento) nfVencimento.value = hojeISO();
 }
 
-document.getElementById("btnCancelarNfEntrada").onclick=()=>{
-modalNF.style.display="none"
+function limparTransferencia() {
+  if (transferBancoOrigem) transferBancoOrigem.value = "";
+  if (transferBancoDestino) transferBancoDestino.value = "";
+  if (transferDescricao) transferDescricao.value = "Transferência entre bancos";
+  if (transferValor) transferValor.value = "";
+  if (transferData) transferData.value = hojeISO();
 }
 
-document.getElementById("btnCancelarTransferencia").onclick=()=>{
-modalTransfer.style.display="none"
+async function carregarBancos() {
+  const { data, error } = await supabase
+    .from("bancos")
+    .select("id, nome")
+    .order("nome", { ascending: true });
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  const bancos = data || [];
+
+  if (novoBanco) {
+    novoBanco.innerHTML = `<option value="">Selecione</option>`;
+    bancos
+      .filter((b) => bancoPermitido(b.nome, BANCOS_NOVO_LANCAMENTO))
+      .forEach((b) => {
+        const opt = document.createElement("option");
+        opt.value = b.id;
+        opt.textContent = b.nome;
+        novoBanco.appendChild(opt);
+      });
+  }
+
+  if (nfBanco) {
+    nfBanco.innerHTML = `<option value="">Selecione</option>`;
+    bancos
+      .filter((b) => bancoPermitido(b.nome, BANCOS_NOVO_LANCAMENTO))
+      .forEach((b) => {
+        const opt = document.createElement("option");
+        opt.value = b.id;
+        opt.textContent = b.nome;
+        nfBanco.appendChild(opt);
+      });
+  }
+
+  if (transferBancoOrigem) {
+    transferBancoOrigem.innerHTML = `<option value="">Selecione</option>`;
+    bancos
+      .filter((b) => bancoPermitido(b.nome, BANCOS_TRANSFERENCIA))
+      .forEach((b) => {
+        const opt = document.createElement("option");
+        opt.value = b.id;
+        opt.textContent = b.nome;
+        transferBancoOrigem.appendChild(opt);
+      });
+  }
+
+  if (transferBancoDestino) {
+    transferBancoDestino.innerHTML = `<option value="">Selecione</option>`;
+    bancos
+      .filter((b) => bancoPermitido(b.nome, BANCOS_TRANSFERENCIA))
+      .forEach((b) => {
+        const opt = document.createElement("option");
+        opt.value = b.id;
+        opt.textContent = b.nome;
+        transferBancoDestino.appendChild(opt);
+      });
+  }
 }
 
-/* SALVAR */
+async function carregarContas() {
+  const { data, error } = await supabase
+    .from("contas_pagar")
+    .select("*, bancos(nome)")
+    .order("vencimento", { ascending: false });
 
-document.getElementById("btnSalvarNovoPagar").onclick=async()=>{
+  if (error) {
+    console.error(error);
+    return;
+  }
 
-const banco=document.getElementById("novoBanco").value
-const desc=document.getElementById("novoDescricao").value
-const valor=parseFloat(document.getElementById("novoValor").value)
-const data=document.getElementById("novoVencimento").value
+  tabela.innerHTML = "";
 
-await supabase.from("contas_pagar").insert({
+  if (!data || data.length === 0) {
+    tabela.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align:center;color:#94a3b8;">
+          Nenhum lançamento encontrado
+        </td>
+      </tr>
+    `;
+    return;
+  }
 
-banco_id:banco,
-descricao:desc,
-valor:valor,
-vencimento:data,
-tipo:"SAIDA",
-status:"ABERTO"
+  data.forEach((l) => {
+    let entrada = "-";
+    let saida = "-";
 
-})
+    if (l.tipo === "ENTRADA") {
+      entrada = `<span class="valor-entrada">${moeda(l.valor)}</span>`;
+    } else {
+      saida = `<span class="valor-saida">${moeda(l.valor)}</span>`;
+    }
 
-modalNovo.style.display="none"
-
-carregarContas()
-
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${dataBR(l.vencimento)}</td>
+      <td>${l.bancos?.nome || "-"}</td>
+      <td>${l.descricao || "-"}</td>
+      <td>${entrada}</td>
+      <td>${saida}</td>
+      <td>${l.status || "-"}</td>
+      <td>
+        ${
+          l.status !== "PAGO"
+            ? `<button onclick="marcarPago(${l.id})" class="btn btn-verde">Pagar</button>`
+            : `<span style="color:#22c55e;font-weight:bold;">Pago</span>`
+        }
+      </td>
+    `;
+    tabela.appendChild(tr);
+  });
 }
 
-document.getElementById("btnSalvarNfEntrada").onclick=async()=>{
+async function salvarNovoLancamento() {
+  const banco_id = novoBanco?.value || "";
+  const descricao = novoDescricao?.value?.trim() || "";
+  const valor = moedaParaNumero(novoValor?.value);
+  const vencimento = novoVencimento?.value || "";
 
-const banco=document.getElementById("nfBanco").value
-const desc=document.getElementById("nfDescricao").value
-const valor=parseFloat(document.getElementById("nfValor").value)
-const data=document.getElementById("nfVencimento").value
+  if (!banco_id || !descricao || !valor || !vencimento) {
+    alert("Preencha banco, descrição, valor e vencimento.");
+    return;
+  }
 
-await supabase.from("contas_pagar").insert({
+  const { error } = await supabase.from("contas_pagar").insert([{
+    banco_id,
+    descricao,
+    valor,
+    vencimento,
+    status: "ABERTO",
+    tipo: "SAIDA"
+  }]);
 
-banco_id:banco,
-descricao:desc,
-valor:valor,
-vencimento:data,
-tipo:"ENTRADA",
-status:"ABERTO"
+  if (error) {
+    console.error(error);
+    alert("Erro ao salvar lançamento.");
+    return;
+  }
 
-})
-
-modalNF.style.display="none"
-
-carregarContas()
-
+  fecharModal(modalNovoPagar);
+  limparNovoLancamento();
+  await carregarContas();
 }
 
-document.getElementById("btnSalvarTransferencia").onclick=async()=>{
+async function salvarNfEntrada() {
+  const banco_id = nfBanco?.value || "";
+  const descricao = nfDescricao?.value?.trim() || "NF Entrada";
+  const valor = moedaParaNumero(nfValor?.value);
+  const vencimento = nfVencimento?.value || "";
 
-const origem=document.getElementById("transferBancoOrigem").value
-const destino=document.getElementById("transferBancoDestino").value
-const desc=document.getElementById("transferDescricao").value
-const valor=parseFloat(document.getElementById("transferValor").value)
-const data=document.getElementById("transferData").value
+  if (!banco_id || !descricao || !valor || !vencimento) {
+    alert("Preencha banco, descrição, valor e data.");
+    return;
+  }
 
-await supabase.from("contas_pagar").insert([
+  const { error } = await supabase.from("contas_pagar").insert([{
+    banco_id,
+    descricao,
+    valor,
+    vencimento,
+    status: "ABERTO",
+    tipo: "ENTRADA"
+  }]);
 
-{
-banco_id:origem,
-descricao:desc+" saída",
-valor:valor,
-vencimento:data,
-tipo:"SAIDA",
-status:"PAGO"
-},
+  if (error) {
+    console.error(error);
+    alert("Erro ao salvar NF Entrada.");
+    return;
+  }
 
-{
-banco_id:destino,
-descricao:desc+" entrada",
-valor:valor,
-vencimento:data,
-tipo:"ENTRADA",
-status:"PAGO"
+  fecharModal(modalNfEntrada);
+  limparNfEntrada();
+  await carregarContas();
 }
 
-])
+async function salvarTransferencia() {
+  const bancoOrigem = transferBancoOrigem?.value || "";
+  const bancoDestino = transferBancoDestino?.value || "";
+  const descricao = transferDescricao?.value?.trim() || "Transferência entre bancos";
+  const valor = moedaParaNumero(transferValor?.value);
+  const vencimento = transferData?.value || "";
 
-modalTransfer.style.display="none"
+  if (!bancoOrigem || !bancoDestino || !valor || !vencimento) {
+    alert("Preencha origem, destino, valor e data.");
+    return;
+  }
 
-carregarContas()
+  if (bancoOrigem === bancoDestino) {
+    alert("Origem e destino não podem ser iguais.");
+    return;
+  }
 
+  const { error } = await supabase.from("contas_pagar").insert([
+    {
+      banco_id: bancoOrigem,
+      descricao: `${descricao} - saída`,
+      valor,
+      vencimento,
+      status: "PAGO",
+      tipo: "SAIDA"
+    },
+    {
+      banco_id: bancoDestino,
+      descricao: `${descricao} - entrada`,
+      valor,
+      vencimento,
+      status: "PAGO",
+      tipo: "ENTRADA"
+    }
+  ]);
+
+  if (error) {
+    console.error(error);
+    alert("Erro ao salvar transferência.");
+    return;
+  }
+
+  fecharModal(modalTransferencia);
+  limparTransferencia();
+  await carregarContas();
 }
 
-carregarContas()
+async function marcarPago(id) {
+  const { error } = await supabase
+    .from("contas_pagar")
+    .update({ status: "PAGO" })
+    .eq("id", id);
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  await carregarContas();
+}
+
+window.marcarPago = marcarPago;
+
+/* EVENTOS */
+
+if (btnNovoPagar) {
+  btnNovoPagar.onclick = () => {
+    limparNovoLancamento();
+    abrirModal(modalNovoPagar);
+  };
+}
+
+if (btnNfEntrada) {
+  btnNfEntrada.onclick = () => {
+    limparNfEntrada();
+    abrirModal(modalNfEntrada);
+  };
+}
+
+if (btnTransferir) {
+  btnTransferir.onclick = () => {
+    limparTransferencia();
+    abrirModal(modalTransferencia);
+  };
+}
+
+if (btnCancelarNovoPagar) {
+  btnCancelarNovoPagar.onclick = () => fecharModal(modalNovoPagar);
+}
+
+if (btnCancelarNfEntrada) {
+  btnCancelarNfEntrada.onclick = () => fecharModal(modalNfEntrada);
+}
+
+if (btnCancelarTransferencia) {
+  btnCancelarTransferencia.onclick = () => fecharModal(modalTransferencia);
+}
+
+if (btnSalvarNovoPagar) {
+  btnSalvarNovoPagar.onclick = salvarNovoLancamento;
+}
+
+if (btnSalvarNfEntrada) {
+  btnSalvarNfEntrada.onclick = salvarNfEntrada;
+}
+
+if (btnSalvarTransferencia) {
+  btnSalvarTransferencia.onclick = salvarTransferencia;
+}
+
+if (modalNovoPagar) {
+  modalNovoPagar.addEventListener("click", (e) => {
+    if (e.target === modalNovoPagar) fecharModal(modalNovoPagar);
+  });
+}
+
+if (modalNfEntrada) {
+  modalNfEntrada.addEventListener("click", (e) => {
+    if (e.target === modalNfEntrada) fecharModal(modalNfEntrada);
+  });
+}
+
+if (modalTransferencia) {
+  modalTransferencia.addEventListener("click", (e) => {
+    if (e.target === modalTransferencia) fecharModal(modalTransferencia);
+  });
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    fecharModal(modalNovoPagar);
+    fecharModal(modalNfEntrada);
+    fecharModal(modalTransferencia);
+  }
+});
+
+async function init() {
+  if (!supabase) {
+    console.error("window.supabaseClient não encontrado");
+    return;
+  }
+
+  await carregarBancos();
+  limparNovoLancamento();
+  limparNfEntrada();
+  limparTransferencia();
+  await carregarContas();
+}
+
+init();
