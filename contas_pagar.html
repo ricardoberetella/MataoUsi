@@ -8,15 +8,36 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <style>
         body { background: #020617; color: white; font-family: 'Segoe UI', sans-serif; }
-        .container { max-width: 1100px; margin: auto; padding: 20px; }
-        .btn-voltar { display: inline-flex; align-items: center; padding: 8px 16px; border: 1px solid #38bdf8; border-radius: 8px; color: #38bdf8; text-decoration: none; margin-bottom: 30px; }
-        h1 { color: #38bdf8; text-align: center; margin-bottom: 40px; }
-        .flex-buttons { display: flex; gap: 12px; margin-bottom: 25px; }
+        .container { max-width: 1200px; margin: auto; padding: 20px; }
+        .btn-voltar { display: inline-flex; align-items: center; padding: 8px 16px; border: 1px solid #38bdf8; border-radius: 8px; color: #38bdf8; text-decoration: none; margin-bottom: 20px; transition: 0.3s; }
+        .btn-voltar:hover { background: rgba(56, 189, 248, 0.1); }
+        h1 { color: #38bdf8; text-align: center; margin-bottom: 30px; }
+        
+        /* Barra de Filtros */
+        .filter-bar {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-end;
+            margin-bottom: 20px;
+            border: 1px solid #1e293b;
+        }
+        .filter-group { display: flex; flex-direction: column; gap: 5px; }
+        .filter-group label { font-size: 0.8rem; color: #38bdf8; font-weight: bold; }
+        .filter-bar input, .filter-bar select { 
+            background: #1e293b; border: 1px solid #334155; color: white; 
+            padding: 8px; border-radius: 6px; outline: none;
+        }
+
+        .flex-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
         .tabela { width: 100%; border-collapse: collapse; background: #0f172a; border-radius: 8px; overflow: hidden; }
         .tabela th { background: #1e293b; color: #38bdf8; text-align: left; padding: 15px; border-bottom: 2px solid #38bdf8; }
         .tabela td { padding: 15px; border-bottom: 1px solid #334155; }
         
-        .btn { padding: 8px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; margin-right: 5px; font-size: 0.85rem; }
+        .btn { padding: 8px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; font-size: 0.85rem; }
         .btn-verde { background: #22c55e; color: white; }
         .btn-azul { background: #38bdf8; color: black; }
         .btn-roxo { background: #8b5cf6; color: white; }
@@ -34,6 +55,25 @@
 <div class="container">
     <a href="index.html" class="btn-voltar">← Voltar ao Menu</a>
     <h1>Financeiro</h1>
+
+    <div class="filter-bar">
+        <div class="filter-group">
+            <label>Data Início</label>
+            <input type="date" id="filtroDataInicio">
+        </div>
+        <div class="filter-group">
+            <label>Data Fim</label>
+            <input type="date" id="filtroDataFim">
+        </div>
+        <div class="filter-group">
+            <label>Banco</label>
+            <select id="filtroBanco">
+                <option value="">Todos os Bancos</option>
+            </select>
+        </div>
+        <button onclick="carregarContas()" class="btn btn-azul">Filtrar</button>
+        <button onclick="limparFiltros()" class="btn">Limpar</button>
+    </div>
 
     <div class="flex-buttons">
         <button id="btnNovoPagar" class="btn btn-verde">Novo Lançamento</button>
