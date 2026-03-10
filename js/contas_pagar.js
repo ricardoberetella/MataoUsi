@@ -9,7 +9,6 @@ function fecharModais() { modalNovo.style.display = "none"; modalEditar.style.di
 
 async function carregarBancos() {
     const { data } = await supabase.from("bancos").select("id, nome").order("nome");
-    // Preenche os selects de filtros e modais
     const selects = ["novoBanco", "editBanco", "filtroBanco"];
     selects.forEach(id => {
         const el = document.getElementById(id);
@@ -24,13 +23,14 @@ async function carregarContas() {
     const dataInicio = document.getElementById("filtroDataInicio").value;
     const dataFim = document.getElementById("filtroDataFim").value;
     const bancoId = document.getElementById("filtroBanco").value;
+    const statusFiltro = document.getElementById("filtroStatus").value;
 
     let query = supabase.from("contas_pagar").select("*, bancos(nome)");
 
-    // Aplica filtros se preenchidos
     if (dataInicio) query = query.gte("vencimento", dataInicio);
     if (dataFim) query = query.lte("vencimento", dataFim);
     if (bancoId) query = query.eq("banco_id", bancoId);
+    if (statusFiltro) query = query.eq("status", statusFiltro);
 
     const { data, error } = await query.order("vencimento", { ascending: false });
 
@@ -48,7 +48,9 @@ async function carregarContas() {
             <td style="color:#ef4444; font-weight:bold">${moeda(l.valor)}</td>
             <td style="font-weight:bold; color: ${ePago ? '#22c55e' : '#f39c12'}">${l.status}</td>
             <td>
-                ${!ePago ? `<button onclick="marcarPago('${l.id}')" class="btn btn-verde">Pagar</button>` : `<span style="color:#22c55e; margin-right:10px;">✓ Pago</span>`}
+                ${!ePago 
+                    ? `<button onclick="pagarConta('${l.id}', ${l.valor}, '${l.banco_id}')" class="btn btn-verde">Pagar</button>` 
+                    : `<button onclick="estornarPagamento('${l.id}', ${l.valor}, '${l.banco_id}')" class="btn btn-cinza">Estornar</button>`}
                 <button onclick="abrirEditar('${l.id}')" class="btn btn-amarelo">Editar</button>
                 <button onclick="excluirConta('${l.id}')" class="btn btn-vermelho">Excluir</button>
             </td>
@@ -57,10 +59,43 @@ async function carregarContas() {
     });
 }
 
+// Lógica de Pagar (Subtrai do Banco)
+async function pagarConta(id, valor, bancoId) {
+    // 1. Atualiza Status
+    await supabase.from("contas_pagar").update({ status: "PAGO" }).eq("id", id);
+    
+    // 2. Busca Saldo Atual
+    const { data: banco } = await supabase.from("bancos").select("saldo").eq("id", bancoId).single();
+    const novoSaldo = (banco.saldo || 0) - valor;
+
+    // 3. Atualiza Saldo no Banco
+    await supabase.from("bancos").update({ saldo: novoSaldo }).eq("id", bancoId);
+    
+    carregarContas();
+}
+
+// Lógica de Estornar (Soma de volta ao Banco)
+async function estornarPagamento(id, valor, bancoId) {
+    if (!confirm("Deseja estornar este pagamento? O valor voltará ao saldo do banco.")) return;
+
+    // 1. Volta para ABERTO
+    await supabase.from("contas_pagar").update({ status: "ABERTO" }).eq("id", id);
+    
+    // 2. Busca Saldo Atual
+    const { data: banco } = await supabase.from("bancos").select("saldo").eq("id", bancoId).single();
+    const novoSaldo = (banco.saldo || 0) + valor;
+
+    // 3. Devolve valor ao Banco
+    await supabase.from("bancos").update({ saldo: novoSaldo }).eq("id", bancoId);
+    
+    carregarContas();
+}
+
 function limparFiltros() {
     document.getElementById("filtroDataInicio").value = "";
     document.getElementById("filtroDataFim").value = "";
     document.getElementById("filtroBanco").value = "";
+    document.getElementById("filtroStatus").value = "ABERTO";
     carregarContas();
 }
 
@@ -98,11 +133,6 @@ async function excluirConta(id) {
     }
 }
 
-async function marcarPago(id) {
-    await supabase.from("contas_pagar").update({ status: "PAGO" }).eq("id", id);
-    carregarContas();
-}
-
 document.getElementById("btnNovoPagar").onclick = () => modalNovo.style.display = "flex";
 document.getElementById("btnSalvarNovoPagar").onclick = async () => {
     const item = {
@@ -119,7 +149,14 @@ document.getElementById("btnSalvarNovoPagar").onclick = async () => {
 
 document.getElementById("btnAtualizarPagar").onclick = atualizarConta;
 window.onclick = (e) => { if (e.target.className === "modal") fecharModais(); };
-window.marcarPago = marcarPago; window.abrirEditar = abrirEditar; window.excluirConta = excluirConta;
+
+// Exportação de funções globais
+window.pagarConta = pagarConta; 
+window.estornarPagamento = estornarPagamento;
+window.abrirEditar = abrirEditar; 
+window.excluirConta = excluirConta;
 window.limparFiltros = limparFiltros;
 
-carregarBancos(); carregarContas();
+// Inicialização
+carregarBancos(); 
+carregarContas();
