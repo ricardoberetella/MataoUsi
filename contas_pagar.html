@@ -3,64 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Financeiro - Matão Usinagem</title>
+    <title>Controle Financeiro - Matão Usinagem</title>
     <link rel="stylesheet" href="css/global.css">
     <style>
         body { background: #020617; color: white; font-family: sans-serif; margin: 0; padding: 15px; }
         .container { max-width: 1200px; margin: auto; }
         .btn-voltar { display: inline-flex; align-items: center; padding: 8px 16px; border: 1px solid #38bdf8; color: #38bdf8; text-decoration: none; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; }
-        h1 { color: #38bdf8; text-align: center; margin-top: 0; }
         
+        /* Dashboard de Saldo (Print 1 integrado) */
+        .dashboard-resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .card { background: #0f172a; border: 1px solid #1e293b; padding: 15px; border-radius: 12px; text-align: center; }
+        .card h4 { margin: 0 0 10px 0; font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; }
+        .card .valor { font-size: 1.2rem; font-weight: bold; }
+        .v-positivo { color: #38bdf8; }
+        .v-negativo { color: #ef4444; }
+        .v-neutro { color: #a855f7; }
+
         .filter-bar { background: #0f172a; padding: 12px; border-radius: 10px; display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 20px; border: 1px solid #1e293b; }
         .filter-group { display: flex; flex-direction: column; gap: 4px; }
         .filter-group label { font-size: 0.7rem; color: #38bdf8; text-transform: uppercase; font-weight: bold; }
         .filter-bar input, .filter-bar select { background: #1e293b; border: 1px solid #334155; color: white; padding: 6px; border-radius: 6px; font-size: 0.85rem; }
 
         .flex-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
-        .btn { padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; font-size: 0.85rem; transition: opacity 0.2s; }
-        .btn:hover { opacity: 0.8; }
+        .btn { padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; font-size: 0.85rem; }
         .btn-verde { background: #22c55e; }
         .btn-roxo { background: #a855f7; }
         .btn-azul { background: #38bdf8; color: #020617; }
         .btn-cinza { background: #475569; }
         .btn-vermelho { background: #ef4444; }
 
-        .tabela-container { background: #0f172a; border-radius: 8px; overflow-x: auto; border: 1px solid #1e293b; }
-        table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th { background: #1e293b; color: #38bdf8; padding: 10px; text-align: left; text-transform: uppercase; font-size: 0.75rem; border-bottom: 2px solid #38bdf8; }
-        td { padding: 10px; border-bottom: 1px solid #334155; font-size: 0.85rem; white-space: nowrap; }
+        .tabela-container { background: #0f172a; border-radius: 8px; border: 1px solid #1e293b; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        th { background: #1e293b; color: #38bdf8; padding: 12px; text-align: left; font-size: 0.75rem; border-bottom: 2px solid #38bdf8; }
+        td { padding: 12px; border-bottom: 1px solid #334155; font-size: 0.85rem; }
         
-        /* Ajuste de largura das colunas */
-        .col-data { width: 80px; }
-        .col-banco { width: 100px; }
-        .col-desc { white-space: normal; min-width: 200px; }
-        .col-valor { width: 100px; text-align: right; }
-        .col-status { width: 90px; text-align: center; }
-        .col-acoes { width: 130px; }
-
-        .acoes-flex { display: flex; align-items: center; gap: 6px; }
-        .btn-excluir-mini { padding: 6px 10px; font-size: 0.9rem; line-height: 1; }
-
+        .acoes-flex { display: flex; gap: 6px; }
         .status-aberto { color: #fbbf24; font-weight: bold; }
-        .status-recebido, .status-pago { color: #22c55e; font-weight: bold; }
-        .valor-saida { color: #ef4444; font-weight: bold; }
-        .valor-entrada { color: #22c55e; font-weight: bold; }
-
+        .status-pago { color: #22c55e; font-weight: bold; }
+        
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 1000; }
         .modal-content { background: #0f172a; padding: 25px; border-radius: 12px; border: 1px solid #38bdf8; width: 90%; max-width: 380px; }
-        .modal h3 { margin-top: 0; margin-bottom: 15px; }
-        .modal input, .modal select { width: 100%; padding: 10px; margin: 8px 0; background: #1e293b; border: 1px solid #334155; color: white; border-radius: 6px; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <a href="index.html" class="btn-voltar">← Voltar ao Menu</a>
-    <h1>Financeiro</h1>
+    
+    <div class="dashboard-resumo">
+        <div class="card"><h4>Disponível SICOOB</h4><div class="valor v-positivo" id="resumoSicoob">R$ 0,00</div></div>
+        <div class="card"><h4>Disponível CAIXA</h4><div class="valor v-positivo" id="resumoCaixa">R$ 0,00</div></div>
+        <div class="card"><h4>Contas a Pagar</h4><div class="valor v-negativo" id="resumoPagar">R$ 0,00</div></div>
+        <div class="card"><h4>Saldo Projetado</h4><div class="valor v-neutro" id="resumoTotal">R$ 0,00</div></div>
+    </div>
 
     <div class="filter-bar">
-        <div class="filter-group"><label>Data Início</label><input type="date" id="filtroDataInicio"></div>
-        <div class="filter-group"><label>Data Fim</label><input type="date" id="filtroDataFim"></div>
+        <div class="filter-group"><label>Início</label><input type="date" id="filtroDataInicio"></div>
+        <div class="filter-group"><label>Fim</label><input type="date" id="filtroDataFim"></div>
         <div class="filter-group">
             <label>Status</label>
             <select id="filtroStatus">
@@ -83,13 +82,13 @@
         <table>
             <thead>
                 <tr>
-                    <th class="col-data">Data</th>
-                    <th class="col-banco">Banco</th>
-                    <th class="col-desc">Descrição</th>
-                    <th class="col-valor">Entrada</th>
-                    <th class="col-valor">Saída</th>
-                    <th class="col-status">Status</th>
-                    <th class="col-acoes">Ações</th>
+                    <th>Data</th>
+                    <th>Banco</th>
+                    <th>Descrição</th>
+                    <th style="text-align: right;">Entrada</th>
+                    <th style="text-align: right;">Saída</th>
+                    <th style="text-align: center;">Status</th>
+                    <th>Ações</th>
                 </tr>
             </thead>
             <tbody id="listaPagar"></tbody>
@@ -97,9 +96,9 @@
     </div>
 </div>
 
-<div id="modalNovo" class="modal"><div class="modal-content"><h3 style="color: #22c55e;">Novo Lançamento</h3><input type="text" id="novoDescricao" placeholder="Descrição"><input type="number" id="novoValor" placeholder="0.00"><input type="date" id="novoVencimento"><select id="novoBanco"></select><div style="display:flex; gap:10px; margin-top:10px;"><button onclick="fecharModais()" class="btn btn-cinza" style="flex:1">Sair</button><button id="btnSalvarNovo" class="btn btn-verde" style="flex:1">Salvar</button></div></div></div>
-<div id="modalTransferencia" class="modal"><div class="modal-content"><h3 style="color: #a855f7;">Transferência</h3><select id="transfOrigem"></select><select id="transfDestino"></select><input type="number" id="transfValor" placeholder="Valor R$"><div style="display:flex; gap:10px; margin-top:10px;"><button onclick="fecharModais()" class="btn btn-cinza" style="flex:1">Sair</button><button id="btnSalvarTransf" class="btn btn-roxo" style="flex:1">Transferir</button></div></div></div>
-<div id="modalNF" class="modal"><div class="modal-content"><h3 style="color: #38bdf8;">NF de Entrada</h3><input type="text" id="nfDescricao" placeholder="NF/Fornecedor"><input type="number" id="nfValor" placeholder="Valor"><input type="date" id="nfVencimento"><select id="nfBanco"></select><div style="display:flex; gap:10px; margin-top:10px;"><button onclick="fecharModais()" class="btn btn-cinza" style="flex:1">Sair</button><button id="btnSalvarNF" class="btn btn-azul" style="flex:1">Lançar</button></div></div></div>
+<div id="modalNovo" class="modal">...</div>
+<div id="modalTransferencia" class="modal">...</div>
+<div id="modalNF" class="modal">...</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/contas_pagar.js"></script>
