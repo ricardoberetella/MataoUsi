@@ -1,71 +1,191 @@
-var supabase = window.supabaseClient;
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contas a Pagar - Matão Usinagem</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <style>
+        body {
+            background: #020617;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-const tabela = document.getElementById("listaPagar");
-const modalNovo = document.getElementById("modalNovoPagar");
-const modalTransfer = document.getElementById("modalTransferencia");
-const modalNF = document.getElementById("modalNfEntrada");
+        .container {
+            max-width: 1100px;
+            margin: auto;
+            padding: 20px;
+        }
 
-function moeda(v) { return Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }); }
+        /* Botão Voltar ao Menu */
+        .btn-voltar {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            border: 1px solid #38bdf8;
+            border-radius: 8px;
+            color: #38bdf8;
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 30px;
+            background: transparent;
+            transition: all 0.3s ease;
+        }
 
-function dataBR(data) {
-    if (!data) return "-";
-    const partes = data.split("-");
-    return `${partes[2]}/${partes[1]}/${partes[0]}`;
-}
+        .btn-voltar:hover {
+            background: rgba(56, 189, 248, 0.1);
+            transform: translateX(-5px);
+        }
 
-async function carregarBancos() {
-    const { data } = await supabase.from("bancos").select("id, nome");
-    const selects = ["novoBanco", "nfBanco", "transferBancoOrigem", "transferBancoDestino"];
-    selects.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.innerHTML = data.map(b => `<option value="${b.id}">${b.nome}</option>`).join("");
-    });
-}
+        h1 {
+            color: #38bdf8;
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+        }
 
-async function carregarContas() {
-    const { data, error } = await supabase.from("contas_pagar").select("*, bancos(nome)").order("vencimento", { ascending: false });
-    if (error) return console.error(error);
-    tabela.innerHTML = "";
-    data.forEach(l => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${dataBR(l.vencimento)}</td>
-            <td>${l.bancos?.nome || "-"}</td>
-            <td>${l.descricao}</td>
-            <td>-</td>
-            <td class="valor-saida">${moeda(l.valor)}</td>
-            <td style="font-weight:bold; color:${l.status === 'PAGO' ? '#22c55e' : '#f39c12'}">${l.status}</td>
-            <td>
-                ${l.status !== "PAGO" 
-                    ? `<button onclick="marcarPago('${l.id}')" class="btn btn-verde">Pagar</button>` 
-                    : `<span style="color:#22c55e;">✓ Pago</span>`}
-            </td>
-        `;
-        tabela.appendChild(tr);
-    });
-}
+        .flex-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
 
-async function salvarNovoPagar() {
-    const obj = {
-        descricao: document.getElementById("novoDescricao").value,
-        valor: parseFloat(document.getElementById("novoValor").value.replace(",", ".")),
-        vencimento: document.getElementById("novoVencimento").value,
-        banco_id: document.getElementById("novoBanco").value,
-        status: "ABERTO"
-    };
-    const { error } = await supabase.from("contas_pagar").insert([obj]);
-    if (!error) { modalNovo.style.display = "none"; carregarContas(); }
-}
+        .tabela {
+            width: 100%;
+            border-collapse: collapse;
+            background: #0f172a;
+            border-radius: 8px;
+            overflow: hidden;
+        }
 
-async function marcarPago(id) {
-    await supabase.from("contas_pagar").update({ status: "PAGO" }).eq("id", id);
-    carregarContas();
-}
+        .tabela th {
+            background: #1e293b;
+            color: #38bdf8;
+            text-align: left;
+            padding: 15px;
+            border-bottom: 2px solid #38bdf8;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
 
-document.getElementById("btnNovoPagar").onclick = () => modalNovo.style.display = "flex";
-document.getElementById("btnCancelarNovoPagar").onclick = () => modalNovo.style.display = "none";
-document.getElementById("btnSalvarNovoPagar").onclick = salvarNovoPagar;
+        .tabela td {
+            padding: 15px;
+            border-bottom: 1px solid #334155;
+            font-size: 0.95rem;
+        }
 
-window.marcarPago = marcarPago;
-carregarBancos();
-carregarContas();
+        .valor-entrada { color: #22c55e; font-weight: bold; }
+        .valor-saida { color: #ef4444; font-weight: bold; }
+
+        .btn {
+            padding: 10px 18px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover { opacity: 0.9; }
+        .btn-verde { background: #22c55e; color: white; }
+        .btn-azul { background: #38bdf8; color: black; }
+        .btn-roxo { background: #8b5cf6; color: white; }
+
+        /* Modais */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: #0f172a;
+            padding: 30px;
+            border-radius: 12px;
+            border: 2px solid #38bdf8;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .modal h3 { color: #38bdf8; margin-top: 0; }
+
+        .modal input, .modal select {
+            width: 100%;
+            margin-top: 12px;
+            padding: 10px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: white;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="index.html" class="btn-voltar">← Voltar ao Menu</a>
+
+    <h1>Financeiro</h1>
+
+    <div class="flex-buttons">
+        <button id="btnNovoPagar" class="btn btn-verde">Novo Lançamento</button>
+        <button id="btnTransferir" class="btn btn-roxo">Transferência</button>
+        <button id="btnNfEntrada" class="btn btn-azul">NF Entrada</button>
+    </div>
+
+    <table class="tabela">
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Banco</th>
+                <th>Descrição</th>
+                <th>Entrada</th>
+                <th>Saída</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="listaPagar"></tbody>
+    </table>
+</div>
+
+<div id="modalNovoPagar" class="modal">
+    <div class="modal-content">
+        <h3>Novo Lançamento</h3>
+        <select id="novoBanco"></select>
+        <input id="novoDescricao" type="text" placeholder="Descrição">
+        <input id="novoValor" type="text" placeholder="Valor (Ex: 150,00)">
+        <input type="date" id="novoVencimento">
+        <div class="modal-actions">
+            <button id="btnCancelarNovoPagar" class="btn">Cancelar</button>
+            <button id="btnSalvarNovoPagar" class="btn btn-verde">Salvar</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const SUPABASE_URL = "https://uxtgicfuggpuyjybwawa.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg";
+    
+    // Inicialização global para o JS externo usar
+    window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>
+<script src="js/contas_pagar.js"></script>
+
+</body>
+</html>
