@@ -1,508 +1,577 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Contas a Pagar - Matão Usinagem</title>
+const supabase = window.supabaseClient;
 
-<link rel="stylesheet" href="css/global.css">
-<link rel="stylesheet" href="css/dashboard.css">
+/* =========================
+FILTROS
+========================= */
 
-<style>
-.page-wrap{
-max-width:1100px;
-margin:10px auto;
-padding:0 12px 20px;
+const filtroBanco = document.getElementById("filtroBanco");
+const filtroData = document.getElementById("filtroData");
+const filtroMes = document.getElementById("filtroMes");
+const filtroStatus = document.getElementById("filtroStatus");
+const filtroTipo = document.getElementById("filtroTipo");
+
+/* =========================
+BOTÕES
+========================= */
+
+const btnNovoPagar = document.getElementById("btnNovoPagar");
+const btnNfEntrada = document.getElementById("btnNfEntrada");
+const btnTransferir = document.getElementById("btnTransferir");
+const btnFiltrar = document.getElementById("btnFiltrar");
+const btnLimparFiltros = document.getElementById("btnLimparFiltros");
+
+/* =========================
+TABELA
+========================= */
+
+const tabela = document.getElementById("listaPagar");
+
+/* =========================
+MODAIS
+========================= */
+
+const modalNovoPagar = document.getElementById("modalNovoPagar");
+const modalNfEntrada = document.getElementById("modalNfEntrada");
+const modalTransferencia = document.getElementById("modalTransferencia");
+
+const btnCancelarNovoPagar = document.getElementById("btnCancelarNovoPagar");
+const btnSalvarNovoPagar = document.getElementById("btnSalvarNovoPagar");
+
+const btnCancelarNfEntrada = document.getElementById("btnCancelarNfEntrada");
+const btnSalvarNfEntrada = document.getElementById("btnSalvarNfEntrada");
+
+const btnCancelarTransferencia = document.getElementById("btnCancelarTransferencia");
+const btnSalvarTransferencia = document.getElementById("btnSalvarTransferencia");
+
+const novoBanco = document.getElementById("novoBanco");
+const novoDescricao = document.getElementById("novoDescricao");
+const novoValor = document.getElementById("novoValor");
+const novoVencimento = document.getElementById("novoVencimento");
+const msgNovoPagar = document.getElementById("msgNovoPagar");
+
+const nfBanco = document.getElementById("nfBanco");
+const nfDescricao = document.getElementById("nfDescricao");
+const nfValor = document.getElementById("nfValor");
+const nfVencimento = document.getElementById("nfVencimento");
+const msgNfEntrada = document.getElementById("msgNfEntrada");
+
+const transferBancoOrigem = document.getElementById("transferBancoOrigem");
+const transferBancoDestino = document.getElementById("transferBancoDestino");
+const transferDescricao = document.getElementById("transferDescricao");
+const transferValor = document.getElementById("transferValor");
+const transferData = document.getElementById("transferData");
+const msgTransferencia = document.getElementById("msgTransferencia");
+
+/* =========================
+CONFIG BANCOS
+========================= */
+
+const BANCOS_NOVO_LANCAMENTO = ["SICOOB", "CAIXA", "CAIXA FEDERAL"];
+const BANCOS_TRANSFERENCIA = ["SICOOB", "CAIXA", "CAIXA FEDERAL"];
+
+/* =========================
+FORMATADORES
+========================= */
+
+function moeda(v) {
+    return Number(v || 0).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+    });
 }
 
-.container{
-width:100%;
-padding:18px;
-border-radius:16px;
-background:rgba(2,6,23,.95);
-border:1px solid rgba(56,189,248,.35);
-box-shadow:0 0 15px rgba(56,189,248,.15);
+function formatarDataBR(data) {
+    if (!data) return "-";
+    const d = new Date(`${data}T00:00:00`);
+    return d.toLocaleDateString("pt-BR");
 }
 
-.topo-contas-pagar{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:15px;
-flex-wrap:wrap;
-gap:10px;
+function moedaParaNumero(valor) {
+    if (!valor) return 0;
+    return Number(String(valor).replace(/\./g, "").replace(",", "."));
 }
 
-.titulo-contas-pagar{
-color:#38bdf8;
-font-size:24px;
-margin:0;
-flex:1;
-text-align:center;
+function hojeISO() {
+    const hoje = new Date();
+    const y = hoje.getFullYear();
+    const m = String(hoje.getMonth() + 1).padStart(2, "0");
+    const d = String(hoje.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
 }
 
-.btn-voltar-topo{
-background:transparent;
-color:#38bdf8;
-border:2px solid #38bdf8;
-border-radius:12px;
-padding:8px 16px;
-font-weight:700;
-font-size:14px;
-cursor:pointer;
-transition:.2s;
-white-space:nowrap;
+function normalizarTexto(txt) {
+    return String(txt || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim()
+        .toUpperCase();
 }
 
-.btn-voltar-topo:hover{
-background:rgba(56,189,248,.08);
+function bancoPermitido(nomeBanco, permitidos) {
+    const nome = normalizarTexto(nomeBanco);
+    return permitidos.some((item) => nome.includes(normalizarTexto(item)));
 }
 
-.cards-bancos{
-display:flex;
-gap:10px;
-margin-bottom:15px;
-flex-wrap:wrap;
+/* =========================
+MODAIS
+========================= */
+
+function abrirModal(modal) {
+    if (modal) modal.classList.add("ativo");
 }
 
-.bloco-filtros{
-background:rgba(30,41,59,.65);
-padding:14px;
-border-radius:12px;
+function fecharModal(modal) {
+    if (modal) modal.classList.remove("ativo");
 }
 
-.filtros-linha{
-display:flex;
-flex-direction:column;
-gap:12px;
+function limparModalNovoPagar() {
+    if (novoBanco) novoBanco.value = "";
+    if (novoDescricao) novoDescricao.value = "";
+    if (novoValor) novoValor.value = "";
+    if (novoVencimento) novoVencimento.value = hojeISO();
+    if (msgNovoPagar) msgNovoPagar.textContent = "";
 }
 
-.campos-linha{
-display:grid;
-grid-template-columns:repeat(5, minmax(0, 1fr));
-gap:12px;
-align-items:end;
+function limparModalNfEntrada() {
+    if (nfBanco) nfBanco.value = "";
+    if (nfDescricao) nfDescricao.value = "NF Entrada";
+    if (nfValor) nfValor.value = "";
+    if (nfVencimento) nfVencimento.value = hojeISO();
+    if (msgNfEntrada) msgNfEntrada.textContent = "";
 }
 
-.botoes-linha{
-display:flex;
-justify-content:flex-end;
-align-items:center;
-gap:10px;
-flex-wrap:wrap;
+function limparModalTransferencia() {
+    if (transferBancoOrigem) transferBancoOrigem.value = "";
+    if (transferBancoDestino) transferBancoDestino.value = "";
+    if (transferDescricao) transferDescricao.value = "Transferência entre bancos";
+    if (transferValor) transferValor.value = "";
+    if (transferData) transferData.value = hojeISO();
+    if (msgTransferencia) msgTransferencia.textContent = "";
 }
 
-.campo-filtro{
-display:flex;
-flex-direction:column;
-gap:4px;
-min-width:0;
+/* =========================
+CARREGAR BANCOS
+========================= */
+
+async function carregarBancos() {
+    const { data, error } = await supabase
+        .from("bancos")
+        .select("id, nome")
+        .order("nome", { ascending: true });
+
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    const bancos = data || [];
+
+    if (filtroBanco) {
+        filtroBanco.innerHTML = `<option value="">Todos</option>`;
+        bancos.forEach((b) => {
+            const opt = document.createElement("option");
+            opt.value = b.id;
+            opt.textContent = b.nome;
+            filtroBanco.appendChild(opt);
+        });
+    }
+
+    if (novoBanco) {
+        novoBanco.innerHTML = `<option value="">Selecione</option>`;
+        bancos
+            .filter((b) => bancoPermitido(b.nome, BANCOS_NOVO_LANCAMENTO))
+            .forEach((b) => {
+                const opt = document.createElement("option");
+                opt.value = b.id;
+                opt.textContent = b.nome;
+                novoBanco.appendChild(opt);
+            });
+    }
+
+    if (nfBanco) {
+        nfBanco.innerHTML = `<option value="">Selecione</option>`;
+        bancos
+            .filter((b) => bancoPermitido(b.nome, BANCOS_NOVO_LANCAMENTO))
+            .forEach((b) => {
+                const opt = document.createElement("option");
+                opt.value = b.id;
+                opt.textContent = b.nome;
+                nfBanco.appendChild(opt);
+            });
+    }
+
+    if (transferBancoOrigem) {
+        transferBancoOrigem.innerHTML = `<option value="">Selecione</option>`;
+        bancos
+            .filter((b) => bancoPermitido(b.nome, BANCOS_TRANSFERENCIA))
+            .forEach((b) => {
+                const opt = document.createElement("option");
+                opt.value = b.id;
+                opt.textContent = b.nome;
+                transferBancoOrigem.appendChild(opt);
+            });
+    }
+
+    if (transferBancoDestino) {
+        transferBancoDestino.innerHTML = `<option value="">Selecione</option>`;
+        bancos
+            .filter((b) => bancoPermitido(b.nome, BANCOS_TRANSFERENCIA))
+            .forEach((b) => {
+                const opt = document.createElement("option");
+                opt.value = b.id;
+                opt.textContent = b.nome;
+                transferBancoDestino.appendChild(opt);
+            });
+    }
 }
 
-.campo-filtro input,
-.campo-filtro select,
-.campo-filtro textarea{
-width:100%;
-min-width:0;
-padding:8px 10px;
-border-radius:8px;
-background:#1e293b;
-color:white;
-border:1px solid #334155;
-height:38px;
-font-size:14px;
-box-sizing:border-box;
+/* =========================
+CARREGAR CONTAS
+========================= */
+
+async function carregarContas() {
+    if (!supabase) {
+        console.error("window.supabaseClient não encontrado");
+        return;
+    }
+
+    let query = supabase
+        .from("contas_pagar")
+        .select("*, bancos(nome)")
+        .order("vencimento", { ascending: false });
+
+    if (filtroBanco?.value) {
+        query = query.eq("banco_id", filtroBanco.value);
+    }
+
+    if (filtroStatus?.value && filtroStatus.value !== "TODOS") {
+        query = query.eq("status", filtroStatus.value);
+    }
+
+    if (filtroTipo?.value && filtroTipo.value !== "TODOS") {
+        query = query.eq("tipo", filtroTipo.value);
+    }
+
+    if (filtroData?.value) {
+        query = query.eq("vencimento", filtroData.value);
+    }
+
+    if (filtroMes?.value) {
+        const inicio = `${filtroMes.value}-01`;
+        const dataFim = new Date(`${filtroMes.value}-01T00:00:00`);
+        dataFim.setMonth(dataFim.getMonth() + 1);
+        const fim = dataFim.toISOString().slice(0, 10);
+
+        query = query.gte("vencimento", inicio).lt("vencimento", fim);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    tabela.innerHTML = "";
+
+    if (!data || data.length === 0) {
+        tabela.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#94a3b8;">Nenhum lançamento encontrado</td></tr>`;
+        return;
+    }
+
+    data.forEach((l) => {
+        const tipo = l.tipo || "SAIDA";
+
+        let entrada = "-";
+        let saida = "-";
+
+        if (tipo === "ENTRADA") {
+            entrada = `<span class="valor-entrada">${moeda(l.valor)}</span>`;
+        } else {
+            saida = `<span class="valor-saida">${moeda(l.valor)}</span>`;
+        }
+
+        const banco = l.bancos?.nome || "-";
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${formatarDataBR(l.vencimento)}</td>
+            <td>${banco}</td>
+            <td>${l.descricao || "-"}</td>
+            <td>${entrada}</td>
+            <td>${saida}</td>
+            <td>${l.status || "-"}</td>
+            <td>
+                ${
+                    l.status !== "PAGO"
+                    ? `<button onclick="marcarPago(${l.id})" style="background:#22c55e;border:none;color:#fff;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:700;">Pagar</button>`
+                    : `<span style="color:#22c55e;font-weight:700;">Pago</span>`
+                }
+            </td>
+        `;
+
+        tabela.appendChild(tr);
+    });
 }
 
-.campo-filtro textarea{
-height:90px;
-resize:vertical;
+/* =========================
+SALVAR NOVO LANÇAMENTO
+========================= */
+
+async function salvarNovoPagar() {
+    const banco_id = novoBanco?.value || null;
+    const descricao = novoDescricao?.value?.trim() || "";
+    const valor = moedaParaNumero(novoValor?.value);
+    const vencimento = novoVencimento?.value || "";
+
+    if (!banco_id || !descricao || !valor || !vencimento) {
+        if (msgNovoPagar) msgNovoPagar.textContent = "Preencha banco, descrição, valor e vencimento.";
+        return;
+    }
+
+    if (msgNovoPagar) msgNovoPagar.textContent = "Salvando...";
+
+    const { error } = await supabase
+        .from("contas_pagar")
+        .insert([{
+            banco_id,
+            descricao,
+            valor,
+            vencimento,
+            status: "ABERTO",
+            tipo: "SAIDA"
+        }]);
+
+    if (error) {
+        console.error(error);
+        if (msgNovoPagar) msgNovoPagar.textContent = "Erro ao salvar lançamento.";
+        return;
+    }
+
+    fecharModal(modalNovoPagar);
+    limparModalNovoPagar();
+    await carregarContas();
 }
 
-.btn-acao{
-cursor:pointer;
-border:none;
-padding:0 16px;
-border-radius:8px;
-font-weight:bold;
-color:white;
-height:38px;
-font-size:14px;
-white-space:nowrap;
+/* =========================
+SALVAR NF ENTRADA
+========================= */
+
+async function salvarNfEntrada() {
+    const banco_id = nfBanco?.value || null;
+    const descricao = nfDescricao?.value?.trim() || "NF Entrada";
+    const valor = moedaParaNumero(nfValor?.value);
+    const vencimento = nfVencimento?.value || "";
+
+    if (!banco_id || !descricao || !valor || !vencimento) {
+        if (msgNfEntrada) msgNfEntrada.textContent = "Preencha banco, descrição, valor e data.";
+        return;
+    }
+
+    if (msgNfEntrada) msgNfEntrada.textContent = "Salvando...";
+
+    const { error } = await supabase
+        .from("contas_pagar")
+        .insert([{
+            banco_id,
+            descricao,
+            valor,
+            vencimento,
+            status: "ABERTO",
+            tipo: "ENTRADA"
+        }]);
+
+    if (error) {
+        console.error(error);
+        if (msgNfEntrada) msgNfEntrada.textContent = "Erro ao salvar NF Entrada.";
+        return;
+    }
+
+    fecharModal(modalNfEntrada);
+    limparModalNfEntrada();
+    await carregarContas();
 }
 
-.label-futuro{
-color:#38bdf8;
-font-size:.70rem;
-letter-spacing:1px;
-text-transform:uppercase;
+/* =========================
+SALVAR TRANSFERÊNCIA
+========================= */
+
+async function salvarTransferencia() {
+    const bancoOrigem = transferBancoOrigem?.value || "";
+    const bancoDestino = transferBancoDestino?.value || "";
+    const descricaoBase = transferDescricao?.value?.trim() || "Transferência entre bancos";
+    const valor = moedaParaNumero(transferValor?.value);
+    const vencimento = transferData?.value || "";
+
+    if (!bancoOrigem || !bancoDestino || !valor || !vencimento) {
+        if (msgTransferencia) msgTransferencia.textContent = "Preencha origem, destino, valor e data.";
+        return;
+    }
+
+    if (bancoOrigem === bancoDestino) {
+        if (msgTransferencia) msgTransferencia.textContent = "Origem e destino não podem ser iguais.";
+        return;
+    }
+
+    if (msgTransferencia) msgTransferencia.textContent = "Salvando transferência...";
+
+    const lancamentos = [
+        {
+            banco_id: bancoOrigem,
+            descricao: `${descricaoBase} - saída`,
+            valor,
+            vencimento,
+            status: "ABERTO",
+            tipo: "SAIDA"
+        },
+        {
+            banco_id: bancoDestino,
+            descricao: `${descricaoBase} - entrada`,
+            valor,
+            vencimento,
+            status: "ABERTO",
+            tipo: "ENTRADA"
+        }
+    ];
+
+    const { error } = await supabase
+        .from("contas_pagar")
+        .insert(lancamentos);
+
+    if (error) {
+        console.error(error);
+        if (msgTransferencia) msgTransferencia.textContent = "Erro ao salvar transferência.";
+        return;
+    }
+
+    fecharModal(modalTransferencia);
+    limparModalTransferencia();
+    await carregarContas();
 }
 
-.tabela-wrapper{
-margin-top:15px;
-overflow-x:auto;
+/* =========================
+MARCAR COMO PAGO
+========================= */
+
+async function marcarPago(id) {
+    const { error } = await supabase
+        .from("contas_pagar")
+        .update({ status: "PAGO" })
+        .eq("id", id);
+
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    await carregarContas();
 }
 
-.tabela-pagar{
-width:100%;
-border-collapse:collapse;
-min-width:1000px;
+window.marcarPago = marcarPago;
+
+/* =========================
+LIMPAR FILTROS
+========================= */
+
+function limparFiltros(){
+    if (filtroBanco) filtroBanco.value = "";
+    if (filtroData) filtroData.value = "";
+    if (filtroMes) filtroMes.value = "";
+    if (filtroStatus) filtroStatus.value = "ABERTO";
+    if (filtroTipo) filtroTipo.value = "TODOS";
+
+    carregarContas();
 }
 
-.tabela-pagar thead tr{
-border-bottom:2px solid #38bdf8;
-color:#38bdf8;
+/* =========================
+EVENTOS
+========================= */
+
+if (filtroBanco) filtroBanco.onchange = carregarContas;
+if (filtroStatus) filtroStatus.onchange = carregarContas;
+if (filtroTipo) filtroTipo.onchange = carregarContas;
+
+if (btnFiltrar) btnFiltrar.onclick = carregarContas;
+if (btnLimparFiltros) btnLimparFiltros.onclick = limparFiltros;
+
+if (btnTransferir) {
+    btnTransferir.onclick = () => {
+        limparModalTransferencia();
+        abrirModal(modalTransferencia);
+    };
 }
 
-.tabela-pagar th,
-.tabela-pagar td{
-padding:10px;
-font-size:14px;
+if (btnNovoPagar) {
+    btnNovoPagar.onclick = () => {
+        limparModalNovoPagar();
+        abrirModal(modalNovoPagar);
+    };
 }
 
-.tabela-pagar tbody tr{
-border-bottom:1px solid rgba(148,163,184,.18);
+if (btnNfEntrada) {
+    btnNfEntrada.onclick = () => {
+        limparModalNfEntrada();
+        abrirModal(modalNfEntrada);
+    };
 }
 
-.valor-entrada{
-color:#22c55e;
-font-weight:bold;
+if (btnCancelarNovoPagar) {
+    btnCancelarNovoPagar.onclick = () => fecharModal(modalNovoPagar);
 }
 
-.valor-saida{
-color:#ef4444;
-font-weight:bold;
+if (btnCancelarNfEntrada) {
+    btnCancelarNfEntrada.onclick = () => fecharModal(modalNfEntrada);
 }
 
-.modal-financeiro{
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.82);
-display:none;
-align-items:center;
-justify-content:center;
-z-index:1000;
-padding:20px;
+if (btnCancelarTransferencia) {
+    btnCancelarTransferencia.onclick = () => fecharModal(modalTransferencia);
 }
 
-.modal-financeiro.ativo{
-display:flex;
+if (btnSalvarNovoPagar) btnSalvarNovoPagar.onclick = salvarNovoPagar;
+if (btnSalvarNfEntrada) btnSalvarNfEntrada.onclick = salvarNfEntrada;
+if (btnSalvarTransferencia) btnSalvarTransferencia.onclick = salvarTransferencia;
+
+if (modalNovoPagar) {
+    modalNovoPagar.addEventListener("click", (e) => {
+        if (e.target === modalNovoPagar) fecharModal(modalNovoPagar);
+    });
 }
 
-.modal-content{
-background:#0f172a;
-border:2px solid #38bdf8;
-padding:22px;
-border-radius:14px;
-width:100%;
-max-width:520px;
-color:white;
-box-shadow:0 0 24px rgba(56,189,248,.18);
+if (modalNfEntrada) {
+    modalNfEntrada.addEventListener("click", (e) => {
+        if (e.target === modalNfEntrada) fecharModal(modalNfEntrada);
+    });
 }
 
-.titulo-modal{
-margin:0 0 14px;
-font-size:22px;
-color:#38bdf8;
+if (modalTransferencia) {
+    modalTransferencia.addEventListener("click", (e) => {
+        if (e.target === modalTransferencia) fecharModal(modalTransferencia);
+    });
 }
 
-.modal-content input,
-.modal-content select,
-.modal-content textarea{
-width:100%;
-padding:10px;
-margin:8px 0 0;
-background:#1e293b;
-border:1px solid #334155;
-color:white;
-border-radius:8px;
-box-sizing:border-box;
-font-size:14px;
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+        fecharModal(modalNovoPagar);
+        fecharModal(modalNfEntrada);
+        fecharModal(modalTransferencia);
+    }
+});
+
+/* =========================
+INIT
+========================= */
+
+async function init(){
+    if(!supabase){
+        console.error("window.supabaseClient não encontrado");
+        return;
+    }
+
+    await carregarBancos();
+    limparModalNovoPagar();
+    limparModalNfEntrada();
+    limparModalTransferencia();
+    await carregarContas();
 }
 
-.modal-content textarea{
-min-height:90px;
-resize:vertical;
-}
-
-.acoes-modal{
-display:flex;
-gap:10px;
-margin-top:16px;
-justify-content:flex-end;
-flex-wrap:wrap;
-}
-
-.btn-modal{
-cursor:pointer;
-border:none;
-padding:10px 16px;
-border-radius:8px;
-font-weight:700;
-font-size:14px;
-color:#fff;
-}
-
-.btn-cancelar{
-background:#475569;
-}
-
-.btn-salvar{
-background:#10b981;
-}
-
-.grid-2{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:12px;
-}
-
-.msg-modal{
-margin-top:10px;
-font-size:13px;
-min-height:18px;
-color:#94a3b8;
-}
-
-@media (max-width:1000px){
-.campos-linha{
-grid-template-columns:repeat(3, minmax(0, 1fr));
-}
-}
-
-@media (max-width:700px){
-.campos-linha{
-grid-template-columns:repeat(2, minmax(0, 1fr));
-}
-
-.grid-2{
-grid-template-columns:1fr;
-}
-}
-
-@media (max-width:520px){
-.campos-linha{
-grid-template-columns:1fr;
-}
-
-.botoes-linha{
-justify-content:stretch;
-}
-
-.btn-acao{
-width:100%;
-}
-
-.modal-content{
-padding:16px;
-}
-}
-</style>
-</head>
-
-<body>
-
-<div class="page-wrap">
-<div class="container">
-
-<header class="topo-contas-pagar">
-<a href="dashboard.html">
-<button class="btn-voltar-topo">← Voltar ao Menu</button>
-</a>
-
-<h1 class="titulo-contas-pagar">FINANCEIRO</h1>
-
-<div style="width:120px;"></div>
-</header>
-
-<div id="cardsBancos" class="cards-bancos"></div>
-
-<div class="bloco-filtros">
-<div class="filtros-linha">
-
-<div class="campos-linha">
-<div class="campo-filtro">
-<label class="label-futuro">Banco</label>
-<select id="filtroBanco">
-<option value="">Todos</option>
-</select>
-</div>
-
-<div class="campo-filtro">
-<label class="label-futuro">Data exata</label>
-<input type="date" id="filtroData">
-</div>
-
-<div class="campo-filtro">
-<label class="label-futuro">Mês</label>
-<input type="month" id="filtroMes">
-</div>
-
-<div class="campo-filtro">
-<label class="label-futuro">Status</label>
-<select id="filtroStatus">
-<option value="ABERTO">Não pagos</option>
-<option value="PAGO">Pagos</option>
-<option value="TODOS">Todos</option>
-</select>
-</div>
-
-<div class="campo-filtro">
-<label class="label-futuro">Tipo</label>
-<select id="filtroTipo">
-<option value="TODOS">Todos</option>
-<option value="SAIDA">Despesas</option>
-<option value="ENTRADA">NF Entrada</option>
-</select>
-</div>
-</div>
-
-<div class="botoes-linha">
-<button id="btnTransferir" class="btn-acao" style="background:#8b5cf6;">Transferências</button>
-<button id="btnFiltrar" class="btn-acao" style="background:#38bdf8;">Filtrar</button>
-<button id="btnLimparFiltros" class="btn-acao" style="background:#475569;">Limpar</button>
-<button id="btnNovoPagar" class="btn-acao" style="background:#10b981;">+ Novo Lançamento</button>
-<button id="btnNfEntrada" class="btn-acao" style="background:#06b6d4;">NF Entrada</button>
-</div>
-
-</div>
-</div>
-
-<div class="tabela-wrapper">
-<table class="tabela-pagar">
-<thead>
-<tr>
-<th>Data</th>
-<th>Banco</th>
-<th>Descrição</th>
-<th>Entrada</th>
-<th>Saída</th>
-<th>Status</th>
-<th>Ações</th>
-</tr>
-</thead>
-<tbody id="listaPagar"></tbody>
-</table>
-</div>
-
-</div>
-</div>
-
-<!-- MODAL NOVO LANÇAMENTO -->
-<div id="modalNovoPagar" class="modal-financeiro">
-  <div class="modal-content">
-    <h2 class="titulo-modal">Novo Lançamento</h2>
-
-    <div class="campo-filtro">
-      <label class="label-futuro">Banco</label>
-      <select id="novoBanco"></select>
-    </div>
-
-    <div class="campo-filtro">
-      <label class="label-futuro">Descrição</label>
-      <input type="text" id="novoDescricao" placeholder="Digite a descrição">
-    </div>
-
-    <div class="grid-2">
-      <div class="campo-filtro">
-        <label class="label-futuro">Valor</label>
-        <input type="text" id="novoValor" placeholder="0,00" oninput="validarMoeda(this)">
-      </div>
-
-      <div class="campo-filtro">
-        <label class="label-futuro">Vencimento</label>
-        <input type="date" id="novoVencimento">
-      </div>
-    </div>
-
-    <div class="grid-2">
-      <div class="campo-filtro">
-        <label class="label-futuro">Status</label>
-        <select id="novoStatus">
-          <option value="ABERTO">Não pago</option>
-          <option value="PAGO">Pago</option>
-        </select>
-      </div>
-
-      <div class="campo-filtro">
-        <label class="label-futuro">Tipo</label>
-        <select id="novoTipo">
-          <option value="SAIDA">Despesa</option>
-          <option value="ENTRADA">NF Entrada</option>
-        </select>
-      </div>
-    </div>
-
-    <div id="msgNovoPagar" class="msg-modal"></div>
-
-    <div class="acoes-modal">
-      <button id="btnCancelarNovoPagar" class="btn-modal btn-cancelar">Cancelar</button>
-      <button id="btnSalvarNovoPagar" class="btn-modal btn-salvar">Salvar</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL NF ENTRADA -->
-<div id="modalNfEntrada" class="modal-financeiro">
-  <div class="modal-content">
-    <h2 class="titulo-modal">NF Entrada</h2>
-
-    <div class="campo-filtro">
-      <label class="label-futuro">Banco</label>
-      <select id="nfBanco"></select>
-    </div>
-
-    <div class="campo-filtro">
-      <label class="label-futuro">Descrição</label>
-      <input type="text" id="nfDescricao" placeholder="Ex.: NF entrada">
-    </div>
-
-    <div class="grid-2">
-      <div class="campo-filtro">
-        <label class="label-futuro">Valor</label>
-        <input type="text" id="nfValor" placeholder="0,00" oninput="validarMoeda(this)">
-      </div>
-
-      <div class="campo-filtro">
-        <label class="label-futuro">Data</label>
-        <input type="date" id="nfVencimento">
-      </div>
-    </div>
-
-    <div class="campo-filtro">
-      <label class="label-futuro">Status</label>
-      <select id="nfStatus">
-        <option value="ABERTO">Não pago</option>
-        <option value="PAGO">Pago</option>
-      </select>
-    </div>
-
-    <div id="msgNfEntrada" class="msg-modal"></div>
-
-    <div class="acoes-modal">
-      <button id="btnCancelarNfEntrada" class="btn-modal btn-cancelar">Cancelar</button>
-      <button id="btnSalvarNfEntrada" class="btn-modal btn-salvar">Salvar NF</button>
-    </div>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script>
-const SUPABASE_URL = "https://uxtgicfuggpuyjybwawa.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg";
-
-window.supabaseClient = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
-
-function validarMoeda(input){
-  input.value = input.value.replace(/[^0-9,]/g,'');
-}
-</script>
-
-<script type="module" src="js/contas_pagar.js"></script>
-
-</body>
-</html>
+init();
