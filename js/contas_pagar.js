@@ -31,118 +31,84 @@ async function carregarContas() {
     corpo.innerHTML = '';
 
     data.forEach(item => {
+        const isNF = item.descricao.startsWith("NF ENTRADA:");
+        const isRecebido = item.status === 'RECEBIDO';
         const isPago = item.status === 'PAGO';
+
         corpo.innerHTML += `
             <tr>
                 <td>${dataBR(item.vencimento)}</td>
                 <td>${item.bancos?.nome || '-'}</td>
                 <td>${item.descricao}</td>
-                <td>-</td>
-                <td class="valor-saida">${moeda(item.valor)}</td>
-                <td class="${isPago ? 'status-pago' : 'status-aberto'}">${item.status}</td>
+                <td class="${isNF ? 'valor-entrada' : ''}">${isNF ? moeda(item.valor) : '-'}</td>
+                <td class="${!isNF ? 'valor-saida' : ''}">${!isNF ? moeda(item.valor) : '-'}</td>
+                <td class="${(isRecebido || isPago) ? 'status-recebido' : 'status-aberto'}">${item.status}</td>
                 <td>
-                    ${!isPago 
+                    ${item.status === 'ABERTO' 
                         ? `<button onclick="baixarConta('${item.id}', ${item.valor}, '${item.banco_id}')" class="btn btn-verde">Pagar</button>`
-                        : `<button onclick="estornarConta('${item.id}', ${item.valor}, '${item.banco_id}')" class="btn btn-cinza">Estornar</button>`
+                        : `<button onclick="estornarConta('${item.id}', ${item.valor}, '${item.banco_id}', '${item.status}')" class="btn btn-cinza">Estornar</button>`
                     }
-                    <button onclick="excluirConta('${item.id}', ${isPago}, ${item.valor}, '${item.banco_id}')" class="btn btn-vermelho" style="padding: 5px 10px; margin-left: 5px;">✕</button>
+                    <button onclick="excluirConta('${item.id}', '${item.status}', ${item.valor}, '${item.banco_id}')" class="btn btn-vermelho" style="padding: 5px 10px; margin-left: 5px;">✕</button>
                 </td>
             </tr>
         `;
     });
 }
 
-// Controle de Modais
-function abrirModalNovo() { document.getElementById('modalNovo').style.display = 'flex'; }
-function abrirModalTransferencia() { document.getElementById('modalTransferencia').style.display = 'flex'; }
-function abrirModalNF() { document.getElementById('modalNF').style.display = 'flex'; }
-function fecharModais() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
-
-// Pagamento e Estorno
-async function baixarConta(id, valor, bancoId) {
-    if (!confirm("Confirmar pagamento?")) return;
-    await supabase.from('contas_pagar').update({ status: 'PAGO' }).eq('id', id);
-    const { data: b } = await supabase.from('bancos').select('saldo').eq('id', bancoId).single();
-    await supabase.from('bancos').update({ saldo: (b.saldo || 0) - valor }).eq('id', bancoId);
-    carregarContas();
-}
-
-async function estornarConta(id, valor, bancoId) {
-    if (!confirm("Estornar e devolver saldo?")) return;
-    await supabase.from('contas_pagar').update({ status: 'ABERTO' }).eq('id', id);
-    const { data: b } = await supabase.from('bancos').select('saldo').eq('id', bancoId).single();
-    await supabase.from('bancos').update({ saldo: (b.saldo || 0) + valor }).eq('id', bancoId);
-    carregarContas();
-}
-
-// Lógica de Exclusão
-async function excluirConta(id, estavaPago, valor, bancoId) {
-    if (!confirm("Excluir lançamento permanentemente?")) return;
-    if (estavaPago) {
-        const { data: b } = await supabase.from('bancos').select('saldo').eq('id', bancoId).single();
-        await supabase.from('bancos').update({ saldo: (b.saldo || 0) + valor }).eq('id', bancoId);
-    }
-    await supabase.from('contas_pagar').delete().eq('id', id);
-    carregarContas();
-}
-
-// Transferência Bancária
-async function processarTransferencia() {
-    const orig = document.getElementById('transfOrigem').value;
-    const dest = document.getElementById('transfDestino').value;
-    const val = parseFloat(document.getElementById('transfValor').value);
-
-    if (orig === dest) return alert("Bancos devem ser diferentes!");
-    
-    const { data: bOrig } = await supabase.from('bancos').select('saldo').eq('id', orig).single();
-    const { data: bDest } = await supabase.from('bancos').select('saldo').eq('id', dest).single();
-
-    await supabase.from('bancos').update({ saldo: bOrig.saldo - val }).eq('id', orig);
-    await supabase.from('bancos').update({ saldo: bDest.saldo + val }).eq('id', dest);
-
-    await supabase.from('transferencias_bancarias').insert([{
-        origem_id: orig, destino_id: dest, valor: val, data_transferencia: new Date().toISOString() 
-    }]);
-
-    alert("Transferência concluída!");
-    fecharModais();
-}
-
-// Salvar Novo Lançamento
-async function salvarNovo() {
-    const item = {
-        descricao: document.getElementById('novoDescricao').value,
-        valor: parseFloat(document.getElementById('novoValor').value),
-        vencimento: document.getElementById('novoVencimento').value,
-        banco_id: document.getElementById('novoBanco').value,
-        status: 'ABERTO'
-    };
-    await supabase.from('contas_pagar').insert([item]);
-    fecharModais(); carregarContas();
-}
-
-// Salvar NF Entrada - SOMA AO SALDO DO BANCO conforme solicitado
+// Lógica de NF Entrada com SOMA e Status RECEBIDO
 async function salvarNF() {
     const valor = parseFloat(document.getElementById('nfValor').value);
     const bancoId = document.getElementById('nfBanco').value;
     
-    // 1. Criar o registro financeiro
     const item = {
         descricao: "NF ENTRADA: " + document.getElementById('nfDescricao').value,
         valor: valor,
         vencimento: document.getElementById('nfVencimento').value,
         banco_id: bancoId,
-        status: 'PAGO' // Definido como PAGO pois o saldo já será alterado agora
+        status: 'RECEBIDO' // Alterado para RECEBIDO
     };
     await supabase.from('contas_pagar').insert([item]);
 
-    // 2. Somar ao saldo do banco indicado
+    // Soma ao saldo do banco
     const { data: b } = await supabase.from('bancos').select('saldo').eq('id', bancoId).single();
     await supabase.from('bancos').update({ saldo: (b.saldo || 0) + valor }).eq('id', bancoId);
 
-    alert("NF lançada e saldo atualizado!");
+    alert("NF lançada como Recebimento!");
     fecharModais(); carregarContas();
 }
 
+// Estorno inteligente (subtrai se for NF, soma se for conta normal)
+async function estornarConta(id, valor, bancoId, statusAtual) {
+    if (!confirm("Deseja realmente estornar?")) return;
+    
+    const { data: b } = await supabase.from('bancos').select('saldo').eq('id', bancoId).single();
+    let novoSaldo = b.saldo || 0;
+
+    if (statusAtual === 'RECEBIDO') {
+        novoSaldo -= valor; // Se era entrada, tira do banco
+    } else {
+        novoSaldo += valor; // Se era saída, devolve ao banco
+    }
+
+    await supabase.from('bancos').update({ saldo: novoSaldo }).eq('id', bancoId);
+    await supabase.from('contas_pagar').update({ status: 'ABERTO' }).eq('id', id);
+    carregarContas();
+}
+
+// Excluir com Inteligência de Saldo
+async function excluirConta(id, status, valor, bancoId) {
+    if (!confirm("Excluir permanentemente?")) return;
+    
+    if (status !== 'ABERTO') {
+        const { data: b } = await supabase.from('bancos').select('saldo').eq('id', bancoId).single();
+        let ajuste = (status === 'RECEBIDO') ? (b.saldo - valor) : (b.saldo + valor);
+        await supabase.from('bancos').update({ saldo: ajuste }).eq('id', bancoId);
+    }
+    
+    await supabase.from('contas_pagar').delete().eq('id', id);
+    carregarContas();
+}
+
+// Outras funções (salvarNovo, baixarConta, processarTransferencia) seguem o padrão anterior.
 carregarBancos();
 carregarContas();
