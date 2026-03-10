@@ -9,17 +9,10 @@
     <style>
         body { background: #020617; color: white; font-family: 'Segoe UI', sans-serif; }
         .container { max-width: 1200px; margin: auto; padding: 20px; }
-        
-        .btn-voltar-menu { 
-            display: inline-flex; align-items: center; padding: 8px 16px; 
-            border: 1px solid #38bdf8; border-radius: 8px; color: #38bdf8; 
-            text-decoration: none; margin-bottom: 20px; transition: 0.3s; 
-        }
+        .btn-voltar-menu { display: inline-flex; align-items: center; padding: 8px 16px; border: 1px solid #38bdf8; border-radius: 8px; color: #38bdf8; text-decoration: none; margin-bottom: 20px; transition: 0.3s; }
         .btn-voltar-menu:hover { background: rgba(56, 189, 248, 0.1); }
-
         h1 { color: #38bdf8; text-align: center; margin-bottom: 30px; }
         
-        /* Barra de Filtros Atualizada */
         .filter-bar {
             background: #0f172a; padding: 15px; border-radius: 10px;
             display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end;
@@ -43,7 +36,7 @@
         .btn-roxo { background: #8b5cf6; color: white; }
         .btn-amarelo { background: #f39c12; color: white; }
         .btn-vermelho { background: #ef4444; color: white; }
-        .btn-cinza { background: #475569; color: white; } /* Botão de Estornar */
+        .btn-cinza { background: #475569; color: white; }
 
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 1000; }
         .modal-content { background: #0f172a; padding: 30px; border-radius: 12px; border: 2px solid #38bdf8; width: 400px; }
@@ -146,6 +139,5 @@
     window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 <script src="js/contas_pagar.js"></script>
-
 </body>
 </html>
