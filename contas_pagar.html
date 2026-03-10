@@ -9,7 +9,6 @@
 <link rel="stylesheet" href="css/dashboard.css">
 
 <style>
-
 .page-wrap{
 max-width:1100px;
 margin:10px auto;
@@ -240,7 +239,6 @@ justify-content:stretch;
 width:100%;
 }
 }
-
 </style>
 </head>
 
@@ -250,7 +248,6 @@ width:100%;
 <div class="container">
 
 <header class="topo-contas-pagar">
-
 <a href="dashboard.html">
 <button class="btn-voltar-topo">← Voltar ao Menu</button>
 </a>
@@ -258,17 +255,14 @@ width:100%;
 <h1 class="titulo-contas-pagar">FINANCEIRO</h1>
 
 <div style="width:120px;"></div>
-
 </header>
 
 <div id="cardsBancos" class="cards-bancos"></div>
 
 <div class="bloco-filtros">
-
 <div class="filtros-linha">
 
 <div class="campos-linha">
-
 <div class="campo-filtro">
 <label class="label-futuro">Banco</label>
 <select id="filtroBanco">
@@ -303,41 +297,21 @@ width:100%;
 <option value="ENTRADA">NF Entrada</option>
 </select>
 </div>
-
 </div>
 
 <div class="botoes-linha">
-
-<button id="btnTransferir" class="btn-acao" style="background:#8b5cf6;">
-Transferências
-</button>
-
-<button id="btnFiltrar" class="btn-acao" style="background:#38bdf8;">
-Filtrar
-</button>
-
-<button id="btnLimparFiltros" class="btn-acao" style="background:#475569;">
-Limpar
-</button>
-
-<button id="btnNovoPagar" class="btn-acao" style="background:#10b981;">
-+ Novo Lançamento
-</button>
-
-<button id="btnNfEntrada" class="btn-acao" style="background:#06b6d4;">
-NF Entrada
-</button>
-
+<button id="btnTransferir" class="btn-acao" style="background:#8b5cf6;">Transferências</button>
+<button id="btnFiltrar" class="btn-acao" style="background:#38bdf8;">Filtrar</button>
+<button id="btnLimparFiltros" class="btn-acao" style="background:#475569;">Limpar</button>
+<button id="btnNovoPagar" class="btn-acao" style="background:#10b981;">+ Novo Lançamento</button>
+<button id="btnNfEntrada" class="btn-acao" style="background:#06b6d4;">NF Entrada</button>
 </div>
 
 </div>
-
 </div>
 
 <div class="tabela-wrapper">
-
 <table class="tabela-pagar">
-
 <thead>
 <tr>
 <th>Data</th>
@@ -349,15 +323,24 @@ NF Entrada
 <th>Ações</th>
 </tr>
 </thead>
-
 <tbody id="listaPagar"></tbody>
-
 </table>
-
 </div>
 
 </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL = "https://uxtgicfuggpuyjybwawa.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg";
+
+window.supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+</script>
 
 <script type="module" src="js/contas_pagar.js"></script>
 
