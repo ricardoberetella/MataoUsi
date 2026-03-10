@@ -100,7 +100,8 @@ min-width:0;
 }
 
 .campo-filtro input,
-.campo-filtro select{
+.campo-filtro select,
+.campo-filtro textarea{
 width:100%;
 min-width:0;
 padding:8px 10px;
@@ -111,6 +112,11 @@ border:1px solid #334155;
 height:38px;
 font-size:14px;
 box-sizing:border-box;
+}
+
+.campo-filtro textarea{
+height:90px;
+resize:vertical;
 }
 
 .btn-acao{
@@ -171,12 +177,16 @@ font-weight:bold;
 .modal-financeiro{
 position:fixed;
 inset:0;
-background:rgba(0,0,0,.85);
+background:rgba(0,0,0,.82);
 display:none;
 align-items:center;
 justify-content:center;
 z-index:1000;
 padding:20px;
+}
+
+.modal-financeiro.ativo{
+display:flex;
 }
 
 .modal-content{
@@ -185,8 +195,15 @@ border:2px solid #38bdf8;
 padding:22px;
 border-radius:14px;
 width:100%;
-max-width:420px;
+max-width:520px;
 color:white;
+box-shadow:0 0 24px rgba(56,189,248,.18);
+}
+
+.titulo-modal{
+margin:0 0 14px;
+font-size:22px;
+color:#38bdf8;
 }
 
 .modal-content input,
@@ -194,24 +211,57 @@ color:white;
 .modal-content textarea{
 width:100%;
 padding:10px;
-margin:8px 0;
+margin:8px 0 0;
 background:#1e293b;
 border:1px solid #334155;
 color:white;
 border-radius:8px;
 box-sizing:border-box;
+font-size:14px;
+}
+
+.modal-content textarea{
+min-height:90px;
+resize:vertical;
 }
 
 .acoes-modal{
 display:flex;
 gap:10px;
-margin-top:15px;
+margin-top:16px;
+justify-content:flex-end;
+flex-wrap:wrap;
+}
+
+.btn-modal{
+cursor:pointer;
+border:none;
+padding:10px 16px;
+border-radius:8px;
+font-weight:700;
+font-size:14px;
+color:#fff;
+}
+
+.btn-cancelar{
+background:#475569;
+}
+
+.btn-salvar{
+background:#10b981;
 }
 
 .grid-2{
 display:grid;
 grid-template-columns:1fr 1fr;
 gap:12px;
+}
+
+.msg-modal{
+margin-top:10px;
+font-size:13px;
+min-height:18px;
+color:#94a3b8;
 }
 
 @media (max-width:1000px){
@@ -223,6 +273,10 @@ grid-template-columns:repeat(3, minmax(0, 1fr));
 @media (max-width:700px){
 .campos-linha{
 grid-template-columns:repeat(2, minmax(0, 1fr));
+}
+
+.grid-2{
+grid-template-columns:1fr;
 }
 }
 
@@ -237,6 +291,10 @@ justify-content:stretch;
 
 .btn-acao{
 width:100%;
+}
+
+.modal-content{
+padding:16px;
 }
 }
 </style>
@@ -330,6 +388,104 @@ width:100%;
 </div>
 </div>
 
+<!-- MODAL NOVO LANÇAMENTO -->
+<div id="modalNovoPagar" class="modal-financeiro">
+  <div class="modal-content">
+    <h2 class="titulo-modal">Novo Lançamento</h2>
+
+    <div class="campo-filtro">
+      <label class="label-futuro">Banco</label>
+      <select id="novoBanco"></select>
+    </div>
+
+    <div class="campo-filtro">
+      <label class="label-futuro">Descrição</label>
+      <input type="text" id="novoDescricao" placeholder="Digite a descrição">
+    </div>
+
+    <div class="grid-2">
+      <div class="campo-filtro">
+        <label class="label-futuro">Valor</label>
+        <input type="text" id="novoValor" placeholder="0,00" oninput="validarMoeda(this)">
+      </div>
+
+      <div class="campo-filtro">
+        <label class="label-futuro">Vencimento</label>
+        <input type="date" id="novoVencimento">
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="campo-filtro">
+        <label class="label-futuro">Status</label>
+        <select id="novoStatus">
+          <option value="ABERTO">Não pago</option>
+          <option value="PAGO">Pago</option>
+        </select>
+      </div>
+
+      <div class="campo-filtro">
+        <label class="label-futuro">Tipo</label>
+        <select id="novoTipo">
+          <option value="SAIDA">Despesa</option>
+          <option value="ENTRADA">NF Entrada</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="msgNovoPagar" class="msg-modal"></div>
+
+    <div class="acoes-modal">
+      <button id="btnCancelarNovoPagar" class="btn-modal btn-cancelar">Cancelar</button>
+      <button id="btnSalvarNovoPagar" class="btn-modal btn-salvar">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NF ENTRADA -->
+<div id="modalNfEntrada" class="modal-financeiro">
+  <div class="modal-content">
+    <h2 class="titulo-modal">NF Entrada</h2>
+
+    <div class="campo-filtro">
+      <label class="label-futuro">Banco</label>
+      <select id="nfBanco"></select>
+    </div>
+
+    <div class="campo-filtro">
+      <label class="label-futuro">Descrição</label>
+      <input type="text" id="nfDescricao" placeholder="Ex.: NF entrada">
+    </div>
+
+    <div class="grid-2">
+      <div class="campo-filtro">
+        <label class="label-futuro">Valor</label>
+        <input type="text" id="nfValor" placeholder="0,00" oninput="validarMoeda(this)">
+      </div>
+
+      <div class="campo-filtro">
+        <label class="label-futuro">Data</label>
+        <input type="date" id="nfVencimento">
+      </div>
+    </div>
+
+    <div class="campo-filtro">
+      <label class="label-futuro">Status</label>
+      <select id="nfStatus">
+        <option value="ABERTO">Não pago</option>
+        <option value="PAGO">Pago</option>
+      </select>
+    </div>
+
+    <div id="msgNfEntrada" class="msg-modal"></div>
+
+    <div class="acoes-modal">
+      <button id="btnCancelarNfEntrada" class="btn-modal btn-cancelar">Cancelar</button>
+      <button id="btnSalvarNfEntrada" class="btn-modal btn-salvar">Salvar NF</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
@@ -340,15 +496,13 @@ window.supabaseClient = window.supabase.createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY
 );
+
+function validarMoeda(input){
+  input.value = input.value.replace(/[^0-9,]/g,'');
+}
 </script>
 
 <script type="module" src="js/contas_pagar.js"></script>
-
-<script>
-function validarMoeda(input){
-input.value=input.value.replace(/[^0-9,]/g,'');
-}
-</script>
 
 </body>
 </html>
