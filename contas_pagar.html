@@ -1,142 +1,162 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contas a Pagar - Matão Usinagem</title>
-    <link rel="stylesheet" href="css/global.css">
-    <link rel="stylesheet" href="css/dashboard.css">
-    <style>
-        body { background: #020617; color: white; font-family: 'Segoe UI', sans-serif; }
-        .container { max-width: 1200px; margin: auto; padding: 20px; }
-        .btn-voltar { display: inline-flex; align-items: center; padding: 8px 16px; border: 1px solid #38bdf8; border-radius: 8px; color: #38bdf8; text-decoration: none; margin-bottom: 20px; transition: 0.3s; }
-        .btn-voltar:hover { background: rgba(56, 189, 248, 0.1); }
-        h1 { color: #38bdf8; text-align: center; margin-bottom: 30px; }
-        
-        /* Barra de Filtros */
-        .filter-bar {
-            background: #0f172a;
-            padding: 15px;
-            border-radius: 10px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            align-items: flex-end;
-            margin-bottom: 20px;
-            border: 1px solid #1e293b;
+var supabase = window.supabaseClient;
+const tabela = document.getElementById("listaPagar");
+const modalNovo = document.getElementById("modalNovoPagar");
+const modalEditar = document.getElementById("modalEditarPagar");
+
+function moeda(v) { return Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }); }
+function dataBR(data) { if (!data) return "-"; const p = data.split("-"); return `${p[2]}/${p[1]}/${p[0]}`; }
+function fecharModais() { modalNovo.style.display = "none"; modalEditar.style.display = "none"; }
+
+async function carregarBancos() {
+    const { data } = await supabase.from("bancos").select("id, nome").order("nome");
+    const selects = ["novoBanco", "editBanco", "filtroBanco"];
+    selects.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            const options = data.map(b => `<option value="${b.id}">${b.nome}</option>`).join("");
+            el.innerHTML = id === "filtroBanco" ? `<option value="">Todos os Bancos</option>${options}` : options;
         }
-        .filter-group { display: flex; flex-direction: column; gap: 5px; }
-        .filter-group label { font-size: 0.8rem; color: #38bdf8; font-weight: bold; }
-        .filter-bar input, .filter-bar select { 
-            background: #1e293b; border: 1px solid #334155; color: white; 
-            padding: 8px; border-radius: 6px; outline: none;
-        }
+    });
+}
 
-        .flex-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tabela { width: 100%; border-collapse: collapse; background: #0f172a; border-radius: 8px; overflow: hidden; }
-        .tabela th { background: #1e293b; color: #38bdf8; text-align: left; padding: 15px; border-bottom: 2px solid #38bdf8; }
-        .tabela td { padding: 15px; border-bottom: 1px solid #334155; }
-        
-        .btn { padding: 8px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; font-size: 0.85rem; }
-        .btn-verde { background: #22c55e; color: white; }
-        .btn-azul { background: #38bdf8; color: black; }
-        .btn-roxo { background: #8b5cf6; color: white; }
-        .btn-amarelo { background: #f39c12; color: white; }
-        .btn-vermelho { background: #ef4444; color: white; }
+async function carregarContas() {
+    const dataInicio = document.getElementById("filtroDataInicio").value;
+    const dataFim = document.getElementById("filtroDataFim").value;
+    const bancoId = document.getElementById("filtroBanco").value;
+    const statusFiltro = document.getElementById("filtroStatus").value;
 
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { background: #0f172a; padding: 30px; border-radius: 12px; border: 2px solid #38bdf8; width: 400px; }
-        .modal input, .modal select { width: 100%; margin-top: 12px; padding: 10px; background: #1e293b; border: 1px solid #334155; color: white; border-radius: 6px; box-sizing: border-box; }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-    </style>
-</head>
-<body>
+    let query = supabase.from("contas_pagar").select("*, bancos(nome)");
 
-<div class="container">
-    <a href="index.html" class="btn-voltar">← Voltar ao Menu</a>
-    <h1>Financeiro</h1>
+    if (dataInicio) query = query.gte("vencimento", dataInicio);
+    if (dataFim) query = query.lte("vencimento", dataFim);
+    if (bancoId) query = query.eq("banco_id", bancoId);
+    if (statusFiltro) query = query.eq("status", statusFiltro);
 
-    <div class="filter-bar">
-        <div class="filter-group">
-            <label>Data Início</label>
-            <input type="date" id="filtroDataInicio">
-        </div>
-        <div class="filter-group">
-            <label>Data Fim</label>
-            <input type="date" id="filtroDataFim">
-        </div>
-        <div class="filter-group">
-            <label>Banco</label>
-            <select id="filtroBanco">
-                <option value="">Todos os Bancos</option>
-            </select>
-        </div>
-        <button onclick="carregarContas()" class="btn btn-azul">Filtrar</button>
-        <button onclick="limparFiltros()" class="btn">Limpar</button>
-    </div>
+    const { data, error } = await query.order("vencimento", { ascending: false });
 
-    <div class="flex-buttons">
-        <button id="btnNovoPagar" class="btn btn-verde">Novo Lançamento</button>
-        <button id="btnTransferir" class="btn btn-roxo">Transferência</button>
-        <button id="btnNfEntrada" class="btn btn-azul">NF Entrada</button>
-    </div>
+    if (error) return console.error(error);
+    
+    tabela.innerHTML = "";
+    data.forEach(l => {
+        const tr = document.createElement("tr");
+        const ePago = l.status === 'PAGO';
+        tr.innerHTML = `
+            <td>${dataBR(l.vencimento)}</td>
+            <td>${l.bancos?.nome || "-"}</td>
+            <td>${l.descricao}</td>
+            <td>-</td>
+            <td style="color:#ef4444; font-weight:bold">${moeda(l.valor)}</td>
+            <td style="font-weight:bold; color: ${ePago ? '#22c55e' : '#f39c12'}">${l.status}</td>
+            <td>
+                ${!ePago 
+                    ? `<button onclick="pagarConta('${l.id}', ${l.valor}, '${l.banco_id}')" class="btn btn-verde">Pagar</button>` 
+                    : `<button onclick="estornarPagamento('${l.id}', ${l.valor}, '${l.banco_id}')" class="btn btn-cinza">Estornar</button>`}
+                <button onclick="abrirEditar('${l.id}')" class="btn btn-amarelo">Editar</button>
+                <button onclick="excluirConta('${l.id}')" class="btn btn-vermelho">Excluir</button>
+            </td>
+        `;
+        tabela.appendChild(tr);
+    });
+}
 
-    <table class="tabela">
-        <thead>
-            <tr>
-                <th>Data</th>
-                <th>Banco</th>
-                <th>Descrição</th>
-                <th>Entrada</th>
-                <th>Saída</th>
-                <th>Status</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody id="listaPagar"></tbody>
-    </table>
-</div>
+// Lógica de Pagar (Subtrai do Banco)
+async function pagarConta(id, valor, bancoId) {
+    // 1. Atualiza Status
+    await supabase.from("contas_pagar").update({ status: "PAGO" }).eq("id", id);
+    
+    // 2. Busca Saldo Atual
+    const { data: banco } = await supabase.from("bancos").select("saldo").eq("id", bancoId).single();
+    const novoSaldo = (banco.saldo || 0) - valor;
 
-<div id="modalNovoPagar" class="modal">
-    <div class="modal-content">
-        <h3>Novo Lançamento</h3>
-        <select id="novoBanco"></select>
-        <input id="novoDescricao" type="text" placeholder="Descrição">
-        <input id="novoValor" type="text" placeholder="Valor (Ex: 150,00)">
-        <input type="date" id="novoVencimento">
-        <div class="modal-actions">
-            <button onclick="fecharModais()" class="btn">Cancelar</button>
-            <button id="btnSalvarNovoPagar" class="btn btn-verde">Salvar</button>
-        </div>
-    </div>
-</div>
+    // 3. Atualiza Saldo no Banco
+    await supabase.from("bancos").update({ saldo: novoSaldo }).eq("id", bancoId);
+    
+    carregarContas();
+}
 
-<div id="modalEditarPagar" class="modal">
-    <div class="modal-content">
-        <h3>Editar Lançamento</h3>
-        <input type="hidden" id="editId">
-        <select id="editBanco"></select>
-        <input id="editDescricao" type="text" placeholder="Descrição">
-        <input id="editValor" type="text" placeholder="Valor">
-        <input type="date" id="editVencimento">
-        <select id="editStatus">
-            <option value="ABERTO">ABERTO</option>
-            <option value="PAGO">PAGO</option>
-        </select>
-        <div class="modal-actions">
-            <button onclick="fecharModais()" class="btn">Cancelar</button>
-            <button id="btnAtualizarPagar" class="btn btn-verde">Atualizar</button>
-        </div>
-    </div>
-</div>
+// Lógica de Estornar (Soma de volta ao Banco)
+async function estornarPagamento(id, valor, bancoId) {
+    if (!confirm("Deseja estornar este pagamento? O valor voltará ao saldo do banco.")) return;
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-    const SUPABASE_URL = "https://uxtgicfuggpuyjybwawa.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg";
-    window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-</script>
-<script src="js/contas_pagar.js"></script>
+    // 1. Volta para ABERTO
+    await supabase.from("contas_pagar").update({ status: "ABERTO" }).eq("id", id);
+    
+    // 2. Busca Saldo Atual
+    const { data: banco } = await supabase.from("bancos").select("saldo").eq("id", bancoId).single();
+    const novoSaldo = (banco.saldo || 0) + valor;
 
-</body>
-</html>
+    // 3. Devolve valor ao Banco
+    await supabase.from("bancos").update({ saldo: novoSaldo }).eq("id", bancoId);
+    
+    carregarContas();
+}
+
+function limparFiltros() {
+    document.getElementById("filtroDataInicio").value = "";
+    document.getElementById("filtroDataFim").value = "";
+    document.getElementById("filtroBanco").value = "";
+    document.getElementById("filtroStatus").value = "ABERTO";
+    carregarContas();
+}
+
+async function abrirEditar(id) {
+    const { data } = await supabase.from("contas_pagar").select("*").eq("id", id).single();
+    if (data) {
+        document.getElementById("editId").value = data.id;
+        document.getElementById("editDescricao").value = data.descricao;
+        document.getElementById("editValor").value = data.valor;
+        document.getElementById("editVencimento").value = data.vencimento;
+        document.getElementById("editBanco").value = data.banco_id;
+        document.getElementById("editStatus").value = data.status;
+        modalEditar.style.display = "flex";
+    }
+}
+
+async function atualizarConta() {
+    const id = document.getElementById("editId").value;
+    const dados = {
+        descricao: document.getElementById("editDescricao").value,
+        valor: parseFloat(document.getElementById("editValor").value),
+        vencimento: document.getElementById("editVencimento").value,
+        banco_id: document.getElementById("editBanco").value,
+        status: document.getElementById("editStatus").value
+    };
+    await supabase.from("contas_pagar").update(dados).eq("id", id);
+    fecharModais();
+    carregarContas();
+}
+
+async function excluirConta(id) {
+    if (confirm("Deseja realmente excluir?")) {
+        await supabase.from("contas_pagar").delete().eq("id", id);
+        carregarContas();
+    }
+}
+
+document.getElementById("btnNovoPagar").onclick = () => modalNovo.style.display = "flex";
+document.getElementById("btnSalvarNovoPagar").onclick = async () => {
+    const item = {
+        descricao: document.getElementById("novoDescricao").value,
+        valor: parseFloat(document.getElementById("novoValor").value.replace(",", ".")),
+        vencimento: document.getElementById("novoVencimento").value,
+        banco_id: document.getElementById("novoBanco").value,
+        status: "ABERTO"
+    };
+    await supabase.from("contas_pagar").insert([item]);
+    fecharModais();
+    carregarContas();
+};
+
+document.getElementById("btnAtualizarPagar").onclick = atualizarConta;
+window.onclick = (e) => { if (e.target.className === "modal") fecharModais(); };
+
+// Exportação de funções globais
+window.pagarConta = pagarConta; 
+window.estornarPagamento = estornarPagamento;
+window.abrirEditar = abrirEditar; 
+window.excluirConta = excluirConta;
+window.limparFiltros = limparFiltros;
+
+// Inicialização
+carregarBancos(); 
+carregarContas();
