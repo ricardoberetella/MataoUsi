@@ -59,33 +59,33 @@ async function carregarContas() {
     });
 }
 
-// Lógica de Pagar (Subtrai do Banco)
+// Lógica de Pagar (Deduz do Banco)
 async function pagarConta(id, valor, bancoId) {
-    // 1. Atualiza Status
+    // 1. Atualiza Status da Conta
     await supabase.from("contas_pagar").update({ status: "PAGO" }).eq("id", id);
     
-    // 2. Busca Saldo Atual
+    // 2. Busca Saldo Atual para atualizar o banco
     const { data: banco } = await supabase.from("bancos").select("saldo").eq("id", bancoId).single();
     const novoSaldo = (banco.saldo || 0) - valor;
 
-    // 3. Atualiza Saldo no Banco
+    // 3. Atualiza Saldo na Tabela Bancos
     await supabase.from("bancos").update({ saldo: novoSaldo }).eq("id", bancoId);
     
     carregarContas();
 }
 
-// Lógica de Estornar (Soma de volta ao Banco)
+// Lógica de Estornar (Devolve ao Banco)
 async function estornarPagamento(id, valor, bancoId) {
-    if (!confirm("Deseja estornar este pagamento? O valor voltará ao saldo do banco.")) return;
+    if (!confirm("Deseja estornar este pagamento? O valor será devolvido ao saldo do banco.")) return;
 
-    // 1. Volta para ABERTO
+    // 1. Volta status para ABERTO
     await supabase.from("contas_pagar").update({ status: "ABERTO" }).eq("id", id);
     
     // 2. Busca Saldo Atual
     const { data: banco } = await supabase.from("bancos").select("saldo").eq("id", bancoId).single();
     const novoSaldo = (banco.saldo || 0) + valor;
 
-    // 3. Devolve valor ao Banco
+    // 3. Extorna o valor para a coluna 'saldo'
     await supabase.from("bancos").update({ saldo: novoSaldo }).eq("id", bancoId);
     
     carregarContas();
@@ -150,7 +150,7 @@ document.getElementById("btnSalvarNovoPagar").onclick = async () => {
 document.getElementById("btnAtualizarPagar").onclick = atualizarConta;
 window.onclick = (e) => { if (e.target.className === "modal") fecharModais(); };
 
-// Exportação de funções globais
+// Exportando funções para o contexto global
 window.pagarConta = pagarConta; 
 window.estornarPagamento = estornarPagamento;
 window.abrirEditar = abrirEditar; 
