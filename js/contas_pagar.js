@@ -1,12 +1,18 @@
-const _supabase = supabase.createClient("SUA_URL_AQUI", "SUA_CHAVE_AQUI");
+// SUBSTITUA PELOS SEUS DADOS REAIS DO SUPABASE
+const SUPABASE_URL = "https://sua-url-aqui.supabase.co"; 
+const SUPABASE_KEY = "sua-chave-anon-aqui";
+
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const moeda = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-// FUNÇÕES DO MODAL
+// FUNÇÕES TORNADAS GLOBAIS PARA O HTML ENCONTRAR
 window.abrirModal = (tipo) => {
-    document.getElementById('modalFinanceiro').style.display = 'block';
+    const modal = document.getElementById('modalFinanceiro');
+    if (!modal) return console.error("Modal não encontrado no HTML");
+    
+    modal.style.display = 'block';
     document.getElementById('modalTitulo').innerText = 'Lançar ' + tipo;
-    // Limpar campos
     document.getElementById('campoDescricao').value = '';
     document.getElementById('campoValor').value = '';
 };
@@ -15,52 +21,75 @@ window.fecharModal = () => {
     document.getElementById('modalFinanceiro').style.display = 'none';
 };
 
-// CÁLCULO E ATUALIZAÇÃO DOS SALDOS (CARDS DO TOPO)
+// CÁLCULO DOS CARDS (SOMA AUTOMÁTICA)
 async function atualizarCards() {
-    const { data: lancamentos } = await _supabase.from('contas_pagar').select('*');
-    
-    let sicoob = 0;
-    let caixa = 0;
-    let pagar = 0;
-    let receber = 0;
+    try {
+        const { data: lancamentos, error } = await _supabase.from('contas_pagar').select('*');
+        if (error) throw error;
 
-    lancamentos?.forEach(item => {
-        const val = parseFloat(item.valor || 0);
-        
-        if (item.status === 'PAGO') {
-            if (item.banco === 'SICOOB') item.tipo === 'CREDITO' ? sicoob += val : sicoob -= val;
-            if (item.banco === 'CAIXA FEDERAL') item.tipo === 'CREDITO' ? caixa += val : caixa -= val;
-        } else if (item.status === 'ABERTO') {
-            item.tipo === 'DEBITO' ? pagar += val : receber += val;
-        }
-    });
+        let sicoob = 0, caixa = 0, pagar = 0, receber = 0;
 
-    document.getElementById('resumoSicoob').innerText = moeda(sicoob);
-    document.getElementById('resumoCaixa').innerText = moeda(caixa);
-    document.getElementById('resumoPagar').innerText = moeda(pagar);
-    document.getElementById('resumoReceber').innerText = moeda(receber);
+        lancamentos?.forEach(item => {
+            const val = parseFloat(item.valor || 0);
+            if (item.status === 'PAGO') {
+                if (item.banco === 'SICOOB') item.tipo === 'CREDITO' ? sicoob += val : sicoob -= val;
+                if (item.banco === 'CAIXA FEDERAL') item.tipo === 'CREDITO' ? caixa += val : caixa -= val;
+            } else if (item.status === 'ABERTO') {
+                item.tipo === 'DEBITO' ? pagar += val : receber += val;
+            }
+        });
+
+        document.getElementById('resumoSicoob').innerText = moeda(sicoob);
+        document.getElementById('resumoCaixa').innerText = moeda(caixa);
+        document.getElementById('resumoPagar').innerText = moeda(pagar);
+        document.getElementById('resumoReceber').innerText = moeda(receber);
+    } catch (err) {
+        console.error("Erro ao carregar saldos:", err.message);
+    }
 }
 
-// CARREGAR TABELA
+// SALVAR NO BANCO
+window.salvarLancamento = async () => {
+    const banco = document.getElementById('campoBanco').value;
+    const desc = document.getElementById('campoDescricao').value;
+    const valor = document.getElementById('campoValor').value;
+    const tipoLabel = document.getElementById('modalTitulo').innerText;
+    const tipo = tipoLabel.includes('CREDITO') ? 'CREDITO' : 'DEBITO';
+
+    if (!desc || !valor) return alert("Preencha Descrição e Valor!");
+
+    const { error } = await _supabase.from('contas_pagar').insert([
+        { 
+            banco, 
+            descricao: desc, 
+            valor: parseFloat(valor), 
+            tipo, 
+            status: 'PAGO', 
+            vencimento: new Date().toISOString().split('T')[0] 
+        }
+    ]);
+
+    if (error) alert("Erro ao salvar: " + error.message);
+    else {
+        fecharModal();
+        carregarTudo();
+    }
+};
+
 async function carregarTabela() {
     const { data } = await _supabase.from('contas_pagar').select('*').order('vencimento', { ascending: false });
     const corpo = document.getElementById('listaFinanceiro');
-    corpo.innerHTML = '';
-
-    data?.forEach(item => {
-        const cor = item.tipo === 'CREDITO' ? '#22c55e' : '#ef4444';
-        corpo.innerHTML += `
-            <tr>
-                <td>${new Date(item.vencimento).toLocaleDateString('pt-BR')}</td>
-                <td>${item.banco}</td>
-                <td>${item.descricao}</td>
-                <td style="color:${cor}; font-weight:bold;">${moeda(item.valor)}</td>
-                <td style="font-weight:bold; color:${item.status === 'ABERTO' ? '#fbbf24' : '#22c55e'}">${item.status}</td>
-                <td>
-                    <button onclick="excluirRegistro('${item.id}')" style="background:#ef4444; border:none; color:white; padding:5px 10px; border-radius:4px; cursor:pointer;">X</button>
-                </td>
-            </tr>`;
-    });
+    if (!corpo) return;
+    
+    corpo.innerHTML = data?.map(item => `
+        <tr>
+            <td>${new Date(item.vencimento).toLocaleDateString('pt-BR')}</td>
+            <td>${item.banco}</td>
+            <td>${item.descricao}</td>
+            <td style="color:${item.tipo === 'CREDITO' ? '#22c55e' : '#ef4444'}; font-weight:bold;">${moeda(item.valor)}</td>
+            <td style="font-weight:bold; color:${item.status === 'ABERTO' ? '#fbbf24' : '#22c55e'}">${item.status}</td>
+            <td><button onclick="excluirRegistro('${item.id}')" style="background:#ef4444; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">X</button></td>
+        </tr>`).join('') || '';
 }
 
 window.carregarTudo = () => {
@@ -68,4 +97,5 @@ window.carregarTudo = () => {
     carregarTabela();
 };
 
-carregarTudo();
+// Inicialização
+document.addEventListener('DOMContentLoaded', carregarTudo);
