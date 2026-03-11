@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard - Matão Usinagem</title>
-
   <link rel="stylesheet" href="css/dashboard.css" />
 </head>
 
@@ -12,7 +11,6 @@
 
   <div class="layout">
 
-    <!-- MENU LATERAL -->
     <aside class="sidebar">
       <div class="logo-sistema">MATÃO USINAGEM</div>
 
@@ -25,21 +23,18 @@
         <a href="produtos_lista.html" class="menu-item">📦 Produtos</a>
         <a href="notas_lista.html" class="menu-item">🧾 Notas Fiscais</a>
         <a href="contas_receber.html" class="menu-item">💰 Contas a Receber</a>
-        <a href="contas_pagar.html" class="menu-item">💸 Contas a Pagar</a>
-        <a href="financeiro_resumo.html" class="menu-item">📊 Saldo Líquido</a>
+        <a href="contas_pagar.html" class="menu-item">💸 Extrato Financeiro</a>
         <a href="zincagem.html" class="menu-item">⚙️ Zincagem / Tratamento</a>
-      </nav>
+        </nav>
 
       <button id="btnLogout" class="menu-item botao-sair">
         🚪 Sair
       </button>
     </aside>
 
-    <!-- CONTEÚDO PRINCIPAL -->
     <main class="main">
       <section class="secao-painel">
 
-        <!-- LOGO CENTRAL -->
         <div class="logo-painel">
           <img src="img/logo-mataousi.png" alt="Matão Usinagem">
         </div>
@@ -77,13 +72,8 @@
           </a>
 
           <a class="card" href="contas_pagar.html">
-            <div class="card-titulo">Contas a Pagar</div>
+            <div class="card-titulo">Extrato Financeiro</div>
             <div class="card-legenda">Controle de pagamentos</div>
-          </a>
-
-          <a class="card" href="financeiro_resumo.html">
-            <div class="card-titulo">Saldo Líquido</div>
-            <div class="card-legenda">Resumo financeiro</div>
           </a>
 
           <a class="card" href="zincagem.html">
@@ -96,13 +86,12 @@
             <div class="card-legenda">Controle, baixas e inclusões</div>
           </a>
 
-        </div>
+          </div>
       </section>
     </main>
 
   </div>
 
-  <!-- AUTENTICAÇÃO -->
   <script type="module">
     import { verificarLogin, supabase } from "./js/auth.js";
 
