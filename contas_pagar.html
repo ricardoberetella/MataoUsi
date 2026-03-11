@@ -13,12 +13,11 @@
         .dashboard-resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .card { background: var(--card); border: 1px solid var(--border); padding: 20px; border-radius: 12px; text-align: center; }
         .card small { color: #94a3b8; text-transform: uppercase; font-size: 0.7rem; font-weight: bold; }
-        .valor { font-size: 1.2rem; font-weight: bold; margin-top: 10px; }
+        .valor { font-size: 1.1rem; font-weight: bold; margin-top: 10px; }
         .acoes-admin { display: flex; gap: 10px; margin-bottom: 25px; }
-        .btn-lancar { border: none; padding: 12px 25px; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-lancar { border: none; padding: 12px 25px; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
         .btn-debito { background: #ef4444; }
         .btn-credito { background: #22c55e; }
-        .btn-transf { background: #a855f7; }
         .tabela-container { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
         table { width: 100%; border-collapse: collapse; }
         th { background: #1e293b; color: var(--accent); padding: 15px; text-align: left; font-size: 0.8rem; }
@@ -49,7 +48,6 @@
     <div class="acoes-admin">
         <button class="btn-lancar btn-debito" onclick="abrirModal('DEBITO')">- Débito</button>
         <button class="btn-lancar btn-credito" onclick="abrirModal('CREDITO')">+ Crédito</button>
-        <button class="btn-lancar btn-transf" onclick="abrirModal('TRANSFERENCIA')">Transferência</button>
     </div>
 
     <div class="tabela-container">
@@ -71,7 +69,7 @@
 
 <div id="modalFinanceiro" class="modal">
     <div class="modal-content">
-        <h2 id="modalTitulo" style="color: var(--accent); margin-top: 0;">Novo Lançamento</h2>
+        <h2 id="modalTitulo" style="color: var(--accent); margin-top: 0;">Lançar</h2>
         <div class="form-group">
             <label>DATA</label>
             <input type="date" id="campoData">
