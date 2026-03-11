@@ -16,16 +16,13 @@ async function atualizarDashboard() {
 
     bancos?.forEach(b => {
         const nome = b.nome.toUpperCase();
-        const val = moeda(b.saldo);
-        if (nome.includes('SICOOB')) document.getElementById('resumoSicoob').innerText = val;
-        if (nome.includes('CAIXA')) document.getElementById('resumoCaixa').innerText = val;
-        if (nome.includes('APLICA')) document.getElementById('resumoAplicacao').innerText = val;
+        if (nome.includes('SICOOB')) document.getElementById('resumoSicoob').innerText = moeda(b.saldo);
+        if (nome.includes('CAIXA')) document.getElementById('resumoCaixa').innerText = moeda(b.saldo);
+        if (nome.includes('APLICA')) document.getElementById('resumoAplicacao').innerText = moeda(b.saldo);
 
-        // Regras para os selects de modal
-        let option = `<option value="${b.id}">${b.nome}</option>`;
-        if (tOrigem) { tOrigem.innerHTML += option; tDestino.innerHTML += option; }
-        // No Débito/Crédito, exclui Aplicação
-        if (mBanco && !nome.includes('APLICA')) { mBanco.innerHTML += option; }
+        let opt = `<option value="${b.id}">${b.nome}</option>`;
+        if (tOrigem) { tOrigem.innerHTML += opt; tDestino.innerHTML += opt; }
+        if (mBanco && !nome.includes('APLICA')) mBanco.innerHTML += opt;
     });
 
     const { data: pag } = await _supabase.from('contas_pagar').select('valor').eq('status', 'ABERTO');
@@ -56,80 +53,122 @@ async function carregarTabela() {
                 <td>${item.vencimento.split('-').reverse().join('/')}</td>
                 <td>${item.bancos?.nome || '-'}</td>
                 <td>${item.descricao}</td>
-                <td style="color:#22c55e; font-weight:bold;">${isEntrada ? moeda(item.valor) : '-'}</td>
+                <td style="color:#22c55e;">${isEntrada ? moeda(item.valor) : '-'}</td>
                 <td style="color:#ef4444;">${!isEntrada ? moeda(item.valor) : '-'}</td>
-                <td style="font-weight:bold; color:${isEntrada ? '#22c55e' : '#38bdf8'}">${item.status}</td>
-                <td><button onclick="excluir('${item.id}')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-weight:bold;">✕</button></td>
+                <td style="font-weight:bold; color:${item.status === 'ABERTO' ? '#fbbf24' : (isEntrada ? '#22c55e' : '#38bdf8')}">${item.status}</td>
+                <td>
+                    <button onclick="editar('${item.id}')" class="btn-acao" style="color:#38bdf8;">EDITAR</button>
+                    ${item.status !== 'ABERTO' ? `<button onclick="estornar('${item.id}')" class="btn-acao" style="color:#fbbf24;">ESTORNAR</button>` : ''}
+                    <button onclick="excluir('${item.id}')" class="btn-acao" style="color:#ef4444;">EXCLUIR</button>
+                </td>
             </tr>`;
     });
 }
 
-// Modais
-function abrirModal(tipo) {
-    document.getElementById('tipoOperacao').value = tipo;
-    document.getElementById('modalTitle').innerText = tipo === 'DEBITO' ? 'Novo Débito (Saída)' : 'Novo Crédito (Entrada)';
-    document.getElementById('modalLancamento').style.display = 'flex';
+// LÓGICA DE SALDO AUTOMÁTICO
+async function alterarSaldoBanco(bancoId, valor, operacao) {
+    const { data: b } = await _supabase.from('bancos').select('saldo').eq('id', bancoId).single();
+    let novoSaldo = operacao === 'SOMA' ? Number(b.saldo) + Number(valor) : Number(b.saldo) - Number(valor);
+    await _supabase.from('bancos').update({ saldo: novoSaldo }).eq('id', bancoId);
 }
-function fecharModal() { document.getElementById('modalLancamento').style.display = 'none'; }
 
-function abrirModalTransf() { document.getElementById('modalTransferencia').style.display = 'flex'; }
-function fecharModalTransf() { document.getElementById('modalTransferencia').style.display = 'none'; }
+// AÇÕES
+async function estornar(id) {
+    if (!confirm("Deseja estornar este lançamento? O saldo do banco será ajustado.")) return;
+    const { data: item } = await _supabase.from('contas_pagar').select('*').eq('id', id).single();
+    
+    // Se era PAGO (débito), devolve o dinheiro ao banco (SOMA)
+    // Se era RECEBIDO (crédito), remove o dinheiro do banco (SUBTRAI)
+    const acao = item.status === 'PAGO' ? 'SOMA' : 'SUBTRAI';
+    await alterarSaldoBanco(item.banco_id, item.valor, acao);
+    await _supabase.from('contas_pagar').update({ status: 'ABERTO' }).eq('id', id);
+    carregarTudo();
+}
 
-// Operações de Banco
+async function excluir(id) {
+    if (!confirm("Excluir permanentemente? Se estiver pago/recebido, o saldo será ajustado.")) return;
+    const { data: item } = await _supabase.from('contas_pagar').select('*').eq('id', id).single();
+    
+    if (item.status !== 'ABERTO') {
+        const acao = item.status === 'PAGO' ? 'SOMA' : 'SUBTRAI';
+        await alterarSaldoBanco(item.banco_id, item.valor, acao);
+    }
+    await _supabase.from('contas_pagar').delete().eq('id', id);
+    carregarTudo();
+}
+
+async function editar(id) {
+    const { data: item } = await _supabase.from('contas_pagar').select('*').eq('id', id).single();
+    document.getElementById('editId').value = item.id;
+    document.getElementById('mNF').value = item.descricao.split(':')[0].replace('NF ', '');
+    document.getElementById('mDesc').value = item.descricao.split(':')[1]?.trim() || '';
+    document.getElementById('mValor').value = item.valor;
+    document.getElementById('mData').value = item.vencimento;
+    document.getElementById('mBanco').value = item.banco_id;
+    document.getElementById('tipoOperacao').value = item.status === 'RECEBIDO' ? 'CREDITO' : 'DEBITO';
+    abrirModal(item.status === 'RECEBIDO' ? 'CREDITO' : 'DEBITO');
+}
+
+// SALVAR (DÉBITO/CRÉDITO/EDIÇÃO)
 async function salvarOperacao() {
+    const id = document.getElementById('editId').value;
     const tipo = document.getElementById('tipoOperacao').value;
     const bancoId = document.getElementById('mBanco').value;
     const valor = Number(document.getElementById('mValor').value);
     const nf = document.getElementById('mNF').value;
     const desc = document.getElementById('mDesc').value;
     const data = document.getElementById('mData').value;
-
-    if (!valor || !data) return alert("Preencha Valor e Data");
-
     const statusFinal = tipo === 'DEBITO' ? 'PAGO' : 'RECEBIDO';
-    await _supabase.from('contas_pagar').insert([{
-        descricao: `NF ${nf}: ${desc}`, valor, vencimento: data, status: statusFinal, banco_id: bancoId
-    }]);
 
-    const { data: b } = await _supabase.from('bancos').select('saldo').eq('id', bancoId).single();
-    const novoSaldo = tipo === 'DEBITO' ? (Number(b.saldo) - valor) : (Number(b.saldo) + valor);
-    await _supabase.from('bancos').update({ saldo: novoSaldo }).eq('id', bancoId);
+    if (id) {
+        // Se for edição, primeiro reverte o saldo antigo
+        const { data: antigo } = await _supabase.from('contas_pagar').select('*').eq('id', id).single();
+        if (antigo.status !== 'ABERTO') {
+            const reverterAcao = antigo.status === 'PAGO' ? 'SOMA' : 'SUBTRAI';
+            await alterarSaldoBanco(antigo.banco_id, antigo.valor, reverterAcao);
+        }
+        // Aplica o novo saldo
+        const aplicarAcao = statusFinal === 'PAGO' ? 'SUBTRAI' : 'SOMA';
+        await alterarSaldoBanco(bancoId, valor, aplicarAcao);
+        
+        await _supabase.from('contas_pagar').update({
+            descricao: `NF ${nf}: ${desc}`, valor, vencimento: data, status: statusFinal, banco_id: bancoId
+        }).eq('id', id);
+    } else {
+        // Novo Lançamento
+        await _supabase.from('contas_pagar').insert([{
+            descricao: `NF ${nf}: ${desc}`, valor, vencimento: data, status: statusFinal, banco_id: bancoId
+        }]);
+        await alterarSaldoBanco(bancoId, valor, tipo === 'DEBITO' ? 'SUBTRAI' : 'SOMA');
+    }
 
     fecharModal();
     carregarTudo();
 }
 
+// AUXILIARES
+function abrirModal(tipo) {
+    document.getElementById('tipoOperacao').value = tipo;
+    document.getElementById('modalTitle').innerText = tipo === 'DEBITO' ? 'Débito' : 'Crédito';
+    document.getElementById('modalLancamento').style.display = 'flex';
+}
+function fecharModal() { 
+    document.getElementById('modalLancamento').style.display = 'none'; 
+    document.getElementById('editId').value = '';
+}
+function abrirModalTransf() { document.getElementById('modalTransferencia').style.display = 'flex'; }
+function fecharModalTransf() { document.getElementById('modalTransferencia').style.display = 'none'; }
+
 async function executarTransferencia() {
     const oId = document.getElementById('tOrigem').value;
     const dId = document.getElementById('tDestino').value;
     const valor = Number(document.getElementById('tValor').value);
-
-    if (oId === dId) return alert("Escolha bancos diferentes");
-    if (valor <= 0) return alert("Informe o valor");
-
-    // Sai da Origem
-    const { data: bO } = await _supabase.from('bancos').select('saldo').eq('id', oId).single();
-    await _supabase.from('bancos').update({ saldo: Number(bO.saldo) - valor }).eq('id', oId);
-
-    // Entra no Destino
-    const { data: bD } = await _supabase.from('bancos').select('saldo').eq('id', dId).single();
-    await _supabase.from('bancos').update({ saldo: Number(bD.saldo) + valor }).eq('id', dId);
-
+    if (oId === dId) return alert("Bancos iguais!");
+    await alterarSaldoBanco(oId, valor, 'SUBTRAI');
+    await alterarSaldoBanco(dId, valor, 'SOMA');
     fecharModalTransf();
     carregarTudo();
 }
 
-async function excluir(id) {
-    if (confirm("Excluir este lançamento?")) {
-        await _supabase.from('contas_pagar').delete().eq('id', id);
-        carregarTudo();
-    }
-}
-
-async function carregarTudo() {
-    await atualizarDashboard();
-    await carregarTabela();
-}
-
-// Iniciar
+async function carregarTudo() { await atualizarDashboard(); await carregarTabela(); }
 carregarTudo();
