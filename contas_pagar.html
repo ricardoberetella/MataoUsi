@@ -7,19 +7,21 @@
     <style>
         :root { --bg: #020617; --card: #0f172a; --border: #1e293b; --accent: #38bdf8; --text: #f8fafc; }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: auto; }
         
+        /* Cabeçalho */
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         .btn-voltar { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 8px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; }
 
-        /* Cards de Saldo Superior */
+        /* Cards de Saldo */
         .dashboard-resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .card { background: var(--card); border: 1px solid var(--border); padding: 20px; border-radius: 12px; text-align: center; }
+        .card { background: var(--card); border: 1px solid var(--border); padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
         .card small { color: #94a3b8; text-transform: uppercase; font-size: 0.7rem; font-weight: bold; }
         .valor { font-size: 1.4rem; font-weight: bold; margin-top: 10px; }
 
         /* Botões de Ação */
         .acoes-admin { display: flex; gap: 10px; margin-bottom: 25px; }
-        .btn-lancar { border: none; padding: 12px 25px; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
+        .btn-lancar { border: none; padding: 12px 25px; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .btn-debito { background: #ef4444; }
         .btn-credito { background: #22c55e; }
         .btn-transf { background: #a855f7; }
@@ -30,13 +32,12 @@
         th { background: #1e293b; color: var(--accent); padding: 15px; text-align: left; font-size: 0.8rem; }
         td { padding: 15px; border-bottom: 1px solid #1e293b; font-size: 0.9rem; }
 
-        /* Modal de Lançamento */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); }
+        /* Modal */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
         .modal-content { background: var(--card); margin: 5% auto; padding: 30px; border: 1px solid var(--accent); width: 400px; border-radius: 15px; }
         .form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
-        .form-group label { margin-bottom: 5px; color: var(--accent); font-size: 0.8rem; font-weight: bold; }
+        .form-group label { margin-bottom: 5px; color: var(--accent); font-weight: bold; font-size: 0.8rem; }
         input, select { background: #1e293b; border: 1px solid #334155; color: white; padding: 10px; border-radius: 6px; }
-        .btn-salvar { background: var(--accent); color: #020617; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -79,7 +80,7 @@
 
 <div id="modalFinanceiro" class="modal">
     <div class="modal-content">
-        <h2 id="modalTitulo" style="color: var(--accent); margin-bottom: 20px;">Novo Lançamento</h2>
+        <h2 id="modalTitulo" style="color: var(--accent); margin-top: 0;">Novo Lançamento</h2>
         <div class="form-group">
             <label>BANCO</label>
             <select id="campoBanco">
@@ -89,22 +90,15 @@
         </div>
         <div class="form-group">
             <label>DESCRIÇÃO</label>
-            <input type="text" id="campoDescricao" placeholder="Ex: NF 1234">
+            <input type="text" id="campoDescricao">
         </div>
         <div class="form-group">
             <label>VALOR (R$)</label>
             <input type="number" step="0.01" id="campoValor">
         </div>
-        <div class="form-group" id="grupoDestino" style="display:none;">
-            <label>BANCO DESTINO (TRANSFERÊNCIA)</label>
-            <select id="campoBancoDestino">
-                <option value="CAIXA FEDERAL">CAIXA FEDERAL</option>
-                <option value="SICOOB">SICOOB</option>
-            </select>
-        </div>
-        <div style="display: flex; gap: 10px;">
-            <button onclick="salvarLancamento()" class="btn-salvar" style="flex:1">SALVAR</button>
-            <button onclick="fecharModal()" style="flex:1; background:#475569; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; margin-top:10px;">CANCELAR</button>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button onclick="salvarLancamento()" style="flex:1; background:var(--accent); color:#020617; border:none; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer;">SALVAR</button>
+            <button onclick="fecharModal()" style="flex:1; background:#334155; color:white; border:none; border-radius:6px; cursor:pointer;">CANCELAR</button>
         </div>
     </div>
 </div>
