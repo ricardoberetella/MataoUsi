@@ -4,63 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Extrato Financeiro - Matão Usinagem</title>
+    <link rel="stylesheet" href="css/contas_pagar.css">
     <style>
-        :root { --bg: #020617; --card: #0f172a; --border: #1e293b; --accent: #38bdf8; --text: #f8fafc; }
-        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; }
-        .container { max-width: 100%; margin: auto; }
-        
-        /* Dashboard Compacto */
-        .dashboard-resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 15px; }
-        .card { background: var(--card); border: 1px solid var(--border); padding: 10px; border-radius: 8px; text-align: center; }
-        .card h4 { margin: 0 0 5px 0; font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; }
-        .valor { font-size: 1rem; font-weight: bold; }
-        
-        /* Filtros */
-        .filter-bar { background: var(--card); padding: 12px; border-radius: 10px; border: 1px solid var(--border); display: flex; gap: 10px; margin-bottom: 15px; align-items: end; flex-wrap: wrap; }
-        .filter-group { flex: 1; min-width: 120px; }
-        .filter-group label { display: block; font-size: 0.65rem; color: var(--accent); margin-bottom: 3px; font-weight: bold; }
-        .filter-bar input, .filter-bar select { background: #1e293b; border: 1px solid #334155; color: white; padding: 8px; border-radius: 6px; width: 100%; font-size: 0.8rem; }
-
-        /* Tabela */
-        .tabela-container { background: var(--card); border-radius: 10px; border: 1px solid var(--border); overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th { background: #1e293b; color: var(--accent); padding: 12px 10px; text-align: left; font-size: 0.75rem; border-bottom: 2px solid var(--accent); }
-        td { padding: 10px; border-bottom: 1px solid #334155; font-size: 0.8rem; }
-        
-        /* Botão Voltar Estilo Print */
-        .btn-voltar {
+        /* Estilo específico para o botão Voltar conforme Print 1 */
+        .btn-voltar-layout {
             background: transparent;
-            border: 1px solid var(--accent);
-            color: var(--accent);
-            padding: 8px 15px;
+            border: 1px solid #38bdf8;
+            color: #38bdf8;
+            padding: 8px 18px;
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 0.8rem;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            transition: 0.3s;
         }
-        .btn-voltar:hover { background: rgba(56, 189, 248, 0.1); }
-
-        .btn-filtrar { background: var(--accent); color: #020617; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-voltar-layout:hover { background: rgba(56, 189, 248, 0.1); }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2 style="color: var(--accent); margin: 0;">Extrato Financeiro</h2>
-        <a href="dashboard.html" class="btn-voltar">← Voltar ao Menu</a>
-    </div>
-    
-    <div class="dashboard-resumo">
-        <div class="card"><h4>Previsão Receber</h4><div id="resumoReceber" class="valor" style="color: #22c55e;">R$ 0,00</div></div>
-        <div class="card"><h4>Contas a Pagar</h4><div id="resumoPagar" class="valor" style="color: #ef4444;">R$ 0,00</div></div>
-        <div class="card"><h4>SICOOB</h4><div id="resumoSicoob" class="valor" style="color: var(--accent);">R$ 0,00</div></div>
-        <div class="card"><h4>CAIXA</h4><div id="resumoCaixa" class="valor" style="color: var(--accent);">R$ 0,00</div></div>
-        <div class="card"><h4>Aplicação</h4><div id="resumoAplicacao" class="valor" style="color: #a855f7;">R$ 0,00</div></div>
+        <h2 style="color: #38bdf8; margin: 0;">Extrato Financeiro</h2>
+        <a href="dashboard.html" class="btn-voltar-layout">← Voltar ao Menu</a>
     </div>
 
     <div class="filter-bar">
@@ -72,10 +40,15 @@
                 <option value="">TODOS</option>
                 <option value="ABERTO">ABERTO</option>
                 <option value="PAGO">PAGO</option>
-                <option value="RECEBIDO">RECEBIDO</option>
             </select>
         </div>
         <button onclick="carregarTudo()" class="btn-filtrar">FILTRAR</button>
+    </div>
+
+    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <button onclick="abrirModal('DEBITO')" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold;">- Débito (Saída)</button>
+        <button onclick="abrirModal('CREDITO')" style="background: #22c55e; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold;">+ Crédito (Entrada)</button>
+        <button onclick="abrirModal('TRANSFERENCIA')" style="background: #a855f7; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold;">Transferência</button>
     </div>
 
     <div class="tabela-container">
@@ -88,7 +61,7 @@
                     <th>ENTRADA</th>
                     <th>SAÍDA</th>
                     <th>STATUS</th>
-                </tr>
+                    <th>AÇÕES</th> </tr>
             </thead>
             <tbody id="listaFinanceiro"></tbody>
         </table>
