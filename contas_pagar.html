@@ -9,31 +9,66 @@
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
         .container { max-width: 1300px; margin: auto; }
         
-        .dashboard-resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        /* Dashboard */
+        .dashboard-resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 12px; text-align: center; }
-        .card h4 { margin: 0 0 10px 0; font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; }
-        .valor { font-size: 1.25rem; font-weight: bold; }
+        .card h4 { margin: 0 0 10px 0; font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; }
+        .valor { font-size: 1.2rem; font-weight: bold; }
         
-        .filter-bar { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; gap: 15px; align-items: end; margin-bottom: 25px; }
-        .tabela-container { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #1e293b; color: var(--accent); padding: 15px; text-align: left; font-size: 0.8rem; }
+        /* Filtros */
+        .filter-bar { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 25px; align-items: end; }
+        .filter-group label { display: block; font-size: 0.7rem; color: var(--accent); margin-bottom: 5px; font-weight: bold; }
+        .filter-bar input, .filter-bar select { background: #1e293b; border: 1px solid #334155; color: white; padding: 10px; border-radius: 8px; width: 100%; box-sizing: border-box; }
+
+        /* Tabela */
+        .tabela-container { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        th { background: #1e293b; color: var(--accent); padding: 15px; text-align: left; font-size: 0.8rem; border-bottom: 2px solid var(--accent); }
         td { padding: 12px 15px; border-bottom: 1px solid #334155; font-size: 0.9rem; }
         
-        .btn { padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        /* Botões */
+        .btn { padding: 10px 18px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 0.85rem; }
         .btn-pagar { background: #22c55e; color: white; }
         .btn-estornar { background: #475569; color: white; }
+        .btn-excluir { background: #ef4444; color: white; margin-left: 5px; }
+        .btn-azul { background: var(--accent); color: #020617; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1 style="color: var(--accent);">Fluxo de Caixa / Extrato</h1>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h1 style="color: var(--accent);">Fluxo de Caixa / Extrato</h1>
+        <a href="index.html" style="color: var(--accent); text-decoration: none; font-weight: bold;">← VOLTAR AO MENU</a>
+    </div>
     
     <div class="dashboard-resumo">
         <div class="card"><h4>Previsão Receber</h4><div id="resumoReceber" class="valor" style="color: #22c55e;">R$ 0,00</div></div>
         <div class="card"><h4>Contas a Pagar</h4><div id="resumoPagar" class="valor" style="color: #ef4444;">R$ 0,00</div></div>
         <div class="card"><h4>SICOOB</h4><div id="resumoSicoob" class="valor" style="color: var(--accent);">R$ 0,00</div></div>
+        <div class="card"><h4>CAIXA</h4><div id="resumoCaixa" class="valor" style="color: var(--accent);">R$ 0,00</div></div>
+        <div class="card"><h4>Aplicação</h4><div id="resumoAplicacao" class="valor" style="color: #a855f7;">R$ 0,00</div></div>
+    </div>
+
+    <div class="filter-bar">
+        <div class="filter-group"><label>DATA INÍCIO</label><input type="date" id="fDataInicio"></div>
+        <div class="filter-group"><label>DATA FIM</label><input type="date" id="fDataFim"></div>
+        <div class="filter-group">
+            <label>STATUS</label>
+            <select id="fStatus">
+                <option value="ABERTO" selected>ABERTO</option>
+                <option value="PAGO">PAGO</option>
+                <option value="RECEBIDO">RECEBIDO</option>
+                <option value="">TODOS</option>
+            </select>
+        </div>
+        <button onclick="carregarTudo()" class="btn btn-azul">FILTRAR</button>
+    </div>
+
+    <div style="margin-bottom: 20px; display: flex; gap: 10px;">
+        <button class="btn" style="background: #22c55e; color: white;">+ Novo Lançamento</button>
+        <button class="btn" style="background: #a855f7; color: white;">Transferência</button>
+        <button class="btn btn-azul">NF Entrada</button>
     </div>
 
     <div class="tabela-container">
@@ -42,6 +77,7 @@
                 <tr>
                     <th>DATA</th>
                     <th>DESCRIÇÃO</th>
+                    <th>ENTRADA</th>
                     <th>SAÍDA</th>
                     <th>STATUS</th>
                     <th>AÇÕES</th>
