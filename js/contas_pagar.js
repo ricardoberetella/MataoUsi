@@ -1,12 +1,12 @@
 const SUPABASE_URL = "https://uxtgicfuggpuyjybwawa.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"; // Use sua chave de acesso anon
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"; // Substitua pela sua chave anon do Supabase
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const moeda = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 async function carregarTudo() {
     try {
-        // 1. Carregar Bancos e Saldos
+        // 1. Carregar Bancos e Saldos (SICOOB, CAIXA, APLICAÇÃO)
         const { data: bancos } = await _supabase.from('bancos').select('*');
         if (bancos) {
             const select = document.getElementById('campoBanco');
@@ -19,18 +19,21 @@ async function carregarTudo() {
             });
         }
 
-        // 2. Previsão Receber (Contas_Receber ABERTO)
+        // 2. Previsão Receber (Soma da tabela contas_receber onde status é ABERTO)
         const { data: rec } = await _supabase.from('contas_receber').select('valor').eq('status', 'ABERTO');
-        if (rec) document.getElementById('resumoReceber').innerText = moeda(rec.reduce((a, b) => a + Number(b.valor), 0));
-
-        // 3. SOMA CONTAS A PAGAR (Apenas débitos pendentes)
-        const { data: pag } = await _supabase.from('contas_pagar').select('valor').eq('status', 'PENDENTE');
-        if (pag) {
-            const totalPendente = pag.reduce((acc, item) => item.valor < 0 ? acc + item.valor : acc, 0);
-            document.getElementById('resumoPagar').innerText = moeda(Math.abs(totalPendente));
+        if (rec) {
+            const totalRec = rec.reduce((acc, item) => acc + Number(item.valor), 0);
+            document.getElementById('resumoReceber').innerText = moeda(totalRec);
         }
 
-        // 4. Lista do Extrato
+        // 3. SOMA CONTAS A PAGAR (Apenas débitos negativos com status PENDENTE)
+        const { data: pag } = await _supabase.from('contas_pagar').select('valor').eq('status', 'PENDENTE');
+        if (pag) {
+            const totalPagar = pag.reduce((acc, item) => item.valor < 0 ? acc + item.valor : acc, 0);
+            document.getElementById('resumoPagar').innerText = moeda(Math.abs(totalPagar));
+        }
+
+        // 4. Lista do Extrato Financeiro
         const { data: lista, error } = await _supabase
             .from('contas_pagar')
             .select('*, bancos(nome)')
@@ -59,10 +62,10 @@ async function carregarTudo() {
             `;
         }).join('');
 
-    } catch (e) { console.error("Erro geral:", e.message); }
+    } catch (e) { console.error("Erro ao carregar dados:", e.message); }
 }
 
-// Funções de Modal
+// Funções para Controle do Modal
 window.abrirModal = (tipo, id = null) => {
     document.getElementById('modalFinanceiro').style.display = 'block';
     document.getElementById('editId').value = id || '';
@@ -74,35 +77,13 @@ window.abrirModal = (tipo, id = null) => {
     }
 };
 
-window.fecharModal = () => document.getElementById('modalFinanceiro').style.display = 'none';
-
-// Salvar Lançamento
-window.salvarLancamento = async () => {
-    const id = document.getElementById('editId').value;
-    const tipo = document.getElementById('modalTitulo').innerText;
-    let valor = parseFloat(document.getElementById('campoValor').value);
-    
-    // Ajusta sinal se for débito (valor negativo)
-    if (tipo.includes('DEBITO')) valor = -Math.abs(valor);
-
-    const dados = {
-        vencimento: document.getElementById('campoData').value,
-        banco_id: document.getElementById('campoBanco').value,
-        descricao: document.getElementById('campoDescricao').value,
-        valor: valor,
-        status: 'PENDENTE'
-    };
-
-    const query = id ? _supabase.from('contas_pagar').update(dados).eq('id', id) : _supabase.from('contas_pagar').insert([dados]);
-    const { error } = await query;
-
-    if (error) alert("Erro ao salvar: " + error.message);
-    else { fecharModal(); carregarTudo(); }
+window.fecharModal = () => {
+    document.getElementById('modalFinanceiro').style.display = 'none';
 };
 
-// Preparar Edição
+// Preparar dados para Edição
 window.prepararEdicao = async (id) => {
-    const { data } = await _supabase.from('contas_pagar').select('*').eq('id', id).single();
+    const { data, error } = await _supabase.from('contas_pagar').select('*').eq('id', id).single();
     if (data) {
         abrirModal('EDIÇÃO', id);
         document.getElementById('modalTitulo').innerText = 'Editar Lançamento';
@@ -113,6 +94,32 @@ window.prepararEdicao = async (id) => {
     }
 };
 
+// Salvar Lançamento (Novo ou Editado)
+window.salvarLancamento = async () => {
+    const id = document.getElementById('editId').value;
+    const tipo = document.getElementById('modalTitulo').innerText;
+    let valor = parseFloat(document.getElementById('campoValor').value);
+    
+    // Se for um débito, garante o sinal negativo no banco de dados
+    if (tipo.includes('DEBITO')) valor = -Math.abs(valor);
+
+    const registro = {
+        vencimento: document.getElementById('campoData').value,
+        banco_id: document.getElementById('campoBanco').value,
+        descricao: document.getElementById('campoDescricao').value,
+        valor: valor,
+        status: 'PENDENTE'
+    };
+
+    const operacao = id 
+        ? _supabase.from('contas_pagar').update(registro).eq('id', id)
+        : _supabase.from('contas_pagar').insert([registro]);
+
+    const { error } = await operacao;
+    if (error) alert("Erro ao salvar: " + error.message);
+    else { fecharModal(); carregarTudo(); }
+};
+
 window.toggleStatus = async (id, status) => {
     const novoStatus = status === 'PAGO' ? 'PENDENTE' : 'PAGO';
     await _supabase.from('contas_pagar').update({ status: novoStatus }).eq('id', id);
@@ -120,7 +127,7 @@ window.toggleStatus = async (id, status) => {
 };
 
 window.excluir = async (id) => {
-    if (confirm("Excluir registro?")) {
+    if (confirm("Deseja realmente excluir este registro?")) {
         await _supabase.from('contas_pagar').delete().eq('id', id);
         carregarTudo();
     }
