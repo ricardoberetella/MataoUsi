@@ -1,38 +1,50 @@
-// Configurações do Supabase
 const SUPABASE_URL = "https://uxtgicfuggpuyjybwawa.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"; 
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg"; // Use sua chave de acesso anon
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const moeda = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 async function carregarTudo() {
     try {
-        // Busca bancos e atualiza os cards de saldo
+        // 1. Carregar Bancos e Saldos
         const { data: bancos } = await _supabase.from('bancos').select('*');
         if (bancos) {
             const select = document.getElementById('campoBanco');
             if (select) select.innerHTML = bancos.map(b => `<option value="${b.id}">${b.nome}</option>`).join('');
             
             bancos.forEach(b => {
-                const idCard = b.nome === 'CAIXA FEDERAL' ? 'resumoCaixa' : b.nome === 'SICOOB' ? 'resumoSicoob' : 'resumoAplicacao';
-                const el = document.getElementById(idCard);
+                let id = b.nome === 'CAIXA FEDERAL' ? 'resumoCaixa' : b.nome === 'SICOOB' ? 'resumoSicoob' : 'resumoAplicacao';
+                let el = document.getElementById(id);
                 if (el) el.innerText = moeda(b.saldo);
             });
         }
 
-        // Carrega a lista do extrato
-        const { data: lista, error } = await _supabase.from('contas_pagar').select('*, bancos(nome)').order('vencimento', { ascending: false });
+        // 2. Previsão Receber (Contas_Receber ABERTO)
+        const { data: rec } = await _supabase.from('contas_receber').select('valor').eq('status', 'ABERTO');
+        if (rec) document.getElementById('resumoReceber').innerText = moeda(rec.reduce((a, b) => a + Number(b.valor), 0));
+
+        // 3. SOMA CONTAS A PAGAR (Apenas débitos pendentes)
+        const { data: pag } = await _supabase.from('contas_pagar').select('valor').eq('status', 'PENDENTE');
+        if (pag) {
+            const totalPendente = pag.reduce((acc, item) => item.valor < 0 ? acc + item.valor : acc, 0);
+            document.getElementById('resumoPagar').innerText = moeda(Math.abs(totalPendente));
+        }
+
+        // 4. Lista do Extrato
+        const { data: lista, error } = await _supabase
+            .from('contas_pagar')
+            .select('*, bancos(nome)')
+            .order('vencimento', { ascending: false });
+
         if (error) throw error;
 
         const corpo = document.getElementById('listaFinanceiro');
-        if (!corpo) return;
-
         corpo.innerHTML = lista.map(item => {
             const isPago = item.status === 'PAGO';
             return `
                 <tr>
                     <td>${new Date(item.vencimento + 'T12:00:00').toLocaleDateString('pt-BR')}</td>
-                    <td>${item.bancos?.nome || 'Bco Removido'}</td>
+                    <td>${item.bancos?.nome || 'N/A'}</td>
                     <td>${item.descricao}</td>
                     <td style="color: ${item.valor < 0 ? '#ef4444' : '#22c55e'}">${moeda(item.valor)}</td>
                     <td class="${isPago ? 'status-pago' : 'status-pendente'}">${item.status}</td>
@@ -40,37 +52,65 @@ async function carregarTudo() {
                         <button class="btn-acao" onclick="toggleStatus('${item.id}', '${item.status}')">
                             ${isPago ? '↩ Estornar' : '✔ Pagar'}
                         </button>
+                        <button class="btn-acao" onclick="prepararEdicao('${item.id}')">✏️ Editar</button>
                         <button class="btn-acao" onclick="excluir('${item.id}')">🗑️</button>
                     </td>
                 </tr>
             `;
         }).join('');
-    } catch (e) { console.error("Erro:", e.message); }
+
+    } catch (e) { console.error("Erro geral:", e.message); }
 }
 
-window.abrirModal = (tipo) => {
+// Funções de Modal
+window.abrirModal = (tipo, id = null) => {
     document.getElementById('modalFinanceiro').style.display = 'block';
-    document.getElementById('modalTitulo').innerText = 'Lançar ' + tipo;
-    document.getElementById('campoData').value = new Date().toISOString().split('T')[0];
+    document.getElementById('editId').value = id || '';
+    if (!id) {
+        document.getElementById('modalTitulo').innerText = 'Lançar ' + tipo;
+        document.getElementById('campoData').value = new Date().toISOString().split('T')[0];
+        document.getElementById('campoDescricao').value = '';
+        document.getElementById('campoValor').value = '';
+    }
 };
 
+window.fecharModal = () => document.getElementById('modalFinanceiro').style.display = 'none';
+
+// Salvar Lançamento
 window.salvarLancamento = async () => {
+    const id = document.getElementById('editId').value;
     const tipo = document.getElementById('modalTitulo').innerText;
     let valor = parseFloat(document.getElementById('campoValor').value);
     
-    // Define se é entrada ou saída
-    valor = tipo.includes('DEBITO') ? -Math.abs(valor) : Math.abs(valor);
+    // Ajusta sinal se for débito (valor negativo)
+    if (tipo.includes('DEBITO')) valor = -Math.abs(valor);
 
-    const { error } = await _supabase.from('contas_pagar').insert([{
+    const dados = {
         vencimento: document.getElementById('campoData').value,
         banco_id: document.getElementById('campoBanco').value,
         descricao: document.getElementById('campoDescricao').value,
         valor: valor,
         status: 'PENDENTE'
-    }]);
+    };
 
-    if (error) alert("Erro: " + error.message);
+    const query = id ? _supabase.from('contas_pagar').update(dados).eq('id', id) : _supabase.from('contas_pagar').insert([dados]);
+    const { error } = await query;
+
+    if (error) alert("Erro ao salvar: " + error.message);
     else { fecharModal(); carregarTudo(); }
+};
+
+// Preparar Edição
+window.prepararEdicao = async (id) => {
+    const { data } = await _supabase.from('contas_pagar').select('*').eq('id', id).single();
+    if (data) {
+        abrirModal('EDIÇÃO', id);
+        document.getElementById('modalTitulo').innerText = 'Editar Lançamento';
+        document.getElementById('campoData').value = data.vencimento;
+        document.getElementById('campoBanco').value = data.banco_id;
+        document.getElementById('campoDescricao').value = data.descricao;
+        document.getElementById('campoValor').value = Math.abs(data.valor);
+    }
 };
 
 window.toggleStatus = async (id, status) => {
@@ -79,6 +119,11 @@ window.toggleStatus = async (id, status) => {
     carregarTudo();
 };
 
-window.fecharModal = () => document.getElementById('modalFinanceiro').style.display = 'none';
+window.excluir = async (id) => {
+    if (confirm("Excluir registro?")) {
+        await _supabase.from('contas_pagar').delete().eq('id', id);
+        carregarTudo();
+    }
+};
 
 document.addEventListener('DOMContentLoaded', carregarTudo);
