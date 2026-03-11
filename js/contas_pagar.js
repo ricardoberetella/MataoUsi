@@ -4,6 +4,7 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const moeda = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+// ATUALIZA OS CARDS DO TOPO E SELECTS DOS MODAIS
 async function atualizarDashboard() {
     const { data: bancos } = await _supabase.from('bancos').select('*');
     const mBanco = document.getElementById('mBanco');
@@ -32,6 +33,7 @@ async function atualizarDashboard() {
     document.getElementById('resumoReceber').innerText = moeda(rec?.reduce((acc, i) => acc + Number(i.valor), 0));
 }
 
+// CARREGA A TABELA COM A LÓGICA DE BOTÕES ALTERNÁVEIS
 async function carregarTabela() {
     const status = document.getElementById('fStatus').value;
     const ini = document.getElementById('fDataInicio').value;
@@ -47,56 +49,72 @@ async function carregarTabela() {
     corpo.innerHTML = '';
 
     data?.forEach(item => {
-        const isEntrada = item.status === 'RECEBIDO';
+        const isAberto = item.status === 'ABERTO';
+        const isPago = item.status === 'PAGO';
+        const isRecebido = item.status === 'RECEBIDO';
+
         corpo.innerHTML += `
             <tr>
                 <td>${item.vencimento.split('-').reverse().join('/')}</td>
                 <td>${item.bancos?.nome || '-'}</td>
                 <td>${item.descricao}</td>
-                <td style="color:#22c55e;">${isEntrada ? moeda(item.valor) : '-'}</td>
-                <td style="color:#ef4444;">${!isEntrada ? moeda(item.valor) : '-'}</td>
-                <td style="font-weight:bold; color:${item.status === 'ABERTO' ? '#fbbf24' : (isEntrada ? '#22c55e' : '#38bdf8')}">${item.status}</td>
+                <td style="color:#22c55e;">${isRecebido ? moeda(item.valor) : '-'}</td>
+                <td style="color:#ef4444;">${!isRecebido ? moeda(item.valor) : '-'}</td>
+                <td style="font-weight:bold; color:${isAberto ? '#fbbf24' : (isRecebido ? '#22c55e' : '#38bdf8')}">${item.status}</td>
                 <td>
-                    <button onclick="editar('${item.id}')" class="btn-acao" style="color:#38bdf8;">EDITAR</button>
-                    ${item.status !== 'ABERTO' ? `<button onclick="estornar('${item.id}')" class="btn-acao" style="color:#fbbf24;">ESTORNAR</button>` : ''}
-                    <button onclick="excluir('${item.id}')" class="btn-acao" style="color:#ef4444;">EXCLUIR</button>
+                    <button onclick="editar('${item.id}')" class="btn-acao" style="color:#38bdf8; border: 1px solid #38bdf8;">EDITAR</button>
+                    
+                    ${isAberto ? 
+                        `<button onclick="efetivarPagamento('${item.id}')" class="btn-acao" style="color:#22c55e; border: 1px solid #22c55e;">PAGAR</button>` : 
+                        (isPago ? `<button onclick="estornar('${item.id}')" class="btn-acao" style="color:#fbbf24; border: 1px solid #fbbf24;">ESTORNAR</button>` : '')
+                    }
+
+                    <button onclick="excluir('${item.id}')" class="btn-acao" style="color:#ef4444; border: 1px solid #ef4444;">EXCLUIR</button>
                 </td>
             </tr>`;
     });
 }
 
-// LÓGICA DE SALDO AUTOMÁTICO
+// LÓGICA DE SALDO AUTOMÁTICO NO BANCO
 async function alterarSaldoBanco(bancoId, valor, operacao) {
     const { data: b } = await _supabase.from('bancos').select('saldo').eq('id', bancoId).single();
     let novoSaldo = operacao === 'SOMA' ? Number(b.saldo) + Number(valor) : Number(b.saldo) - Number(valor);
     await _supabase.from('bancos').update({ saldo: novoSaldo }).eq('id', bancoId);
 }
 
-// AÇÕES
-async function estornar(id) {
-    if (!confirm("Deseja estornar este lançamento? O saldo do banco será ajustado.")) return;
+// EFETIVAR PAGAMENTO (STATUS ABERTO -> PAGO)
+async function efetivarPagamento(id) {
+    if (!confirm("Confirmar o pagamento desta conta? O saldo será reduzido.")) return;
     const { data: item } = await _supabase.from('contas_pagar').select('*').eq('id', id).single();
     
-    // Se era PAGO (débito), devolve o dinheiro ao banco (SOMA)
-    // Se era RECEBIDO (crédito), remove o dinheiro do banco (SUBTRAI)
-    const acao = item.status === 'PAGO' ? 'SOMA' : 'SUBTRAI';
-    await alterarSaldoBanco(item.banco_id, item.valor, acao);
+    await alterarSaldoBanco(item.banco_id, item.valor, 'SUBTRAI');
+    await _supabase.from('contas_pagar').update({ status: 'PAGO' }).eq('id', id);
+    carregarTudo();
+}
+
+// ESTORNAR PAGAMENTO (STATUS PAGO -> ABERTO)
+async function estornar(id) {
+    if (!confirm("Estornar este pagamento? O valor retornará ao banco.")) return;
+    const { data: item } = await _supabase.from('contas_pagar').select('*').eq('id', id).single();
+    
+    await alterarSaldoBanco(item.banco_id, item.valor, 'SOMA');
     await _supabase.from('contas_pagar').update({ status: 'ABERTO' }).eq('id', id);
     carregarTudo();
 }
 
+// EXCLUIR LANÇAMENTO (COM AJUSTE DE SALDO SE JÁ PAGO)
 async function excluir(id) {
     if (!confirm("Excluir permanentemente? Se estiver pago/recebido, o saldo será ajustado.")) return;
     const { data: item } = await _supabase.from('contas_pagar').select('*').eq('id', id).single();
     
-    if (item.status !== 'ABERTO') {
-        const acao = item.status === 'PAGO' ? 'SOMA' : 'SUBTRAI';
-        await alterarSaldoBanco(item.banco_id, item.valor, acao);
-    }
+    if (item.status === 'PAGO') await alterarSaldoBanco(item.banco_id, item.valor, 'SOMA');
+    if (item.status === 'RECEBIDO') await alterarSaldoBanco(item.banco_id, item.valor, 'SUBTRAI');
+    
     await _supabase.from('contas_pagar').delete().eq('id', id);
     carregarTudo();
 }
 
+// EDIÇÃO E SALVAMENTO
 async function editar(id) {
     const { data: item } = await _supabase.from('contas_pagar').select('*').eq('id', id).single();
     document.getElementById('editId').value = item.id;
@@ -109,7 +127,6 @@ async function editar(id) {
     abrirModal(item.status === 'RECEBIDO' ? 'CREDITO' : 'DEBITO');
 }
 
-// SALVAR (DÉBITO/CRÉDITO/EDIÇÃO)
 async function salvarOperacao() {
     const id = document.getElementById('editId').value;
     const tipo = document.getElementById('tipoOperacao').value;
@@ -121,41 +138,30 @@ async function salvarOperacao() {
     const statusFinal = tipo === 'DEBITO' ? 'PAGO' : 'RECEBIDO';
 
     if (id) {
-        // Se for edição, primeiro reverte o saldo antigo
         const { data: antigo } = await _supabase.from('contas_pagar').select('*').eq('id', id).single();
-        if (antigo.status !== 'ABERTO') {
-            const reverterAcao = antigo.status === 'PAGO' ? 'SOMA' : 'SUBTRAI';
-            await alterarSaldoBanco(antigo.banco_id, antigo.valor, reverterAcao);
-        }
-        // Aplica o novo saldo
-        const aplicarAcao = statusFinal === 'PAGO' ? 'SUBTRAI' : 'SOMA';
-        await alterarSaldoBanco(bancoId, valor, aplicarAcao);
-        
+        if (antigo.status === 'PAGO') await alterarSaldoBanco(antigo.banco_id, antigo.valor, 'SOMA');
+        if (antigo.status === 'RECEBIDO') await alterarSaldoBanco(antigo.banco_id, antigo.valor, 'SUBTRAI');
+
+        await alterarSaldoBanco(bancoId, valor, statusFinal === 'PAGO' ? 'SUBTRAI' : 'SOMA');
         await _supabase.from('contas_pagar').update({
             descricao: `NF ${nf}: ${desc}`, valor, vencimento: data, status: statusFinal, banco_id: bancoId
         }).eq('id', id);
     } else {
-        // Novo Lançamento
         await _supabase.from('contas_pagar').insert([{
             descricao: `NF ${nf}: ${desc}`, valor, vencimento: data, status: statusFinal, banco_id: bancoId
         }]);
         await alterarSaldoBanco(bancoId, valor, tipo === 'DEBITO' ? 'SUBTRAI' : 'SOMA');
     }
-
-    fecharModal();
-    carregarTudo();
+    fecharModal(); carregarTudo();
 }
 
-// AUXILIARES
+// AUXILIARES DE MODAL
 function abrirModal(tipo) {
     document.getElementById('tipoOperacao').value = tipo;
     document.getElementById('modalTitle').innerText = tipo === 'DEBITO' ? 'Débito' : 'Crédito';
     document.getElementById('modalLancamento').style.display = 'flex';
 }
-function fecharModal() { 
-    document.getElementById('modalLancamento').style.display = 'none'; 
-    document.getElementById('editId').value = '';
-}
+function fecharModal() { document.getElementById('modalLancamento').style.display = 'none'; document.getElementById('editId').value = ''; }
 function abrirModalTransf() { document.getElementById('modalTransferencia').style.display = 'flex'; }
 function fecharModalTransf() { document.getElementById('modalTransferencia').style.display = 'none'; }
 
@@ -166,8 +172,7 @@ async function executarTransferencia() {
     if (oId === dId) return alert("Bancos iguais!");
     await alterarSaldoBanco(oId, valor, 'SUBTRAI');
     await alterarSaldoBanco(dId, valor, 'SOMA');
-    fecharModalTransf();
-    carregarTudo();
+    fecharModalTransf(); carregarTudo();
 }
 
 async function carregarTudo() { await atualizarDashboard(); await carregarTabela(); }
