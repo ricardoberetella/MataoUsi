@@ -1,108 +1,115 @@
-const SUPABASE_URL = "https://uxtgicfuggpuyjybwawa.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg";
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extrato Financeiro - Matão Usinagem</title>
+    <link rel="stylesheet" href="css/estilo.css">
+    <style>
+        body { background-color: #0f172a; color: white; font-family: sans-serif; margin: 0; padding: 15px; }
+        .container { max-width: 1000px; margin: auto; }
+        
+        /* Dashboard com cards de tamanho real */
+        .dashboard { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); 
+            gap: 12px; 
+            margin-bottom: 20px; 
+        }
+        .card { 
+            background: #1e293b; 
+            padding: 15px; 
+            border-radius: 10px; 
+            text-align: center; 
+            border: 1px solid #334155;
+        }
+        .valor { font-size: 1.2rem; font-weight: bold; margin-top: 5px; }
 
-const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-async function carregarTudo() {
-    try {
-        // 1. Bancos e Saldos
-        const { data: bancos } = await _supabase.from('bancos').select('*');
-        if (bancos) {
-            const select = document.getElementById('campoBanco');
-            select.innerHTML = bancos.map(b => `<option value="${b.id}">${b.nome}</option>`).join('');
-            
-            bancos.forEach(b => {
-                let id = b.nome === 'CAIXA FEDERAL' ? 'resumoCaixa' : b.nome === 'SICOOB' ? 'resumoSicoob' : 'resumoAplicacao';
-                let el = document.getElementById(id);
-                if (el) el.innerText = fmt(b.saldo);
-            });
+        /* Botões centrais e grandes para Tablet */
+        .area-botoes {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .btn-principal {
+            flex: 1;
+            max-width: 200px;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
 
-        // 2. Somas dos Cards
-        const { data: rec } = await _supabase.from('contas_receber').select('valor').eq('status', 'ABERTO');
-        document.getElementById('resumoReceber').innerText = fmt(rec?.reduce((acc, i) => acc + Number(i.valor), 0));
+        /* Modal Ajustado (nem muito pequeno, nem gigante) */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); }
+        .modal-content { 
+            background: #1e293b; 
+            margin: 10% auto; 
+            padding: 25px; 
+            width: 85%; 
+            max-width: 450px; 
+            border-radius: 15px; 
+            border: 1px solid #38bdf8; 
+        }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 6px; box-sizing: border-box; }
+        
+        table { width: 100%; border-collapse: collapse; background: #1e293b; margin-top: 10px; border-radius: 8px; overflow: hidden; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h1 style="color: #38bdf8; margin: 0;">Extrato Financeiro</h1>
+            <a href="dashboard.html" style="color: #38bdf8; text-decoration: none; border: 1px solid #38bdf8; padding: 8px 15px; border-radius: 6px;">← Voltar</a>
+        </div>
 
-        const { data: pag } = await _supabase.from('contas_pagar').select('valor').eq('status', 'PENDENTE');
-        const totalPagar = pag?.reduce((acc, i) => i.valor < 0 ? acc + i.valor : acc, 0) || 0;
-        document.getElementById('resumoPagar').innerText = fmt(Math.abs(totalPagar));
+        <div class="dashboard">
+            <div class="card"><small>PREVISÃO RECEBER</small><div id="resumoReceber" class="valor" style="color: #22c55e;">R$ 0,00</div></div>
+            <div class="card"><small>CONTAS A PAGAR</small><div id="resumoPagar" class="valor" style="color: #ef4444;">R$ 0,00</div></div>
+            <div class="card"><small>SICOOB</small><div id="resumoSicoob" class="valor">R$ 0,00</div></div>
+            <div class="card"><small>CAIXA FEDERAL</small><div id="resumoCaixa" class="valor">R$ 0,00</div></div>
+            <div class="card"><small>APLICAÇÃO</small><div id="resumoAplicacao" class="valor" style="color: #a855f7;">R$ 0,00</div></div>
+        </div>
 
-        // 3. Tabela de Extrato
-        const { data: lista } = await _supabase.from('contas_pagar').select('*, bancos(nome)').order('vencimento', { ascending: false });
-        document.getElementById('listaFinanceiro').innerHTML = lista.map(item => `
-            <tr>
-                <td>${new Date(item.vencimento + 'T12:00:00').toLocaleDateString('pt-BR')}</td>
-                <td>${item.bancos?.nome || '--'}</td>
-                <td>${item.descricao}</td>
-                <td style="color: ${item.valor < 0 ? '#ef4444' : '#22c55e'}">${fmt(item.valor)}</td>
-                <td style="font-weight:bold; color: ${item.status === 'PAGO' ? '#22c55e' : '#f59e0b'}">${item.status}</td>
-                <td style="text-align: center;">
-                    <button onclick="mudarStatus('${item.id}', '${item.status}')" style="background:#334155; color:white; border:1px solid #475569; padding:5px 10px; border-radius:4px; cursor:pointer;">${item.status === 'PAGO' ? '↩' : '✔ Pagar'}</button>
-                    <button onclick="editarRegistro('${item.id}')" style="background:none; border:none; cursor:pointer; margin-left:10px;">✏️</button>
-                    <button onclick="excluirRegistro('${item.id}')" style="background:none; border:none; cursor:pointer; margin-left:10px;">🗑️</button>
-                </td>
-            </tr>
-        `).join('');
-    } catch (e) { console.error(e); }
-}
+        <div class="area-botoes">
+            <button onclick="abrirModal('DEBITO')" class="btn-principal" style="background: #ef4444;">- Débito</button>
+            <button onclick="abrirModal('CREDITO')" class="btn-principal" style="background: #22c55e;">+ Crédito</button>
+            <button onclick="abrirModal('TRANSFERENCIA')" class="btn-principal" style="background: #a855f7;">Transferência</button>
+        </div>
 
-window.abrirModal = (tipo, id = null) => {
-    document.getElementById('modalFinanceiro').style.display = 'block';
-    document.getElementById('editId').value = id || '';
-    if (!id) {
-        document.getElementById('modalTitulo').innerText = 'Lançar ' + tipo;
-        document.getElementById('campoData').value = new Date().toISOString().split('T')[0];
-        document.getElementById('campoDescricao').value = '';
-        document.getElementById('campoValor').value = '';
-    }
-};
+        <table>
+            <thead>
+                <tr>
+                    <th>DATA</th><th>BANCO</th><th>DESCRIÇÃO</th><th>VALOR</th><th style="text-align: center;">AÇÕES</th>
+                </tr>
+            </thead>
+            <tbody id="listaFinanceiro"></tbody>
+        </table>
+    </div>
 
-window.fecharModal = () => document.getElementById('modalFinanceiro').style.display = 'none';
+    <div id="modalFinanceiro" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitulo" style="color: #38bdf8; margin-top: 0;">Lançar Débito</h2>
+            <input type="hidden" id="editId">
+            <label>Data</label><input type="date" id="campoData">
+            <label>Banco</label><select id="campoBanco"></select>
+            <label>Descrição</label><input type="text" id="campoDescricao" placeholder="Ex: Pagamento Boleto">
+            <label>Valor (R$)</label><input type="number" step="0.01" id="campoValor" placeholder="0,00">
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="salvarLancamento()" style="flex: 2; padding: 15px; background: #38bdf8; border: none; font-weight: bold; border-radius: 8px; cursor: pointer;">SALVAR</button>
+                <button onclick="fecharModal()" style="flex: 1; padding: 15px; background: #475569; border: none; color: white; border-radius: 8px; cursor: pointer;">Sair</button>
+            </div>
+        </div>
+    </div>
 
-window.salvarLancamento = async () => {
-    const id = document.getElementById('editId').value;
-    const titulo = document.getElementById('modalTitulo').innerText;
-    let valor = parseFloat(document.getElementById('campoValor').value);
-    
-    if (titulo.includes('DEBITO')) valor = -Math.abs(valor);
-    if (titulo.includes('CREDITO')) valor = Math.abs(valor);
-
-    const dados = {
-        vencimento: document.getElementById('campoData').value,
-        banco_id: document.getElementById('campoBanco').value,
-        descricao: document.getElementById('campoDescricao').value,
-        valor: valor,
-        status: 'PENDENTE'
-    };
-
-    const res = id ? await _supabase.from('contas_pagar').update(dados).eq('id', id) : await _supabase.from('contas_pagar').insert([dados]);
-    if (res.error) alert("Erro: " + res.error.message);
-    else { fecharModal(); carregarTudo(); }
-};
-
-window.mudarStatus = async (id, status) => {
-    const novo = status === 'PAGO' ? 'PENDENTE' : 'PAGO';
-    await _supabase.from('contas_pagar').update({ status: novo }).eq('id', id);
-    carregarTudo();
-};
-
-window.editarRegistro = async (id) => {
-    const { data } = await _supabase.from('contas_pagar').select('*').eq('id', id).single();
-    if (data) {
-        abrirModal('EDIÇÃO', id);
-        document.getElementById('modalTitulo').innerText = 'Editar Lançamento';
-        document.getElementById('campoData').value = data.vencimento;
-        document.getElementById('campoBanco').value = data.banco_id;
-        document.getElementById('campoDescricao').value = data.descricao;
-        document.getElementById('campoValor').value = Math.abs(data.valor);
-    }
-};
-
-window.excluirRegistro = async (id) => {
-    if (confirm("Deseja excluir?")) {
-        await _supabase.from('contas_pagar').delete().eq('id', id);
-        carregarTudo();
-    }
-};
-
-document.addEventListener('DOMContentLoaded', carregarTudo);
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/contas_pagar.js"></script>
+</body>
+</html>
