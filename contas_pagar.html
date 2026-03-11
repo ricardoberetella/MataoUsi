@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Extrato Financeiro - Matão Usinagem</title>
+    <title>Fluxo de Caixa / Extrato - Matão Usinagem</title>
     <link rel="stylesheet" href="css/contas_pagar.css">
     <style>
-        /* Estilo do Botão Voltar conforme Print 1 */
         .btn-voltar-topo {
             background: transparent;
             border: 1px solid #38bdf8;
@@ -16,45 +15,46 @@
             text-decoration: none;
             font-weight: bold;
             font-size: 0.85rem;
-            transition: 0.3s;
         }
-        .btn-voltar-topo:hover { background: rgba(56, 189, 248, 0.1); }
-
-        /* Botões de Ação do Administrador */
-        .acoes-admin-topo { display: flex; gap: 10px; margin: 20px 0; }
-        .btn-topo { border: none; padding: 10px 20px; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-debito { background-color: #ef4444; } /* Vermelho */
-        .btn-credito { background-color: #22c55e; } /* Verde */
-        .btn-transf { background-color: #a855f7; } /* Roxo */
-        .btn-topo:hover { opacity: 0.8; }
+        .dashboard-resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .card { background: #0f172a; border: 1px solid #1e293b; padding: 15px; border-radius: 10px; text-align: center; }
+        .acoes-admin { display: flex; gap: 10px; margin-bottom: 20px; }
+        .btn-acao { border: none; padding: 10px 20px; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
+        .btn-debito { background-color: #ef4444; }
+        .btn-credito { background-color: #22c55e; }
+        .btn-transf { background-color: #a855f7; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2 style="color: #38bdf8; margin: 0;">Fluxo de Caixa / Extrato</h2>
+        <h2 style="color: #38bdf8;">Fluxo de Caixa / Extrato</h2>
         <a href="dashboard.html" class="btn-voltar-topo">← Voltar ao Menu</a>
     </div>
 
+    <div class="dashboard-resumo">
+        <div class="card"><small>PREVISÃO RECEBER</small><div id="resumoReceber" style="color:#22c55e; font-weight:bold;">R$ 0,00</div></div>
+        <div class="card"><small>CONTAS A PAGAR</small><div id="resumoPagar" style="color:#ef4444; font-weight:bold;">R$ 0,00</div></div>
+        <div class="card"><small>SICOOB</small><div id="resumoSicoob" style="color:#38bdf8; font-weight:bold;">R$ 0,00</div></div>
+        <div class="card"><small>CAIXA</small><div id="resumoCaixa" style="color:#38bdf8; font-weight:bold;">R$ 0,00</div></div>
+    </div>
+
     <div class="filter-bar">
-        <div class="filter-group"><label>DATA INÍCIO</label><input type="date" id="fDataInicio"></div>
-        <div class="filter-group"><label>DATA FIM</label><input type="date" id="fDataFim"></div>
-        <div class="filter-group">
-            <label>STATUS</label>
-            <select id="fStatus">
-                <option value="">TODOS</option>
-                <option value="ABERTO">ABERTO</option>
-                <option value="PAGO">PAGO</option>
-            </select>
-        </div>
+        <input type="date" id="fDataInicio">
+        <input type="date" id="fDataFim">
+        <select id="fStatus">
+            <option value="">TODOS</option>
+            <option value="ABERTO">ABERTO</option>
+            <option value="PAGO">PAGO</option>
+        </select>
         <button onclick="carregarTudo()" class="btn-filtrar">FILTRAR</button>
     </div>
 
-    <div class="acoes-admin-topo">
-        <button class="btn-topo btn-debito" onclick="abrirModal('DEBITO')">- Débito (Saída)</button>
-        <button class="btn-topo btn-credito" onclick="abrirModal('CREDITO')">+ Crédito (Entrada)</button>
-        <button class="btn-topo btn-transf" onclick="abrirModal('TRANSFERENCIA')">Transferência</button>
+    <div class="acoes-admin">
+        <button class="btn-acao btn-debito" onclick="abrirModal('DEBITO')">- Débito (Saída)</button>
+        <button class="btn-acao btn-credito" onclick="abrirModal('CREDITO')">+ Crédito (Entrada)</button>
+        <button class="btn-acao btn-transf" onclick="abrirModal('TRANSFERENCIA')">Transferência</button>
     </div>
 
     <div class="tabela-container">
@@ -70,8 +70,7 @@
                     <th>AÇÕES</th>
                 </tr>
             </thead>
-            <tbody id="listaFinanceiro">
-                </tbody>
+            <tbody id="listaFinanceiro"></tbody>
         </table>
     </div>
 </div>
