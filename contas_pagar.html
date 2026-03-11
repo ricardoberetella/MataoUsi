@@ -1,16 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle Financeiro - Matão Usinagem</title>
+    <style>
+        body { background: #020617; color: white; font-family: sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: auto; }
+        .dashboard-resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin: 20px 0; }
+        .card { background: #0f172a; border: 1px solid #1e293b; padding: 15px; border-radius: 12px; text-align: center; }
+        .card h4 { margin: 0 0 8px 0; font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; }
+        .card .valor { font-size: 1.1rem; font-weight: bold; }
+        .v-positivo { color: #38bdf8; }
+        .v-negativo { color: #ef4444; }
+        .v-total { color: #38bdf8; font-size: 1.6rem !important; }
+        
+        table { width: 100%; border-collapse: collapse; background: #0f172a; border-radius: 8px; overflow: hidden; }
+        th { background: #1e293b; color: #38bdf8; padding: 12px; text-align: left; border-bottom: 2px solid #38bdf8; }
+        td { padding: 12px; border-bottom: 1px solid #334155; font-size: 0.85rem; }
+        .btn { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-right: 5px; }
+        .btn-azul { background: #38bdf8; color: #020617; }
+        .btn-verde { background: #22c55e; color: white; }
+        .btn-vermelho { background: #ef4444; color: white; }
+    </style>
+</head>
+<body>
+
 <div class="container">
-    <a href="index.html" class="btn-voltar">← Voltar ao Menu</a>
+    <a href="index.html" style="color: #38bdf8; text-decoration: none;">← Voltar ao Menu</a>
     <h1>Controle Financeiro</h1>
-    
+
     <div class="dashboard-resumo">
-        <div class="card"><h4>Previsão Recebimento</h4><div class="valor v-positivo" id="resumoReceber">R$ 0,00</div><small>Status: ABERTO</small></div>
-        <div class="card"><h4>Contas a Pagar</h4><div class="valor v-negativo" id="resumoPagar">R$ 0,00</div><small>Status: ABERTO</small></div>
-        <div class="card"><h4>Disponível SICOOB</h4><div class="valor v-positivo" id="resumoSicoob">R$ 0,00</div></div>
-        <div class="card"><h4>Disponível CAIXA</h4><div class="valor v-positivo" id="resumoCaixa">R$ 0,00</div></div>
-        <div class="card"><h4>Reserva Aplicação</h4><div class="valor v-neutro" id="resumoAplicacao" style="color: #a855f7;">R$ 0,00</div></div>
-        <div class="card" style="grid-column: span 2; border-color: #38bdf8;">
+        <div class="card"><h4>Previsão Receber</h4><div id="resumoReceber" class="valor v-positivo">R$ 0,00</div></div>
+        <div class="card"><h4>Contas a Pagar</h4><div id="resumoPagar" class="valor v-negativo">R$ 0,00</div></div>
+        <div class="card"><h4>SICOOB</h4><div id="resumoSicoob" class="valor v-positivo">R$ 0,00</div></div>
+        <div class="card"><h4>CAIXA</h4><div id="resumoCaixa" class="valor v-positivo">R$ 0,00</div></div>
+        <div class="card"><h4>Aplicação</h4><div id="resumoAplicacao" class="valor" style="color: #a855f7;">R$ 0,00</div></div>
+        <div class="card" style="grid-column: 1 / -1; border-color: #38bdf8;">
             <h4>Saldo Líquido Projetado</h4>
-            <div class="valor" id="resumoTotal" style="font-size: 1.8rem; color: #38bdf8;">R$ 0,00</div>
-            <small>(Bancos + Aplicação + Recebimentos - Dívidas)</small>
+            <div id="resumoTotal" class="valor v-total">R$ 0,00</div>
         </div>
     </div>
+
+    <div style="margin-bottom: 20px;">
+        <button onclick="abrirModal('modalNovo')" class="btn btn-verde">Novo Lançamento</button>
+        <button onclick="abrirModal('modalNF')" class="btn btn-azul">NF Entrada</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Banco</th>
+                <th>Descrição</th>
+                <th>Entrada</th>
+                <th>Saída</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="listaPagar"></tbody>
+    </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/contas_pagar.js"></script>
+</body>
+</html>
