@@ -7,12 +7,10 @@ const moeda = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency',
 
 async function carregarTudo() {
     try {
-        // 1. Carrega Bancos e Saldo (incluindo Aplicação)
+        // 1. Carrega Bancos
         const { data: bancos } = await _supabase.from('bancos').select('*');
         const selectBanco = document.getElementById('campoBanco');
-        if (selectBanco && bancos) {
-            selectBanco.innerHTML = bancos.map(b => `<option value="${b.id}">${b.nome}</option>`).join('');
-        }
+        if (selectBanco) selectBanco.innerHTML = bancos.map(b => `<option value="${b.id}">${b.nome}</option>`).join('');
 
         let sicoob = 0, caixa = 0, aplicacao = 0;
         bancos?.forEach(b => {
@@ -21,22 +19,21 @@ async function carregarTudo() {
             if (b.nome === 'APLICAÇÃO') aplicacao = b.saldo;
         });
 
-        // 2. Soma Previsão Receber (status ABERTO) - Deve dar R$ 322.266,46
+        // 2. Previsão Receber (status ABERTO) -> R$ 322.266,46
         const { data: receber } = await _supabase.from('contas_receber').select('valor').eq('status', 'ABERTO');
         const totalReceber = receber?.reduce((acc, i) => acc + parseFloat(i.valor || 0), 0) || 0;
 
-        // 3. Soma Contas a Pagar (status ABERTO)
+        // 3. Contas a Pagar (status ABERTO)
         const { data: pagar } = await _supabase.from('contas_pagar').select('valor').eq('status', 'ABERTO');
         const totalPagar = pagar?.reduce((acc, i) => acc + parseFloat(i.valor || 0), 0) || 0;
 
-        // Atualiza Cards
         document.getElementById('resumoSicoob').innerText = moeda(sicoob);
         document.getElementById('resumoCaixa').innerText = moeda(caixa);
         document.getElementById('resumoAplicacao').innerText = moeda(aplicacao);
         document.getElementById('resumoReceber').innerText = moeda(totalReceber);
         document.getElementById('resumoPagar').innerText = moeda(totalPagar);
 
-        // 4. Carrega Tabela de Extrato com a Data Correta
+        // 4. Lista de Lançamentos
         const { data: lista } = await _supabase.from('contas_pagar').select('*, bancos(nome)').order('vencimento', {ascending: false});
         const corpo = document.getElementById('listaFinanceiro');
         if (corpo) {
@@ -45,47 +42,47 @@ async function carregarTudo() {
                     <td>${item.vencimento ? new Date(item.vencimento + 'T12:00:00').toLocaleDateString('pt-BR') : '---'}</td>
                     <td>${item.bancos?.nome || 'N/A'}</td>
                     <td>${item.descricao}</td>
-                    <td style="color:${item.tipo === 'CREDITO' ? '#22c55e' : '#ef4444'}; font-weight:bold;">${moeda(item.valor)}</td>
-                    <td>${item.status}</td>
-                    <td><button onclick="excluir('${item.id}')" style="background:none; border:none; color:#ef4444; cursor:pointer;">🗑️</button></td>
+                    <td style="color:${item.valor < 0 ? '#ef4444' : '#22c55e'}; font-weight:bold;">${moeda(item.valor)}</td>
+                    <td>${item.status || 'PAGO'}</td>
+                    <td><button onclick="excluir('${item.id}')" style="background:none; border:none; cursor:pointer;">🗑️</button></td>
                 </tr>
             `).join('') || '';
         }
     } catch (err) {
-        console.error("Erro ao carregar:", err.message);
+        console.error("Erro:", err.message);
     }
 }
 
 window.abrirModal = (tipo) => {
     document.getElementById('modalFinanceiro').style.display = 'block';
     document.getElementById('modalTitulo').innerText = 'Lançar ' + tipo;
-    // Define a data de hoje como padrão no input
     document.getElementById('campoData').value = new Date().toISOString().split('T')[0];
 };
 
-window.fecharModal = () => {
-    document.getElementById('modalFinanceiro').style.display = 'none';
-};
+window.fecharModal = () => document.getElementById('modalFinanceiro').style.display = 'none';
 
 window.salvarLancamento = async () => {
     const data = document.getElementById('campoData').value;
     const bancoId = document.getElementById('campoBanco').value;
     const desc = document.getElementById('campoDescricao').value;
-    const valor = document.getElementById('campoValor').value;
-    const tipo = document.getElementById('modalTitulo').innerText.includes('CREDITO') ? 'CREDITO' : 'DEBITO';
+    let valor = parseFloat(document.getElementById('campoValor').value);
+    const tipo = document.getElementById('modalTitulo').innerText;
 
-    if (!data || !desc || !valor) return alert("Por favor, preencha a data, descrição e valor.");
+    if (!data || !desc || isNaN(valor)) return alert("Preencha todos os campos!");
 
+    // Se for Débito, transforma o valor em negativo para o banco de dados
+    if (tipo.includes('DEBITO')) valor = -Math.abs(valor);
+
+    // REMOVIDA A COLUNA 'TIPO' PARA EVITAR O ERRO DO PRINT
     const { error } = await _supabase.from('contas_pagar').insert([{
         vencimento: data,
         banco_id: bancoId,
         descricao: desc,
-        valor: parseFloat(valor),
-        tipo: tipo,
+        valor: valor,
         status: 'PAGO'
     }]);
 
-    if (error) alert("Erro ao salvar: " + error.message);
+    if (error) alert("Erro Supabase: " + error.message);
     else {
         fecharModal();
         carregarTudo();
@@ -93,7 +90,7 @@ window.salvarLancamento = async () => {
 };
 
 window.excluir = async (id) => {
-    if (confirm("Deseja excluir este lançamento?")) {
+    if (confirm("Excluir lançamento?")) {
         await _supabase.from('contas_pagar').delete().eq('id', id);
         carregarTudo();
     }
