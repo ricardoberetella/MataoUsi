@@ -1,101 +1,112 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Extrato Financeiro - Matão Usinagem</title>
-    <style>
-        :root { --bg: #020617; --card: #0f172a; --border: #1e293b; --accent: #38bdf8; --text: #f8fafc; }
-        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; }
-        .container { max-width: 100%; margin: auto; }
-        
-        /* Dashboard Compacto */
-        .dashboard-resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 15px; }
-        .card { background: var(--card); border: 1px solid var(--border); padding: 10px; border-radius: 8px; text-align: center; }
-        .card h4 { margin: 0 0 5px 0; font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; }
-        .valor { font-size: 1rem; font-weight: bold; }
-        
-        /* Filtros */
-        .filter-bar { background: var(--card); padding: 12px; border-radius: 10px; border: 1px solid var(--border); display: flex; gap: 10px; margin-bottom: 15px; align-items: end; flex-wrap: wrap; }
-        .filter-group { flex: 1; min-width: 120px; }
-        .filter-group label { display: block; font-size: 0.65rem; color: var(--accent); margin-bottom: 3px; font-weight: bold; }
-        .filter-bar input, .filter-bar select { background: #1e293b; border: 1px solid #334155; color: white; padding: 8px; border-radius: 6px; width: 100%; font-size: 0.8rem; }
-
-        /* Tabela */
-        .tabela-container { background: var(--card); border-radius: 10px; border: 1px solid var(--border); overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th { background: #1e293b; color: var(--accent); padding: 12px 10px; text-align: left; font-size: 0.75rem; border-bottom: 2px solid var(--accent); }
-        td { padding: 10px; border-bottom: 1px solid #334155; font-size: 0.8rem; }
-        
-        /* Botão Voltar Estilo Print */
-        .btn-voltar {
-            background: transparent;
-            border: 1px solid var(--accent);
-            color: var(--accent);
-            padding: 8px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 0.8rem;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .btn-voltar:hover { background: rgba(56, 189, 248, 0.1); }
-
-        .btn-filtrar { background: var(--accent); color: #020617; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - Matão Usinagem</title>
+  <link rel="stylesheet" href="css/dashboard.css" />
 </head>
+
 <body>
 
-<div class="container">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2 style="color: var(--accent); margin: 0;">Extrato Financeiro</h2>
-        <a href="dashboard.html" class="btn-voltar">← Voltar ao Menu</a>
-    </div>
-    
-    <div class="dashboard-resumo">
-        <div class="card"><h4>Previsão Receber</h4><div id="resumoReceber" class="valor" style="color: #22c55e;">R$ 0,00</div></div>
-        <div class="card"><h4>Contas a Pagar</h4><div id="resumoPagar" class="valor" style="color: #ef4444;">R$ 0,00</div></div>
-        <div class="card"><h4>SICOOB</h4><div id="resumoSicoob" class="valor" style="color: var(--accent);">R$ 0,00</div></div>
-        <div class="card"><h4>CAIXA</h4><div id="resumoCaixa" class="valor" style="color: var(--accent);">R$ 0,00</div></div>
-        <div class="card"><h4>Aplicação</h4><div id="resumoAplicacao" class="valor" style="color: #a855f7;">R$ 0,00</div></div>
-    </div>
+  <div class="layout">
 
-    <div class="filter-bar">
-        <div class="filter-group"><label>DATA INÍCIO</label><input type="date" id="fDataInicio"></div>
-        <div class="filter-group"><label>DATA FIM</label><input type="date" id="fDataFim"></div>
-        <div class="filter-group">
-            <label>STATUS</label>
-            <select id="fStatus">
-                <option value="">TODOS</option>
-                <option value="ABERTO">ABERTO</option>
-                <option value="PAGO">PAGO</option>
-                <option value="RECEBIDO">RECEBIDO</option>
-            </select>
+    <aside class="sidebar">
+      <div class="logo-sistema">MATÃO USINAGEM</div>
+
+      <nav class="menu">
+        <div class="menu-titulo">Módulos</div>
+
+        <a href="clientes.html" class="menu-item">👤 Clientes</a>
+        <a href="pedidos_lista.html" class="menu-item">📑 Pedidos</a>
+        <a href="pedidos_abertos.html" class="menu-item">📌 Pedidos em Aberto</a>
+        <a href="produtos_lista.html" class="menu-item">📦 Produtos</a>
+        <a href="notas_lista.html" class="menu-item">🧾 Notas Fiscais</a>
+        <a href="contas_receber.html" class="menu-item">💰 Contas a Receber</a>
+        <a href="contas_pagar.html" class="menu-item">💸 Extrato Financeiro</a>
+        <a href="zincagem.html" class="menu-item">⚙️ Zincagem / Tratamento</a>
+        </nav>
+
+      <button id="btnLogout" class="menu-item botao-sair">
+        🚪 Sair
+      </button>
+    </aside>
+
+    <main class="main">
+      <section class="secao-painel">
+
+        <div class="logo-painel">
+          <img src="img/logo-mataousi.png" alt="Matão Usinagem">
         </div>
-        <button onclick="carregarTudo()" class="btn-filtrar">FILTRAR</button>
-    </div>
 
-    <div class="tabela-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>DATA</th>
-                    <th>BANCO</th>
-                    <th>DESCRIÇÃO</th>
-                    <th>ENTRADA</th>
-                    <th>SAÍDA</th>
-                    <th>STATUS</th>
-                </tr>
-            </thead>
-            <tbody id="listaFinanceiro"></tbody>
-        </table>
-    </div>
-</div>
+        <div class="cards-grid">
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/contas_pagar.js"></script>
+          <a class="card" href="clientes.html">
+            <div class="card-titulo">Clientes</div>
+            <div class="card-legenda">Gerenciar cadastro</div>
+          </a>
+
+          <a class="card" href="pedidos_lista.html">
+            <div class="card-titulo">Pedidos</div>
+            <div class="card-legenda">Lista de pedidos</div>
+          </a>
+
+          <a class="card" href="pedidos_abertos.html">
+            <div class="card-titulo">Pedidos em Aberto</div>
+            <div class="card-legenda">Saldos pendentes</div>
+          </a>
+
+          <a class="card" href="produtos_lista.html">
+            <div class="card-titulo">Produtos</div>
+            <div class="card-legenda">Cadastro de peças</div>
+          </a>
+
+          <a class="card" href="notas_lista.html">
+            <div class="card-titulo">Notas Fiscais</div>
+            <div class="card-legenda">Lançamento e baixa automática</div>
+          </a>
+
+          <a class="card" href="contas_receber.html">
+            <div class="card-titulo">Contas a Receber</div>
+            <div class="card-legenda">Boletos e recebimentos</div>
+          </a>
+
+          <a class="card" href="contas_pagar.html">
+            <div class="card-titulo">Extrato Financeiro</div>
+            <div class="card-legenda">Controle de pagamentos</div>
+          </a>
+
+          <a class="card" href="zincagem.html">
+            <div class="card-titulo">Zincagem / Tratamento</div>
+            <div class="card-legenda">Lançar e acompanhar OPs</div>
+          </a>
+
+          <a class="card" href="insertos_lista.html">
+            <div class="card-titulo">Estoque de Insertos</div>
+            <div class="card-legenda">Controle, baixas e inclusões</div>
+          </a>
+
+          </div>
+      </section>
+    </main>
+
+  </div>
+
+  <script type="module">
+    import { verificarLogin, supabase } from "./js/auth.js";
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const user = await verificarLogin();
+      if (!user) return;
+
+      document
+        .getElementById("btnLogout")
+        .addEventListener("click", async () => {
+          await supabase.auth.signOut();
+          window.location.href = "index.html";
+        });
+    });
+  </script>
+
 </body>
 </html>
