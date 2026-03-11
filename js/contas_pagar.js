@@ -1,88 +1,70 @@
-// Configurações do Supabase (Substitua pelas suas credenciais se necessário)
-const SUPABASE_URL = "https://uxtgicfuggpuyjybwawa.supabase.co";
-const SUPABASE_KEY = "SUA_CHAVE_AQUI"; 
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const _supabase = supabase.createClient("URL_DO_SEU_SUPABASE", "SUA_CHAVE_AQUI");
 
 const moeda = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-// FUNÇÕES GLOBAIS - Resolvem o erro "abrirModal is not defined"
-window.abrirModal = (tipo) => {
-    console.log("Iniciando novo lançamento:", tipo);
-    // Aqui você deve disparar a exibição do seu formulário modal
-    alert("Formulário de " + tipo + " em desenvolvimento.");
-};
-
-window.editarRegistro = (id) => alert("Editando ID: " + id);
-window.excluirRegistro = async (id) => {
-    if(confirm("Deseja realmente excluir este lançamento?")) {
-        await _supabase.from('contas_pagar').delete().eq('id', id);
-        carregarTudo();
-    }
-};
-
-window.baixarTitulo = async (id) => {
-    await _supabase.from('contas_pagar').update({ status: 'PAGO' }).eq('id', id);
-    carregarTudo();
-};
-
-window.estornarTitulo = async (id) => {
-    await _supabase.from('contas_pagar').update({ status: 'ABERTO' }).eq('id', id);
-    carregarTudo();
-};
-
-async function carregarTabela() {
-    const status = document.getElementById('fStatus').value;
-    const ini = document.getElementById('fDataInicio').value;
-    const fim = document.getElementById('fDataFim').value;
-
-    let query = _supabase.from('contas_pagar').select('*, bancos(nome)');
+// FUNÇÕES DE MODAL
+window.abrirModal = async (tipo) => {
+    document.getElementById('modalFinanceiro').style.display = 'block';
+    document.getElementById('tipoLancamento').value = tipo;
+    document.getElementById('modalTitulo').innerText = tipo === 'DEBITO' ? 'Novo Débito' : tipo === 'CREDITO' ? 'Novo Crédito' : 'Nova Transferência';
     
-    if (status) query = query.eq('status', status);
-    if (ini) query = query.gte('vencimento', ini);
-    if (fim) query = query.lte('vencimento', fim);
+    // Buscar bancos e filtrar (Caixa e Sicoob)
+    const { data: bancos } = await _supabase.from('bancos').select('*');
+    const combo = document.getElementById('campoBanco');
+    combo.innerHTML = '';
+    
+    bancos?.forEach(b => {
+        const nome = b.nome.toUpperCase();
+        if (nome.includes('SICOOB') || nome.includes('CAIXA')) {
+            combo.innerHTML += `<option value="${b.id}">${b.nome}</option>`;
+        }
+    });
+};
 
-    const { data, error } = await query.order('vencimento', { ascending: false });
+window.fecharModal = () => {
+    document.getElementById('modalFinanceiro').style.display = 'none';
+};
+
+// ATUALIZAR SALDOS NO TOPO
+async function atualizarSaldos() {
+    const { data: bancos } = await _supabase.from('bancos').select('*');
+    bancos?.forEach(b => {
+        const nome = b.nome.toUpperCase();
+        if (nome.includes('SICOOB')) document.getElementById('resumoSicoob').innerText = moeda(b.saldo);
+        if (nome.includes('CAIXA')) document.getElementById('resumoCaixa').innerText = moeda(b.saldo);
+    });
+
+    // Buscar Previsões
+    const { data: pag } = await _supabase.from('contas_pagar').select('valor').eq('status', 'ABERTO');
+    document.getElementById('resumoPagar').innerText = moeda(pag?.reduce((acc, i) => acc + Number(i.valor), 0));
+}
+
+// CARREGAR TABELA
+async function carregarTabela() {
+    const { data, error } = await _supabase.from('contas_pagar').select('*, bancos(nome)').order('vencimento', { ascending: false });
     const corpo = document.getElementById('listaFinanceiro');
     corpo.innerHTML = '';
 
-    if (error) { console.error("Erro ao carregar:", error); return; }
-
     data?.forEach(item => {
-        const isPago = item.status === 'PAGO';
-        const corStatus = item.status === 'ABERTO' ? '#fbbf24' : '#22c55e';
-
+        const corValor = item.tipo === 'CREDITO' ? '#22c55e' : '#ef4444';
         corpo.innerHTML += `
             <tr>
                 <td>${item.vencimento.split('-').reverse().join('/')}</td>
                 <td>${item.bancos?.nome || '-'}</td>
                 <td>${item.descricao}</td>
-                <td style="color:#22c55e; font-weight:bold;">${item.tipo === 'CREDITO' ? moeda(item.valor) : '-'}</td>
-                <td style="color:#ef4444; font-weight:bold;">${item.tipo === 'DEBITO' ? moeda(item.valor) : '-'}</td>
-                <td style="font-weight:bold; color:${corStatus}">${item.status}</td>
+                <td style="color:${corValor}; font-weight:bold;">${moeda(item.valor)}</td>
+                <td style="font-weight:bold; color:${item.status === 'ABERTO' ? '#fbbf24' : '#22c55e'}">${item.status}</td>
                 <td>
-                    <div style="display: flex;">
-                        <button onclick="editarRegistro('${item.id}')" class="btn-tab" style="background:#0ea5e9">EDITAR</button>
-                        ${!isPago ? 
-                            `<button onclick="baixarTitulo('${item.id}')" class="btn-tab" style="background:#22c55e">PAGAR</button>` : 
-                            `<button onclick="estornarTitulo('${item.id}')" class="btn-tab" style="background:#f59e0b">ESTORNAR</button>`
-                        }
-                        <button onclick="excluirRegistro('${item.id}')" class="btn-tab" style="background:#ef4444">X</button>
-                    </div>
+                    <button onclick="baixarTitulo('${item.id}')" style="background:#22c55e; border:none; color:white; padding:5px; border-radius:4px; cursor:pointer; font-size:10px;">PAGAR</button>
+                    <button onclick="excluirRegistro('${item.id}')" style="background:#ef4444; border:none; color:white; padding:5px; border-radius:4px; cursor:pointer; font-size:10px;">X</button>
                 </td>
             </tr>`;
     });
 }
 
-// Atualiza os cards de resumo (Simulação - vincule aos dados reais do Supabase)
-async function atualizarResumo() {
-    // Exemplo de atualização:
-    // document.getElementById('resumoSicoob').innerText = moeda(118950.08);
-}
-
 window.carregarTudo = () => {
-    atualizarResumo();
+    atualizarSaldos();
     carregarTabela();
 };
 
-// Inicia o sistema ao abrir a página
 carregarTudo();
