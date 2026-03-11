@@ -1,4 +1,4 @@
-// Configuração direta com suas chaves fornecidas
+// Configurações do seu projeto Supabase
 const SUPABASE_URL = "https://uxtgicfuggpuyjybwawa.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg";
 
@@ -6,7 +6,43 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const moeda = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-// FUNÇÕES DOS BOTÕES (ABRIR MODAL)
+// Sincroniza os cards com os valores reais do Banco de Dados
+async function atualizarCards() {
+    try {
+        // 1. Busca saldos diretamente da tabela 'bancos'
+        const { data: bancos, error: errBancos } = await _supabase.from('bancos').select('nome, saldo');
+        if (errBancos) throw errBancos;
+
+        let saldoSicoob = 0, saldoCaixa = 0, saldoAplicacao = 0;
+        bancos?.forEach(b => {
+            if (b.nome === 'SICOOB') saldoSicoob = b.saldo;
+            if (b.nome === 'CAIXA FEDERAL') saldoCaixa = b.saldo;
+            if (b.nome === 'APLICAÇÃO') saldoAplicacao = b.saldo;
+        });
+
+        // 2. Busca total em aberto da tabela 'contas_receber'
+        const { data: receber, error: errReceber } = await _supabase.from('contas_receber').select('valor').eq('status', 'ABERTO');
+        if (errReceber) throw errReceber;
+        const totalReceber = receber?.reduce((acc, item) => acc + parseFloat(item.valor || 0), 0) || 0;
+
+        // 3. Busca total em aberto da tabela 'contas_pagar'
+        const { data: pagar, error: errPagar } = await _supabase.from('contas_pagar').select('valor').eq('status', 'ABERTO');
+        if (errPagar) throw errPagar;
+        const totalPagar = pagar?.reduce((acc, item) => acc + parseFloat(item.valor || 0), 0) || 0;
+
+        // Atualiza a tela
+        document.getElementById('resumoSicoob').innerText = moeda(saldoSicoob);
+        document.getElementById('resumoCaixa').innerText = moeda(saldoCaixa);
+        document.getElementById('resumoAplicacao').innerText = moeda(saldoAplicacao);
+        document.getElementById('resumoReceber').innerText = moeda(totalReceber);
+        document.getElementById('resumoPagar').innerText = moeda(totalPagar);
+
+    } catch (err) {
+        console.error("Erro ao sincronizar dados:", err.message);
+    }
+}
+
+// Abre o modal para novo lançamento
 window.abrirModal = (tipo) => {
     const modal = document.getElementById('modalFinanceiro');
     if (modal) {
@@ -21,48 +57,21 @@ window.fecharModal = () => {
     document.getElementById('modalFinanceiro').style.display = 'none';
 };
 
-// CÁLCULO DOS CARDS (SOMA AUTOMÁTICA DO BANCO)
-async function atualizarCards() {
-    try {
-        const { data: lancamentos, error } = await _supabase.from('contas_pagar').select('*');
-        if (error) throw error;
-
-        let sicoob = 0, caixa = 0, pagar = 0, receber = 0;
-
-        lancamentos?.forEach(item => {
-            const val = parseFloat(item.valor || 0);
-            if (item.status === 'PAGO') {
-                if (item.banco === 'SICOOB') item.tipo === 'CREDITO' ? sicoob += val : sicoob -= val;
-                if (item.banco === 'CAIXA FEDERAL') item.tipo === 'CREDITO' ? caixa += val : caixa -= val;
-            } else if (item.status === 'ABERTO') {
-                item.tipo === 'DEBITO' ? pagar += val : receber += val;
-            }
-        });
-
-        document.getElementById('resumoSicoob').innerText = moeda(sicoob);
-        document.getElementById('resumoCaixa').innerText = moeda(caixa);
-        document.getElementById('resumoPagar').innerText = moeda(pagar);
-        document.getElementById('resumoReceber').innerText = moeda(receber);
-    } catch (err) {
-        console.error("Erro ao carregar saldos:", err.message);
-    }
-}
-
-// SALVAR NOVO LANÇAMENTO
+// Salva um novo lançamento e atualiza tudo
 window.salvarLancamento = async () => {
     const banco = document.getElementById('campoBanco').value;
     const desc = document.getElementById('campoDescricao').value;
-    const valor = document.getElementById('campoValor').value;
+    const valorInput = document.getElementById('campoValor').value;
     const tipoLabel = document.getElementById('modalTitulo').innerText;
     const tipo = tipoLabel.includes('CREDITO') ? 'CREDITO' : 'DEBITO';
 
-    if (!desc || !valor) return alert("Preencha Descrição e Valor!");
+    if (!desc || !valorInput) return alert("Preencha Descrição e Valor!");
 
     const { error } = await _supabase.from('contas_pagar').insert([
         { 
             banco, 
             descricao: desc, 
-            valor: parseFloat(valor), 
+            valor: parseFloat(valorInput), 
             tipo, 
             status: 'PAGO', 
             vencimento: new Date().toISOString().split('T')[0] 
@@ -76,9 +85,11 @@ window.salvarLancamento = async () => {
     }
 };
 
-// CARREGAR LISTA NA TABELA
+// Renderiza a tabela de extrato
 async function carregarTabela() {
-    const { data } = await _supabase.from('contas_pagar').select('*').order('vencimento', { ascending: false });
+    const { data, error } = await _supabase.from('contas_pagar').select('*').order('vencimento', { ascending: false });
+    if (error) return console.error("Erro ao carregar tabela:", error.message);
+    
     const corpo = document.getElementById('listaFinanceiro');
     if (!corpo) return;
     
@@ -98,5 +109,4 @@ window.carregarTudo = () => {
     carregarTabela();
 };
 
-// Iniciar quando a página carregar
 document.addEventListener('DOMContentLoaded', carregarTudo);
