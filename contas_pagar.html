@@ -2,62 +2,42 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Extrato Financeiro - Matão Usinagem</title>
     <link rel="stylesheet" href="css/estilo.css">
     <style>
         .status-pago { color: #22c55e; font-weight: bold; }
         .status-pendente { color: #f59e0b; font-weight: bold; }
-        .btn-acao { background: #1e293b; border: 1px solid #38bdf8; color: white; padding: 5px 10px; border-radius: 6px; cursor: pointer; margin-right: 5px; }
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .card { background: #1e293b; padding: 15px; border-radius: 8px; border-left: 4px solid #38bdf8; }
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); }
         .modal-content { background: #0f172a; margin: 10% auto; padding: 20px; width: 350px; border-radius: 12px; border: 1px solid #38bdf8; }
+        input, select { width: 100%; margin-bottom: 10px; padding: 8px; border-radius: 4px; border: 1px solid #334155; background: #0f172a; color: white; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="acoes-topo">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
             <h2>Extrato Financeiro</h2>
-            <a href="dashboard.html" class="btn-voltar">← Voltar ao Menu</a>
+            <a href="dashboard.html" style="color: #38bdf8; text-decoration: none;">← Voltar ao Menu</a>
         </div>
 
         <div class="dashboard">
-            <div class="card">
-                <small>PREVISÃO RECEBER</small>
-                <div id="resumoReceber" class="valor" style="color: #22c55e;">R$ 0,00</div>
-            </div>
-            <div class="card">
-                <small>CONTAS A PAGAR</small>
-                <div id="resumoPagar" class="valor" style="color: #ef4444;">R$ 0,00</div>
-            </div>
-            <div class="card">
-                <small>SICOOB</small>
-                <div id="resumoSicoob" class="valor">R$ 0,00</div>
-            </div>
-            <div class="card">
-                <small>CAIXA</small>
-                <div id="resumoCaixa" class="valor">R$ 0,00</div>
-            </div>
-            <div class="card">
-                <small>APLICAÇÃO</small>
-                <div id="resumoAplicacao" class="valor" style="color: #a855f7;">R$ 0,00</div>
-            </div>
+            <div class="card"><small>PREVISÃO RECEBER</small><div id="resumoReceber" style="color: #22c55e; font-size: 1.2em;">R$ 0,00</div></div>
+            <div class="card"><small>CONTAS A PAGAR</small><div id="resumoPagar" style="color: #ef4444; font-size: 1.2em;">R$ 0,00</div></div>
+            <div class="card"><small>SICOOB</small><div id="resumoSicoob" style="font-size: 1.2em;">R$ 0,00</div></div>
+            <div class="card"><small>CAIXA</small><div id="resumoCaixa" style="font-size: 1.2em;">R$ 0,00</div></div>
+            <div class="card"><small>APLICAÇÃO</small><div id="resumoAplicacao" style="color: #a855f7; font-size: 1.2em;">R$ 0,00</div></div>
         </div>
 
-        <div class="botoes-acoes">
-            <button class="btn-debito" onclick="abrirModal('DEBITO')">- Débito</button>
-            <button class="btn-credito" onclick="abrirModal('CREDITO')">+ Crédito</button>
-            <button class="btn-transf" onclick="abrirModal('TRANSFERENCIA')">Transferência</button>
+        <div style="margin-bottom: 20px; display: flex; gap: 10px;">
+            <button onclick="abrirModal('DEBITO')" style="background: #ef4444; color: white; border: none; padding: 10px 20px; cursor: pointer;">- Débito</button>
+            <button onclick="abrirModal('CREDITO')" style="background: #22c55e; color: white; border: none; padding: 10px 20px; cursor: pointer;">+ Crédito</button>
         </div>
 
-        <table>
+        <table style="width: 100%; border-collapse: collapse;">
             <thead>
-                <tr>
-                    <th>DATA</th>
-                    <th>BANCO</th>
-                    <th>DESCRIÇÃO</th>
-                    <th>VALOR</th>
-                    <th>STATUS</th>
-                    <th>AÇÕES</th>
+                <tr style="text-align: left; border-bottom: 1px solid #334155;">
+                    <th>DATA</th><th>BANCO</th><th>DESCRIÇÃO</th><th>VALOR</th><th>STATUS</th><th>AÇÕES</th>
                 </tr>
             </thead>
             <tbody id="listaFinanceiro"></tbody>
@@ -66,19 +46,15 @@
 
     <div id="modalFinanceiro" class="modal">
         <div class="modal-content">
-            <h3 id="modalTitulo">Novo Lançamento</h3>
+            <h3 id="modalTitulo">Lançamento</h3>
             <input type="hidden" id="editId">
-            <label>Data</label>
-            <input type="date" id="campoData">
-            <label>Banco</label>
-            <select id="campoBanco"></select>
-            <label>Descrição</label>
-            <input type="text" id="campoDescricao">
-            <label>Valor (R$)</label>
-            <input type="number" step="0.01" id="campoValor">
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button onclick="salvarLancamento()" class="btn-credito">SALVAR</button>
-                <button onclick="fecharModal()" style="background: #475569;">CANCELAR</button>
+            <label>Data</label><input type="date" id="campoData">
+            <label>Banco</label><select id="campoBanco"></select>
+            <label>Descrição</label><input type="text" id="campoDescricao">
+            <label>Valor (R$)</label><input type="number" step="0.01" id="campoValor">
+            <div style="display: flex; gap: 10px;">
+                <button onclick="salvarLancamento()" style="background: #38bdf8; flex: 1;">SALVAR</button>
+                <button onclick="fecharModal()" style="background: #475569; flex: 1;">CANCELAR</button>
             </div>
         </div>
     </div>
