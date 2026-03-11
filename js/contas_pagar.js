@@ -1,27 +1,27 @@
-// SUBSTITUA PELOS SEUS DADOS REAIS DO SUPABASE
-const SUPABASE_URL = "https://sua-url-aqui.supabase.co"; 
-const SUPABASE_KEY = "sua-chave-anon-aqui";
+// CONFIGURAÇÃO - COLOQUE SEUS DADOS AQUI
+const SUPABASE_URL = "https://uxtgicfuggpuyjybwawa.supabase.co"; 
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg";
 
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const moeda = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-// FUNÇÕES TORNADAS GLOBAIS PARA O HTML ENCONTRAR
+// FUNÇÕES GLOBAIS PARA OS BOTÕES FUNCIONAREM
 window.abrirModal = (tipo) => {
     const modal = document.getElementById('modalFinanceiro');
-    if (!modal) return console.error("Modal não encontrado no HTML");
-    
-    modal.style.display = 'block';
-    document.getElementById('modalTitulo').innerText = 'Lançar ' + tipo;
-    document.getElementById('campoDescricao').value = '';
-    document.getElementById('campoValor').value = '';
+    if (modal) {
+        modal.style.display = 'block';
+        document.getElementById('modalTitulo').innerText = 'Lançar ' + tipo;
+        document.getElementById('campoDescricao').value = '';
+        document.getElementById('campoValor').value = '';
+    }
 };
 
 window.fecharModal = () => {
     document.getElementById('modalFinanceiro').style.display = 'none';
 };
 
-// CÁLCULO DOS CARDS (SOMA AUTOMÁTICA)
+// CÁLCULO DOS SALDOS E PREENCHIMENTO DOS CARDS
 async function atualizarCards() {
     try {
         const { data: lancamentos, error } = await _supabase.from('contas_pagar').select('*');
@@ -44,11 +44,11 @@ async function atualizarCards() {
         document.getElementById('resumoPagar').innerText = moeda(pagar);
         document.getElementById('resumoReceber').innerText = moeda(receber);
     } catch (err) {
-        console.error("Erro ao carregar saldos:", err.message);
+        console.error("Erro na conexão:", err.message);
     }
 }
 
-// SALVAR NO BANCO
+// SALVAR NOVO LANÇAMENTO
 window.salvarLancamento = async () => {
     const banco = document.getElementById('campoBanco').value;
     const desc = document.getElementById('campoDescricao').value;
@@ -56,7 +56,7 @@ window.salvarLancamento = async () => {
     const tipoLabel = document.getElementById('modalTitulo').innerText;
     const tipo = tipoLabel.includes('CREDITO') ? 'CREDITO' : 'DEBITO';
 
-    if (!desc || !valor) return alert("Preencha Descrição e Valor!");
+    if (!desc || !valor) return alert("Preencha todos os campos!");
 
     const { error } = await _supabase.from('contas_pagar').insert([
         { 
@@ -69,7 +69,7 @@ window.salvarLancamento = async () => {
         }
     ]);
 
-    if (error) alert("Erro ao salvar: " + error.message);
+    if (error) alert("Erro ao salvar!");
     else {
         fecharModal();
         carregarTudo();
@@ -87,8 +87,8 @@ async function carregarTabela() {
             <td>${item.banco}</td>
             <td>${item.descricao}</td>
             <td style="color:${item.tipo === 'CREDITO' ? '#22c55e' : '#ef4444'}; font-weight:bold;">${moeda(item.valor)}</td>
-            <td style="font-weight:bold; color:${item.status === 'ABERTO' ? '#fbbf24' : '#22c55e'}">${item.status}</td>
-            <td><button onclick="excluirRegistro('${item.id}')" style="background:#ef4444; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">X</button></td>
+            <td style="color:${item.status === 'ABERTO' ? '#fbbf24' : '#22c55e'}">${item.status}</td>
+            <td><button onclick="excluirRegistro('${item.id}')" style="background:#ef4444; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">X</button></td>
         </tr>`).join('') || '';
 }
 
@@ -97,5 +97,5 @@ window.carregarTudo = () => {
     carregarTabela();
 };
 
-// Inicialização
+// INICIAR AO CARREGAR PÁGINA
 document.addEventListener('DOMContentLoaded', carregarTudo);
