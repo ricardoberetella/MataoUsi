@@ -1,33 +1,24 @@
-// Substitua pelas suas credenciais reais se necessário
-const SUPABASE_URL = "https://uxtgicfuggpuyjybwawa.supabase.co";
-const SUPABASE_KEY = "SUA_CHAVE_AQUI"; 
+// Configurações do Supabase (use as suas chaves aqui)
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const moeda = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-// FUNÇÃO PARA ABRIR MODAL (Resolve o erro do console)
+// Define a função abrirModal globalmente para evitar o erro ReferenceError
 window.abrirModal = function(tipo) {
-    console.log("Abrindo formulário para:", tipo);
-    // Aqui você deve disparar a exibição do seu formulário de cadastro
-    alert("Iniciando novo lançamento: " + tipo);
+    console.log("Iniciando lançamento:", tipo);
+    // Adicione aqui a lógica para exibir o seu modal de formulário
+    alert("Abrir formulário de " + tipo);
 };
 
 async function carregarTabela() {
     const status = document.getElementById('fStatus').value;
-    const ini = document.getElementById('fDataInicio').value;
-    const fim = document.getElementById('fDataFim').value;
-
     let query = _supabase.from('contas_pagar').select('*, bancos(nome)');
     
     if (status) query = query.eq('status', status);
-    if (ini) query = query.gte('vencimento', ini);
-    if (fim) query = query.lte('vencimento', fim);
 
     const { data, error } = await query.order('vencimento', { ascending: false });
     const corpo = document.getElementById('listaFinanceiro');
     corpo.innerHTML = '';
-
-    if (error) { console.error("Erro ao carregar:", error); return; }
 
     data?.forEach(item => {
         const isPago = item.status === 'PAGO';
@@ -54,14 +45,6 @@ async function carregarTabela() {
             </tr>`;
     });
 }
-
-// Funções de Ação (Exemplos)
-window.excluirRegistro = async (id) => {
-    if(confirm("Deseja realmente excluir?")) {
-        await _supabase.from('contas_pagar').delete().eq('id', id);
-        carregarTabela();
-    }
-};
 
 window.carregarTudo = () => carregarTabela();
 carregarTudo();
