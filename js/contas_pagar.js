@@ -1,72 +1,90 @@
-// Use variáveis simples para evitar o erro "Identifier has already been declared"
+// Configurações Globais (Usando 'var' para evitar erro de redeclaração no console)
 var SUPABASE_URL = "https://uxtgicfuggpuyjybwawa.supabase.co";
 var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg";
 var _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-function moeda(v) { return Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+const moeda = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+async function carregarBancos() {
+    const { data } = await _supabase.from('bancos').select('id, nome');
+    const select = document.getElementById('fBanco');
+    if(!select) return;
+    data?.forEach(b => {
+        let opt = document.createElement('option');
+        opt.value = b.id;
+        opt.innerText = b.nome;
+        select.appendChild(opt);
+    });
+}
 
 async function atualizarDashboard() {
-    try {
-        // Busca Bancos
-        const { data: bancos } = await _supabase.from('bancos').select('nome, saldo');
-        let sicoob = 0, caixa = 0, aplic = 0;
-        bancos?.forEach(b => {
-            if(b.nome.includes('SICOOB')) sicoob = b.saldo;
-            if(b.nome.includes('CAIXA')) caixa = b.saldo;
-            if(b.nome.includes('APLICA')) aplic = b.saldo;
-        });
+    // 1. Saldos Bancários Reais
+    const { data: bancos } = await _supabase.from('bancos').select('nome, saldo');
+    let sicoob = 0, caixa = 0, aplic = 0;
+    bancos?.forEach(b => {
+        const n = b.nome.toUpperCase();
+        if(n.includes('SICOOB')) sicoob = b.saldo;
+        if(n.includes('CAIXA')) caixa = b.saldo;
+        if(n.includes('APLICA')) aplic = b.saldo;
+    });
 
-        // Busca Contas a Pagar (Aberto)
-        const { data: pagar } = await _supabase.from('contas_pagar').select('valor').eq('status', 'ABERTO').not('descricao', 'ilike', '%NF ENTRADA%');
-        const totalPagar = pagar?.reduce((acc, i) => acc + i.valor, 0) || 0;
+    // 2. Contas a Pagar (Aberto)
+    const { data: pagar } = await _supabase.from('contas_pagar').select('valor').eq('status', 'ABERTO').not('descricao', 'ilike', '%NF ENTRADA%');
+    const totalPagar = pagar?.reduce((acc, i) => acc + i.valor, 0) || 0;
 
-        // Busca Contas a Receber (Não Pago)
-        const { data: receber } = await _supabase.from('contas_receber').select('valor').neq('status', 'PAGO');
-        const totalReceber = receber?.reduce((acc, i) => acc + (Number(i.valor) || 0), 0) || 0;
+    // 3. Contas a Receber (Vencidos ou Pendentes)
+    const { data: receber } = await _supabase.from('contas_receber').select('valor').neq('status', 'PAGO');
+    const totalReceber = receber?.reduce((acc, i) => acc + (Number(i.valor) || 0), 0) || 0;
 
-        const totalGeral = (sicoob + caixa + aplic + totalReceber) - totalPagar;
+    const projetado = (sicoob + caixa + aplic + totalReceber) - totalPagar;
 
-        document.getElementById('resumoSicoob').innerText = moeda(sicoob);
-        document.getElementById('resumoCaixa').innerText = moeda(caixa);
-        document.getElementById('resumoAplicacao').innerText = moeda(aplic);
-        document.getElementById('resumoPagar').innerText = moeda(totalPagar);
-        document.getElementById('resumoReceber').innerText = moeda(totalReceber);
-        document.getElementById('resumoTotal').innerText = moeda(totalGeral);
-    } catch (e) { console.error("Erro no dashboard:", e); }
+    document.getElementById('resumoSicoob').innerText = moeda(sicoob);
+    document.getElementById('resumoCaixa').innerText = moeda(caixa);
+    document.getElementById('resumoAplicacao').innerText = moeda(aplic);
+    document.getElementById('resumoPagar').innerText = moeda(totalPagar);
+    document.getElementById('resumoReceber').innerText = moeda(totalReceber);
+    document.getElementById('resumoTotal').innerText = moeda(projetado);
+    document.getElementById('resumoTotal').style.color = projetado >= 0 ? '#38bdf8' : '#ef4444';
 }
 
 async function carregarContas() {
-    const { data } = await _supabase.from('contas_pagar').select('*, bancos(nome)').order('vencimento');
+    const status = document.getElementById('fStatus').value;
+    const bancoId = document.getElementById('fBanco').value;
+    const ini = document.getElementById('fDataInicio').value;
+    const fim = document.getElementById('fDataFim').value;
+
+    let query = _supabase.from('contas_pagar').select('*, bancos(nome)');
+
+    if (status) query = query.eq('status', status);
+    if (bancoId) query = query.eq('banco_id', bancoId);
+    if (ini) query = query.gte('vencimento', ini);
+    if (fim) query = query.lte('vencimento', fim);
+
+    const { data } = await query.order('vencimento', { ascending: true });
     const corpo = document.getElementById('listaPagar');
-    if(!corpo) return;
     corpo.innerHTML = '';
 
     data?.forEach(item => {
-        const isNF = item.descricao.toUpperCase().includes("NF ENTRADA");
+        const isEntrada = item.descricao.toUpperCase().includes("NF ENTRADA") || item.status === "RECEBIDO";
         corpo.innerHTML += `
             <tr>
-                <td>${item.vencimento}</td>
+                <td>${item.vencimento.split('-').reverse().join('/')}</td>
                 <td>${item.bancos?.nome || '-'}</td>
                 <td>${item.descricao}</td>
-                <td style="color:#22c55e">${isNF ? moeda(item.valor) : '-'}</td>
-                <td style="color:#ef4444">${!isNF ? moeda(item.valor) : '-'}</td>
-                <td>${item.status}</td>
-                <td>
-                    <button onclick="excluir('${item.id}', '${item.status}', ${item.valor}, '${item.banco_id}')" class="btn btn-vermelho">✕</button>
+                <td style="text-align: right; color:#22c55e">${isEntrada ? moeda(item.valor) : '-'}</td>
+                <td style="text-align: right; color:#ef4444">${!isEntrada ? moeda(item.valor) : '-'}</td>
+                <td style="text-align: center; font-weight: bold; color: ${item.status === 'ABERTO' ? '#fbbf24' : '#22c55e'}">${item.status}</td>
+                <td style="text-align: center;">
+                    <button onclick="excluirLancamento('${item.id}')" class="btn btn-vermelho" style="padding: 5px 10px;">✕</button>
                 </td>
             </tr>`;
     });
 }
 
-window.excluir = async (id, status, val, bId) => {
-    if(!confirm("Deseja excluir?")) return;
-    if(status !== 'ABERTO') {
-        const { data: b } = await _supabase.from('bancos').select('saldo').eq('id', bId).single();
-        let novoSaldo = (status === 'RECEBIDO') ? (b.saldo - val) : (b.saldo + val);
-        await _supabase.from('bancos').update({ saldo: novoSaldo }).eq('id', bId);
-    }
-    await _supabase.from('contas_pagar').delete().eq('id', id);
-    carregarTudo();
+window.excluirLancamento = async (id) => {
+    if(!confirm("Deseja realmente excluir este registro?")) return;
+    const { error } = await _supabase.from('contas_pagar').delete().eq('id', id);
+    if(!error) carregarTudo();
 };
 
 async function carregarTudo() {
@@ -74,5 +92,6 @@ async function carregarTudo() {
     await atualizarDashboard();
 }
 
-// Inicia o sistema
+// Inicialização
+carregarBancos();
 carregarTudo();
