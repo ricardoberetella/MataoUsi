@@ -3,101 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle Financeiro - Matão Usinagem</title>
+    <title>Financeiro - Matão Usinagem</title>
     <style>
         :root { --bg: #020617; --card: #0f172a; --border: #1e293b; --accent: #38bdf8; --text: #f8fafc; }
-        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
-        .container { max-width: 1300px; margin: auto; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: auto; }
         
-        /* Dashboard de Saldo */
-        .dashboard-resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
-        .card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 12px; text-align: center; transition: 0.3s; }
-        .card h4 { margin: 0 0 10px 0; font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
-        .card .valor { font-size: 1.2rem; font-weight: bold; }
-        .v-positivo { color: var(--accent); }
-        .v-negativo { color: #ef4444; }
-        .v-neutro { color: #a855f7; }
-        .card-destaque { grid-column: 1 / -1; border-color: var(--accent); background: rgba(56, 189, 248, 0.05); }
-
-        /* Barra de Filtros */
-        .filter-bar { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 25px; align-items: end; }
-        .filter-group label { color: var(--accent); font-size: 0.7rem; font-weight: bold; display: block; margin-bottom: 5px; }
-        .filter-bar input, .filter-bar select { background: #1e293b; border: 1px solid #334155; color: white; padding: 10px; border-radius: 8px; width: 100%; box-sizing: border-box; }
+        /* Dashboard */
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 10px; text-align: center; }
+        .card h4 { margin: 0 0 8px 0; font-size: 0.7rem; color: #94a3b8; }
+        .valor { font-size: 1.1rem; font-weight: bold; }
+        
+        /* Filtros */
+        .filter-bar { background: var(--card); padding: 20px; border-radius: 10px; border: 1px solid var(--border); display: flex; gap: 15px; align-items: end; margin-bottom: 20px; flex-wrap: wrap; }
+        .filter-group label { display: block; font-size: 0.7rem; color: var(--accent); margin-bottom: 5px; font-weight: bold; }
+        .filter-bar input, .filter-bar select { background: #1e293b; border: 1px solid #334155; color: white; padding: 8px; border-radius: 6px; }
 
         /* Tabela */
-        .tabela-container { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
-        th { background: #1e293b; color: var(--accent); padding: 15px; text-align: left; font-size: 0.8rem; border-bottom: 2px solid var(--accent); }
-        td { padding: 12px 15px; border-bottom: 1px solid #334155; font-size: 0.9rem; }
+        table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; }
+        th { background: #1e293b; color: var(--accent); padding: 12px; text-align: left; border-bottom: 2px solid var(--accent); font-size: 0.8rem; }
+        td { padding: 12px; border-bottom: 1px solid #334155; font-size: 0.85rem; }
         
-        /* Botões */
-        .btn { padding: 10px 18px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 0.85rem; }
-        .btn-azul { background: var(--accent); color: #020617; }
-        .btn-verde { background: #22c55e; color: white; }
-        .btn-vermelho { background: #ef4444; color: white; }
-        .btn:hover { opacity: 0.8; }
+        .btn { padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-pagar { background: #22c55e; color: white; }
+        .btn-excluir { background: #ef4444; color: white; margin-left: 5px; }
+        .btn-estornar { background: #475569; color: white; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h1>Controle Financeiro</h1>
-        <a href="index.html" style="color: var(--accent); text-decoration: none; font-weight: bold;">← VOLTAR AO MENU</a>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h1 style="color: var(--accent);">Controle Financeiro</h1>
+        <a href="index.html" style="color: var(--accent); text-decoration: none;">← Voltar ao Menu</a>
     </div>
-    
-    <div class="dashboard-resumo">
-        <div class="card"><h4>Previsão Receber</h4><div id="resumoReceber" class="valor v-positivo">R$ 0,00</div></div>
-        <div class="card"><h4>Contas a Pagar</h4><div id="resumoPagar" class="valor v-negativo">R$ 0,00</div></div>
-        <div class="card"><h4>SICOOB</h4><div id="resumoSicoob" class="valor v-positivo">R$ 0,00</div></div>
-        <div class="card"><h4>CAIXA</h4><div id="resumoCaixa" class="valor v-positivo">R$ 0,00</div></div>
-        <div class="card"><h4>Aplicação</h4><div id="resumoAplicacao" class="valor v-neutro">R$ 0,00</div></div>
-        <div class="card card-destaque">
-            <h4>Saldo Líquido Projetado</h4>
-            <div id="resumoTotal" class="valor" style="font-size: 1.8rem;">R$ 0,00</div>
-        </div>
+
+    <div class="dashboard">
+        <div class="card"><h4>PREVISÃO RECEBER</h4><div id="resumoReceber" class="valor" style="color: #22c55e;">R$ 0,00</div></div>
+        <div class="card"><h4>CONTAS A PAGAR</h4><div id="resumoPagar" class="valor" style="color: #ef4444;">R$ 0,00</div></div>
+        <div class="card"><h4>SICOOB</h4><div id="resumoSicoob" class="valor" style="color: var(--accent);">R$ 0,00</div></div>
+        <div class="card"><h4>CAIXA</h4><div id="resumoCaixa" class="valor" style="color: var(--accent);">R$ 0,00</div></div>
+        <div class="card"><h4>APLICAÇÃO</h4><div id="resumoAplicacao" class="valor" style="color: #a855f7;">R$ 0,00</div></div>
     </div>
 
     <div class="filter-bar">
         <div class="filter-group"><label>DATA INÍCIO</label><input type="date" id="fDataInicio"></div>
         <div class="filter-group"><label>DATA FIM</label><input type="date" id="fDataFim"></div>
         <div class="filter-group">
-            <label>BANCO</label>
-            <select id="fBanco"><option value="">TODOS</option></select>
-        </div>
-        <div class="filter-group">
             <label>STATUS</label>
             <select id="fStatus">
-                <option value="ABERTO" selected>ABERTO</option>
+                <option value="ABERTO">ABERTO</option>
                 <option value="PAGO">PAGO</option>
                 <option value="RECEBIDO">RECEBIDO</option>
                 <option value="">TODOS</option>
             </select>
         </div>
-        <button onclick="carregarTudo()" class="btn btn-azul">APLICAR FILTRO</button>
+        <button onclick="carregarTudo()" class="btn" style="background: var(--accent); color: #020617;">Filtrar</button>
     </div>
 
-    <div style="margin-bottom: 20px;">
-        <button onclick="alert('Funcionalidade Novo Lançamento')" class="btn btn-verde">+ Novo Lançamento</button>
-        <button onclick="alert('Funcionalidade NF')" class="btn btn-azul">NF Entrada</button>
+    <div style="margin-bottom: 20px; display: flex; gap: 10px;">
+        <button class="btn" style="background: #22c55e; color: white;">Novo Lançamento</button>
+        <button class="btn" style="background: #a855f7; color: white;">Transferência</button>
+        <button class="btn" style="background: var(--accent); color: #020617;">NF Entrada</button>
     </div>
 
-    <div class="tabela-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>DATA</th>
-                    <th>BANCO</th>
-                    <th>DESCRIÇÃO</th>
-                    <th style="text-align: right;">ENTRADA</th>
-                    <th style="text-align: right;">SAÍDA</th>
-                    <th style="text-align: center;">STATUS</th>
-                    <th style="text-align: center;">AÇÕES</th>
-                </tr>
-            </thead>
-            <tbody id="listaPagar"></tbody>
-        </table>
-    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>DATA</th>
+                <th>BANCO</th>
+                <th>DESCRIÇÃO</th>
+                <th>ENTRADA</th>
+                <th>SAÍDA</th>
+                <th>STATUS</th>
+                <th>AÇÕES</th>
+            </tr>
+        </thead>
+        <tbody id="listaFinanceiro"></tbody>
+    </table>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
