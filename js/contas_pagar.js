@@ -1,97 +1,114 @@
-// Configurações Globais (Usando 'var' para evitar erro de redeclaração no console)
+// Inicialização do Supabase (Corrigido para evitar conflitos de variáveis)
 var SUPABASE_URL = "https://uxtgicfuggpuyjybwawa.supabase.co";
 var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg";
 var _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const moeda = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-async function carregarBancos() {
-    const { data } = await _supabase.from('bancos').select('id, nome');
-    const select = document.getElementById('fBanco');
-    if(!select) return;
-    data?.forEach(b => {
-        let opt = document.createElement('option');
-        opt.value = b.id;
-        opt.innerText = b.nome;
-        select.appendChild(opt);
-    });
+async function carregarTudo() {
+    await carregarLista();
+    await atualizarDashboard();
 }
 
 async function atualizarDashboard() {
-    // 1. Saldos Bancários Reais
-    const { data: bancos } = await _supabase.from('bancos').select('nome, saldo');
+    const { data: bancos } = await _supabase.from('bancos').select('*');
     let sicoob = 0, caixa = 0, aplic = 0;
+    
     bancos?.forEach(b => {
-        const n = b.nome.toUpperCase();
-        if(n.includes('SICOOB')) sicoob = b.saldo;
-        if(n.includes('CAIXA')) caixa = b.saldo;
-        if(n.includes('APLICA')) aplic = b.saldo;
+        if(b.nome.includes('SICOOB')) { sicoob = b.saldo; window.idSicoob = b.id; }
+        if(b.nome.includes('CAIXA')) caixa = b.saldo;
+        if(b.nome.includes('APLICA')) aplic = b.saldo;
     });
 
-    // 2. Contas a Pagar (Aberto)
-    const { data: pagar } = await _supabase.from('contas_pagar').select('valor').eq('status', 'ABERTO').not('descricao', 'ilike', '%NF ENTRADA%');
+    const { data: pagar } = await _supabase.from('contas_pagar').select('valor').eq('status', 'ABERTO');
     const totalPagar = pagar?.reduce((acc, i) => acc + i.valor, 0) || 0;
-
-    // 3. Contas a Receber (Vencidos ou Pendentes)
-    const { data: receber } = await _supabase.from('contas_receber').select('valor').neq('status', 'PAGO');
-    const totalReceber = receber?.reduce((acc, i) => acc + (Number(i.valor) || 0), 0) || 0;
-
-    const projetado = (sicoob + caixa + aplic + totalReceber) - totalPagar;
 
     document.getElementById('resumoSicoob').innerText = moeda(sicoob);
     document.getElementById('resumoCaixa').innerText = moeda(caixa);
     document.getElementById('resumoAplicacao').innerText = moeda(aplic);
     document.getElementById('resumoPagar').innerText = moeda(totalPagar);
-    document.getElementById('resumoReceber').innerText = moeda(totalReceber);
-    document.getElementById('resumoTotal').innerText = moeda(projetado);
-    document.getElementById('resumoTotal').style.color = projetado >= 0 ? '#38bdf8' : '#ef4444';
 }
 
-async function carregarContas() {
+async function carregarLista() {
     const status = document.getElementById('fStatus').value;
-    const bancoId = document.getElementById('fBanco').value;
     const ini = document.getElementById('fDataInicio').value;
     const fim = document.getElementById('fDataFim').value;
 
     let query = _supabase.from('contas_pagar').select('*, bancos(nome)');
-
     if (status) query = query.eq('status', status);
-    if (bancoId) query = query.eq('banco_id', bancoId);
     if (ini) query = query.gte('vencimento', ini);
     if (fim) query = query.lte('vencimento', fim);
 
     const { data } = await query.order('vencimento', { ascending: true });
-    const corpo = document.getElementById('listaPagar');
+    const corpo = document.getElementById('listaFinanceiro');
     corpo.innerHTML = '';
 
     data?.forEach(item => {
-        const isEntrada = item.descricao.toUpperCase().includes("NF ENTRADA") || item.status === "RECEBIDO";
+        const isRecebido = item.status === "RECEBIDO";
         corpo.innerHTML += `
             <tr>
                 <td>${item.vencimento.split('-').reverse().join('/')}</td>
-                <td>${item.bancos?.nome || '-'}</td>
+                <td>${item.bancos?.nome || 'SICOOB'}</td>
                 <td>${item.descricao}</td>
-                <td style="text-align: right; color:#22c55e">${isEntrada ? moeda(item.valor) : '-'}</td>
-                <td style="text-align: right; color:#ef4444">${!isEntrada ? moeda(item.valor) : '-'}</td>
-                <td style="text-align: center; font-weight: bold; color: ${item.status === 'ABERTO' ? '#fbbf24' : '#22c55e'}">${item.status}</td>
-                <td style="text-align: center;">
-                    <button onclick="excluirLancamento('${item.id}')" class="btn btn-vermelho" style="padding: 5px 10px;">✕</button>
+                <td style="color: #22c55e; font-weight: bold;">${isRecebido ? moeda(item.valor) : '-'}</td>
+                <td style="color: #ef4444;">${!isRecebido ? moeda(item.valor) : '-'}</td>
+                <td style="color: ${isRecebido ? '#22c55e' : '#fbbf24'}; font-weight: bold;">${item.status}</td>
+                <td>
+                    ${item.status === 'ABERTO' 
+                        ? `<button onclick="confirmarPagamento('${item.id}', ${item.valor}, '${item.descricao}')" class="btn btn-pagar">Pagar</button>`
+                        : `<button onclick="estornarLancamento('${item.id}', ${item.valor}, '${item.status}')" class="btn btn-estornar">Estornar</button>`
+                    }
+                    <button onclick="excluirLancamento('${item.id}')" class="btn btn-excluir">✕</button>
                 </td>
             </tr>`;
     });
 }
 
-window.excluirLancamento = async (id) => {
-    if(!confirm("Deseja realmente excluir este registro?")) return;
-    const { error } = await _supabase.from('contas_pagar').delete().eq('id', id);
-    if(!error) carregarTudo();
-};
+// Lógica Automática para NF de Entrada -> Vira RECEBIDO no SICOOB
+async function confirmarPagamento(id, valor, descricao) {
+    if(!confirm("Confirmar pagamento/entrada deste boleto?")) return;
 
-async function carregarTudo() {
-    await carregarContas();
-    await atualizarDashboard();
+    // Se for NF Entrada, vira RECEBIDO automaticamente no SICOOB
+    let novoStatus = descricao.toUpperCase().includes("NF ENTRADA") ? "RECEBIDO" : "PAGO";
+    let bancoId = window.idSicoob; // Sempre SICOOB para entradas automáticas
+
+    // 1. Atualiza o status do lançamento
+    await _supabase.from('contas_pagar').update({ 
+        status: novoStatus, 
+        banco_id: bancoId,
+        descricao: descricao.toUpperCase().includes("NF ENTRADA") ? "BOLETO: " + descricao.replace("NF ENTRADA:", "").trim() : descricao
+    }).eq('id', id);
+
+    // 2. Atualiza o saldo do Banco SICOOB
+    const { data: b } = await _supabase.from('bancos').select('saldo').eq('id', bancoId).single();
+    let novoSaldo = (novoStatus === "RECEBIDO") ? (b.saldo + valor) : (b.saldo - valor);
+    
+    await _supabase.from('bancos').update({ saldo: novoSaldo }).eq('id', bancoId);
+
+    carregarTudo();
 }
 
-// Inicialização
-carregarBancos();
+async function estornarLancamento(id, valor, statusAnterior) {
+    if(!confirm("Deseja estornar e reverter o valor no banco?")) return;
+
+    // 1. Volta para ABERTO
+    const { data: item } = await _supabase.from('contas_pagar').select('banco_id').eq('id', id).single();
+    await _supabase.from('contas_pagar').update({ status: 'ABERTO' }).eq('id', id);
+
+    // 2. Reverte o valor no banco (Subtrai se era entrada, soma se era saída)
+    const { data: b } = await _supabase.from('bancos').select('saldo').eq('id', item.banco_id).single();
+    let novoSaldo = (statusAnterior === "RECEBIDO") ? (b.saldo - valor) : (b.saldo + valor);
+
+    await _supabase.from('bancos').update({ saldo: novoSaldo }).eq('id', item.banco_id);
+
+    carregarTudo();
+}
+
+async function excluirLancamento(id) {
+    if(!confirm("Excluir registro permanentemente?")) return;
+    await _supabase.from('contas_pagar').delete().eq('id', id);
+    carregarTudo();
+}
+
+// Início
 carregarTudo();
