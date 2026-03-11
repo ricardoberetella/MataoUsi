@@ -1,118 +1,94 @@
-// Configuração do Banco de Dados
-var SUPABASE_URL = "https://uxtgicfuggpuyjybwawa.supabase.co";
-var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg";
-var _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financeiro - Matão Usinagem</title>
+    <style>
+        :root { --bg: #020617; --card: #0f172a; --border: #1e293b; --accent: #38bdf8; --text: #f8fafc; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 1300px; margin: auto; }
+        
+        /* Dashboard de Resumo */
+        .dashboard-resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 12px; text-align: center; }
+        .card h4 { margin: 0 0 10px 0; font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; }
+        .valor { font-size: 1.25rem; font-weight: bold; }
+        
+        /* Barra de Filtros */
+        .filter-bar { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; gap: 15px; align-items: end; margin-bottom: 25px; flex-wrap: wrap; }
+        .filter-group label { display: block; font-size: 0.7rem; color: var(--accent); margin-bottom: 5px; font-weight: bold; }
+        .filter-bar input, .filter-bar select { background: #1e293b; border: 1px solid #334155; color: white; padding: 10px; border-radius: 8px; }
 
-const moeda = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        /* Tabela */
+        .tabela-container { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #1e293b; color: var(--accent); padding: 15px; text-align: left; font-size: 0.8rem; border-bottom: 2px solid var(--accent); }
+        td { padding: 12px 15px; border-bottom: 1px solid #334155; font-size: 0.9rem; }
+        
+        /* Botões */
+        .btn { padding: 10px 18px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-pagar { background: #22c55e; color: white; }
+        .btn-estornar { background: #475569; color: white; }
+        .btn-excluir { background: #ef4444; color: white; margin-left: 5px; }
+        .btn-azul { background: var(--accent); color: #020617; }
+    </style>
+</head>
+<body>
 
-async function atualizarDashboard() {
-    // 1. Saldos Reais (Bancos)
-    const { data: bancos } = await _supabase.from('bancos').select('*');
-    let sicoob = 0, caixa = 0, aplic = 0;
-    bancos?.forEach(b => {
-        if(b.nome.includes('SICOOB')) { sicoob = b.saldo; window.idSicoob = b.id; }
-        if(b.nome.includes('CAIXA')) caixa = b.saldo;
-        if(b.nome.includes('APLICA')) aplic = b.saldo;
-    });
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h1 style="color: var(--accent);">Controle Financeiro</h1>
+        <a href="index.html" style="color: var(--accent); text-decoration: none; font-weight: bold;">← VOLTAR AO MENU</a>
+    </div>
+    
+    <div class="dashboard-resumo">
+        <div class="card"><h4>Previsão Receber</h4><div id="resumoReceber" class="valor" style="color: #22c55e;">R$ 0,00</div></div>
+        <div class="card"><h4>Contas a Pagar</h4><div id="resumoPagar" class="valor" style="color: #ef4444;">R$ 0,00</div></div>
+        <div class="card"><h4>SICOOB</h4><div id="resumoSicoob" class="valor" style="color: var(--accent);">R$ 0,00</div></div>
+        <div class="card"><h4>CAIXA</h4><div id="resumoCaixa" class="valor" style="color: var(--accent);">R$ 0,00</div></div>
+        <div class="card"><h4>Aplicação</h4><div id="resumoAplicacao" class="valor" style="color: #a855f7;">R$ 0,00</div></div>
+    </div>
 
-    // 2. Contas a Pagar (Abertas)
-    const { data: pagar } = await _supabase.from('contas_pagar').select('valor').eq('status', 'ABERTO');
-    const totalPagar = pagar?.reduce((acc, i) => acc + (Number(i.valor) || 0), 0) || 0;
+    <div class="filter-bar">
+        <div class="filter-group"><label>DATA INÍCIO</label><input type="date" id="fDataInicio"></div>
+        <div class="filter-group"><label>DATA FIM</label><input type="date" id="fDataFim"></div>
+        <div class="filter-group">
+            <label>STATUS</label>
+            <select id="fStatus">
+                <option value="ABERTO" selected>ABERTO</option>
+                <option value="PAGO">PAGO</option>
+                <option value="RECEBIDO">RECEBIDO</option>
+                <option value="">TODOS</option>
+            </select>
+        </div>
+        <button onclick="carregarTudo()" class="btn btn-azul">FILTRAR</button>
+    </div>
 
-    // 3. Previsão Receber (Abertos + Vencidos da tela Contas a Receber)
-    const { data: receber } = await _supabase.from('contas_receber')
-        .select('valor')
-        .or('status.eq.ABERTO,status.eq.VENCIDO');
-    const totalReceber = receber?.reduce((acc, i) => acc + (Number(i.valor) || 0), 0) || 0;
+    <div style="margin-bottom: 20px; display: flex; gap: 10px;">
+        <button class="btn" style="background: #22c55e; color: white;">+ Novo Lançamento</button>
+        <button class="btn btn-azul">NF Entrada</button>
+    </div>
 
-    document.getElementById('resumoSicoob').innerText = moeda(sicoob);
-    document.getElementById('resumoCaixa').innerText = moeda(caixa);
-    document.getElementById('resumoAplicacao').innerText = moeda(aplic);
-    document.getElementById('resumoPagar').innerText = moeda(totalPagar);
-    document.getElementById('resumoReceber').innerText = moeda(totalReceber);
-}
+    <div class="tabela-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>DATA</th>
+                    <th>BANCO</th>
+                    <th>DESCRIÇÃO</th>
+                    <th>ENTRADA</th>
+                    <th>SAÍDA</th>
+                    <th>STATUS</th>
+                    <th>AÇÕES</th>
+                </tr>
+            </thead>
+            <tbody id="listaFinanceiro"></tbody>
+        </table>
+    </div>
+</div>
 
-async function carregarLista() {
-    const status = document.getElementById('fStatus').value;
-    const ini = document.getElementById('fDataInicio').value;
-    const fim = document.getElementById('fDataFim').value;
-
-    let query = _supabase.from('contas_pagar').select('*, bancos(nome)');
-    if (status) query = query.eq('status', status);
-    if (ini) query = query.gte('vencimento', ini);
-    if (fim) query = query.lte('vencimento', fim);
-
-    const { data } = await query.order('vencimento', { ascending: true });
-    const corpo = document.getElementById('listaFinanceiro');
-    corpo.innerHTML = '';
-
-    data?.forEach(item => {
-        const isRecebido = item.status === "RECEBIDO";
-        corpo.innerHTML += `
-            <tr>
-                <td>${item.vencimento.split('-').reverse().join('/')}</td>
-                <td>${item.bancos?.nome || 'SICOOB'}</td>
-                <td>${item.descricao}</td>
-                <td style="color: #22c55e; font-weight: bold;">${isRecebido ? moeda(item.valor) : '-'}</td>
-                <td style="color: #ef4444;">${!isRecebido ? moeda(item.valor) : '-'}</td>
-                <td style="color: ${isRecebido ? '#22c55e' : '#fbbf24'}; font-weight: bold;">${item.status}</td>
-                <td>
-                    ${item.status === 'ABERTO' 
-                        ? `<button onclick="confirmarAcao('${item.id}', ${item.valor}, '${item.descricao}')" class="btn btn-pagar">Pagar</button>`
-                        : `<button onclick="estornarLancamento('${item.id}', ${item.valor}, '${item.status}')" class="btn btn-estornar">Estornar</button>`
-                    }
-                    <button onclick="excluirLancamento('${item.id}')" class="btn btn-excluir">✕</button>
-                </td>
-            </tr>`;
-    });
-}
-
-async function confirmarAcao(id, valor, desc) {
-    if(!confirm("Confirmar este lançamento?")) return;
-
-    // Automação: Se for NF Entrada, vira RECEBIDO no SICOOB
-    const isNF = desc.toUpperCase().includes("NF ENTRADA");
-    const novoStatus = isNF ? "RECEBIDO" : "PAGO";
-    const bancoId = window.idSicoob;
-
-    // 1. Atualiza Status e Descrição
-    await _supabase.from('contas_pagar').update({ 
-        status: novoStatus, 
-        banco_id: bancoId,
-        descricao: isNF ? desc.replace("NF ENTRADA:", "BOLETO:").trim() : desc
-    }).eq('id', id);
-
-    // 2. Atualiza Saldo do Banco (Soma se for Recebido, Subtrai se for Pago)
-    const { data: b } = await _supabase.from('bancos').select('saldo').eq('id', bancoId).single();
-    let novoSaldo = isNF ? (b.saldo + valor) : (b.saldo - valor);
-    await _supabase.from('bancos').update({ saldo: novoSaldo }).eq('id', bancoId);
-
-    carregarTudo();
-}
-
-async function estornarLancamento(id, valor, statusAnterior) {
-    if(!confirm("Reverter valor e voltar para aberto?")) return;
-
-    const { data: item } = await _supabase.from('contas_pagar').select('banco_id').eq('id', id).single();
-    await _supabase.from('contas_pagar').update({ status: 'ABERTO' }).eq('id', id);
-
-    const { data: b } = await _supabase.from('bancos').select('saldo').eq('id', item.banco_id).single();
-    let novoSaldo = (statusAnterior === "RECEBIDO") ? (b.saldo - valor) : (b.saldo + valor);
-    await _supabase.from('bancos').update({ saldo: novoSaldo }).eq('id', item.banco_id);
-
-    carregarTudo();
-}
-
-async function excluirLancamento(id) {
-    if(confirm("Excluir permanentemente?")) {
-        await _supabase.from('contas_pagar').delete().eq('id', id);
-        carregarTudo();
-    }
-}
-
-async function carregarTudo() {
-    await carregarLista();
-    await atualizarDashboard();
-}
-
-carregarTudo();
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/contas_pagar.js"></script>
+</body>
+</html>
