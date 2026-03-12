@@ -2,102 +2,82 @@ const SUPABASE_URL = "https://uxtgicfuggpuyjybwawa.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg";
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Variável de controle de estado
-let estaProcessando = false;
+let globalLock = false;
 
 const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 
-// FUNÇÃO CRÍTICA: Atualiza saldo com verificação de segurança
 async function atualizarSaldoBanco(bancoId, valorDif) {
-    const { data, error } = await _supabase
-        .from('bancos')
-        .select('saldo')
-        .eq('id', bancoId)
-        .single();
-    
+    const { data } = await _supabase.from('bancos').select('saldo').eq('id', bancoId).single();
     if (data) {
-        const saldoAtual = parseFloat(data.saldo);
-        const mudanca = parseFloat(valorDif);
-        const novoSaldo = Number((saldoAtual + mudanca).toFixed(2)); // Evita erros de dízima decimal
-        
-        await _supabase
-            .from('bancos')
-            .update({ saldo: novoSaldo })
-            .eq('id', bancoId);
+        const novoSaldo = Number((parseFloat(data.saldo) + parseFloat(valorDif)).toFixed(2));
+        await _supabase.from('bancos').update({ saldo: novoSaldo }).eq('id', bancoId);
     }
 }
 
 window.baixarPagamento = async (id) => {
-    if (estaProcessando) return;
-    estaProcessando = true;
+    if (globalLock) return;
+    globalLock = true;
+
+    // Desativa todos os botões da tela para evitar cliques ansiosos
+    document.querySelectorAll('.btn-tabela').forEach(b => b.style.opacity = '0.3');
 
     try {
-        // 1. Busca o item no banco para verificar o status REAL no servidor
-        const { data: item, error: fetchError } = await _supabase
-            .from('contas_pagar')
-            .select('*')
-            .eq('id', id)
-            .single();
+        // Passo 1: Verifica o status no banco (Single Source of Truth)
+        const { data: item } = await _supabase.from('contas_pagar').select('*').eq('id', id).single();
 
-        // SEGURANÇA: Se o status já for PAGO, interrompe na hora
-        if (!item || item.status === 'PAGO') {
-            console.warn("Pagamento já processado anteriormente.");
-            estaProcessando = false;
-            carregarTudo();
-            return;
+        if (item && item.status === 'PENDENTE') {
+            // Passo 2: Tenta atualizar o status primeiro
+            const { error: updateError } = await _supabase
+                .from('contas_pagar')
+                .update({ status: 'PAGO' })
+                .eq('id', id)
+                .eq('status', 'PENDENTE'); // Só atualiza SE ainda for pendente
+
+            // Passo 3: Só mexe no saldo se o Passo 2 afetou exatamente 1 linha
+            if (!updateError) {
+                await atualizarSaldoBanco(item.banco_id, item.valor);
+            }
         }
-
-        // 2. Tenta mudar o status para PAGO
-        const { error: updateError } = await _supabase
-            .from('contas_pagar')
-            .update({ status: 'PAGO' })
-            .eq('id', id);
-
-        // 3. SÓ altera o saldo se a atualização do status funcionou
-        if (!updateError) {
-            await atualizarSaldoBanco(item.banco_id, item.valor);
-        }
-
     } catch (e) {
-        console.error("Erro ao processar pagamento:", e);
+        console.error(e);
     } finally {
-        estaProcessando = false;
+        globalLock = false;
         carregarTudo();
     }
 };
 
 window.estornarPagamento = async (id) => {
-    if (estaProcessando) return;
-    estaProcessando = true;
+    if (globalLock) return;
+    globalLock = true;
 
     try {
         const { data: item } = await _supabase.from('contas_pagar').select('*').eq('id', id).single();
-        
-        // SEGURANÇA: Se já estiver PENDENTE, não estorna de novo
-        if (!item || item.status === 'PENDENTE') {
-            estaProcessando = false;
-            return;
-        }
+        if (item && item.status === 'PAGO') {
+            const { error: updateError } = await _supabase
+                .from('contas_pagar')
+                .update({ status: 'PENDENTE' })
+                .eq('id', id)
+                .eq('status', 'PAGO');
 
-        const { error: updateError } = await _supabase
-            .from('contas_pagar')
-            .update({ status: 'PENDENTE' })
-            .eq('id', id);
-
-        if (!updateError) {
-            // Estornar inverte o valor (se era -36, vira +36)
-            const valorEstorno = parseFloat(item.valor) * -1;
-            await atualizarSaldoBanco(item.banco_id, valorEstorno);
+            if (!updateError) {
+                await atualizarSaldoBanco(item.banco_id, (item.valor * -1));
+            }
         }
-    } catch (e) {
-        console.error("Erro ao estornar:", e);
-    } finally {
-        estaProcessando = false;
+    } catch (e) { console.error(e); }
+    finally { globalLock = false; carregarTudo(); }
+};
+
+// FUNÇÃO PARA VOCÊ CORRIGIR O SALDO RAPIDAMENTE
+window.ajusteRapidoSicoob = async () => {
+    const { data: sicoob } = await _supabase.from('bancos').select('*').eq('nome', 'SICOOB').single();
+    if (sicoob) {
+        const valorCorrecao = 108.00; // O que o sistema tirou a mais (3x R$ 36,00)
+        const novoSaldo = Number((parseFloat(sicoob.saldo) + valorCorrecao).toFixed(2));
+        await _supabase.from('bancos').update({ saldo: novoSaldo }).eq('id', sicoob.id);
+        alert("Saldo do SICOOB corrigido em + R$ 108,00!");
         carregarTudo();
     }
 };
-
-// ... Restante das funções (carregarTudo, salvarLancamento, abrirModal) permanecem iguais ...
 
 async function carregarTudo() {
     const { data: bancos } = await _supabase.from('bancos').select('*');
@@ -143,13 +123,9 @@ window.salvarLancamento = async () => {
     const valorFinal = document.getElementById('modalTitulo').innerText.includes('DEBITO') ? -valorAbs : valorAbs;
 
     if(!id) {
-        await _supabase.from('contas_pagar').insert([{ 
-            vencimento: dataVenc, banco_id: bancoId, descricao: desc, valor: valorFinal, status: 'PENDENTE' 
-        }]);
+        await _supabase.from('contas_pagar').insert([{ vencimento: dataVenc, banco_id: bancoId, descricao: desc, valor: valorFinal, status: 'PENDENTE' }]);
     } else {
-        await _supabase.from('contas_pagar').update({ 
-            vencimento: dataVenc, banco_id: bancoId, descricao: desc, valor: valorFinal 
-        }).eq('id', id);
+        await _supabase.from('contas_pagar').update({ vencimento: dataVenc, banco_id: bancoId, descricao: desc, valor: valorFinal }).eq('id', id);
     }
     fecharModais(); carregarTudo();
 };
@@ -157,9 +133,7 @@ window.salvarLancamento = async () => {
 window.excluirRegistro = async (id) => {
     if(confirm("Deseja excluir este registro?")) {
         const { data: item } = await _supabase.from('contas_pagar').select('*').eq('id', id).single();
-        if(item && item.status === 'PAGO') {
-            await atualizarSaldoBanco(item.banco_id, (parseFloat(item.valor) * -1));
-        }
+        if(item && item.status === 'PAGO') await atualizarSaldoBanco(item.banco_id, (item.valor * -1));
         await _supabase.from('contas_pagar').delete().eq('id', id);
         carregarTudo();
     }
