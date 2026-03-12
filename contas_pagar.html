@@ -27,7 +27,11 @@
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); }
         .modal-content { background: var(--card); margin: 10% auto; padding: 20px; width: 90%; max-width: 350px; border-radius: 12px; border: 1px solid var(--blue); }
         input, select { width: 100%; padding: 12px; margin-top: 10px; background: #0f172a; border: 1px solid var(--border); color: white; border-radius: 6px; box-sizing: border-box; }
-        .btn-salvar { width: 100%; padding: 15px; background: var(--blue); border: none; border-radius: 6px; margin-top: 20px; font-weight: bold; }
+        .btn-salvar { width: 100%; padding: 15px; background: var(--blue); border: none; border-radius: 6px; margin-top: 20px; font-weight: bold; cursor: pointer; }
+        .filtros-wrap { display:flex; gap:10px; margin-bottom:20px; align-items:end; flex-wrap:wrap; }
+        .filtro-box { min-width: 140px; }
+        .filtro-box label { display:block; font-size:12px; color:#94a3b8; margin-bottom:6px; }
+        .btn-filtro-atual { padding:10px 14px; background:#334155; color:white; border:none; border-radius:6px; cursor:pointer; height:42px; }
     </style>
 </head>
 <body>
@@ -50,10 +54,44 @@
             <button onclick="abrirModal('LANÇAR CREDITO')" class="btn-main" style="background: var(--green);">+ Crédito</button>
         </div>
 
+        <div class="filtros-wrap">
+            <div class="filtro-box">
+                <label for="filtroMes">Mês</label>
+                <select id="filtroMes" onchange="carregarTudo()">
+                    <option value="1">Janeiro</option>
+                    <option value="2">Fevereiro</option>
+                    <option value="3">Março</option>
+                    <option value="4">Abril</option>
+                    <option value="5">Maio</option>
+                    <option value="6">Junho</option>
+                    <option value="7">Julho</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Setembro</option>
+                    <option value="10">Outubro</option>
+                    <option value="11">Novembro</option>
+                    <option value="12">Dezembro</option>
+                </select>
+            </div>
+
+            <div class="filtro-box">
+                <label for="filtroAno">Ano</label>
+                <select id="filtroAno" onchange="carregarTudo()"></select>
+            </div>
+
+            <button onclick="limparFiltroMesAno()" class="btn-filtro-atual">Mês Atual</button>
+        </div>
+
         <div class="tabela-wrap">
             <table>
                 <thead>
-                    <tr><th>DATA</th><th>BANCO</th><th>DESCRIÇÃO</th><th>VALOR</th><th>STATUS</th><th style="text-align: center;">AÇÕES</th></tr>
+                    <tr>
+                        <th>DATA</th>
+                        <th>BANCO</th>
+                        <th>DESCRIÇÃO</th>
+                        <th>VALOR</th>
+                        <th>STATUS</th>
+                        <th style="text-align: center;">AÇÕES</th>
+                    </tr>
                 </thead>
                 <tbody id="listaFinanceiro"></tbody>
             </table>
