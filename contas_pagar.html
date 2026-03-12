@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Financeiro - Matão Usinagem</title>
     <style>
-        :root { --bg: #0b1120; --card: #1e293b; --blue: #38bdf8; --green: #22c55e; --red: #ef4444; --orange: #f59e0b; --border: #334155; }
+        :root { --bg: #0b1120; --card: #1e293b; --blue: #38bdf8; --green: #22c55e; --red: #ef4444; --orange: #f59e0b; --border: #334155; --purple: #a855f7; }
         body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; padding: 15px; }
         .container { max-width: 1200px; margin: auto; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
@@ -24,14 +24,16 @@
         .btn-estornar { background: var(--orange); }
         .btn-editar { background: var(--blue); }
         .btn-excluir { background: var(--red); }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); }
-        .modal-content { background: var(--card); margin: 10% auto; padding: 20px; width: 90%; max-width: 350px; border-radius: 12px; border: 1px solid var(--blue); }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 999; }
+        .modal-content { background: var(--card); margin: 6% auto; padding: 20px; width: 90%; max-width: 380px; border-radius: 12px; border: 1px solid var(--blue); }
         input, select { width: 100%; padding: 12px; margin-top: 10px; background: #0f172a; border: 1px solid var(--border); color: white; border-radius: 6px; box-sizing: border-box; }
-        .btn-salvar { width: 100%; padding: 15px; background: var(--blue); border: none; border-radius: 6px; margin-top: 20px; font-weight: bold; cursor: pointer; }
+        .btn-salvar { width: 100%; padding: 15px; background: var(--blue); border: none; border-radius: 6px; margin-top: 20px; font-weight: bold; cursor: pointer; color: white; }
         .filtros-wrap { display:flex; gap:10px; margin-bottom:20px; align-items:end; flex-wrap:wrap; }
         .filtro-box { min-width: 140px; }
         .filtro-box label { display:block; font-size:12px; color:#94a3b8; margin-bottom:6px; }
         .btn-filtro-atual { padding:10px 14px; background:#334155; color:white; border:none; border-radius:6px; cursor:pointer; height:42px; }
+        .acoes-topo { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+        .texto-info-transferencia { font-size: 12px; color: #94a3b8; margin-top: 8px; line-height: 1.4; }
     </style>
 </head>
 <body>
@@ -49,9 +51,10 @@
             <div class="card"><small>APLICAÇÃO</small><div id="resumoAplicacao" class="valor" style="color: #a855f7;">R$ 0,00</div></div>
         </div>
 
-        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <div class="acoes-topo">
             <button onclick="abrirModal('LANÇAR DEBITO')" class="btn-main" style="background: var(--red);">- Débito</button>
             <button onclick="abrirModal('LANÇAR CREDITO')" class="btn-main" style="background: var(--green);">+ Crédito</button>
+            <button onclick="abrirModalTransferencia()" class="btn-main" style="background: var(--purple);">↔ Transferência</button>
         </div>
 
         <div class="filtros-wrap">
@@ -108,6 +111,22 @@
             <input type="number" step="0.01" id="campoValor" placeholder="Valor 0,00">
             <button onclick="salvarLancamento()" class="btn-salvar">SALVAR AGENDAMENTO</button>
             <button onclick="fecharModais()" style="width:100%; background:none; border:none; color:#94a3b8; margin-top:10px; cursor:pointer;">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="modalTransferencia" class="modal">
+        <div class="modal-content">
+            <h3 style="color: var(--purple); margin-top: 0;">Transferência entre contas</h3>
+            <input type="date" id="transferData" onclick="this.showPicker()">
+            <select id="transferOrigem"></select>
+            <select id="transferDestino"></select>
+            <input type="number" step="0.01" id="transferValor" placeholder="Valor 0,00">
+            <input type="text" id="transferDescricao" placeholder="Descrição opcional">
+            <div class="texto-info-transferencia">
+                A transferência debita da conta de origem e credita na conta de destino, registrando os dois lançamentos no extrato.
+            </div>
+            <button onclick="salvarTransferencia()" class="btn-salvar" style="background: var(--purple);">SALVAR TRANSFERÊNCIA</button>
+            <button onclick="fecharModalTransferencia()" style="width:100%; background:none; border:none; color:#94a3b8; margin-top:10px; cursor:pointer;">Cancelar</button>
         </div>
     </div>
 
