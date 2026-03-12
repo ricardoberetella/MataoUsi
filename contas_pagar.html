@@ -14,164 +14,29 @@
             --warning: #f59e0b;
             --border: #334155;
         }
-
-        body { 
-            background-color: var(--bg-dark); 
-            color: white; 
-            font-family: 'Segoe UI', Roboto, sans-serif; 
-            margin: 0; 
-            padding: 15px; 
-        }
-
+        body { background-color: var(--bg-dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; }
         .container { max-width: 1200px; margin: auto; }
-
-        /* Cabeçalho */
-        .header-area { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 25px; 
-        }
-        
-        .btn-voltar { 
-            color: var(--primary); 
-            text-decoration: none; 
-            border: 1px solid var(--primary); 
-            padding: 10px 20px; 
-            border-radius: 8px; 
-            font-size: 14px; 
-            transition: 0.3s;
-        }
-        .btn-voltar:hover { background: rgba(56, 189, 248, 0.1); }
-
-        /* Dashboard de Cards */
-        .dashboard { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-            gap: 15px; 
-            margin-bottom: 25px; 
-        }
-        .card { 
-            background: var(--card-bg); 
-            padding: 20px; 
-            border-radius: 12px; 
-            text-align: center; 
-            border: 1px solid var(--border); 
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-        .card small { 
-            color: #94a3b8; 
-            font-weight: bold; 
-            font-size: 11px; 
-            text-transform: uppercase; 
-            display: block; 
-            margin-bottom: 8px; 
-        }
-        .valor { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; }
-
-        /* Botões Principais */
-        .area-botoes { 
-            display: flex; 
-            gap: 12px; 
-            margin-bottom: 25px; 
-        }
-        .btn-acao { 
-            flex: 1; 
-            padding: 18px; 
-            border: none; 
-            border-radius: 10px; 
-            color: white; 
-            font-weight: bold; 
-            font-size: 16px; 
-            cursor: pointer; 
-            transition: transform 0.1s;
-        }
-        .btn-acao:active { transform: scale(0.98); }
-
-        /* Tabela Estilizada */
-        .tabela-container { 
-            background: var(--card-bg); 
-            border-radius: 12px; 
-            overflow-x: auto; 
-            border: 1px solid var(--border); 
-        }
+        .header-area { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .btn-voltar { color: var(--primary); text-decoration: none; border: 1px solid var(--primary); padding: 10px 20px; border-radius: 8px; font-size: 14px; }
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .card { background: var(--card-bg); padding: 20px; border-radius: 12px; text-align: center; border: 1px solid var(--border); }
+        .card small { color: #94a3b8; font-weight: bold; font-size: 11px; text-transform: uppercase; display: block; margin-bottom: 8px; }
+        .valor { font-size: 1.4rem; font-weight: 800; }
+        .area-botoes { display: flex; gap: 12px; margin-bottom: 25px; }
+        .btn-acao { flex: 1; padding: 18px; border: none; border-radius: 10px; color: white; font-weight: bold; font-size: 16px; cursor: pointer; }
+        .tabela-container { background: var(--card-bg); border-radius: 12px; overflow-x: auto; border: 1px solid var(--border); }
         table { width: 100%; border-collapse: collapse; min-width: 600px; }
-        th { 
-            background: #0f172a; 
-            padding: 15px; 
-            text-align: left; 
-            color: var(--primary); 
-            font-size: 12px; 
-            text-transform: uppercase;
-        }
+        th { background: #0f172a; padding: 15px; text-align: left; color: var(--primary); font-size: 12px; }
         td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 14px; }
-        
-        /* Botões de Ação na Tabela */
-        .btn-tabela { 
-            padding: 8px 14px; 
-            border-radius: 6px; 
-            border: none; 
-            cursor: pointer; 
-            font-size: 12px; 
-            font-weight: bold; 
-            color: white; 
-            margin-right: 5px; 
-        }
+        .btn-tabela { padding: 8px 14px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: bold; color: white; margin-right: 5px; }
         .btn-pagar { background: var(--success); }
         .btn-estornar { background: var(--warning); }
         .btn-editar { background: var(--primary); }
         .btn-excluir { background: var(--danger); }
-
-        /* Modal */
-        .modal { 
-            display: none; 
-            position: fixed; 
-            z-index: 999; 
-            left: 0; 
-            top: 0; 
-            width: 100%; 
-            height: 100%; 
-            background: rgba(0,0,0,0.85); 
-            backdrop-filter: blur(4px);
-        }
-        .modal-content { 
-            background: var(--card-bg); 
-            margin: 5% auto; 
-            padding: 25px; 
-            width: 90%; 
-            max-width: 380px; 
-            border-radius: 15px; 
-            border: 1px solid var(--primary); 
-            box-sizing: border-box;
-        }
-        .modal-content label { display: block; margin-top: 15px; color: #94a3b8; font-size: 13px; }
-        .modal-content input, .modal-content select { 
-            width: 100%; 
-            padding: 14px; 
-            margin-top: 5px; 
-            background: #0f172a; 
-            border: 1px solid var(--border); 
-            color: white; 
-            border-radius: 8px; 
-            box-sizing: border-box; 
-            font-size: 16px; 
-        }
-        .btn-salvar { 
-            width: 100%; 
-            padding: 16px; 
-            background: var(--primary); 
-            border: none; 
-            color: #0f172a; 
-            font-weight: bold; 
-            border-radius: 8px; 
-            margin-top: 25px; 
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        /* Status colors */
-        .status-pendente { color: var(--warning); }
-        .status-pago { color: var(--primary); }
+        .modal { display: none; position: fixed; z-index: 999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); }
+        .modal-content { background: var(--card-bg); margin: 5% auto; padding: 25px; width: 95%; max-width: 380px; border-radius: 15px; border: 1px solid var(--primary); box-sizing: border-box; }
+        .modal-content input, .modal-content select { width: 100%; padding: 14px; margin-top: 10px; background: #0f172a; border: 1px solid var(--border); color: white; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        .btn-salvar { width: 100%; padding: 16px; background: var(--primary); border: none; color: #0f172a; font-weight: bold; border-radius: 8px; margin-top: 25px; font-size: 16px; }
     </style>
 </head>
 <body>
@@ -183,7 +48,7 @@
 
         <div class="dashboard">
             <div class="card"><small>Previsão Receber</small><div id="resumoReceber" class="valor" style="color: var(--success);">R$ 0,00</div></div>
-            <div class="card"><small>Contas a Pagar (Pendente)</small><div id="resumoPagar" class="valor" style="color: var(--danger);">R$ 0,00</div></div>
+            <div class="card"><small>A Pagar (Pendente)</small><div id="resumoPagar" class="valor" style="color: var(--danger);">R$ 0,00</div></div>
             <div class="card"><small>SICOOB</small><div id="resumoSicoob" class="valor">R$ 0,00</div></div>
             <div class="card"><small>CAIXA FEDERAL</small><div id="resumoCaixa" class="valor">R$ 0,00</div></div>
             <div class="card"><small>APLICAÇÃO</small><div id="resumoAplicacao" class="valor" style="color: #a855f7;">R$ 0,00</div></div>
@@ -197,17 +62,9 @@
         <div class="tabela-container">
             <table>
                 <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Banco</th>
-                        <th>Descrição</th>
-                        <th>Valor</th>
-                        <th>Status</th>
-                        <th style="text-align: center;">Ações</th>
-                    </tr>
+                    <tr><th>DATA</th><th>BANCO</th><th>DESCRIÇÃO</th><th>VALOR</th><th>STATUS</th><th style="text-align: center;">AÇÕES</th></tr>
                 </thead>
-                <tbody id="listaFinanceiro">
-                    </tbody>
+                <tbody id="listaFinanceiro"></tbody>
             </table>
         </div>
     </div>
@@ -216,19 +73,10 @@
         <div class="modal-content">
             <h2 id="modalTitulo" style="margin-top: 0; color: var(--primary);">Lançar</h2>
             <input type="hidden" id="editId">
-            
-            <label>Data de Vencimento</label>
             <input type="date" id="campoData" onclick="this.showPicker()">
-            
-            <label>Conta Bancária</label>
             <select id="campoBanco"></select>
-            
-            <label>Descrição do Lançamento</label>
-            <input type="text" id="campoDescricao" placeholder="Ex: Pagamento Boleto">
-            
-            <label>Valor (R$)</label>
+            <input type="text" id="campoDescricao" placeholder="Descrição">
             <input type="number" step="0.01" id="campoValor" placeholder="0,00">
-            
             <button onclick="salvarLancamento()" class="btn-salvar">SALVAR AGENDAMENTO</button>
             <button onclick="fecharModais()" style="width:100%; background:none; border:none; color:#94a3b8; margin-top:15px; cursor:pointer;">Cancelar</button>
         </div>
