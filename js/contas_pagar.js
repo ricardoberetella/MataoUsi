@@ -10,6 +10,61 @@ const fmt = (v) =>
     currency: "BRL",
   }).format(Number(v || 0));
 
+function travarBotoesTabela(travar) {
+  document.querySelectorAll(".btn-tabela").forEach((b) => {
+    b.disabled = travar;
+    b.style.opacity = travar ? "0.3" : "1";
+    b.style.pointerEvents = travar ? "none" : "auto";
+  });
+}
+
+function preencherFiltroAno() {
+  const selectAno = document.getElementById("filtroAno");
+  if (!selectAno) return;
+
+  const anoAtual = new Date().getFullYear();
+  let options = "";
+
+  for (let ano = anoAtual - 3; ano <= anoAtual + 3; ano++) {
+    options += `<option value="${ano}">${ano}</option>`;
+  }
+
+  selectAno.innerHTML = options;
+}
+
+function definirFiltroMesAtual() {
+  const hoje = new Date();
+  const mesAtual = hoje.getMonth() + 1;
+  const anoAtual = hoje.getFullYear();
+
+  const filtroMes = document.getElementById("filtroMes");
+  const filtroAno = document.getElementById("filtroAno");
+
+  if (filtroMes) filtroMes.value = String(mesAtual);
+  if (filtroAno) filtroAno.value = String(anoAtual);
+}
+
+window.limparFiltroMesAno = () => {
+  definirFiltroMesAtual();
+  carregarTudo();
+};
+
+function obterPeriodoFiltro() {
+  const filtroMes = document.getElementById("filtroMes");
+  const filtroAno = document.getElementById("filtroAno");
+
+  const mes = Number(filtroMes?.value || new Date().getMonth() + 1);
+  const ano = Number(filtroAno?.value || new Date().getFullYear());
+
+  const dataInicio = `${ano}-${String(mes).padStart(2, "0")}-01`;
+
+  const proximoMes = mes === 12 ? 1 : mes + 1;
+  const proximoAno = mes === 12 ? ano + 1 : ano;
+  const dataFim = `${proximoAno}-${String(proximoMes).padStart(2, "0")}-01`;
+
+  return { dataInicio, dataFim };
+}
+
 async function atualizarSaldoBanco(bancoId, valorDif) {
   const { data, error } = await _supabase
     .from("bancos")
@@ -39,14 +94,6 @@ async function atualizarSaldoBanco(bancoId, valorDif) {
   return true;
 }
 
-function travarBotoesTabela(travar) {
-  document.querySelectorAll(".btn-tabela").forEach((b) => {
-    b.disabled = travar;
-    b.style.opacity = travar ? "0.3" : "1";
-    b.style.pointerEvents = travar ? "none" : "auto";
-  });
-}
-
 window.baixarPagamento = async (id) => {
   if (globalLock) return;
   globalLock = true;
@@ -64,9 +111,7 @@ window.baixarPagamento = async (id) => {
       return;
     }
 
-    if (item.status !== "PENDENTE") {
-      return;
-    }
+    if (item.status !== "PENDENTE") return;
 
     const { data: linhasAtualizadas, error: updateError } = await _supabase
       .from("contas_pagar")
@@ -109,9 +154,7 @@ window.estornarPagamento = async (id) => {
       return;
     }
 
-    if (item.status !== "PAGO") {
-      return;
-    }
+    if (item.status !== "PAGO") return;
 
     const { data: linhasAtualizadas, error: updateError } = await _supabase
       .from("contas_pagar")
@@ -138,6 +181,8 @@ window.estornarPagamento = async (id) => {
 };
 
 async function carregarTudo() {
+  const { dataInicio, dataFim } = obterPeriodoFiltro();
+
   const { data: bancos, error: bancosError } = await _supabase
     .from("bancos")
     .select("*");
@@ -182,7 +227,9 @@ async function carregarTudo() {
   const { data: pnd, error: pndError } = await _supabase
     .from("contas_pagar")
     .select("valor")
-    .eq("status", "PENDENTE");
+    .eq("status", "PENDENTE")
+    .gte("vencimento", dataInicio)
+    .lt("vencimento", dataFim);
 
   if (!pndError) {
     const totalPagar = (pnd || []).reduce((acc, c) => acc + Math.abs(Number(c.valor || 0)), 0);
@@ -193,6 +240,8 @@ async function carregarTudo() {
   const { data: lista, error: listaError } = await _supabase
     .from("contas_pagar")
     .select("*, bancos(nome)")
+    .gte("vencimento", dataInicio)
+    .lt("vencimento", dataFim)
     .order("vencimento", { ascending: false });
 
   if (listaError) {
@@ -345,4 +394,8 @@ window.fecharModais = () => {
   document.getElementById("modalFinanceiro").style.display = "none";
 };
 
-document.addEventListener("DOMContentLoaded", carregarTudo);
+document.addEventListener("DOMContentLoaded", () => {
+  preencherFiltroAno();
+  definirFiltroMesAtual();
+  carregarTudo();
+});
