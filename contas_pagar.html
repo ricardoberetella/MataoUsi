@@ -34,6 +34,7 @@
         .btn-filtro-atual { padding:10px 14px; background:#334155; color:white; border:none; border-radius:6px; cursor:pointer; height:42px; }
         .acoes-topo { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
         .texto-info-transferencia { font-size: 12px; color: #94a3b8; margin-top: 8px; line-height: 1.4; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -51,7 +52,7 @@
             <div class="card"><small>APLICAÇÃO</small><div id="resumoAplicacao" class="valor" style="color: #a855f7;">R$ 0,00</div></div>
         </div>
 
-        <div class="acoes-topo">
+        <div class="acoes-topo" id="acoesTopo">
             <button onclick="abrirModal('LANÇAR DEBITO')" class="btn-main" style="background: var(--red);">- Débito</button>
             <button onclick="abrirModal('LANÇAR CREDITO')" class="btn-main" style="background: var(--green);">+ Crédito</button>
             <button onclick="abrirModalTransferencia()" class="btn-main" style="background: var(--purple);">↔ Transferência</button>
@@ -93,7 +94,7 @@
                         <th>DESCRIÇÃO</th>
                         <th>VALOR</th>
                         <th>STATUS</th>
-                        <th style="text-align: center;">AÇÕES</th>
+                        <th id="colunaAcoes" style="text-align: center;">AÇÕES</th>
                     </tr>
                 </thead>
                 <tbody id="listaFinanceiro"></tbody>
@@ -130,7 +131,6 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/contas_pagar.js"></script>
+    <script type="module" src="js/contas_pagar.js"></script>
 </body>
 </html>
