@@ -65,6 +65,10 @@ function obterPeriodoFiltro() {
   return { dataInicio, dataFim };
 }
 
+function isTransferencia(item) {
+  return (item?.descricao || "").startsWith("[TRANSFERÊNCIA]");
+}
+
 async function atualizarSaldoBanco(bancoId, valorDif) {
   const { data, error } = await _supabase
     .from("bancos")
@@ -111,6 +115,11 @@ window.baixarPagamento = async (id) => {
       return;
     }
 
+    if (isTransferencia(item)) {
+      alert("Transferências não podem ser pagas manualmente.");
+      return;
+    }
+
     if (item.status !== "PENDENTE") return;
 
     const { data: linhasAtualizadas, error: updateError } = await _supabase
@@ -154,6 +163,11 @@ window.estornarPagamento = async (id) => {
       return;
     }
 
+    if (isTransferencia(item)) {
+      alert("Transferências não podem ser estornadas por este botão.");
+      return;
+    }
+
     if (item.status !== "PAGO") return;
 
     const { data: linhasAtualizadas, error: updateError } = await _supabase
@@ -185,7 +199,8 @@ async function carregarTudo() {
 
   const { data: bancos, error: bancosError } = await _supabase
     .from("bancos")
-    .select("*");
+    .select("*")
+    .order("nome", { ascending: true });
 
   if (bancosError) {
     console.error("Erro ao carregar bancos:", bancosError);
@@ -211,6 +226,22 @@ async function carregarTudo() {
         .map((b) => `<option value="${b.id}">${b.nome}</option>`)
         .join("");
     }
+
+    const transferOrigem = document.getElementById("transferOrigem");
+    const transferDestino = document.getElementById("transferDestino");
+    const bancosTransferencia = bancos.filter(
+      (b) =>
+        b.nome === "SICOOB" ||
+        b.nome === "CAIXA FEDERAL" ||
+        b.nome === "APLICAÇÃO"
+    );
+
+    const optionsTransfer = bancosTransferencia
+      .map((b) => `<option value="${b.id}">${b.nome}</option>`)
+      .join("");
+
+    if (transferOrigem) transferOrigem.innerHTML = optionsTransfer;
+    if (transferDestino) transferDestino.innerHTML = optionsTransfer;
   }
 
   const { data: rcb, error: rcbError } = await _supabase
@@ -254,8 +285,10 @@ async function carregarTudo() {
 
   listaFinanceiro.innerHTML =
     (lista || [])
-      .map(
-        (item) => `
+      .map((item) => {
+        const transferencia = isTransferencia(item);
+
+        return `
         <tr>
           <td>${new Date(item.vencimento + "T12:00:00").toLocaleDateString("pt-BR")}</td>
           <td>${item.bancos?.nome || "--"}</td>
@@ -264,16 +297,18 @@ async function carregarTudo() {
           <td style="font-weight:bold; color: ${item.status === "PENDENTE" ? "#f59e0b" : "#38bdf8"}">${item.status}</td>
           <td style="text-align:center;">
             ${
-              item.status === "PENDENTE"
+              transferencia
+                ? `<span style="color:#94a3b8;">—</span>`
+                : item.status === "PENDENTE"
                 ? `<button onclick="baixarPagamento('${item.id}')" class="btn-tabela btn-pagar">Pagar</button>`
                 : `<button onclick="estornarPagamento('${item.id}')" class="btn-tabela btn-estornar">Estornar</button>`
             }
-            <button onclick="editarRegistro('${item.id}')" class="btn-tabela btn-editar">✎</button>
-            <button onclick="excluirRegistro('${item.id}')" class="btn-tabela btn-excluir">🗑</button>
+            ${transferencia ? "" : `<button onclick="editarRegistro('${item.id}')" class="btn-tabela btn-editar">✎</button>`}
+            ${transferencia ? "" : `<button onclick="excluirRegistro('${item.id}')" class="btn-tabela btn-excluir">🗑</button>`}
           </td>
         </tr>
-      `
-      )
+      `;
+      })
       .join("");
 }
 
@@ -307,6 +342,22 @@ window.salvarLancamento = async () => {
       return;
     }
   } else {
+    const { data: atual, error: erroAtual } = await _supabase
+      .from("contas_pagar")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (erroAtual || !atual) {
+      console.error("Erro ao carregar lançamento para editar:", erroAtual);
+      return;
+    }
+
+    if (isTransferencia(atual)) {
+      alert("Transferências não podem ser editadas por aqui.");
+      return;
+    }
+
     const { error } = await _supabase
       .from("contas_pagar")
       .update({
@@ -341,6 +392,11 @@ window.excluirRegistro = async (id) => {
     return;
   }
 
+  if (isTransferencia(item)) {
+    alert("Transferências não podem ser excluídas por este botão.");
+    return;
+  }
+
   if (item.status === "PAGO") {
     await atualizarSaldoBanco(item.banco_id, Number(item.valor) * -1);
   }
@@ -370,6 +426,11 @@ window.editarRegistro = async (id) => {
     return;
   }
 
+  if (isTransferencia(item)) {
+    alert("Transferências não podem ser editadas por aqui.");
+    return;
+  }
+
   abrirModal("EDITAR");
   document.getElementById("editId").value = item.id;
   document.getElementById("campoData").value = item.vencimento;
@@ -392,6 +453,107 @@ window.abrirModal = (t) => {
 
 window.fecharModais = () => {
   document.getElementById("modalFinanceiro").style.display = "none";
+};
+
+window.abrirModalTransferencia = () => {
+  const hoje = new Date().toISOString().split("T")[0];
+  document.getElementById("transferData").value = hoje;
+  document.getElementById("transferValor").value = "";
+  document.getElementById("transferDescricao").value = "";
+
+  const origem = document.getElementById("transferOrigem");
+  const destino = document.getElementById("transferDestino");
+
+  if (origem && destino && origem.options.length > 1) {
+    origem.selectedIndex = 0;
+    destino.selectedIndex = 1;
+  }
+
+  document.getElementById("modalTransferencia").style.display = "block";
+};
+
+window.fecharModalTransferencia = () => {
+  document.getElementById("modalTransferencia").style.display = "none";
+};
+
+window.salvarTransferencia = async () => {
+  if (globalLock) return;
+  globalLock = true;
+
+  try {
+    const data = document.getElementById("transferData").value;
+    const origemId = document.getElementById("transferOrigem").value;
+    const destinoId = document.getElementById("transferDestino").value;
+    const valor = Math.abs(parseFloat(document.getElementById("transferValor").value || 0));
+    const descricaoLivre = document.getElementById("transferDescricao").value.trim();
+
+    if (!data || !origemId || !destinoId || !valor) {
+      alert("Preencha data, origem, destino e valor.");
+      return;
+    }
+
+    if (origemId === destinoId) {
+      alert("Selecione contas diferentes para origem e destino.");
+      return;
+    }
+
+    const { data: bancosSelecionados, error: erroBancos } = await _supabase
+      .from("bancos")
+      .select("id, nome")
+      .in("id", [origemId, destinoId]);
+
+    if (erroBancos || !bancosSelecionados || bancosSelecionados.length < 2) {
+      console.error("Erro ao buscar bancos da transferência:", erroBancos);
+      alert("Não foi possível localizar as contas da transferência.");
+      return;
+    }
+
+    const bancoOrigem = bancosSelecionados.find((b) => String(b.id) === String(origemId));
+    const bancoDestino = bancosSelecionados.find((b) => String(b.id) === String(destinoId));
+
+    const complemento = descricaoLivre ? ` - ${descricaoLivre}` : "";
+    const descricaoSaida = `[TRANSFERÊNCIA] PARA ${bancoDestino.nome}${complemento}`;
+    const descricaoEntrada = `[TRANSFERÊNCIA] DE ${bancoOrigem.nome}${complemento}`;
+
+    const { error: insertError } = await _supabase.from("contas_pagar").insert([
+      {
+        vencimento: data,
+        banco_id: origemId,
+        descricao: descricaoSaida,
+        valor: -valor,
+        status: "PAGO",
+      },
+      {
+        vencimento: data,
+        banco_id: destinoId,
+        descricao: descricaoEntrada,
+        valor: valor,
+        status: "PAGO",
+      },
+    ]);
+
+    if (insertError) {
+      console.error("Erro ao registrar transferência:", insertError);
+      alert("Erro ao salvar transferência.");
+      return;
+    }
+
+    const okOrigem = await atualizarSaldoBanco(origemId, -valor);
+    const okDestino = await atualizarSaldoBanco(destinoId, valor);
+
+    if (!okOrigem || !okDestino) {
+      alert("Transferência registrada, mas houve erro ao atualizar algum saldo.");
+      return;
+    }
+
+    fecharModalTransferencia();
+    carregarTudo();
+  } catch (e) {
+    console.error("Erro inesperado na transferência:", e);
+    alert("Erro inesperado ao salvar transferência.");
+  } finally {
+    globalLock = false;
+  }
 };
 
 document.addEventListener("DOMContentLoaded", () => {
