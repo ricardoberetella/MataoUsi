@@ -4,162 +4,358 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let globalLock = false;
 
-const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
+const fmt = (v) =>
+  new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(v || 0);
 
 async function atualizarSaldoBanco(bancoId, valorDif) {
-    const { data } = await _supabase.from('bancos').select('saldo').eq('id', bancoId).single();
-    if (data) {
-        const novoSaldo = Number((parseFloat(data.saldo) + parseFloat(valorDif)).toFixed(2));
-        await _supabase.from('bancos').update({ saldo: novoSaldo }).eq('id', bancoId);
-    }
+  const { data, error } = await _supabase
+    .from("bancos")
+    .select("saldo")
+    .eq("id", bancoId)
+    .single();
+
+  if (error || !data) {
+    console.error("Erro ao buscar saldo do banco:", error);
+    return;
+  }
+
+  const saldoAtual = Number(data.saldo || 0);
+  const diferenca = Number(valorDif || 0);
+  const novoSaldo = Number((saldoAtual + diferenca).toFixed(2));
+
+  const { error: updateError } = await _supabase
+    .from("bancos")
+    .update({ saldo: novoSaldo })
+    .eq("id", bancoId);
+
+  if (updateError) {
+    console.error("Erro ao atualizar saldo do banco:", updateError);
+  }
 }
 
 window.baixarPagamento = async (id) => {
-    if (globalLock) return;
-    globalLock = true;
+  if (globalLock) return;
+  globalLock = true;
 
-    // Desativa todos os botões da tela para evitar cliques ansiosos
-    document.querySelectorAll('.btn-tabela').forEach(b => b.style.opacity = '0.3');
+  const botoes = document.querySelectorAll(".btn-tabela");
+  botoes.forEach((b) => {
+    b.disabled = true;
+    b.style.opacity = "0.3";
+    b.style.pointerEvents = "none";
+  });
 
-    try {
-        // Passo 1: Verifica o status no banco (Single Source of Truth)
-        const { data: item } = await _supabase.from('contas_pagar').select('*').eq('id', id).single();
+  try {
+    const { data: item, error: itemError } = await _supabase
+      .from("contas_pagar")
+      .select("*")
+      .eq("id", id)
+      .single();
 
-        if (item && item.status === 'PENDENTE') {
-            // Passo 2: Tenta atualizar o status primeiro
-            const { error: updateError } = await _supabase
-                .from('contas_pagar')
-                .update({ status: 'PAGO' })
-                .eq('id', id)
-                .eq('status', 'PENDENTE'); // Só atualiza SE ainda for pendente
-
-            // Passo 3: Só mexe no saldo se o Passo 2 afetou exatamente 1 linha
-            if (!updateError) {
-                await atualizarSaldoBanco(item.banco_id, item.valor);
-            }
-        }
-    } catch (e) {
-        console.error(e);
-    } finally {
-        globalLock = false;
-        carregarTudo();
+    if (itemError || !item) {
+      console.error("Erro ao buscar conta:", itemError);
+      return;
     }
+
+    if (item.status !== "PENDENTE") {
+      return;
+    }
+
+    const { data: linhasAtualizadas, error: updateError } = await _supabase
+      .from("contas_pagar")
+      .update({ status: "PAGO" })
+      .eq("id", id)
+      .eq("status", "PENDENTE")
+      .select();
+
+    if (updateError) {
+      console.error("Erro ao baixar pagamento:", updateError);
+      return;
+    }
+
+    if (linhasAtualizadas && linhasAtualizadas.length === 1) {
+      await atualizarSaldoBanco(item.banco_id, Number(item.valor));
+    }
+  } catch (e) {
+    console.error(e);
+  } finally {
+    globalLock = false;
+    carregarTudo();
+  }
 };
 
 window.estornarPagamento = async (id) => {
-    if (globalLock) return;
-    globalLock = true;
+  if (globalLock) return;
+  globalLock = true;
 
-    try {
-        const { data: item } = await _supabase.from('contas_pagar').select('*').eq('id', id).single();
-        if (item && item.status === 'PAGO') {
-            const { error: updateError } = await _supabase
-                .from('contas_pagar')
-                .update({ status: 'PENDENTE' })
-                .eq('id', id)
-                .eq('status', 'PAGO');
+  const botoes = document.querySelectorAll(".btn-tabela");
+  botoes.forEach((b) => {
+    b.disabled = true;
+    b.style.opacity = "0.3";
+    b.style.pointerEvents = "none";
+  });
 
-            if (!updateError) {
-                await atualizarSaldoBanco(item.banco_id, (item.valor * -1));
-            }
-        }
-    } catch (e) { console.error(e); }
-    finally { globalLock = false; carregarTudo(); }
+  try {
+    const { data: item, error: itemError } = await _supabase
+      .from("contas_pagar")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (itemError || !item) {
+      console.error("Erro ao buscar conta:", itemError);
+      return;
+    }
+
+    if (item.status !== "PAGO") {
+      return;
+    }
+
+    const { data: linhasAtualizadas, error: updateError } = await _supabase
+      .from("contas_pagar")
+      .update({ status: "PENDENTE" })
+      .eq("id", id)
+      .eq("status", "PAGO")
+      .select();
+
+    if (updateError) {
+      console.error("Erro ao estornar pagamento:", updateError);
+      return;
+    }
+
+    if (linhasAtualizadas && linhasAtualizadas.length === 1) {
+      await atualizarSaldoBanco(item.banco_id, Number(item.valor) * -1);
+    }
+  } catch (e) {
+    console.error(e);
+  } finally {
+    globalLock = false;
+    carregarTudo();
+  }
 };
 
 // FUNÇÃO PARA VOCÊ CORRIGIR O SALDO RAPIDAMENTE
 window.ajusteRapidoSicoob = async () => {
-    const { data: sicoob } = await _supabase.from('bancos').select('*').eq('nome', 'SICOOB').single();
-    if (sicoob) {
-        const valorCorrecao = 108.00; // O que o sistema tirou a mais (3x R$ 36,00)
-        const novoSaldo = Number((parseFloat(sicoob.saldo) + valorCorrecao).toFixed(2));
-        await _supabase.from('bancos').update({ saldo: novoSaldo }).eq('id', sicoob.id);
-        alert("Saldo do SICOOB corrigido em + R$ 108,00!");
-        carregarTudo();
-    }
+  const { data: sicoob, error } = await _supabase
+    .from("bancos")
+    .select("*")
+    .eq("nome", "SICOOB")
+    .single();
+
+  if (error || !sicoob) {
+    console.error("Erro ao buscar SICOOB:", error);
+    return;
+  }
+
+  const valorCorrecao = 108.0; // O que o sistema tirou a mais (3x R$ 36,00)
+  const novoSaldo = Number((parseFloat(sicoob.saldo) + valorCorrecao).toFixed(2));
+
+  const { error: updateError } = await _supabase
+    .from("bancos")
+    .update({ saldo: novoSaldo })
+    .eq("id", sicoob.id);
+
+  if (updateError) {
+    console.error("Erro ao corrigir saldo do SICOOB:", updateError);
+    return;
+  }
+
+  alert("Saldo do SICOOB corrigido em + R$ 108,00!");
+  carregarTudo();
 };
 
 async function carregarTudo() {
-    const { data: bancos } = await _supabase.from('bancos').select('*');
-    if (bancos) {
-        bancos.forEach(b => {
-            let id = b.nome === 'SICOOB' ? 'resumoSicoob' : b.nome === 'CAIXA FEDERAL' ? 'resumoCaixa' : 'resumoAplicacao';
-            if(document.getElementById(id)) document.getElementById(id).innerText = fmt(b.saldo);
-        });
-        document.getElementById('campoBanco').innerHTML = bancos.map(b => `<option value="${b.id}">${b.nome}</option>`).join('');
+  const { data: bancos, error: bancosError } = await _supabase.from("bancos").select("*");
+
+  if (bancosError) {
+    console.error("Erro ao carregar bancos:", bancosError);
+    return;
+  }
+
+  if (bancos) {
+    bancos.forEach((b) => {
+      let id =
+        b.nome === "SICOOB"
+          ? "resumoSicoob"
+          : b.nome === "CAIXA FEDERAL"
+          ? "resumoCaixa"
+          : "resumoAplicacao";
+
+      if (document.getElementById(id)) {
+        document.getElementById(id).innerText = fmt(b.saldo);
+      }
+    });
+
+    const campoBanco = document.getElementById("campoBanco");
+    if (campoBanco) {
+      campoBanco.innerHTML = bancos
+        .map((b) => `<option value="${b.id}">${b.nome}</option>`)
+        .join("");
     }
+  }
 
-    const { data: rcb } = await _supabase.from('contas_receber').select('valor').eq('status', 'ABERTO');
-    document.getElementById('resumoReceber').innerText = fmt(rcb?.reduce((acc, c) => acc + Number(c.valor), 0));
+  const { data: rcb, error: rcbError } = await _supabase
+    .from("contas_receber")
+    .select("valor")
+    .eq("status", "ABERTO");
 
-    const { data: pnd } = await _supabase.from('contas_pagar').select('valor').eq('status', 'PENDENTE');
-    document.getElementById('resumoPagar').innerText = fmt(pnd?.reduce((acc, c) => acc + Math.abs(c.valor), 0));
+  if (!rcbError && document.getElementById("resumoReceber")) {
+    document.getElementById("resumoReceber").innerText = fmt(
+      rcb?.reduce((acc, c) => acc + Number(c.valor), 0) || 0
+    );
+  }
 
-    const { data: lista } = await _supabase.from('contas_pagar').select('*, bancos(nome)').order('vencimento', { ascending: false });
-    document.getElementById('listaFinanceiro').innerHTML = lista?.map(item => `
+  const { data: pnd, error: pndError } = await _supabase
+    .from("contas_pagar")
+    .select("valor")
+    .eq("status", "PENDENTE");
+
+  if (!pndError && document.getElementById("resumoPagar")) {
+    document.getElementById("resumoPagar").innerText = fmt(
+      pnd?.reduce((acc, c) => acc + Math.abs(Number(c.valor)), 0) || 0
+    );
+  }
+
+  const { data: lista, error: listaError } = await _supabase
+    .from("contas_pagar")
+    .select("*, bancos(nome)")
+    .order("vencimento", { ascending: false });
+
+  if (listaError) {
+    console.error("Erro ao carregar lista financeira:", listaError);
+    return;
+  }
+
+  const listaFinanceiro = document.getElementById("listaFinanceiro");
+  if (listaFinanceiro) {
+    listaFinanceiro.innerHTML =
+      lista?.map(
+        (item) => `
         <tr>
-            <td>${new Date(item.vencimento + 'T12:00:00').toLocaleDateString('pt-BR')}</td>
-            <td>${item.bancos?.nome || '--'}</td>
+            <td>${new Date(item.vencimento + "T12:00:00").toLocaleDateString("pt-BR")}</td>
+            <td>${item.bancos?.nome || "--"}</td>
             <td>${item.descricao}</td>
-            <td style="color: ${item.valor < 0 ? '#ef4444' : '#22c55e'}">${fmt(item.valor)}</td>
-            <td style="font-weight:bold; color: ${item.status === 'PENDENTE' ? '#f59e0b' : '#38bdf8'}">${item.status}</td>
+            <td style="color: ${item.valor < 0 ? "#ef4444" : "#22c55e"}">${fmt(item.valor)}</td>
+            <td style="font-weight:bold; color: ${item.status === "PENDENTE" ? "#f59e0b" : "#38bdf8"}">${item.status}</td>
             <td style="text-align: center;">
-                ${item.status === 'PENDENTE' 
-                    ? `<button onclick="baixarPagamento('${item.id}')" class="btn-tabela btn-pagar">Pagar</button>` 
-                    : `<button onclick="estornarPagamento('${item.id}')" class="btn-tabela btn-estornar">Estornar</button>`}
+                ${
+                  item.status === "PENDENTE"
+                    ? `<button onclick="baixarPagamento('${item.id}')" class="btn-tabela btn-pagar">Pagar</button>`
+                    : `<button onclick="estornarPagamento('${item.id}')" class="btn-tabela btn-estornar">Estornar</button>`
+                }
                 <button onclick="editarRegistro('${item.id}')" class="btn-tabela btn-editar">✎</button>
                 <button onclick="excluirRegistro('${item.id}')" class="btn-tabela btn-excluir">🗑</button>
             </td>
         </tr>
-    `).join('') || '';
+    `
+      ).join("") || "";
+  }
 }
 
 window.salvarLancamento = async () => {
-    const id = document.getElementById('editId').value;
-    const desc = document.getElementById('campoDescricao').value;
-    const valorAbs = Math.abs(parseFloat(document.getElementById('campoValor').value || 0));
-    const bancoId = document.getElementById('campoBanco').value;
-    const dataVenc = document.getElementById('campoData').value;
-    const valorFinal = document.getElementById('modalTitulo').innerText.includes('DEBITO') ? -valorAbs : valorAbs;
+  const id = document.getElementById("editId").value;
+  const desc = document.getElementById("campoDescricao").value;
+  const valorAbs = Math.abs(parseFloat(document.getElementById("campoValor").value || 0));
+  const bancoId = document.getElementById("campoBanco").value;
+  const dataVenc = document.getElementById("campoData").value;
+  const valorFinal = document.getElementById("modalTitulo").innerText.includes("DEBITO")
+    ? -valorAbs
+    : valorAbs;
 
-    if(!id) {
-        await _supabase.from('contas_pagar').insert([{ vencimento: dataVenc, banco_id: bancoId, descricao: desc, valor: valorFinal, status: 'PENDENTE' }]);
-    } else {
-        await _supabase.from('contas_pagar').update({ vencimento: dataVenc, banco_id: bancoId, descricao: desc, valor: valorFinal }).eq('id', id);
-    }
-    fecharModais(); carregarTudo();
+  if (!id) {
+    await _supabase.from("contas_pagar").insert([
+      {
+        vencimento: dataVenc,
+        banco_id: bancoId,
+        descricao: desc,
+        valor: valorFinal,
+        status: "PENDENTE",
+      },
+    ]);
+  } else {
+    await _supabase
+      .from("contas_pagar")
+      .update({
+        vencimento: dataVenc,
+        banco_id: bancoId,
+        descricao: desc,
+        valor: valorFinal,
+      })
+      .eq("id", id);
+  }
+
+  fecharModais();
+  carregarTudo();
 };
 
 window.excluirRegistro = async (id) => {
-    if(confirm("Deseja excluir este registro?")) {
-        const { data: item } = await _supabase.from('contas_pagar').select('*').eq('id', id).single();
-        if(item && item.status === 'PAGO') await atualizarSaldoBanco(item.banco_id, (item.valor * -1));
-        await _supabase.from('contas_pagar').delete().eq('id', id);
-        carregarTudo();
+  if (confirm("Deseja excluir este registro?")) {
+    const { data: item, error } = await _supabase
+      .from("contas_pagar")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      console.error("Erro ao buscar item para excluir:", error);
+      return;
     }
+
+    if (item && item.status === "PAGO") {
+      await atualizarSaldoBanco(item.banco_id, Number(item.valor) * -1);
+    }
+
+    const { error: deleteError } = await _supabase
+      .from("contas_pagar")
+      .delete()
+      .eq("id", id);
+
+    if (deleteError) {
+      console.error("Erro ao excluir registro:", deleteError);
+      return;
+    }
+
+    carregarTudo();
+  }
 };
 
 window.editarRegistro = async (id) => {
-    const { data: item } = await _supabase.from('contas_pagar').select('*').eq('id', id).single();
-    if (item) {
-        abrirModal('EDITAR');
-        document.getElementById('editId').value = item.id;
-        document.getElementById('campoData').value = item.vencimento;
-        document.getElementById('campoBanco').value = item.banco_id;
-        document.getElementById('campoDescricao').value = item.descricao;
-        document.getElementById('campoValor').value = Math.abs(item.valor);
-    }
+  const { data: item, error } = await _supabase
+    .from("contas_pagar")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    console.error("Erro ao carregar item para edição:", error);
+    return;
+  }
+
+  if (item) {
+    abrirModal("EDITAR");
+    document.getElementById("editId").value = item.id;
+    document.getElementById("campoData").value = item.vencimento;
+    document.getElementById("campoBanco").value = item.banco_id;
+    document.getElementById("campoDescricao").value = item.descricao;
+    document.getElementById("campoValor").value = Math.abs(item.valor);
+  }
 };
 
-window.abrirModal = (t) => { 
-    document.getElementById('modalFinanceiro').style.display='block'; 
-    document.getElementById('modalTitulo').innerText = t;
-    if(t !== 'EDITAR') {
-        document.getElementById('editId').value = '';
-        document.getElementById('campoValor').value = '';
-        document.getElementById('campoData').value = new Date().toISOString().split('T')[0];
-    }
-};
-window.fecharModais = () => document.getElementById('modalFinanceiro').style.display='none';
+window.abrirModal = (t) => {
+  document.getElementById("modalFinanceiro").style.display = "block";
+  document.getElementById("modalTitulo").innerText = t;
 
-document.addEventListener('DOMContentLoaded', carregarTudo);
+  if (t !== "EDITAR") {
+    document.getElementById("editId").value = "";
+    document.getElementById("campoValor").value = "";
+    document.getElementById("campoData").value = new Date().toISOString().split("T")[0];
+  }
+};
+
+window.fecharModais = () => {
+  document.getElementById("modalFinanceiro").style.display = "none";
+};
+
+document.addEventListener("DOMContentLoaded", carregarTudo);
