@@ -3,63 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Extrato Financeiro - Matão Usinagem</title>
+    <title>Financeiro - Matão Usinagem</title>
     <style>
-        :root {
-            --bg-dark: #0b1120;
-            --card-bg: #1e293b;
-            --primary: #38bdf8;
-            --success: #22c55e;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --border: #334155;
-        }
-        body { background-color: var(--bg-dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; }
+        :root { --bg: #0b1120; --card: #1e293b; --blue: #38bdf8; --green: #22c55e; --red: #ef4444; --orange: #f59e0b; --border: #334155; }
+        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; padding: 15px; }
         .container { max-width: 1200px; margin: auto; }
-        .header-area { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .btn-voltar { color: var(--primary); text-decoration: none; border: 1px solid var(--primary); padding: 10px 20px; border-radius: 8px; font-size: 14px; }
-        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .card { background: var(--card-bg); padding: 20px; border-radius: 12px; text-align: center; border: 1px solid var(--border); }
-        .card small { color: #94a3b8; font-weight: bold; font-size: 11px; text-transform: uppercase; display: block; margin-bottom: 8px; }
-        .valor { font-size: 1.4rem; font-weight: 800; }
-        .area-botoes { display: flex; gap: 12px; margin-bottom: 25px; }
-        .btn-acao { flex: 1; padding: 18px; border: none; border-radius: 10px; color: white; font-weight: bold; font-size: 16px; cursor: pointer; }
-        .tabela-container { background: var(--card-bg); border-radius: 12px; overflow-x: auto; border: 1px solid var(--border); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn-voltar { color: var(--blue); text-decoration: none; border: 1px solid var(--blue); padding: 8px 15px; border-radius: 6px; }
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .card { background: var(--card); padding: 15px; border-radius: 10px; text-align: center; border: 1px solid var(--border); }
+        .card small { color: #94a3b8; display: block; font-size: 10px; margin-bottom: 5px; }
+        .valor { font-size: 1.2rem; font-weight: bold; }
+        .btn-main { flex: 1; padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
+        .tabela-wrap { background: var(--card); border-radius: 10px; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; min-width: 600px; }
-        th { background: #0f172a; padding: 15px; text-align: left; color: var(--primary); font-size: 12px; }
-        td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 14px; }
-        .btn-tabela { padding: 8px 14px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: bold; color: white; margin-right: 5px; }
-        .btn-pagar { background: var(--success); }
-        .btn-estornar { background: var(--warning); }
-        .btn-editar { background: var(--primary); }
-        .btn-excluir { background: var(--danger); }
-        .modal { display: none; position: fixed; z-index: 999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); }
-        .modal-content { background: var(--card-bg); margin: 5% auto; padding: 25px; width: 95%; max-width: 380px; border-radius: 15px; border: 1px solid var(--primary); box-sizing: border-box; }
-        .modal-content input, .modal-content select { width: 100%; padding: 14px; margin-top: 10px; background: #0f172a; border: 1px solid var(--border); color: white; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        .btn-salvar { width: 100%; padding: 16px; background: var(--primary); border: none; color: #0f172a; font-weight: bold; border-radius: 8px; margin-top: 25px; font-size: 16px; }
+        th { background: #0f172a; padding: 12px; text-align: left; color: var(--blue); font-size: 11px; }
+        td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+        .btn-tabela { padding: 6px 10px; border-radius: 4px; border: none; cursor: pointer; color: white; font-weight: bold; margin-right: 3px; }
+        .btn-pagar { background: var(--green); }
+        .btn-estornar { background: var(--orange); }
+        .btn-editar { background: var(--blue); }
+        .btn-excluir { background: var(--red); }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); }
+        .modal-content { background: var(--card); margin: 10% auto; padding: 20px; width: 90%; max-width: 350px; border-radius: 12px; border: 1px solid var(--blue); }
+        input, select { width: 100%; padding: 12px; margin-top: 10px; background: #0f172a; border: 1px solid var(--border); color: white; border-radius: 6px; box-sizing: border-box; }
+        .btn-salvar { width: 100%; padding: 15px; background: var(--blue); border: none; border-radius: 6px; margin-top: 20px; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header-area">
-            <h1 style="color: var(--primary); margin: 0;">Extrato Financeiro</h1>
+        <div class="header">
+            <h2 style="color: var(--blue);">Extrato Financeiro</h2>
             <a href="dashboard.html" class="btn-voltar">← Voltar</a>
         </div>
 
         <div class="dashboard">
-            <div class="card"><small>Previsão Receber</small><div id="resumoReceber" class="valor" style="color: var(--success);">R$ 0,00</div></div>
-            <div class="card"><small>A Pagar (Pendente)</small><div id="resumoPagar" class="valor" style="color: var(--danger);">R$ 0,00</div></div>
+            <div class="card"><small>RECEBER</small><div id="resumoReceber" class="valor" style="color: var(--green);">R$ 0,00</div></div>
+            <div class="card"><small>A PAGAR</small><div id="resumoPagar" class="valor" style="color: var(--red);">R$ 0,00</div></div>
             <div class="card"><small>SICOOB</small><div id="resumoSicoob" class="valor">R$ 0,00</div></div>
-            <div class="card"><small>CAIXA FEDERAL</small><div id="resumoCaixa" class="valor">R$ 0,00</div></div>
+            <div class="card"><small>CAIXA</small><div id="resumoCaixa" class="valor">R$ 0,00</div></div>
             <div class="card"><small>APLICAÇÃO</small><div id="resumoAplicacao" class="valor" style="color: #a855f7;">R$ 0,00</div></div>
         </div>
 
-        <div class="area-botoes">
-            <button onclick="abrirModal('LANÇAR DEBITO')" class="btn-acao" style="background: var(--danger);">- Débito</button>
-            <button onclick="abrirModal('LANÇAR CREDITO')" class="btn-acao" style="background: var(--success);">+ Crédito</button>
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <button onclick="abrirModal('LANÇAR DEBITO')" class="btn-main" style="background: var(--red);">- Débito</button>
+            <button onclick="abrirModal('LANÇAR CREDITO')" class="btn-main" style="background: var(--green);">+ Crédito</button>
         </div>
 
-        <div class="tabela-container">
+        <div class="tabela-wrap">
             <table>
                 <thead>
                     <tr><th>DATA</th><th>BANCO</th><th>DESCRIÇÃO</th><th>VALOR</th><th>STATUS</th><th style="text-align: center;">AÇÕES</th></tr>
@@ -71,14 +62,14 @@
 
     <div id="modalFinanceiro" class="modal">
         <div class="modal-content">
-            <h2 id="modalTitulo" style="margin-top: 0; color: var(--primary);">Lançar</h2>
+            <h3 id="modalTitulo" style="color: var(--blue); margin-top: 0;">Lançar</h3>
             <input type="hidden" id="editId">
             <input type="date" id="campoData" onclick="this.showPicker()">
             <select id="campoBanco"></select>
             <input type="text" id="campoDescricao" placeholder="Descrição">
-            <input type="number" step="0.01" id="campoValor" placeholder="0,00">
+            <input type="number" step="0.01" id="campoValor" placeholder="Valor 0,00">
             <button onclick="salvarLancamento()" class="btn-salvar">SALVAR AGENDAMENTO</button>
-            <button onclick="fecharModais()" style="width:100%; background:none; border:none; color:#94a3b8; margin-top:15px; cursor:pointer;">Cancelar</button>
+            <button onclick="fecharModais()" style="width:100%; background:none; border:none; color:#94a3b8; margin-top:10px; cursor:pointer;">Cancelar</button>
         </div>
     </div>
 
