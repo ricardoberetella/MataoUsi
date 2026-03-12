@@ -4,18 +4,24 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 
-// FUNÇÃO CRITICAL: Atualiza o saldo apenas uma vez por chamada
+// Variável de controle para evitar cliques duplos/múltiplos
+let processando = false;
+
 async function atualizarSaldoBanco(bancoId, valorDif) {
+    // Busca o saldo atual mais recente do banco
     const { data, error } = await _supabase.from('bancos').select('saldo').eq('id', bancoId).single();
     if (data) {
-        const novoSaldo = parseFloat(data.saldo) + parseFloat(valorDif);
+        const saldoAtual = parseFloat(data.saldo);
+        const ajuste = parseFloat(valorDif);
+        const novoSaldo = saldoAtual + ajuste;
+        
         await _supabase.from('bancos').update({ saldo: novoSaldo }).eq('id', bancoId);
     }
 }
 
 async function carregarTudo() {
+    if (processando) return;
     try {
-        // 1. Atualiza Cards de Bancos
         const { data: bancos } = await _supabase.from('bancos').select('*');
         if (bancos) {
             document.getElementById('campoBanco').innerHTML = bancos.map(b => `<option value="${b.id}">${b.nome}</option>`).join('');
@@ -25,14 +31,12 @@ async function carregarTudo() {
             });
         }
 
-        // 2. Atualiza Resumos (Receber e Pagar)
         const { data: rcb } = await _supabase.from('contas_receber').select('valor').eq('status', 'ABERTO');
         document.getElementById('resumoReceber').innerText = fmt(rcb?.reduce((acc, c) => acc + Number(c.valor), 0));
 
         const { data: pnd } = await _supabase.from('contas_pagar').select('valor').eq('status', 'PENDENTE');
         document.getElementById('resumoPagar').innerText = fmt(pnd?.reduce((acc, c) => acc + Math.abs(c.valor), 0));
 
-        // 3. Renderiza Tabela com as Ações Solicitadas
         const { data: lista } = await _supabase.from('contas_pagar').select('*, bancos(nome)').order('vencimento', { ascending: false });
         document.getElementById('listaFinanceiro').innerHTML = lista?.map(item => `
             <tr>
@@ -41,7 +45,7 @@ async function carregarTudo() {
                 <td>${item.descricao}</td>
                 <td style="color: ${item.valor < 0 ? '#ef4444' : '#22c55e'}">${fmt(item.valor)}</td>
                 <td style="color: ${item.status === 'PENDENTE' ? '#f59e0b' : '#38bdf8'}; font-weight:bold">${item.status}</td>
-                <td style="text-align: center; white-space: nowrap;">
+                <td style="text-align: center;">
                     ${item.status === 'PENDENTE' 
                         ? `<button onclick="baixarPagamento('${item.id}')" class="btn-tabela btn-pagar">Pagar</button>` 
                         : `<button onclick="estornarPagamento('${item.id}')" class="btn-tabela btn-estornar">Estornar</button>`}
@@ -53,30 +57,39 @@ async function carregarTudo() {
     } catch (e) { console.error(e); }
 }
 
-// AÇÃO: PAGAR (Move para PAGO e debita saldo)
 window.baixarPagamento = async (id) => {
-    // Busca o item primeiro para garantir que ainda está pendente (evita clique duplo)
+    if (processando) return;
+    processando = true;
+
     const { data: item } = await _supabase.from('contas_pagar').select('*').eq('id', id).single();
+    
+    // SÓ EXECUTA SE O ITEM AINDA ESTIVER PENDENTE
     if (item && item.status === 'PENDENTE') {
         const { error } = await _supabase.from('contas_pagar').update({ status: 'PAGO' }).eq('id', id);
         if (!error) {
             await atualizarSaldoBanco(item.banco_id, item.valor);
-            carregarTudo();
         }
     }
+    
+    processando = false;
+    carregarTudo();
 };
 
-// AÇÃO: ESTORNAR (Move para PENDENTE e devolve saldo)
 window.estornarPagamento = async (id) => {
+    if (processando) return;
+    processando = true;
+
     const { data: item } = await _supabase.from('contas_pagar').select('*').eq('id', id).single();
     if (item && item.status === 'PAGO') {
         const { error } = await _supabase.from('contas_pagar').update({ status: 'PENDENTE' }).eq('id', id);
         if (!error) {
-            // Estorno: subtrai o valor original (se era -36, vira +36)
-            await atualizarSaldoBanco(item.banco_id, (item.valor * -1));
-            carregarTudo();
+            // Se era débito (-36), estornar significa somar (+36). Por isso (valor * -1)
+            await atualizarSaldoBanco(item.banco_id, (parseFloat(item.valor) * -1));
         }
     }
+
+    processando = false;
+    carregarTudo();
 };
 
 window.salvarLancamento = async () => {
@@ -85,12 +98,9 @@ window.salvarLancamento = async () => {
     const valorAbs = Math.abs(parseFloat(document.getElementById('campoValor').value));
     const bancoId = document.getElementById('campoBanco').value;
     const dataVenc = document.getElementById('campoData').value;
-    
-    // Se o modal for "DEBITO", o valor gravado é negativo
     const valorFinal = document.getElementById('modalTitulo').innerText.includes('DEBITO') ? -valorAbs : valorAbs;
 
     if(!id) {
-        // SEMPRE entra como PENDENTE para não mexer no saldo agora
         await _supabase.from('contas_pagar').insert([{ 
             vencimento: dataVenc, banco_id: bancoId, descricao: desc, valor: valorFinal, status: 'PENDENTE' 
         }]);
@@ -99,15 +109,15 @@ window.salvarLancamento = async () => {
             vencimento: dataVenc, banco_id: bancoId, descricao: desc, valor: valorFinal 
         }).eq('id', id);
     }
-    fecharModais(); carregarTudo();
+    fecharModais(); 
+    carregarTudo();
 };
 
 window.excluirRegistro = async (id) => {
     if(confirm("Deseja excluir este registro?")) {
         const { data: item } = await _supabase.from('contas_pagar').select('*').eq('id', id).single();
         if(item) {
-            // Se excluir um item PAGO, precisa devolver o dinheiro pro banco primeiro
-            if(item.status === 'PAGO') await atualizarSaldoBanco(item.banco_id, (item.valor * -1));
+            if(item.status === 'PAGO') await atualizarSaldoBanco(item.banco_id, (parseFloat(item.valor) * -1));
             await _supabase.from('contas_pagar').delete().eq('id', id);
             carregarTudo();
         }
