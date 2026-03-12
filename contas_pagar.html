@@ -8,40 +8,38 @@
         body { background-color: #0b1120; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; }
         .container { max-width: 1200px; margin: auto; }
         
-        /* Cabeçalho */
         .header-area { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .btn-voltar { color: #38bdf8; text-decoration: none; border: 1px solid #38bdf8; padding: 8px 15px; border-radius: 8px; font-size: 14px; }
 
-        /* Dashboard de Cards */
         .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
         .card { background: #1e293b; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #334155; }
         .card small { color: #94a3b8; font-weight: bold; font-size: 10px; text-transform: uppercase; display: block; margin-bottom: 5px; }
         .valor { font-size: 1.2rem; font-weight: 800; }
 
-        /* Botões de Ação */
         .area-botoes { display: flex; gap: 10px; margin-bottom: 20px; }
         .btn-acao { flex: 1; padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 16px; cursor: pointer; }
 
-        /* Tabela */
         .tabela-container { background: #1e293b; border-radius: 12px; overflow-x: auto; border: 1px solid #334155; }
         table { width: 100%; border-collapse: collapse; }
         th { background: #0f172a; padding: 12px; text-align: left; color: #38bdf8; font-size: 12px; }
         td { padding: 12px; border-bottom: 1px solid #334155; font-size: 13px; }
 
-        /* Modais */
+        /* Estilo dos Botões de Ação na Tabela */
+        .btn-tabela { padding: 5px 10px; border-radius: 6px; border: none; cursor: pointer; font-size: 11px; font-weight: bold; color: white; margin-right: 4px; }
+        .btn-pagar { background: #22c55e; }
+        .btn-editar { background: #38bdf8; }
+        .btn-excluir { background: #ef4444; }
+
         .modal { display: none; position: fixed; z-index: 999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); }
         .modal-content { 
             background: #1e293b; margin: 2% auto; padding: 20px; width: 90%; max-width: 340px; 
             max-height: 95vh; overflow-y: auto; border-radius: 15px; border: 1px solid #38bdf8; box-sizing: border-box; 
         }
-        .modal-content h2 { color: #38bdf8; margin-bottom: 15px; text-align: center; }
-        .modal-content label { display: block; margin-top: 10px; font-size: 12px; color: #94a3b8; }
         .modal-content input, .modal-content select { 
             width: 100%; padding: 12px; margin-top: 5px; background: #0f172a; border: 1px solid #334155; 
             color: white; border-radius: 8px; box-sizing: border-box; font-size: 16px; 
         }
-        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
-        .btn-salvar { width: 100%; padding: 15px; background: #38bdf8; border: none; color: #0f172a; font-weight: bold; border-radius: 8px; margin-top: 20px; cursor: pointer; }
+        .btn-salvar { width: 100%; padding: 15px; background: #38bdf8; border: none; color: #0f172a; font-weight: bold; border-radius: 8px; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -80,32 +78,17 @@
     <div id="modalFinanceiro" class="modal">
         <div class="modal-content">
             <h2 id="modalTitulo">Lançar</h2>
+            <input type="hidden" id="editId">
             <label>Data</label>
             <input type="date" id="campoData" onclick="this.showPicker()">
             <label>Banco</label>
             <select id="campoBanco"></select>
             <label>Descrição</label>
-            <input type="text" id="campoDescricao" placeholder="Ex: Pagamento Boleto">
+            <input type="text" id="campoDescricao">
             <label>Valor (R$)</label>
-            <input type="number" step="0.01" id="campoValor" placeholder="0,00">
+            <input type="number" step="0.01" id="campoValor">
             <button onclick="salvarLancamento()" class="btn-salvar">SALVAR</button>
-            <button onclick="fecharModais()" style="width:100%; background:none; border:none; color:#94a3b8; margin-top:10px; cursor:pointer;">Cancelar</button>
-        </div>
-    </div>
-
-    <div id="modalTransferencia" class="modal">
-        <div class="modal-content">
-            <h2 style="color: #a855f7;">Transferência</h2>
-            <label>Data</label>
-            <input type="date" id="transfData" onclick="this.showPicker()">
-            <label>Origem (Sai)</label>
-            <select id="transfOrigem"></select>
-            <label>Destino (Entra)</label>
-            <select id="transfDestino"></select>
-            <label>Valor (R$)</label>
-            <input type="number" step="0.01" id="transfValor" placeholder="0,00">
-            <button onclick="executarTransferencia()" class="btn-salvar" style="background: #a855f7; color: white;">CONFIRMAR</button>
-            <button onclick="fecharModais()" style="width:100%; background:none; border:none; color:#94a3b8; margin-top:10px; cursor:pointer;">Cancelar</button>
+            <button onclick="fecharModais()" style="width:100%; background:none; border:none; color:#94a3b8; margin-top:10px;">Cancelar</button>
         </div>
     </div>
 
