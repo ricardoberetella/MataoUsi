@@ -1,16 +1,8 @@
-const SUPABASE_URL = "https://uxtgicfuggpuyjybwawa.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg";
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// Lógica de perfil por URL para teste rápido
-const params = new URLSearchParams(window.location.search);
-let isVisualizador = params.get('perfil') === 'view';
+// Removemos o import que causava erro ("obterRole") para garantir que a página carregue
+const _supabase = supabase;
 
 let globalLock = false;
-
-// Tenta detectar o perfil pelo localStorage (vindo do auth.js) caso não esteja na URL
-const userRole = localStorage.getItem('userRole'); 
-if (userRole === 'viewer') isVisualizador = true;
+let roleUsuario = "viewer"; // Padrão por segurança
 
 const fmt = (v) =>
   new Intl.NumberFormat("pt-BR", {
@@ -18,8 +10,25 @@ const fmt = (v) =>
     currency: "BRL",
   }).format(Number(v || 0));
 
+function usuarioEhAdmin() {
+  return roleUsuario === "admin";
+}
+
+// Esconde os botões e colunas se não for admin
+function aplicarPermissoesUI() {
+  const acoesTopo = document.getElementById("containerAcoesTopo");
+  const thAcoes = document.getElementById("thAcoes");
+
+  if (!usuarioEhAdmin()) {
+    if (acoesTopo) acoesTopo.style.display = 'none';
+    if (thAcoes) thAcoes.style.display = 'none';
+  } else {
+    if (acoesTopo) acoesTopo.style.display = 'flex';
+    if (thAcoes) thAcoes.style.display = 'table-cell';
+  }
+}
+
 function travarBotoesTabela(travar) {
-  if (isVisualizador) return;
   document.querySelectorAll(".btn-tabela").forEach((b) => {
     b.disabled = travar;
     b.style.opacity = travar ? "0.3" : "1";
@@ -70,7 +79,6 @@ function isTransferencia(item) {
 }
 
 async function atualizarSaldoBanco(bancoId, valorDif) {
-  if (isVisualizador) return false;
   const { data, error } = await _supabase.from("bancos").select("saldo").eq("id", bancoId).single();
   if (error || !data) return false;
   const novoSaldo = Number((Number(data.saldo || 0) + Number(valorDif || 0)).toFixed(2));
@@ -79,7 +87,7 @@ async function atualizarSaldoBanco(bancoId, valorDif) {
 }
 
 window.baixarPagamento = async (id) => {
-  if (globalLock || isVisualizador) return;
+  if (!usuarioEhAdmin() || globalLock) return;
   globalLock = true; travarBotoesTabela(true);
   try {
     const { data: item } = await _supabase.from("contas_pagar").select("*").eq("id", id).single();
@@ -90,7 +98,7 @@ window.baixarPagamento = async (id) => {
 };
 
 window.estornarPagamento = async (id) => {
-  if (globalLock || isVisualizador) return;
+  if (!usuarioEhAdmin() || globalLock) return;
   globalLock = true; travarBotoesTabela(true);
   try {
     const { data: item } = await _supabase.from("contas_pagar").select("*").eq("id", id).single();
@@ -102,11 +110,7 @@ window.estornarPagamento = async (id) => {
 
 async function carregarTudo() {
   const { dataInicio, dataFim } = obterPeriodoFiltro();
-  
-  if (isVisualizador) {
-      if (document.getElementById("containerAcoesTopo")) document.getElementById("containerAcoesTopo").style.display = 'none';
-      if (document.getElementById("thAcoes")) document.getElementById("thAcoes").style.display = 'none';
-  }
+  aplicarPermissoesUI();
 
   const { data: bancos } = await _supabase.from("bancos").select("*").order("nome", { ascending: true });
   if (bancos) {
@@ -134,15 +138,16 @@ async function carregarTudo() {
     .map((item) => {
       const transferencia = isTransferencia(item);
       let colAcoes = "";
-      if (!isVisualizador) {
-          colAcoes = `
-            <td style="text-align:center;">
-              ${transferencia ? `<span style="color:#94a3b8;">—</span>` : item.status === "PENDENTE" 
-                ? `<button onclick="baixarPagamento('${item.id}')" class="btn-tabela btn-pagar">Pagar</button>` 
-                : `<button onclick="estornarPagamento('${item.id}')" class="btn-tabela btn-estornar">Estornar</button>`}
-              ${transferencia ? "" : `<button onclick="editarRegistro('${item.id}')" class="btn-tabela btn-editar">✎</button>`}
-              ${transferencia ? "" : `<button onclick="excluirRegistro('${item.id}')" class="btn-tabela btn-excluir">🗑</button>`}
-            </td>`;
+      
+      if (usuarioEhAdmin()) {
+        colAcoes = `
+          <td style="text-align:center;">
+            ${transferencia ? `<span style="color:#94a3b8;">—</span>` : item.status === "PENDENTE" 
+              ? `<button onclick="baixarPagamento('${item.id}')" class="btn-tabela btn-pagar">Pagar</button>` 
+              : `<button onclick="estornarPagamento('${item.id}')" class="btn-tabela btn-estornar">Estornar</button>`}
+            ${transferencia ? "" : `<button onclick="editarRegistro('${item.id}')" class="btn-tabela btn-editar">✎</button>`}
+            ${transferencia ? "" : `<button onclick="excluirRegistro('${item.id}')" class="btn-tabela btn-excluir">🗑</button>`}
+          </td>`;
       }
 
       return `
@@ -157,16 +162,23 @@ async function carregarTudo() {
     }).join("");
 }
 
-window.salvarLancamento = async () => { if(isVisualizador) return; };
-window.excluirRegistro = async (id) => { if(isVisualizador || !confirm("Excluir?")) return; };
-window.editarRegistro = async (id) => { if(isVisualizador) return; };
-window.abrirModal = (t) => { if(isVisualizador) return; document.getElementById("modalFinanceiro").style.display = "block"; };
-window.abrirModalTransferencia = () => { if(isVisualizador) return; document.getElementById("modalTransferencia").style.display = "block"; };
+// Funções de Modal e Escrita
+window.abrirModal = (t) => { if(!usuarioEhAdmin()) return; document.getElementById("modalFinanceiro").style.display = "block"; };
 window.fecharModais = () => document.getElementById("modalFinanceiro").style.display = "none";
+window.abrirModalTransferencia = () => { if(!usuarioEhAdmin()) return; document.getElementById("modalTransferencia").style.display = "block"; };
 window.fecharModalTransferencia = () => document.getElementById("modalTransferencia").style.display = "none";
 
-document.addEventListener("DOMContentLoaded", () => {
+async function iniciarPagina() {
+  try {
+      // Tenta ler a role salva pelo login ou usa viewer
+      roleUsuario = localStorage.getItem('userRole') || "viewer";
+  } catch (e) {
+      console.warn("Erro ao ler permissões");
+  }
+
   preencherFiltroAno();
   definirFiltroMesAtual();
   carregarTudo();
-});
+}
+
+document.addEventListener("DOMContentLoaded", iniciarPagina);
