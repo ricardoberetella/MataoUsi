@@ -1,126 +1,287 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Financeiro - Matão Usinagem</title>
-    <style>
-        :root { --bg: #0b1120; --card: #1e293b; --blue: #38bdf8; --green: #22c55e; --red: #ef4444; --orange: #f59e0b; --border: #334155; --purple: #a855f7; }
-        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; padding: 15px; }
-        .container { max-width: 1200px; margin: auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .btn-voltar { color: var(--blue); text-decoration: none; border: 1px solid var(--blue); padding: 8px 15px; border-radius: 6px; }
-        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
-        .card { background: var(--card); padding: 15px; border-radius: 10px; text-align: center; border: 1px solid var(--border); }
-        .card small { color: #94a3b8; display: block; font-size: 10px; margin-bottom: 5px; }
-        .valor { font-size: 1.2rem; font-weight: bold; }
-        .btn-main { flex: 1; padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
-        .tabela-wrap { background: var(--card); border-radius: 10px; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; }
-        th { background: #0f172a; padding: 12px; text-align: left; color: var(--blue); font-size: 11px; }
-        td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
-        .btn-tabela { padding: 6px 10px; border-radius: 4px; border: none; cursor: pointer; color: white; font-weight: bold; margin-right: 3px; }
-        .btn-pagar { background: var(--green); }
-        .btn-estornar { background: var(--orange); }
-        .btn-editar { background: var(--blue); }
-        .btn-excluir { background: var(--red); }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 999; }
-        .modal-content { background: var(--card); margin: 6% auto; padding: 20px; width: 90%; max-width: 380px; border-radius: 12px; border: 1px solid var(--blue); }
-        input, select { width: 100%; padding: 12px; margin-top: 10px; background: #0f172a; border: 1px solid var(--border); color: white; border-radius: 6px; box-sizing: border-box; }
-        .btn-salvar { width: 100%; padding: 15px; background: var(--blue); border: none; border-radius: 6px; margin-top: 20px; font-weight: bold; cursor: pointer; color: white; }
-        .filtros-wrap { display:flex; gap:10px; margin-bottom:20px; align-items:end; flex-wrap:wrap; }
-        .filtro-box { min-width: 140px; }
-        .filtro-box label { display:block; font-size:12px; color:#94a3b8; margin-bottom:6px; }
-        .btn-filtro-atual { padding:10px 14px; background:#334155; color:white; border:none; border-radius:6px; cursor:pointer; height:42px; }
-        .acoes-topo { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
-        .texto-info-transferencia { font-size: 12px; color: #94a3b8; margin-top: 8px; line-height: 1.4; }
-    </style>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Extrato Financeiro</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Segoe UI;
+background:radial-gradient(circle at top,#0b1224,#020617 70%);
+color:white;
+}
+
+.container{
+max-width:1200px;
+margin:auto;
+padding:30px;
+}
+
+.topo{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:30px;
+}
+
+h1{
+color:#38bdf8;
+margin:0;
+}
+
+.btn-voltar{
+background:#020617;
+border:1px solid #38bdf8;
+color:#38bdf8;
+padding:8px 18px;
+border-radius:8px;
+cursor:pointer;
+}
+
+.cards{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:20px;
+margin-bottom:30px;
+}
+
+.card{
+background:#1e293b;
+padding:20px;
+border-radius:10px;
+text-align:center;
+}
+
+.card h3{
+font-size:14px;
+color:#94a3b8;
+margin-bottom:10px;
+}
+
+.card span{
+font-size:22px;
+font-weight:bold;
+}
+
+.receber{color:#22c55e}
+.pagar{color:#ef4444}
+.aplicacao{color:#a855f7}
+
+.filtros{
+display:flex;
+gap:20px;
+margin-bottom:20px;
+align-items:center;
+}
+
+select{
+padding:10px;
+border-radius:8px;
+border:none;
+background:#020617;
+color:white;
+}
+
+button{
+cursor:pointer;
+}
+
+.tabela{
+width:100%;
+border-collapse:collapse;
+}
+
+.tabela th{
+text-align:left;
+color:#38bdf8;
+padding:10px;
+border-bottom:2px solid #334155;
+}
+
+.tabela td{
+padding:10px;
+border-bottom:1px solid #334155;
+}
+
+.hidden{
+display:none;
+}
+
+.btn-tabela{
+padding:4px 8px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+.btn-pagar{background:#22c55e}
+.btn-estornar{background:#f59e0b}
+.btn-editar{background:#38bdf8}
+.btn-excluir{background:#ef4444}
+
+.modal{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.6);
+}
+
+.modal-content{
+background:#020617;
+padding:30px;
+border-radius:10px;
+max-width:500px;
+margin:80px auto;
+}
+
+input,select{
+width:100%;
+padding:10px;
+margin-bottom:10px;
+border-radius:8px;
+border:none;
+}
+
+</style>
+
 </head>
+
 <body>
-    <div class="container">
-        <div class="header">
-            <h2 style="color: var(--blue);">Extrato Financeiro</h2>
-            <a href="dashboard.html" class="btn-voltar">← Voltar</a>
-        </div>
 
-        <div class="dashboard">
-            <div class="card"><small>RECEBER</small><div id="resumoReceber" class="valor" style="color: var(--green);">R$ 0,00</div></div>
-            <div class="card"><small>A PAGAR</small><div id="resumoPagar" class="valor" style="color: var(--red);">R$ 0,00</div></div>
-            <div class="card"><small>SICOOB</small><div id="resumoSicoob" class="valor">R$ 0,00</div></div>
-            <div class="card"><small>CAIXA</small><div id="resumoCaixa" class="valor">R$ 0,00</div></div>
-            <div class="card"><small>APLICAÇÃO</small><div id="resumoAplicacao" class="valor" style="color: #a855f7;">R$ 0,00</div></div>
-        </div>
+<div class="container">
 
-        <div class="acoes-topo" id="containerAcoesTopo">
-            <button onclick="abrirModal('LANÇAR DEBITO')" class="btn-main" style="background: var(--red);">- Débito</button>
-            <button onclick="abrirModal('LANÇAR CREDITO')" class="btn-main" style="background: var(--green);">+ Crédito</button>
-            <button onclick="abrirModalTransferencia()" class="btn-main" style="background: var(--purple);">↔ Transferência</button>
-        </div>
+<div class="topo">
 
-        <div class="filtros-wrap">
-            <div class="filtro-box">
-                <label for="filtroMes">Mês</label>
-                <select id="filtroMes" onchange="carregarTudo()">
-                    <option value="1">Janeiro</option><option value="2">Fevereiro</option>
-                    <option value="3">Março</option><option value="4">Abril</option>
-                    <option value="5">Maio</option><option value="6">Junho</option>
-                    <option value="7">Julho</option><option value="8">Agosto</option>
-                    <option value="9">Setembro</option><option value="10">Outubro</option>
-                    <option value="11">Novembro</option><option value="12">Dezembro</option>
-                </select>
-            </div>
-            <div class="filtro-box">
-                <label for="filtroAno">Ano</label>
-                <select id="filtroAno" onchange="carregarTudo()"></select>
-            </div>
-            <button onclick="limparFiltroMesAno()" class="btn-filtro-atual">Mês Atual</button>
-        </div>
+<h1>Extrato Financeiro</h1>
 
-        <div class="tabela-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>DATA</th>
-                        <th>BANCO</th>
-                        <th>DESCRIÇÃO</th>
-                        <th>VALOR</th>
-                        <th>STATUS</th>
-                        <th id="thAcoes" style="text-align: center;">AÇÕES</th>
-                    </tr>
-                </thead>
-                <tbody id="listaFinanceiro"></tbody>
-            </table>
-        </div>
-    </div>
+<button class="btn-voltar" onclick="window.location.href='dashboard.html'">
+← Voltar
+</button>
 
-    <div id="modalFinanceiro" class="modal">
-        <div class="modal-content">
-            <h3 id="modalTitulo" style="color: var(--blue); margin-top: 0;">Lançar</h3>
-            <input type="hidden" id="editId">
-            <input type="date" id="campoData" onclick="this.showPicker()">
-            <select id="campoBanco"></select>
-            <input type="text" id="campoDescricao" placeholder="Descrição">
-            <input type="number" step="0.01" id="campoValor" placeholder="Valor 0,00">
-            <button onclick="salvarLancamento()" class="btn-salvar">SALVAR AGENDAMENTO</button>
-            <button onclick="fecharModais()" style="width:100%; background:none; border:none; color:#94a3b8; margin-top:10px; cursor:pointer;">Cancelar</button>
-        </div>
-    </div>
+</div>
 
-    <div id="modalTransferencia" class="modal">
-        <div class="modal-content">
-            <h3 style="color: var(--purple); margin-top: 0;">Transferência entre contas</h3>
-            <input type="date" id="transferData" onclick="this.showPicker()">
-            <select id="transferOrigem"></select>
-            <select id="transferDestino"></select>
-            <input type="number" step="0.01" id="transferValor" placeholder="Valor 0,00">
-            <input type="text" id="transferDescricao" placeholder="Descrição opcional">
-            <button onclick="salvarTransferencia()" class="btn-salvar" style="background: var(--purple);">SALVAR TRANSFERÊNCIA</button>
-            <button onclick="fecharModalTransferencia()" style="width:100%; background:none; border:none; color:#94a3b8; margin-top:10px; cursor:pointer;">Cancelar</button>
-        </div>
-    </div>
+<div class="cards">
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/auth.js"></script> 
-    <script src="js/contas_pagar.js"></script>
+<div class="card">
+<h3>RECEBER</h3>
+<span id="resumoReceber" class="receber">R$ 0,00</span>
+</div>
+
+<div class="card">
+<h3>A PAGAR</h3>
+<span id="resumoPagar" class="pagar">R$ 0,00</span>
+</div>
+
+<div class="card">
+<h3>SICOOB</h3>
+<span id="resumoSicoob">R$ 0,00</span>
+</div>
+
+<div class="card">
+<h3>CAIXA</h3>
+<span id="resumoCaixa">R$ 0,00</span>
+</div>
+
+<div class="card">
+<h3>APLICAÇÃO</h3>
+<span id="resumoAplicacao" class="aplicacao">R$ 0,00</span>
+</div>
+
+</div>
+
+<div class="filtros">
+
+<div>
+<label>Mês</label>
+<select id="filtroMes">
+<option value="1">Janeiro</option>
+<option value="2">Fevereiro</option>
+<option value="3">Março</option>
+<option value="4">Abril</option>
+<option value="5">Maio</option>
+<option value="6">Junho</option>
+<option value="7">Julho</option>
+<option value="8">Agosto</option>
+<option value="9">Setembro</option>
+<option value="10">Outubro</option>
+<option value="11">Novembro</option>
+<option value="12">Dezembro</option>
+</select>
+</div>
+
+<div>
+<label>Ano</label>
+<select id="filtroAno"></select>
+</div>
+
+<button onclick="limparFiltroMesAno()">Mês Atual</button>
+
+</div>
+
+<table class="tabela">
+
+<thead>
+
+<tr>
+
+<th>DATA</th>
+<th>BANCO</th>
+<th>DESCRIÇÃO</th>
+<th>VALOR</th>
+<th>STATUS</th>
+<th id="colunaAcoes">AÇÕES</th>
+
+</tr>
+
+</thead>
+
+<tbody id="listaFinanceiro"></tbody>
+
+</table>
+
+</div>
+
+<!-- MODAL -->
+
+<div id="modalFinanceiro" class="modal">
+
+<div class="modal-content">
+
+<h2 id="modalTitulo">NOVO</h2>
+
+<input type="hidden" id="editId">
+
+<label>Data</label>
+<input type="date" id="campoData">
+
+<label>Banco</label>
+<select id="campoBanco"></select>
+
+<label>Descrição</label>
+<input id="campoDescricao">
+
+<label>Valor</label>
+<input id="campoValor" type="number">
+
+<button onclick="salvarLancamento()">Salvar</button>
+
+<button onclick="fecharModais()">Cancelar</button>
+
+</div>
+
+</div>
+
+<!-- JS -->
+
+<script type="module" src="js/contas_pagar.js"></script>
+
 </body>
 </html>
