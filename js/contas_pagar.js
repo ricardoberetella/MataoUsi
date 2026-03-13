@@ -2,11 +2,15 @@ const SUPABASE_URL = "https://uxtgicfuggpuyjybwawa.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg";
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Lógica de perfil por URL
+// Lógica de perfil por URL para teste rápido
 const params = new URLSearchParams(window.location.search);
-const isVisualizador = params.get('perfil') === 'view';
+let isVisualizador = params.get('perfil') === 'view';
 
 let globalLock = false;
+
+// Tenta detectar o perfil pelo localStorage (vindo do auth.js) caso não esteja na URL
+const userRole = localStorage.getItem('userRole'); 
+if (userRole === 'viewer') isVisualizador = true;
 
 const fmt = (v) =>
   new Intl.NumberFormat("pt-BR", {
@@ -15,7 +19,7 @@ const fmt = (v) =>
   }).format(Number(v || 0));
 
 function travarBotoesTabela(travar) {
-  if (isVisualizador) return; // Não precisa travar o que não existe
+  if (isVisualizador) return;
   document.querySelectorAll(".btn-tabela").forEach((b) => {
     b.disabled = travar;
     b.style.opacity = travar ? "0.3" : "1";
@@ -99,7 +103,6 @@ window.estornarPagamento = async (id) => {
 async function carregarTudo() {
   const { dataInicio, dataFim } = obterPeriodoFiltro();
   
-  // Esconder elementos de Admin se for visualizador
   if (isVisualizador) {
       if (document.getElementById("containerAcoesTopo")) document.getElementById("containerAcoesTopo").style.display = 'none';
       if (document.getElementById("thAcoes")) document.getElementById("thAcoes").style.display = 'none';
@@ -130,8 +133,6 @@ async function carregarTudo() {
   listaFinanceiro.innerHTML = (lista || [])
     .map((item) => {
       const transferencia = isTransferencia(item);
-      
-      // Coluna de ações condicional
       let colAcoes = "";
       if (!isVisualizador) {
           colAcoes = `
@@ -152,20 +153,15 @@ async function carregarTudo() {
           <td style="color: ${Number(item.valor) < 0 ? "#ef4444" : "#22c55e"}">${fmt(item.valor)}</td>
           <td style="font-weight:bold; color: ${item.status === "PENDENTE" ? "#f59e0b" : "#38bdf8"}">${item.status}</td>
           ${colAcoes}
-        </tr>
-      `;
-    })
-    .join("");
+        </tr>`;
+    }).join("");
 }
 
-// Bloqueio extra para funções de escrita
-window.salvarLancamento = async () => { if(isVisualizador) return; /* ... lógica original ... */ };
-window.excluirRegistro = async (id) => { if(isVisualizador || !confirm("Excluir?")) return; /* ... */ };
-window.editarRegistro = async (id) => { if(isVisualizador) return; /* ... */ };
-window.abrirModal = (t) => { if(isVisualizador) return; document.getElementById("modalFinanceiro").style.display = "block"; /* ... */ };
+window.salvarLancamento = async () => { if(isVisualizador) return; };
+window.excluirRegistro = async (id) => { if(isVisualizador || !confirm("Excluir?")) return; };
+window.editarRegistro = async (id) => { if(isVisualizador) return; };
+window.abrirModal = (t) => { if(isVisualizador) return; document.getElementById("modalFinanceiro").style.display = "block"; };
 window.abrirModalTransferencia = () => { if(isVisualizador) return; document.getElementById("modalTransferencia").style.display = "block"; };
-
-// Mantive as funções auxiliares originais para fechar modais e carregar dados
 window.fecharModais = () => document.getElementById("modalFinanceiro").style.display = "none";
 window.fecharModalTransferencia = () => document.getElementById("modalTransferencia").style.display = "none";
 
