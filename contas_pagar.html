@@ -61,26 +61,18 @@
             <div class="filtro-box">
                 <label for="filtroMes">Mês</label>
                 <select id="filtroMes" onchange="carregarTudo()">
-                    <option value="1">Janeiro</option>
-                    <option value="2">Fevereiro</option>
-                    <option value="3">Março</option>
-                    <option value="4">Abril</option>
-                    <option value="5">Maio</option>
-                    <option value="6">Junho</option>
-                    <option value="7">Julho</option>
-                    <option value="8">Agosto</option>
-                    <option value="9">Setembro</option>
-                    <option value="10">Outubro</option>
-                    <option value="11">Novembro</option>
-                    <option value="12">Dezembro</option>
+                    <option value="1">Janeiro</option><option value="2">Fevereiro</option>
+                    <option value="3">Março</option><option value="4">Abril</option>
+                    <option value="5">Maio</option><option value="6">Junho</option>
+                    <option value="7">Julho</option><option value="8">Agosto</option>
+                    <option value="9">Setembro</option><option value="10">Outubro</option>
+                    <option value="11">Novembro</option><option value="12">Dezembro</option>
                 </select>
             </div>
-
             <div class="filtro-box">
                 <label for="filtroAno">Ano</label>
                 <select id="filtroAno" onchange="carregarTudo()"></select>
             </div>
-
             <button onclick="limparFiltroMesAno()" class="btn-filtro-atual">Mês Atual</button>
         </div>
 
@@ -122,15 +114,13 @@
             <select id="transferDestino"></select>
             <input type="number" step="0.01" id="transferValor" placeholder="Valor 0,00">
             <input type="text" id="transferDescricao" placeholder="Descrição opcional">
-            <div class="texto-info-transferencia">
-                A transferência debita da conta de origem e credita na conta de destino, registrando os dois lançamentos no extrato.
-            </div>
             <button onclick="salvarTransferencia()" class="btn-salvar" style="background: var(--purple);">SALVAR TRANSFERÊNCIA</button>
             <button onclick="fecharModalTransferencia()" style="width:100%; background:none; border:none; color:#94a3b8; margin-top:10px; cursor:pointer;">Cancelar</button>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/auth.js"></script> 
     <script src="js/contas_pagar.js"></script>
 </body>
 </html>
