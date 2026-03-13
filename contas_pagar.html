@@ -51,7 +51,7 @@
             <div class="card"><small>APLICAÇÃO</small><div id="resumoAplicacao" class="valor" style="color: #a855f7;">R$ 0,00</div></div>
         </div>
 
-        <div class="acoes-topo">
+        <div class="acoes-topo" id="containerAcoesTopo">
             <button onclick="abrirModal('LANÇAR DEBITO')" class="btn-main" style="background: var(--red);">- Débito</button>
             <button onclick="abrirModal('LANÇAR CREDITO')" class="btn-main" style="background: var(--green);">+ Crédito</button>
             <button onclick="abrirModalTransferencia()" class="btn-main" style="background: var(--purple);">↔ Transferência</button>
@@ -93,7 +93,7 @@
                         <th>DESCRIÇÃO</th>
                         <th>VALOR</th>
                         <th>STATUS</th>
-                        <th style="text-align: center;">AÇÕES</th>
+                        <th id="thAcoes" style="text-align: center;">AÇÕES</th>
                     </tr>
                 </thead>
                 <tbody id="listaFinanceiro"></tbody>
