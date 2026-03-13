@@ -1,4 +1,4 @@
-import { supabase, protegerPagina, obterRole } from "./auth.js";
+import { supabase, protegerPagina } from "./auth.js";
 
 const _supabase = supabase;
 
@@ -15,16 +15,27 @@ function usuarioEhAdmin() {
   return roleUsuario === "admin";
 }
 
+async function carregarRoleUsuario() {
+  const { data, error } = await _supabase.auth.getSession();
+
+  if (error || !data?.session?.user) {
+    roleUsuario = "viewer";
+    return;
+  }
+
+  roleUsuario = data.session.user.user_metadata?.role || "viewer";
+}
+
 function aplicarPermissoesUI() {
   const acoesTopo = document.getElementById("acoesTopo");
   const colunaAcoes = document.getElementById("colunaAcoes");
 
   if (!usuarioEhAdmin()) {
-    if (acoesTopo) acoesTopo.classList.add("hidden");
-    if (colunaAcoes) colunaAcoes.classList.add("hidden");
+    if (acoesTopo) acoesTopo.style.display = "none";
+    if (colunaAcoes) colunaAcoes.style.display = "none";
   } else {
-    if (acoesTopo) acoesTopo.classList.remove("hidden");
-    if (colunaAcoes) colunaAcoes.classList.remove("hidden");
+    if (acoesTopo) acoesTopo.style.display = "flex";
+    if (colunaAcoes) colunaAcoes.style.display = "";
   }
 }
 
@@ -337,7 +348,7 @@ async function carregarTudo() {
           <td>${item.descricao || ""}</td>
           <td style="color: ${Number(item.valor) < 0 ? "#ef4444" : "#22c55e"}">${fmt(item.valor)}</td>
           <td style="font-weight:bold; color: ${item.status === "PENDENTE" ? "#f59e0b" : "#38bdf8"}">${item.status}</td>
-          <td class="${usuarioEhAdmin() ? "" : "hidden"}" style="text-align:center;">
+          <td style="text-align:center; ${usuarioEhAdmin() ? "" : "display:none;"}">
             ${acoesHtml}
           </td>
         </tr>
@@ -603,7 +614,7 @@ window.salvarTransferencia = async () => {
 
 async function iniciarPagina() {
   await protegerPagina();
-  roleUsuario = (await obterRole()) || "viewer";
+  await carregarRoleUsuario();
 
   preencherFiltroAno();
   definirFiltroMesAtual();
