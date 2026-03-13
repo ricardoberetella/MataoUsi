@@ -1,333 +1,472 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Extrato Financeiro</title>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    *{
+      box-sizing:border-box;
+    }
 
-<title>Extrato Financeiro</title>
+    body{
+      margin:0;
+      font-family:Segoe UI, Arial, sans-serif;
+      background:radial-gradient(circle at top,#0b1224,#020617 70%);
+      color:#fff;
+    }
 
-<style>
+    .container{
+      width:100%;
+      max-width:1400px;
+      margin:auto;
+      padding:20px 24px 30px;
+    }
 
-*{
-box-sizing:border-box;
-}
+    .topo{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:16px;
+      margin-bottom:14px;
+      flex-wrap:wrap;
+    }
 
-body{
-margin:0;
-font-family:Segoe UI, Arial, sans-serif;
-background:radial-gradient(circle at top,#0b1224,#020617 70%);
-color:white;
-}
+    h1{
+      color:#38bdf8;
+      margin:0;
+      font-size:28px;
+      line-height:1.1;
+    }
 
-.container{
-width:100%;
-max-width:1400px;
-margin:auto;
-padding:20px 24px 30px;
-}
+    .topo-direita{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
 
-.topo{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:15px;
-flex-wrap:wrap;
-}
+    #containerAcoesTopo{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
 
-h1{
-color:#38bdf8;
-margin:0;
-font-size:28px;
-}
+    .btn-topo,
+    .btn-voltar-menu,
+    .btn-filtro,
+    .btn-modal,
+    .btn-cancelar{
+      border:none;
+      border-radius:10px;
+      padding:10px 16px;
+      cursor:pointer;
+      font-weight:700;
+      font-size:14px;
+      transition:0.2s;
+      white-space:nowrap;
+    }
 
-.topo-direita{
-display:flex;
-gap:10px;
-align-items:center;
-}
+    .btn-topo:hover,
+    .btn-voltar-menu:hover,
+    .btn-filtro:hover,
+    .btn-modal:hover,
+    .btn-cancelar:hover{
+      transform:translateY(-1px);
+      filter:brightness(1.05);
+    }
 
-.btn-voltar,
-.btn-topo{
-border:none;
-border-radius:8px;
-padding:8px 14px;
-cursor:pointer;
-font-weight:600;
-}
+    .btn-credito{
+      background:#22c55e;
+      color:#04130a;
+    }
 
-.btn-voltar{
-background:#020617;
-border:1px solid #38bdf8;
-color:#38bdf8;
-}
+    .btn-debito{
+      background:#ef4444;
+      color:#fff;
+    }
 
-.btn-topo{
-background:#38bdf8;
-color:#001018;
-}
+    .btn-transferencia{
+      background:#38bdf8;
+      color:#001018;
+    }
 
-/* ===== CARDS COMPACTOS ===== */
+    .btn-voltar-menu{
+      background:transparent;
+      border:1px solid #38bdf8;
+      color:#38bdf8;
+      min-width:170px;
+      text-align:center;
+      box-shadow:0 0 0 1px rgba(56,189,248,0.12) inset;
+    }
 
-.cards{
-display:flex;
-gap:10px;
-margin-bottom:12px;
-}
+    .cards{
+      display:flex;
+      gap:10px;
+      margin-bottom:12px;
+      flex-wrap:nowrap;
+    }
 
-.card{
-flex:1;
-background:linear-gradient(180deg,#1e293b,#0f172a);
-border:1px solid #334155;
-padding:10px 6px;
-border-radius:10px;
-text-align:center;
-height:65px;
-display:flex;
-flex-direction:column;
-justify-content:center;
-}
+    .card{
+      flex:1;
+      background:linear-gradient(180deg,#1e293b,#0f172a);
+      border:1px solid #334155;
+      padding:10px 6px;
+      border-radius:10px;
+      text-align:center;
+      height:78px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      min-width:0;
+    }
 
-.card h3{
-font-size:11px;
-color:#94a3b8;
-margin:0 0 3px 0;
-}
+    .card h3{
+      font-size:11px;
+      color:#94a3b8;
+      margin:0 0 5px 0;
+      font-weight:700;
+    }
 
-.card span{
-font-size:16px;
-font-weight:bold;
-}
+    .card span{
+      font-size:16px;
+      font-weight:700;
+      line-height:1.2;
+    }
 
-.receber{color:#22c55e}
-.pagar{color:#ef4444}
-.aplicacao{color:#a855f7}
+    .receber{color:#22c55e;}
+    .pagar{color:#ef4444;}
+    .aplicacao{color:#a855f7;}
 
-/* ===== FILTROS ===== */
+    .filtros{
+      display:flex;
+      gap:12px;
+      margin-bottom:18px;
+      align-items:end;
+      flex-wrap:wrap;
+      background:#0f172a;
+      border:1px solid #334155;
+      border-radius:14px;
+      padding:14px;
+    }
 
-.filtros{
-display:flex;
-gap:12px;
-margin-bottom:15px;
-align-items:end;
-flex-wrap:wrap;
-background:#0f172a;
-border:1px solid #334155;
-border-radius:10px;
-padding:10px;
-}
+    .campo-filtro{
+      display:flex;
+      flex-direction:column;
+      gap:5px;
+      min-width:120px;
+    }
 
-.campo-filtro{
-display:flex;
-flex-direction:column;
-gap:4px;
-}
+    label{
+      font-size:12px;
+      color:#cbd5e1;
+      font-weight:600;
+    }
 
-label{
-font-size:12px;
-color:#cbd5e1;
-}
+    select,
+    input{
+      width:100%;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid #334155;
+      background:#020617;
+      color:#fff;
+      outline:none;
+    }
 
-select,input{
-padding:8px;
-border-radius:8px;
-border:1px solid #334155;
-background:#020617;
-color:white;
-}
+    select:focus,
+    input:focus{
+      border-color:#38bdf8;
+      box-shadow:0 0 0 2px rgba(56,189,248,0.15);
+    }
 
-.btn-filtro{
-background:#1e293b;
-color:white;
-border:1px solid #334155;
-padding:8px 14px;
-border-radius:8px;
-cursor:pointer;
-}
+    .btn-filtro{
+      background:#334155;
+      color:#fff;
+      border:1px solid #475569;
+      height:42px;
+    }
 
-/* ===== TABELA ===== */
+    .tabela-wrap{
+      overflow:auto;
+      border-radius:16px;
+      border:1px solid #334155;
+      background:#0f172a;
+    }
 
-.tabela-wrap{
-overflow:auto;
-border-radius:12px;
-border:1px solid #334155;
-background:#0f172a;
-}
+    .tabela{
+      width:100%;
+      border-collapse:collapse;
+      min-width:900px;
+    }
 
-.tabela{
-width:100%;
-border-collapse:collapse;
-min-width:850px;
-}
+    .tabela th{
+      text-align:left;
+      color:#38bdf8;
+      padding:16px 12px;
+      border-bottom:2px solid #334155;
+      font-size:14px;
+      white-space:nowrap;
+      background:#0f172a;
+    }
 
-.tabela th{
-text-align:left;
-color:#38bdf8;
-padding:12px;
-border-bottom:2px solid #334155;
-}
+    .tabela td{
+      padding:14px 12px;
+      border-bottom:1px solid #334155;
+      vertical-align:middle;
+    }
 
-.tabela td{
-padding:10px;
-border-bottom:1px solid #334155;
-}
+    .tabela tr:hover td{
+      background:#162033;
+    }
 
-.tabela tr:hover td{
-background:#1e293b;
-}
+    .btn-tabela{
+      padding:7px 10px;
+      border:none;
+      border-radius:8px;
+      cursor:pointer;
+      font-size:12px;
+      font-weight:700;
+      margin:2px;
+      color:#fff;
+    }
 
-.btn-tabela{
-padding:5px 8px;
-border:none;
-border-radius:6px;
-cursor:pointer;
-font-size:12px;
-margin:2px;
-color:white;
-}
+    .btn-pagar{background:#16a34a;}
+    .btn-estornar{background:#d97706;}
+    .btn-editar{background:#0284c7;}
+    .btn-excluir{background:#dc2626;}
 
-.btn-pagar{background:#16a34a}
-.btn-estornar{background:#d97706}
-.btn-editar{background:#0284c7}
-.btn-excluir{background:#dc2626}
+    .hidden{
+      display:none !important;
+    }
 
-.modal{
-display:none;
-position:fixed;
-inset:0;
-background:rgba(0,0,0,0.7);
-padding:20px;
-}
+    .modal{
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.72);
+      z-index:999;
+      padding:20px;
+      overflow:auto;
+    }
 
-.modal-content{
-background:#0f172a;
-border:1px solid #334155;
-padding:20px;
-border-radius:12px;
-max-width:450px;
-margin:60px auto;
-}
+    .modal-content{
+      background:#0f172a;
+      border:1px solid #334155;
+      padding:22px;
+      border-radius:16px;
+      max-width:500px;
+      margin:50px auto;
+      box-shadow:0 20px 50px rgba(0,0,0,0.35);
+    }
 
-</style>
+    .modal-content h2{
+      margin:0 0 18px 0;
+      color:#38bdf8;
+      font-size:24px;
+    }
 
+    .acoes-modal{
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+      margin-top:8px;
+    }
+
+    .btn-modal{
+      background:#38bdf8;
+      color:#001018;
+    }
+
+    .btn-cancelar{
+      background:#334155;
+      color:#fff;
+    }
+
+    @media (max-width: 1100px){
+      .cards{
+        flex-wrap:wrap;
+      }
+
+      .card{
+        min-width:180px;
+      }
+    }
+
+    @media (max-width: 760px){
+      .topo{
+        flex-direction:column;
+        align-items:stretch;
+      }
+
+      .topo-direita,
+      #containerAcoesTopo{
+        justify-content:flex-start;
+      }
+
+      .btn-voltar-menu{
+        min-width:auto;
+      }
+
+      .cards{
+        flex-direction:column;
+      }
+    }
+  </style>
 </head>
-
 <body>
 
-<div class="container">
+  <div class="container">
 
-<div class="topo">
+    <div class="topo">
+      <h1>Extrato Financeiro</h1>
 
-<h1>Extrato Financeiro</h1>
+      <div class="topo-direita">
+        <div id="containerAcoesTopo">
+          <button class="btn-topo btn-credito" onclick="abrirModal('NOVO CREDITO')">+ Crédito</button>
+          <button class="btn-topo btn-debito" onclick="abrirModal('NOVO DEBITO')">+ Débito</button>
+          <button class="btn-topo btn-transferencia" onclick="abrirModalTransferencia()">⇄ Transferência</button>
+        </div>
 
-<div class="topo-direita">
+        <button class="btn-voltar-menu" onclick="window.location.href='dashboard.html'">
+          ← Voltar ao Menu
+        </button>
+      </div>
+    </div>
 
-<div id="containerAcoesTopo">
-<button class="btn-topo" onclick="abrirModal('NOVO CREDITO')">+ Crédito</button>
-<button class="btn-topo" onclick="abrirModal('NOVO DEBITO')">+ Débito</button>
-<button class="btn-topo" onclick="abrirModalTransferencia()">⇄ Transferência</button>
-</div>
+    <div class="cards">
+      <div class="card">
+        <h3>RECEBER</h3>
+        <span id="resumoReceber" class="receber">R$ 0,00</span>
+      </div>
 
-<button class="btn-voltar" onclick="window.location.href='dashboard.html'">
-← Voltar
-</button>
+      <div class="card">
+        <h3>A PAGAR</h3>
+        <span id="resumoPagar" class="pagar">R$ 0,00</span>
+      </div>
 
-</div>
+      <div class="card">
+        <h3>SICOOB</h3>
+        <span id="resumoSicoob">R$ 0,00</span>
+      </div>
 
-</div>
+      <div class="card">
+        <h3>CAIXA FEDERAL</h3>
+        <span id="resumoCaixa">R$ 0,00</span>
+      </div>
 
-<!-- CARDS -->
+      <div class="card">
+        <h3>APLICAÇÃO</h3>
+        <span id="resumoAplicacao" class="aplicacao">R$ 0,00</span>
+      </div>
+    </div>
 
-<div class="cards">
+    <div class="filtros">
+      <div class="campo-filtro">
+        <label for="filtroMes">Mês</label>
+        <select id="filtroMes">
+          <option value="1">Janeiro</option>
+          <option value="2">Fevereiro</option>
+          <option value="3">Março</option>
+          <option value="4">Abril</option>
+          <option value="5">Maio</option>
+          <option value="6">Junho</option>
+          <option value="7">Julho</option>
+          <option value="8">Agosto</option>
+          <option value="9">Setembro</option>
+          <option value="10">Outubro</option>
+          <option value="11">Novembro</option>
+          <option value="12">Dezembro</option>
+        </select>
+      </div>
 
-<div class="card">
-<h3>RECEBER</h3>
-<span id="resumoReceber" class="receber">R$ 0,00</span>
-</div>
+      <div class="campo-filtro">
+        <label for="filtroAno">Ano</label>
+        <select id="filtroAno"></select>
+      </div>
 
-<div class="card">
-<h3>A PAGAR</h3>
-<span id="resumoPagar" class="pagar">R$ 0,00</span>
-</div>
+      <button class="btn-filtro" onclick="limparFiltroMesAno()">Mês Atual</button>
+    </div>
 
-<div class="card">
-<h3>SICOOB</h3>
-<span id="resumoSicoob">R$ 0,00</span>
-</div>
+    <div class="tabela-wrap">
+      <table class="tabela">
+        <thead>
+          <tr>
+            <th>DATA</th>
+            <th>BANCO</th>
+            <th>DESCRIÇÃO</th>
+            <th>VALOR</th>
+            <th>STATUS</th>
+            <th id="thAcoes">AÇÕES</th>
+          </tr>
+        </thead>
 
-<div class="card">
-<h3>CAIXA FEDERAL</h3>
-<span id="resumoCaixa">R$ 0,00</span>
-</div>
+        <tbody id="listaFinanceiro">
+          <tr>
+            <td colspan="6" style="text-align:center;color:#94a3b8;">Carregando dados...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-<div class="card">
-<h3>APLICAÇÃO</h3>
-<span id="resumoAplicacao" class="aplicacao">R$ 0,00</span>
-</div>
+  </div>
 
-</div>
+  <div id="modalFinanceiro" class="modal">
+    <div class="modal-content">
+      <h2 id="modalTitulo">NOVO</h2>
 
-<!-- FILTROS -->
+      <input type="hidden" id="editId">
 
-<div class="filtros">
+      <label for="campoData">Data</label>
+      <input type="date" id="campoData">
 
-<div class="campo-filtro">
-<label>Mês</label>
-<select id="filtroMes">
-<option value="1">Janeiro</option>
-<option value="2">Fevereiro</option>
-<option value="3">Março</option>
-<option value="4">Abril</option>
-<option value="5">Maio</option>
-<option value="6">Junho</option>
-<option value="7">Julho</option>
-<option value="8">Agosto</option>
-<option value="9">Setembro</option>
-<option value="10">Outubro</option>
-<option value="11">Novembro</option>
-<option value="12">Dezembro</option>
-</select>
-</div>
+      <label for="campoBanco">Banco</label>
+      <select id="campoBanco"></select>
 
-<div class="campo-filtro">
-<label>Ano</label>
-<select id="filtroAno"></select>
-</div>
+      <label for="campoDescricao">Descrição</label>
+      <input id="campoDescricao" type="text">
 
-<button class="btn-filtro" onclick="limparFiltroMesAno()">Mês Atual</button>
+      <label for="campoValor">Valor</label>
+      <input id="campoValor" type="number" step="0.01">
 
-</div>
+      <div class="acoes-modal">
+        <button class="btn-cancelar" onclick="fecharModais()">Cancelar</button>
+        <button class="btn-modal" onclick="salvarLancamento()">Salvar</button>
+      </div>
+    </div>
+  </div>
 
-<div class="tabela-wrap">
+  <div id="modalTransferencia" class="modal">
+    <div class="modal-content">
+      <h2>Nova Transferência</h2>
 
-<table class="tabela">
+      <label for="transferData">Data</label>
+      <input type="date" id="transferData">
 
-<thead>
-<tr>
-<th>DATA</th>
-<th>BANCO</th>
-<th>DESCRIÇÃO</th>
-<th>VALOR</th>
-<th>STATUS</th>
-<th id="thAcoes">AÇÕES</th>
-</tr>
-</thead>
+      <label for="transferOrigem">Conta Origem</label>
+      <select id="transferOrigem"></select>
 
-<tbody id="listaFinanceiro">
-<tr>
-<td colspan="6" style="text-align:center;color:#94a3b8">
-Carregando dados...
-</td>
-</tr>
-</tbody>
+      <label for="transferDestino">Conta Destino</label>
+      <select id="transferDestino"></select>
 
-</table>
+      <label for="transferValor">Valor</label>
+      <input type="number" id="transferValor" step="0.01">
 
-</div>
+      <label for="transferDescricao">Descrição</label>
+      <input type="text" id="transferDescricao" placeholder="Opcional">
 
-</div>
+      <div class="acoes-modal">
+        <button class="btn-cancelar" onclick="fecharModalTransferencia()">Cancelar</button>
+        <button class="btn-modal" onclick="salvarTransferencia()">Salvar</button>
+      </div>
+    </div>
+  </div>
 
-<script type="module" src="js/contas_pagar.js"></script>
-
+  <script type="module" src="js/contas_pagar.js"></script>
 </body>
 </html>
