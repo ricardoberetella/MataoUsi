@@ -18,9 +18,10 @@
     }
 
     .container{
-      max-width:1280px;
+      width:100%;
+      max-width:1400px;
       margin:auto;
-      padding:30px;
+      padding:20px 24px 30px;
     }
 
     .topo{
@@ -28,14 +29,15 @@
       justify-content:space-between;
       align-items:center;
       gap:16px;
-      margin-bottom:24px;
+      margin-bottom:18px;
       flex-wrap:wrap;
     }
 
     h1{
       color:#38bdf8;
       margin:0;
-      font-size:32px;
+      font-size:28px;
+      line-height:1.1;
     }
 
     .topo-direita{
@@ -87,30 +89,36 @@
 
     .cards{
       display:grid;
-      grid-template-columns:repeat(5,1fr);
-      gap:18px;
-      margin-bottom:28px;
+      grid-template-columns:repeat(5, 1fr);
+      gap:14px;
+      margin-bottom:16px;
     }
 
     .card{
       background:linear-gradient(180deg,#1e293b,#0f172a);
       border:1px solid #334155;
-      padding:20px;
+      padding:14px 12px;
       border-radius:14px;
       text-align:center;
+      min-height:92px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
       box-shadow:0 0 0 1px rgba(56,189,248,0.05), 0 8px 24px rgba(0,0,0,0.25);
     }
 
     .card h3{
-      font-size:13px;
+      font-size:12px;
       color:#94a3b8;
-      margin:0 0 10px 0;
-      letter-spacing:0.5px;
+      margin:0 0 8px 0;
+      letter-spacing:0.4px;
+      font-weight:700;
     }
 
     .card span{
-      font-size:22px;
+      font-size:18px;
       font-weight:700;
+      line-height:1.2;
     }
 
     .receber{color:#22c55e;}
@@ -120,13 +128,13 @@
     .filtros{
       display:flex;
       gap:14px;
-      margin-bottom:20px;
+      margin-bottom:18px;
       align-items:end;
       flex-wrap:wrap;
       background:rgba(15,23,42,0.7);
       border:1px solid #334155;
       border-radius:14px;
-      padding:16px;
+      padding:14px;
     }
 
     .campo-filtro{
@@ -268,15 +276,21 @@
       color:#94a3b8;
     }
 
-    @media (max-width: 1100px){
+    @media (max-width: 1200px){
       .cards{
-        grid-template-columns:repeat(2,1fr);
+        grid-template-columns:repeat(3, 1fr);
       }
     }
 
-    @media (max-width: 700px){
+    @media (max-width: 820px){
+      .cards{
+        grid-template-columns:repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 580px){
       .container{
-        padding:18px;
+        padding:16px;
       }
 
       .cards{
@@ -284,11 +298,7 @@
       }
 
       h1{
-        font-size:26px;
-      }
-
-      .topo{
-        align-items:flex-start;
+        font-size:24px;
       }
     }
   </style>
@@ -343,7 +353,7 @@
     <div class="filtros">
       <div class="campo-filtro">
         <label for="filtroMes">Mês</label>
-        <select id="filtroMes" onchange="carregarTudo && carregarTudo()">
+        <select id="filtroMes" onchange="limparFiltroMesAno && carregarTudo && carregarTudo()">
           <option value="1">Janeiro</option>
           <option value="2">Fevereiro</option>
           <option value="3">Março</option>
@@ -389,7 +399,6 @@
 
   </div>
 
-  <!-- MODAL LANÇAMENTO -->
   <div id="modalFinanceiro" class="modal">
     <div class="modal-content">
       <h2 id="modalTitulo">NOVO</h2>
@@ -415,7 +424,6 @@
     </div>
   </div>
 
-  <!-- MODAL TRANSFERÊNCIA -->
   <div id="modalTransferencia" class="modal">
     <div class="modal-content">
       <h2>Nova Transferência</h2>
