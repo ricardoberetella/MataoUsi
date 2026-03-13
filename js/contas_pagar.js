@@ -1,14 +1,32 @@
-const SUPABASE_URL = "https://uxtgicfuggpuyjybwawa.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg";
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+import { supabase, protegerPagina, obterRole } from "./auth.js";
+
+const _supabase = supabase;
 
 let globalLock = false;
+let roleUsuario = "viewer";
 
 const fmt = (v) =>
   new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
   }).format(Number(v || 0));
+
+function usuarioEhAdmin() {
+  return roleUsuario === "admin";
+}
+
+function aplicarPermissoesUI() {
+  const acoesTopo = document.getElementById("acoesTopo");
+  const colunaAcoes = document.getElementById("colunaAcoes");
+
+  if (!usuarioEhAdmin()) {
+    if (acoesTopo) acoesTopo.classList.add("hidden");
+    if (colunaAcoes) colunaAcoes.classList.add("hidden");
+  } else {
+    if (acoesTopo) acoesTopo.classList.remove("hidden");
+    if (colunaAcoes) colunaAcoes.classList.remove("hidden");
+  }
+}
 
 function travarBotoesTabela(travar) {
   document.querySelectorAll(".btn-tabela").forEach((b) => {
@@ -99,7 +117,9 @@ async function atualizarSaldoBanco(bancoId, valorDif) {
 }
 
 window.baixarPagamento = async (id) => {
+  if (!usuarioEhAdmin()) return;
   if (globalLock) return;
+
   globalLock = true;
   travarBotoesTabela(true);
 
@@ -147,7 +167,9 @@ window.baixarPagamento = async (id) => {
 };
 
 window.estornarPagamento = async (id) => {
+  if (!usuarioEhAdmin()) return;
   if (globalLock) return;
+
   globalLock = true;
   travarBotoesTabela(true);
 
@@ -288,6 +310,26 @@ async function carregarTudo() {
       .map((item) => {
         const transferencia = isTransferencia(item);
 
+        let acoesHtml = `<span style="color:#94a3b8;">—</span>`;
+
+        if (usuarioEhAdmin()) {
+          if (transferencia) {
+            acoesHtml = `<span style="color:#94a3b8;">—</span>`;
+          } else if (item.status === "PENDENTE") {
+            acoesHtml = `
+              <button onclick="baixarPagamento('${item.id}')" class="btn-tabela btn-pagar">Pagar</button>
+              <button onclick="editarRegistro('${item.id}')" class="btn-tabela btn-editar">✎</button>
+              <button onclick="excluirRegistro('${item.id}')" class="btn-tabela btn-excluir">🗑</button>
+            `;
+          } else {
+            acoesHtml = `
+              <button onclick="estornarPagamento('${item.id}')" class="btn-tabela btn-estornar">Estornar</button>
+              <button onclick="editarRegistro('${item.id}')" class="btn-tabela btn-editar">✎</button>
+              <button onclick="excluirRegistro('${item.id}')" class="btn-tabela btn-excluir">🗑</button>
+            `;
+          }
+        }
+
         return `
         <tr>
           <td>${new Date(item.vencimento + "T12:00:00").toLocaleDateString("pt-BR")}</td>
@@ -295,16 +337,8 @@ async function carregarTudo() {
           <td>${item.descricao || ""}</td>
           <td style="color: ${Number(item.valor) < 0 ? "#ef4444" : "#22c55e"}">${fmt(item.valor)}</td>
           <td style="font-weight:bold; color: ${item.status === "PENDENTE" ? "#f59e0b" : "#38bdf8"}">${item.status}</td>
-          <td style="text-align:center;">
-            ${
-              transferencia
-                ? `<span style="color:#94a3b8;">—</span>`
-                : item.status === "PENDENTE"
-                ? `<button onclick="baixarPagamento('${item.id}')" class="btn-tabela btn-pagar">Pagar</button>`
-                : `<button onclick="estornarPagamento('${item.id}')" class="btn-tabela btn-estornar">Estornar</button>`
-            }
-            ${transferencia ? "" : `<button onclick="editarRegistro('${item.id}')" class="btn-tabela btn-editar">✎</button>`}
-            ${transferencia ? "" : `<button onclick="excluirRegistro('${item.id}')" class="btn-tabela btn-excluir">🗑</button>`}
+          <td class="${usuarioEhAdmin() ? "" : "hidden"}" style="text-align:center;">
+            ${acoesHtml}
           </td>
         </tr>
       `;
@@ -313,6 +347,8 @@ async function carregarTudo() {
 }
 
 window.salvarLancamento = async () => {
+  if (!usuarioEhAdmin()) return;
+
   const id = document.getElementById("editId").value;
   const desc = document.getElementById("campoDescricao").value.trim();
   const valorAbs = Math.abs(parseFloat(document.getElementById("campoValor").value || 0));
@@ -379,6 +415,7 @@ window.salvarLancamento = async () => {
 };
 
 window.excluirRegistro = async (id) => {
+  if (!usuarioEhAdmin()) return;
   if (!confirm("Deseja excluir este registro?")) return;
 
   const { data: item, error } = await _supabase
@@ -415,6 +452,8 @@ window.excluirRegistro = async (id) => {
 };
 
 window.editarRegistro = async (id) => {
+  if (!usuarioEhAdmin()) return;
+
   const { data: item, error } = await _supabase
     .from("contas_pagar")
     .select("*")
@@ -440,6 +479,8 @@ window.editarRegistro = async (id) => {
 };
 
 window.abrirModal = (t) => {
+  if (!usuarioEhAdmin()) return;
+
   document.getElementById("modalFinanceiro").style.display = "block";
   document.getElementById("modalTitulo").innerText = t;
 
@@ -456,6 +497,8 @@ window.fecharModais = () => {
 };
 
 window.abrirModalTransferencia = () => {
+  if (!usuarioEhAdmin()) return;
+
   const hoje = new Date().toISOString().split("T")[0];
   document.getElementById("transferData").value = hoje;
   document.getElementById("transferValor").value = "";
@@ -477,7 +520,9 @@ window.fecharModalTransferencia = () => {
 };
 
 window.salvarTransferencia = async () => {
+  if (!usuarioEhAdmin()) return;
   if (globalLock) return;
+
   globalLock = true;
 
   try {
@@ -556,8 +601,14 @@ window.salvarTransferencia = async () => {
   }
 };
 
-document.addEventListener("DOMContentLoaded", () => {
+async function iniciarPagina() {
+  await protegerPagina();
+  roleUsuario = (await obterRole()) || "viewer";
+
   preencherFiltroAno();
   definirFiltroMesAtual();
+  aplicarPermissoesUI();
   carregarTudo();
-});
+}
+
+document.addEventListener("DOMContentLoaded", iniciarPagina);
