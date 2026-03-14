@@ -1,694 +1,536 @@
-import { supabase, protegerPagina, obterRole } from "./auth.js";
 
-const _supabase = supabase;
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Extrato Financeiro</title>
 
-let globalLock = false;
-let roleUsuario = "viewer";
-
-const fmt = (v) =>
-  new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(Number(v || 0));
-
-function usuarioEhAdmin() {
-  return roleUsuario === "admin";
-}
-
-function aplicarPermissoesUI() {
-  const acoesTopo = document.getElementById("containerAcoesTopo");
-  const thAcoes = document.getElementById("thAcoes");
-  const colunaAcoes = document.getElementById("colunaAcoes");
-
-  if (!usuarioEhAdmin()) {
-    if (acoesTopo) acoesTopo.style.display = "none";
-    if (thAcoes) thAcoes.style.display = "none";
-    if (colunaAcoes) colunaAcoes.style.display = "none";
-  } else {
-    if (acoesTopo) acoesTopo.style.display = "flex";
-    if (thAcoes) thAcoes.style.display = "table-cell";
-    if (colunaAcoes) colunaAcoes.style.display = "table-cell";
-  }
-}
-
-function travarBotoesTabela(travar) {
-  document.querySelectorAll(".btn-tabela").forEach((b) => {
-    b.disabled = travar;
-    b.style.opacity = travar ? "0.3" : "1";
-    b.style.pointerEvents = travar ? "none" : "auto";
-  });
-}
-
-function preencherFiltroAno() {
-  const selectAno = document.getElementById("filtroAno");
-  if (!selectAno) return;
-
-  const anoAtual = new Date().getFullYear();
-  let options = "";
-
-  for (let ano = anoAtual - 3; ano <= anoAtual + 3; ano++) {
-    options += `<option value="${ano}">${ano}</option>`;
-  }
-
-  selectAno.innerHTML = options;
-}
-
-function definirFiltroMesAtual() {
-  const hoje = new Date();
-  const mesAtual = hoje.getMonth() + 1;
-  const anoAtual = hoje.getFullYear();
-
-  const filtroMes = document.getElementById("filtroMes");
-  const filtroAno = document.getElementById("filtroAno");
-
-  if (filtroMes) filtroMes.value = String(mesAtual);
-  if (filtroAno) filtroAno.value = String(anoAtual);
-}
-
-window.limparFiltroMesAno = () => {
-  definirFiltroMesAtual();
-  carregarTudo();
-};
-
-function obterPeriodoFiltro() {
-  const filtroMes = document.getElementById("filtroMes");
-  const filtroAno = document.getElementById("filtroAno");
-
-  const mes = Number(filtroMes?.value || new Date().getMonth() + 1);
-  const ano = Number(filtroAno?.value || new Date().getFullYear());
-
-  const dataInicio = `${ano}-${String(mes).padStart(2, "0")}-01`;
-
-  const proximoMes = mes === 12 ? 1 : mes + 1;
-  const proximoAno = mes === 12 ? ano + 1 : ano;
-  const dataFim = `${proximoAno}-${String(proximoMes).padStart(2, "0")}-01`;
-
-  return { dataInicio, dataFim };
-}
-
-function isTransferencia(item) {
-  return (item?.descricao || "").startsWith("[TRANSFERÊNCIA]");
-}
-
-function atualizarResumoMensal(lista) {
-  let totalCreditos = 0;
-  let totalDebitos = 0;
-
-  (lista || []).forEach((item) => {
-    const valor = Number(item.valor || 0);
-
-    if (valor > 0) {
-      totalCreditos += valor;
-    } else if (valor < 0) {
-      totalDebitos += Math.abs(valor);
-    }
-  });
-
-  const elCreditos = document.getElementById("totalCreditosMes");
-  const elDebitos = document.getElementById("totalDebitosMes");
-
-  if (elCreditos) elCreditos.innerText = fmt(totalCreditos);
-  if (elDebitos) elDebitos.innerText = fmt(totalDebitos);
-}
-
-async function atualizarSaldoBanco(bancoId, valorDif) {
-  const { data, error } = await _supabase
-    .from("bancos")
-    .select("saldo")
-    .eq("id", bancoId)
-    .single();
-
-  if (error || !data) {
-    console.error("Erro ao buscar saldo do banco:", error);
-    return false;
-  }
-
-  const saldoAtual = Number(data.saldo || 0);
-  const diferenca = Number(valorDif || 0);
-  const novoSaldo = Number((saldoAtual + diferenca).toFixed(2));
-
-  const { error: updateError } = await _supabase
-    .from("bancos")
-    .update({ saldo: novoSaldo })
-    .eq("id", bancoId);
-
-  if (updateError) {
-    console.error("Erro ao atualizar saldo do banco:", updateError);
-    return false;
-  }
-
-  return true;
-}
-
-window.baixarPagamento = async (id) => {
-  if (!usuarioEhAdmin()) return;
-  if (globalLock) return;
-
-  globalLock = true;
-  travarBotoesTabela(true);
-
-  try {
-    const { data: item, error: itemError } = await _supabase
-      .from("contas_pagar")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (itemError || !item) {
-      console.error("Erro ao buscar conta:", itemError);
-      return;
+  <style>
+    *{
+      box-sizing:border-box;
     }
 
-    if (isTransferencia(item)) {
-      alert("Transferências não podem ser pagas manualmente.");
-      return;
+    body{
+      margin:0;
+      font-family:Segoe UI, Arial, sans-serif;
+      background:radial-gradient(circle at top,#0b1224,#020617 70%);
+      color:#fff;
     }
 
-    if (item.status !== "PENDENTE") return;
-
-    const { data: linhasAtualizadas, error: updateError } = await _supabase
-      .from("contas_pagar")
-      .update({ status: "PAGO" })
-      .eq("id", id)
-      .eq("status", "PENDENTE")
-      .select("id");
-
-    if (updateError) {
-      console.error("Erro ao baixar pagamento:", updateError);
-      return;
+    .container{
+      width:100%;
+      max-width:1400px;
+      margin:auto;
+      padding:20px 24px 30px;
     }
 
-    if (linhasAtualizadas && linhasAtualizadas.length === 1) {
-      await atualizarSaldoBanco(item.banco_id, Number(item.valor));
-    }
-  } catch (e) {
-    console.error("Erro inesperado ao baixar pagamento:", e);
-  } finally {
-    globalLock = false;
-    travarBotoesTabela(false);
-    carregarTudo();
-  }
-};
-
-window.estornarPagamento = async (id) => {
-  if (!usuarioEhAdmin()) return;
-  if (globalLock) return;
-
-  globalLock = true;
-  travarBotoesTabela(true);
-
-  try {
-    const { data: item, error: itemError } = await _supabase
-      .from("contas_pagar")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (itemError || !item) {
-      console.error("Erro ao buscar conta:", itemError);
-      return;
+    .topo{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:16px;
+      margin-bottom:14px;
+      flex-wrap:wrap;
     }
 
-    if (isTransferencia(item)) {
-      alert("Transferências não podem ser estornadas por este botão.");
-      return;
+    h1{
+      color:#38bdf8;
+      margin:0;
+      font-size:28px;
+      line-height:1.1;
     }
 
-    if (item.status !== "PAGO") return;
-
-    const { data: linhasAtualizadas, error: updateError } = await _supabase
-      .from("contas_pagar")
-      .update({ status: "PENDENTE" })
-      .eq("id", id)
-      .eq("status", "PAGO")
-      .select("id");
-
-    if (updateError) {
-      console.error("Erro ao estornar pagamento:", updateError);
-      return;
+    .topo-direita{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
     }
 
-    if (linhasAtualizadas && linhasAtualizadas.length === 1) {
-      await atualizarSaldoBanco(item.banco_id, Number(item.valor) * -1);
-    }
-  } catch (e) {
-    console.error("Erro inesperado ao estornar pagamento:", e);
-  } finally {
-    globalLock = false;
-    travarBotoesTabela(false);
-    carregarTudo();
-  }
-};
-
-async function carregarTudo() {
-  const { dataInicio, dataFim } = obterPeriodoFiltro();
-
-  aplicarPermissoesUI();
-
-  const { data: bancos, error: bancosError } = await _supabase
-    .from("bancos")
-    .select("*")
-    .order("nome", { ascending: true });
-
-  if (bancosError) {
-    console.error("Erro ao carregar bancos:", bancosError);
-    return;
-  }
-
-  if (bancos) {
-    bancos.forEach((b) => {
-      let id =
-        b.nome === "SICOOB"
-          ? "resumoSicoob"
-          : b.nome === "CAIXA FEDERAL"
-          ? "resumoCaixa"
-          : "resumoAplicacao";
-
-      const el = document.getElementById(id);
-      if (el) el.innerText = fmt(b.saldo);
-    });
-
-    const campoBanco = document.getElementById("campoBanco");
-    if (campoBanco) {
-      campoBanco.innerHTML = bancos
-        .map((b) => `<option value="${b.id}">${b.nome}</option>`)
-        .join("");
+    #containerAcoesTopo{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
     }
 
-    const transferOrigem = document.getElementById("transferOrigem");
-    const transferDestino = document.getElementById("transferDestino");
-    const bancosTransferencia = bancos.filter(
-      (b) =>
-        b.nome === "SICOOB" ||
-        b.nome === "CAIXA FEDERAL" ||
-        b.nome === "APLICAÇÃO"
-    );
+    .btn-topo,
+    .btn-voltar-menu,
+    .btn-filtro,
+    .btn-modal,
+    .btn-cancelar{
+      border:none;
+      border-radius:10px;
+      padding:10px 16px;
+      cursor:pointer;
+      font-weight:700;
+      font-size:14px;
+      transition:0.2s;
+      white-space:nowrap;
+    }
 
-    const optionsTransfer = bancosTransferencia
-      .map((b) => `<option value="${b.id}">${b.nome}</option>`)
-      .join("");
+    .btn-topo:hover,
+    .btn-voltar-menu:hover,
+    .btn-filtro:hover,
+    .btn-modal:hover,
+    .btn-cancelar:hover{
+      transform:translateY(-1px);
+      filter:brightness(1.05);
+    }
 
-    if (transferOrigem) transferOrigem.innerHTML = optionsTransfer;
-    if (transferDestino) transferDestino.innerHTML = optionsTransfer;
-  }
+    .btn-credito{
+      background:#22c55e;
+      color:#04130a;
+    }
 
-  const { data: rcb, error: rcbError } = await _supabase
-    .from("contas_receber")
-    .select("valor")
-    .eq("status", "ABERTO");
+    .btn-debito{
+      background:#ef4444;
+      color:#fff;
+    }
 
-  if (!rcbError) {
-    const totalReceber = (rcb || []).reduce(
-      (acc, c) => acc + Number(c.valor || 0),
-      0
-    );
-    const elReceber = document.getElementById("resumoReceber");
-    if (elReceber) elReceber.innerText = fmt(totalReceber);
-  }
+    .btn-transferencia{
+      background:#38bdf8;
+      color:#001018;
+    }
 
-  const { data: pnd, error: pndError } = await _supabase
-    .from("contas_pagar")
-    .select("valor")
-    .eq("status", "PENDENTE")
-    .gte("vencimento", dataInicio)
-    .lt("vencimento", dataFim);
+    .btn-voltar-menu{
+      background:transparent;
+      border:1px solid #38bdf8;
+      color:#38bdf8;
+      min-width:170px;
+      text-align:center;
+      box-shadow:0 0 0 1px rgba(56,189,248,0.12) inset;
+    }
 
-  if (!pndError) {
-    const totalPagar = (pnd || []).reduce(
-      (acc, c) => acc + Math.abs(Number(c.valor || 0)),
-      0
-    );
-    const elPagar = document.getElementById("resumoPagar");
-    if (elPagar) elPagar.innerText = fmt(totalPagar);
-  }
+    .cards{
+      display:flex;
+      gap:10px;
+      margin-bottom:12px;
+      flex-wrap:nowrap;
+    }
 
-  const { data: lista, error: listaError } = await _supabase
-    .from("contas_pagar")
-    .select("*, bancos(nome)")
-    .gte("vencimento", dataInicio)
-    .lt("vencimento", dataFim)
-    .order("vencimento", { ascending: false });
+    .card{
+      flex:1;
+      background:linear-gradient(180deg,#1e293b,#0f172a);
+      border:1px solid #334155;
+      padding:10px 6px;
+      border-radius:10px;
+      text-align:center;
+      height:78px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      min-width:0;
+    }
 
-  if (listaError) {
-    console.error("Erro ao carregar lista financeira:", listaError);
-    return;
-  }
+    .card h3{
+      font-size:11px;
+      color:#94a3b8;
+      margin:0 0 5px 0;
+      font-weight:700;
+    }
 
-  atualizarResumoMensal(lista || []);
+    .card span{
+      font-size:16px;
+      font-weight:700;
+      line-height:1.2;
+    }
 
-  const listaFinanceiro = document.getElementById("listaFinanceiro");
-  if (!listaFinanceiro) return;
+    .receber{color:#22c55e;}
+    .pagar{color:#ef4444;}
+    .aplicacao{color:#a855f7;}
 
-  if (!lista || lista.length === 0) {
-    listaFinanceiro.innerHTML = `
-      <tr>
-        <td colspan="${usuarioEhAdmin() ? 6 : 5}" style="text-align:center;color:#94a3b8;">
-          Nenhum lançamento encontrado para este período.
-        </td>
-      </tr>
-    `;
-    return;
-  }
+    .filtros{
+      display:flex;
+      gap:12px;
+      margin-bottom:18px;
+      align-items:end;
+      flex-wrap:wrap;
+      background:#0f172a;
+      border:1px solid #334155;
+      border-radius:14px;
+      padding:14px;
+    }
 
-  listaFinanceiro.innerHTML = (lista || [])
-    .map((item) => {
-      const transferencia = isTransferencia(item);
+    .campo-filtro{
+      display:flex;
+      flex-direction:column;
+      gap:5px;
+      min-width:120px;
+    }
 
-      let colAcoes = "";
-      if (usuarioEhAdmin()) {
-        colAcoes = `
-          <td style="text-align:center;">
-            ${
-              transferencia
-                ? `<span style="color:#94a3b8;">—</span>`
-                : item.status === "PENDENTE"
-                ? `<button onclick="baixarPagamento('${item.id}')" class="btn-tabela btn-pagar">Pagar</button>`
-                : `<button onclick="estornarPagamento('${item.id}')" class="btn-tabela btn-estornar">Estornar</button>`
-            }
-            ${
-              transferencia
-                ? ""
-                : `<button onclick="editarRegistro('${item.id}')" class="btn-tabela btn-editar">✎</button>`
-            }
-            ${
-              transferencia
-                ? ""
-                : `<button onclick="excluirRegistro('${item.id}')" class="btn-tabela btn-excluir">🗑</button>`
-            }
-          </td>
-        `;
+    label{
+      font-size:12px;
+      color:#cbd5e1;
+      font-weight:600;
+    }
+
+    select,
+    input{
+      width:100%;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid #334155;
+      background:#020617;
+      color:#fff;
+      outline:none;
+    }
+
+    select:focus,
+    input:focus{
+      border-color:#38bdf8;
+      box-shadow:0 0 0 2px rgba(56,189,248,0.15);
+    }
+
+    .btn-filtro{
+      background:#334155;
+      color:#fff;
+      border:1px solid #475569;
+      height:42px;
+    }
+
+    .btn-buscar{
+      background:#38bdf8;
+      color:#001018;
+      border:1px solid #0ea5e9;
+      height:42px;
+    }
+
+    .tabela-wrap{
+      overflow:auto;
+      border-radius:16px;
+      border:1px solid #334155;
+      background:#0f172a;
+    }
+
+    .tabela{
+      width:100%;
+      border-collapse:collapse;
+      min-width:900px;
+    }
+
+    .tabela th{
+      text-align:left;
+      color:#38bdf8;
+      padding:16px 12px;
+      border-bottom:2px solid #334155;
+      font-size:14px;
+      white-space:nowrap;
+      background:#0f172a;
+    }
+
+    .tabela td{
+      padding:14px 12px;
+      border-bottom:1px solid #334155;
+      vertical-align:middle;
+    }
+
+    .tabela tr:hover td{
+      background:#162033;
+    }
+
+    .btn-tabela{
+      padding:7px 10px;
+      border:none;
+      border-radius:8px;
+      cursor:pointer;
+      font-size:12px;
+      font-weight:700;
+      margin:2px;
+      color:#fff;
+    }
+
+    .btn-pagar{background:#16a34a;}
+    .btn-estornar{background:#d97706;}
+    .btn-editar{background:#0284c7;}
+    .btn-excluir{background:#dc2626;}
+
+    .resumo-mes{
+      margin-top:18px;
+      display:flex;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+
+    .resumo-mes-card{
+      flex:1;
+      min-width:240px;
+      background:linear-gradient(180deg,#111c31,#0b1324);
+      border:1px solid #334155;
+      border-radius:14px;
+      padding:18px;
+      box-shadow:0 8px 24px rgba(0,0,0,0.18);
+    }
+
+    .resumo-mes-card h3{
+      margin:0 0 8px 0;
+      font-size:14px;
+      color:#cbd5e1;
+      font-weight:700;
+      letter-spacing:0.3px;
+    }
+
+    .resumo-mes-card .valor{
+      font-size:26px;
+      font-weight:800;
+      line-height:1.1;
+    }
+
+    .valor-credito{
+      color:#22c55e;
+    }
+
+    .valor-debito{
+      color:#ef4444;
+    }
+
+    .hidden{
+      display:none !important;
+    }
+
+    .modal{
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.72);
+      z-index:999;
+      padding:20px;
+      overflow:auto;
+    }
+
+    .modal-content{
+      background:#0f172a;
+      border:1px solid #334155;
+      padding:22px;
+      border-radius:16px;
+      max-width:500px;
+      margin:50px auto;
+      box-shadow:0 20px 50px rgba(0,0,0,0.35);
+    }
+
+    .modal-content h2{
+      margin:0 0 18px 0;
+      color:#38bdf8;
+      font-size:24px;
+    }
+
+    .acoes-modal{
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+      margin-top:8px;
+    }
+
+    .btn-modal{
+      background:#38bdf8;
+      color:#001018;
+    }
+
+    .btn-cancelar{
+      background:#334155;
+      color:#fff;
+    }
+
+    @media (max-width: 1100px){
+      .cards{
+        flex-wrap:wrap;
       }
 
-      return `
-        <tr>
-          <td>${new Date(item.vencimento + "T12:00:00").toLocaleDateString("pt-BR")}</td>
-          <td>${item.bancos?.nome || "--"}</td>
-          <td>${item.descricao || ""}</td>
-          <td style="color: ${Number(item.valor) < 0 ? "#ef4444" : "#22c55e"}">${fmt(item.valor)}</td>
-          <td style="font-weight:bold; color: ${item.status === "PENDENTE" ? "#f59e0b" : "#38bdf8"}">${item.status}</td>
-          ${colAcoes}
-        </tr>
-      `;
-    })
-    .join("");
-}
-
-window.carregarLancamentos = () => {
-  carregarTudo();
-};
-
-window.salvarLancamento = async () => {
-  if (!usuarioEhAdmin()) return;
-
-  const id = document.getElementById("editId")?.value || "";
-  const desc = document.getElementById("campoDescricao")?.value.trim() || "";
-  const valorAbs = Math.abs(
-    parseFloat(document.getElementById("campoValor")?.value || 0)
-  );
-  const bancoId = document.getElementById("campoBanco")?.value || "";
-  const dataVenc = document.getElementById("campoData")?.value || "";
-  const titulo = document.getElementById("modalTitulo")?.innerText || "";
-  const valorFinal = titulo.includes("DEBITO") ? -valorAbs : valorAbs;
-
-  if (!desc || !bancoId || !dataVenc || !valorAbs) {
-    alert("Preencha data, banco, descrição e valor.");
-    return;
-  }
-
-  if (!id) {
-    const { error } = await _supabase.from("contas_pagar").insert([
-      {
-        vencimento: dataVenc,
-        banco_id: bancoId,
-        descricao: desc,
-        valor: valorFinal,
-        status: "PENDENTE",
-      },
-    ]);
-
-    if (error) {
-      console.error("Erro ao inserir lançamento:", error);
-      return;
-    }
-  } else {
-    const { data: atual, error: erroAtual } = await _supabase
-      .from("contas_pagar")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (erroAtual || !atual) {
-      console.error("Erro ao carregar lançamento para editar:", erroAtual);
-      return;
+      .card{
+        min-width:180px;
+      }
     }
 
-    if (isTransferencia(atual)) {
-      alert("Transferências não podem ser editadas por aqui.");
-      return;
+    @media (max-width: 760px){
+      .topo{
+        flex-direction:column;
+        align-items:stretch;
+      }
+
+      .topo-direita,
+      #containerAcoesTopo{
+        justify-content:flex-start;
+      }
+
+      .btn-voltar-menu{
+        min-width:auto;
+      }
+
+      .cards{
+        flex-direction:column;
+      }
+
+      .resumo-mes{
+        flex-direction:column;
+      }
     }
+  </style>
+</head>
+<body>
 
-    const { error } = await _supabase
-      .from("contas_pagar")
-      .update({
-        vencimento: dataVenc,
-        banco_id: bancoId,
-        descricao: desc,
-        valor: valorFinal,
-      })
-      .eq("id", id);
+  <div class="container">
 
-    if (error) {
-      console.error("Erro ao editar lançamento:", error);
-      return;
-    }
-  }
+    <div class="topo">
+      <h1>Extrato Financeiro</h1>
 
-  fecharModais();
-  carregarTudo();
-};
+      <div class="topo-direita">
+        <div id="containerAcoesTopo">
+          <button class="btn-topo btn-credito" onclick="abrirModal('NOVO CREDITO')">+ Crédito</button>
+          <button class="btn-topo btn-debito" onclick="abrirModal('NOVO DEBITO')">+ Débito</button>
+          <button class="btn-topo btn-transferencia" onclick="abrirModalTransferencia()">⇄ Transferência</button>
+        </div>
 
-window.excluirRegistro = async (id) => {
-  if (!usuarioEhAdmin()) return;
-  if (!confirm("Deseja excluir este registro?")) return;
+        <button class="btn-voltar-menu" onclick="window.location.href='dashboard.html'">
+          ← Voltar ao Menu
+        </button>
+      </div>
+    </div>
 
-  const { data: item, error } = await _supabase
-    .from("contas_pagar")
-    .select("*")
-    .eq("id", id)
-    .single();
+    <div class="cards">
+      <div class="card">
+        <h3>RECEBER</h3>
+        <span id="resumoReceber" class="receber">R$ 0,00</span>
+      </div>
 
-  if (error || !item) {
-    console.error("Erro ao buscar item para excluir:", error);
-    return;
-  }
+      <div class="card">
+        <h3>A PAGAR</h3>
+        <span id="resumoPagar" class="pagar">R$ 0,00</span>
+      </div>
 
-  if (isTransferencia(item)) {
-    alert("Transferências não podem ser excluídas por este botão.");
-    return;
-  }
+      <div class="card">
+        <h3>SICOOB</h3>
+        <span id="resumoSicoob">R$ 0,00</span>
+      </div>
 
-  if (item.status === "PAGO") {
-    await atualizarSaldoBanco(item.banco_id, Number(item.valor) * -1);
-  }
+      <div class="card">
+        <h3>CAIXA FEDERAL</h3>
+        <span id="resumoCaixa">R$ 0,00</span>
+      </div>
 
-  const { error: deleteError } = await _supabase
-    .from("contas_pagar")
-    .delete()
-    .eq("id", id);
+      <div class="card">
+        <h3>APLICAÇÃO</h3>
+        <span id="resumoAplicacao" class="aplicacao">R$ 0,00</span>
+      </div>
+    </div>
 
-  if (deleteError) {
-    console.error("Erro ao excluir registro:", deleteError);
-    return;
-  }
+    <div class="filtros">
+      <div class="campo-filtro">
+        <label for="filtroMes">Mês</label>
+        <select id="filtroMes">
+          <option value="1">Janeiro</option>
+          <option value="2">Fevereiro</option>
+          <option value="3">Março</option>
+          <option value="4">Abril</option>
+          <option value="5">Maio</option>
+          <option value="6">Junho</option>
+          <option value="7">Julho</option>
+          <option value="8">Agosto</option>
+          <option value="9">Setembro</option>
+          <option value="10">Outubro</option>
+          <option value="11">Novembro</option>
+          <option value="12">Dezembro</option>
+        </select>
+      </div>
 
-  carregarTudo();
-};
+      <div class="campo-filtro">
+        <label for="filtroAno">Ano</label>
+        <select id="filtroAno"></select>
+      </div>
 
-window.editarRegistro = async (id) => {
-  if (!usuarioEhAdmin()) return;
+      <button class="btn-filtro btn-buscar" onclick="carregarLancamentos()">Buscar</button>
+      <button class="btn-filtro" onclick="limparFiltroMesAno()">Mês Atual</button>
+    </div>
 
-  const { data: item, error } = await _supabase
-    .from("contas_pagar")
-    .select("*")
-    .eq("id", id)
-    .single();
+    <div class="tabela-wrap">
+      <table class="tabela">
+        <thead>
+          <tr>
+            <th>DATA</th>
+            <th>BANCO</th>
+            <th>DESCRIÇÃO</th>
+            <th>VALOR</th>
+            <th>STATUS</th>
+            <th id="thAcoes">AÇÕES</th>
+          </tr>
+        </thead>
 
-  if (error || !item) {
-    console.error("Erro ao carregar item para edição:", error);
-    return;
-  }
+        <tbody id="listaFinanceiro">
+          <tr>
+            <td colspan="6" style="text-align:center;color:#94a3b8;">Carregando dados...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-  if (isTransferencia(item)) {
-    alert("Transferências não podem ser editadas por aqui.");
-    return;
-  }
+    <div class="resumo-mes">
+      <div class="resumo-mes-card">
+        <h3>TOTAL DE CRÉDITOS DO MÊS</h3>
+        <div id="totalCreditosMes" class="valor valor-credito">R$ 0,00</div>
+      </div>
 
-  abrirModal("EDITAR");
-  document.getElementById("editId").value = item.id;
-  document.getElementById("campoData").value = item.vencimento;
-  document.getElementById("campoBanco").value = item.banco_id;
-  document.getElementById("campoDescricao").value = item.descricao || "";
-  document.getElementById("campoValor").value = Math.abs(Number(item.valor || 0));
-};
+      <div class="resumo-mes-card">
+        <h3>TOTAL DE DÉBITOS DO MÊS</h3>
+        <div id="totalDebitosMes" class="valor valor-debito">R$ 0,00</div>
+      </div>
+    </div>
 
-window.abrirModal = (t) => {
-  if (!usuarioEhAdmin()) return;
+  </div>
 
-  const modal = document.getElementById("modalFinanceiro");
-  const titulo = document.getElementById("modalTitulo");
+  <div id="modalFinanceiro" class="modal">
+    <div class="modal-content">
+      <h2 id="modalTitulo">NOVO</h2>
 
-  if (modal) modal.style.display = "block";
-  if (titulo) titulo.innerText = t;
+      <input type="hidden" id="editId">
 
-  if (t !== "EDITAR") {
-    const editId = document.getElementById("editId");
-    const campoValor = document.getElementById("campoValor");
-    const campoDescricao = document.getElementById("campoDescricao");
-    const campoData = document.getElementById("campoData");
+      <label for="campoData">Data</label>
+      <input type="date" id="campoData">
 
-    if (editId) editId.value = "";
-    if (campoValor) campoValor.value = "";
-    if (campoDescricao) campoDescricao.value = "";
-    if (campoData) campoData.value = new Date().toISOString().split("T")[0];
-  }
-};
+      <label for="campoBanco">Banco</label>
+      <select id="campoBanco"></select>
 
-window.fecharModais = () => {
-  const modal = document.getElementById("modalFinanceiro");
-  if (modal) modal.style.display = "none";
-};
+      <label for="campoDescricao">Descrição</label>
+      <input id="campoDescricao" type="text">
 
-window.abrirModalTransferencia = () => {
-  if (!usuarioEhAdmin()) return;
+      <label for="campoValor">Valor</label>
+      <input id="campoValor" type="number" step="0.01">
 
-  const hoje = new Date().toISOString().split("T")[0];
+      <div class="acoes-modal">
+        <button class="btn-cancelar" onclick="fecharModais()">Cancelar</button>
+        <button class="btn-modal" onclick="salvarLancamento()">Salvar</button>
+      </div>
+    </div>
+  </div>
 
-  const transferData = document.getElementById("transferData");
-  const transferValor = document.getElementById("transferValor");
-  const transferDescricao = document.getElementById("transferDescricao");
-  const origem = document.getElementById("transferOrigem");
-  const destino = document.getElementById("transferDestino");
-  const modal = document.getElementById("modalTransferencia");
+  <div id="modalTransferencia" class="modal">
+    <div class="modal-content">
+      <h2>Nova Transferência</h2>
 
-  if (transferData) transferData.value = hoje;
-  if (transferValor) transferValor.value = "";
-  if (transferDescricao) transferDescricao.value = "";
+      <label for="transferData">Data</label>
+      <input type="date" id="transferData">
 
-  if (origem && destino && origem.options.length > 1) {
-    origem.selectedIndex = 0;
-    destino.selectedIndex = 1;
-  }
+      <label for="transferOrigem">Conta Origem</label>
+      <select id="transferOrigem"></select>
 
-  if (modal) modal.style.display = "block";
-};
+      <label for="transferDestino">Conta Destino</label>
+      <select id="transferDestino"></select>
 
-window.fecharModalTransferencia = () => {
-  const modal = document.getElementById("modalTransferencia");
-  if (modal) modal.style.display = "none";
-};
+      <label for="transferValor">Valor</label>
+      <input type="number" id="transferValor" step="0.01">
 
-window.salvarTransferencia = async () => {
-  if (!usuarioEhAdmin()) return;
-  if (globalLock) return;
+      <label for="transferDescricao">Descrição</label>
+      <input type="text" id="transferDescricao" placeholder="Opcional">
 
-  globalLock = true;
+      <div class="acoes-modal">
+        <button class="btn-cancelar" onclick="fecharModalTransferencia()">Cancelar</button>
+        <button class="btn-modal" onclick="salvarTransferencia()">Salvar</button>
+      </div>
+    </div>
+  </div>
 
-  try {
-    const data = document.getElementById("transferData")?.value || "";
-    const origemId = document.getElementById("transferOrigem")?.value || "";
-    const destinoId = document.getElementById("transferDestino")?.value || "";
-    const valor = Math.abs(
-      parseFloat(document.getElementById("transferValor")?.value || 0)
-    );
-    const descricaoLivre =
-      document.getElementById("transferDescricao")?.value.trim() || "";
-
-    if (!data || !origemId || !destinoId || !valor) {
-      alert("Preencha data, origem, destino e valor.");
-      return;
-    }
-
-    if (origemId === destinoId) {
-      alert("Selecione contas diferentes para origem e destino.");
-      return;
-    }
-
-    const { data: bancosSelecionados, error: erroBancos } = await _supabase
-      .from("bancos")
-      .select("id, nome")
-      .in("id", [origemId, destinoId]);
-
-    if (erroBancos || !bancosSelecionados || bancosSelecionados.length < 2) {
-      console.error("Erro ao buscar bancos da transferência:", erroBancos);
-      alert("Não foi possível localizar as contas da transferência.");
-      return;
-    }
-
-    const bancoOrigem = bancosSelecionados.find(
-      (b) => String(b.id) === String(origemId)
-    );
-    const bancoDestino = bancosSelecionados.find(
-      (b) => String(b.id) === String(destinoId)
-    );
-
-    const complemento = descricaoLivre ? ` - ${descricaoLivre}` : "";
-    const descricaoSaida = `[TRANSFERÊNCIA] PARA ${bancoDestino.nome}${complemento}`;
-    const descricaoEntrada = `[TRANSFERÊNCIA] DE ${bancoOrigem.nome}${complemento}`;
-
-    const { error: insertError } = await _supabase.from("contas_pagar").insert([
-      {
-        vencimento: data,
-        banco_id: origemId,
-        descricao: descricaoSaida,
-        valor: -valor,
-        status: "PAGO",
-      },
-      {
-        vencimento: data,
-        banco_id: destinoId,
-        descricao: descricaoEntrada,
-        valor: valor,
-        status: "PAGO",
-      },
-    ]);
-
-    if (insertError) {
-      console.error("Erro ao registrar transferência:", insertError);
-      alert("Erro ao salvar transferência.");
-      return;
-    }
-
-    const okOrigem = await atualizarSaldoBanco(origemId, -valor);
-    const okDestino = await atualizarSaldoBanco(destinoId, valor);
-
-    if (!okOrigem || !okDestino) {
-      alert("Transferência registrada, mas houve erro ao atualizar algum saldo.");
-      return;
-    }
-
-    fecharModalTransferencia();
-    carregarTudo();
-  } catch (e) {
-    console.error("Erro inesperado na transferência:", e);
-    alert("Erro inesperado ao salvar transferência.");
-  } finally {
-    globalLock = false;
-  }
-};
-
-async function iniciarPagina() {
-  try {
-    await protegerPagina();
-    roleUsuario = (await obterRole()) || "viewer";
-  } catch (e) {
-    console.error("Erro ao iniciar página:", e);
-    roleUsuario = "viewer";
-  }
-
-  preencherFiltroAno();
-  definirFiltroMesAtual();
-  aplicarPermissoesUI();
-  carregarTudo();
-}
-
-document.addEventListener("DOMContentLoaded", iniciarPagina);
+  <script type="module" src="js/contas_pagar.js"></script>
+</body>
+</html>
