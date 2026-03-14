@@ -18,16 +18,13 @@ function usuarioEhAdmin() {
 function aplicarPermissoesUI() {
   const acoesTopo = document.getElementById("containerAcoesTopo");
   const thAcoes = document.getElementById("thAcoes");
-  const colunaAcoes = document.getElementById("colunaAcoes");
 
   if (!usuarioEhAdmin()) {
     if (acoesTopo) acoesTopo.style.display = "none";
     if (thAcoes) thAcoes.style.display = "none";
-    if (colunaAcoes) colunaAcoes.style.display = "none";
   } else {
     if (acoesTopo) acoesTopo.style.display = "flex";
     if (thAcoes) thAcoes.style.display = "table-cell";
-    if (colunaAcoes) colunaAcoes.style.display = "table-cell";
   }
 }
 
@@ -88,6 +85,27 @@ function obterPeriodoFiltro() {
 
 function isTransferencia(item) {
   return (item?.descricao || "").startsWith("[TRANSFERÊNCIA]");
+}
+
+function atualizarResumoMensal(lista) {
+  let totalCreditos = 0;
+  let totalDebitos = 0;
+
+  (lista || []).forEach((item) => {
+    const valor = Number(item.valor || 0);
+
+    if (valor > 0) {
+      totalCreditos += valor;
+    } else if (valor < 0) {
+      totalDebitos += Math.abs(valor);
+    }
+  });
+
+  const elCreditos = document.getElementById("totalCreditosMes");
+  const elDebitos = document.getElementById("totalDebitosMes");
+
+  if (elCreditos) elCreditos.innerText = fmt(totalCreditos);
+  if (elDebitos) elDebitos.innerText = fmt(totalDebitos);
 }
 
 async function atualizarSaldoBanco(bancoId, valorDif) {
@@ -312,6 +330,8 @@ async function carregarTudo() {
     console.error("Erro ao carregar lista financeira:", listaError);
     return;
   }
+
+  atualizarResumoMensal(lista || []);
 
   const listaFinanceiro = document.getElementById("listaFinanceiro");
   if (!listaFinanceiro) return;
