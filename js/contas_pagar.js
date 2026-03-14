@@ -316,6 +316,17 @@ async function carregarTudo() {
   const listaFinanceiro = document.getElementById("listaFinanceiro");
   if (!listaFinanceiro) return;
 
+  if (!lista || lista.length === 0) {
+    listaFinanceiro.innerHTML = `
+      <tr>
+        <td colspan="${usuarioEhAdmin() ? 6 : 5}" style="text-align:center;color:#94a3b8;">
+          Nenhum lançamento encontrado para este período.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
   listaFinanceiro.innerHTML = (lista || [])
     .map((item) => {
       const transferencia = isTransferencia(item);
@@ -358,6 +369,10 @@ async function carregarTudo() {
     })
     .join("");
 }
+
+window.carregarLancamentos = () => {
+  carregarTudo();
+};
 
 window.salvarLancamento = async () => {
   if (!usuarioEhAdmin()) return;
