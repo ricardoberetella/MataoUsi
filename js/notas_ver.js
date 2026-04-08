@@ -138,7 +138,7 @@ async function carregarItensNF() {
 }
 
 // ===============================================
-// BAIXAS
+// BAIXAS (🔥 CORRIGIDO AQUI)
 // ===============================================
 async function carregarBaixas() {
     const tbody = document.getElementById("listaBaixas");
@@ -146,7 +146,13 @@ async function carregarBaixas() {
 
     const { data: baixas } = await supabase
         .from("notas_pedidos_baixas")
-        .select("pedido_id, produto_id, quantidade_baixada")
+        .select(`
+            quantidade_baixada,
+            produto_id,
+            pedidos (
+                numero_pedido
+            )
+        `)
         .eq("nf_id", nfId);
 
     if (!baixas || baixas.length === 0) {
@@ -157,7 +163,7 @@ async function carregarBaixas() {
     baixas.forEach(b => {
         tbody.innerHTML += `
             <tr>
-                <td>${b.pedido_id}</td>
+                <td><strong>${b.pedidos?.numero_pedido ?? "-"}</strong></td>
                 <td>${nomeProduto(b.produto_id)}</td>
                 <td>${b.quantidade_baixada}</td>
                 <td>Concluído</td>
@@ -250,7 +256,7 @@ async function salvarBoleto() {
 }
 
 // ===============================================
-// AÇÕES (OBRIGATORIAMENTE NO WINDOW)
+// AÇÕES (WINDOW)
 // ===============================================
 window.editarBoleto = async function (id) {
     if (roleUsuario !== "admin") return;
