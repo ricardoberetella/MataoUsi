@@ -1,5 +1,5 @@
 // ===============================================
-//  NOTAS_NOVA.JS — FINAL AJUSTADO AO SEU BANCO
+//  NOTAS_NOVA.JS — FINAL DEFINITIVO
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -29,6 +29,8 @@ async function carregarClientes() {
     listaClientes = data || [];
 
     const select = document.getElementById("clienteSelect");
+    select.innerHTML = `<option value="">Selecione o cliente</option>`;
+
     listaClientes.forEach(cli => {
         const opt = document.createElement("option");
         opt.value = cli.id;
@@ -47,6 +49,8 @@ async function carregarProdutos() {
     listaProdutos = data || [];
 
     const select = document.getElementById("produtoSelect");
+    select.innerHTML = `<option value="">Selecione o produto</option>`;
+
     listaProdutos.forEach(prod => {
         const opt = document.createElement("option");
         opt.value = prod.id;
@@ -70,7 +74,9 @@ function adicionarItem() {
     const produtoId = Number(document.getElementById("produtoSelect").value);
     const quantidade = Number(document.getElementById("quantidadeNF").value);
 
-    if (!produtoId || quantidade <= 0) return alert("Preencha item");
+    if (!produtoId || quantidade <= 0) {
+        return alert("Selecione produto e quantidade.");
+    }
 
     itensNF.push({ produto_id: produtoId, quantidade });
     atualizarTabelaItens();
@@ -106,7 +112,7 @@ function adicionarParcela() {
     const vencimento = document.getElementById("vencimentoInput").value;
 
     if (!parcela || !valor || !vencimento) {
-        return alert("Preencha parcela");
+        return alert("Preencha todos os campos da parcela.");
     }
 
     boletos.push({ parcela, valor, vencimento });
@@ -136,7 +142,7 @@ window.removerParcela = (i) => {
 // ===============================================
 function gerarParcelas() {
     const total = Number(document.getElementById("valorTotalNF").value);
-    const qtd = prompt("Qtd parcelas?");
+    const qtd = prompt("Quantidade de parcelas?");
 
     if (!total || !qtd) return;
 
@@ -166,6 +172,10 @@ async function salvarNF() {
     const dataNF = document.getElementById("nfData").value;
     const total = Number(document.getElementById("valorTotalNF").value);
 
+    if (!clienteId || !numeroNF || !dataNF) {
+        return alert("Preencha os dados da NF.");
+    }
+
     // ---------- NF ----------
     const { data: nf, error } = await supabase
         .from("notas_fiscais")
@@ -179,22 +189,29 @@ async function salvarNF() {
         .single();
 
     if (error) {
-        console.error(error);
-        return alert("Erro NF");
+        console.error("Erro NF:", error);
+        return alert("Erro ao salvar NF.");
     }
 
     const nfId = nf.id;
 
     // ---------- ITENS ----------
-    await supabase.from("notas_fiscais_itens").insert(
-        itensNF.map(i => ({
-            nf_id: nfId,
-            produto_id: i.produto_id,
-            quantidade: i.quantidade
-        }))
-    );
+    const { error: erroItens } = await supabase
+        .from("notas_fiscais_itens")
+        .insert(
+            itensNF.map(i => ({
+                nf_id: nfId,
+                produto_id: i.produto_id,
+                quantidade: i.quantidade
+            }))
+        );
 
-    // ---------- BOLETOS CORRIGIDO ----------
+    if (erroItens) {
+        console.error("Erro itens:", erroItens);
+        return alert("Erro ao salvar itens.");
+    }
+
+    // ---------- BOLETOS ----------
     for (const b of boletos) {
 
         const { error: erroBoleto } = await supabase
@@ -206,13 +223,14 @@ async function salvarNF() {
                 numero_referencia: `${numeroNF}-${b.parcela}`,
                 valor: b.valor,
                 data_vencimento: b.vencimento,
+                data_emissao: dataNF,
                 status: "ABERTO",
                 tipo_de_iniciacao: "NF"
             });
 
         if (erroBoleto) {
             console.error("ERRO BOLETO:", erroBoleto);
-            return alert("Erro ao salvar boleto");
+            return alert("Erro ao salvar boleto.");
         }
 
         // ---------- CONTAS RECEBER ----------
@@ -227,10 +245,10 @@ async function salvarNF() {
 
         if (erroCR) {
             console.error("ERRO CR:", erroCR);
-            return alert("Erro contas receber");
+            return alert("Erro ao salvar contas a receber.");
         }
     }
 
-    alert("NF salva completa 🚀");
+    alert("NF salva completa com sucesso 🚀");
     window.location.href = "notas_lista.html";
 }
