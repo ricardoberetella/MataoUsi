@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lançar Nota Fiscal - MataoUsi</title>
 
-    <!-- CSS já existentes -->
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/global.css">
 </head>
@@ -56,7 +55,6 @@
     <section class="card">
         <h2 class="card-title">Itens da Nota Fiscal</h2>
 
-        <!-- Linha para adicionar item -->
         <div class="form-grid">
 
             <div class="form-group">
@@ -77,20 +75,77 @@
 
         </div>
 
-        <!-- Tabela de itens adicionados -->
         <div class="tabela-wrapper" style="margin-top: 16px; overflow-x: auto;">
             <table class="tabela-padrao">
                 <thead>
                     <tr>
-                        <th style="min-width: 220px;">Produto</th>
-                        <th style="min-width: 120px;">Quantidade</th>
-                        <th style="min-width: 80px;">Ações</th>
+                        <th>Produto</th>
+                        <th>Quantidade</th>
+                        <th>Ações</th>
                     </tr>
                 </thead>
-                <tbody id="tbodyItensNF">
-                    <!-- Linhas via JS -->
-                </tbody>
+                <tbody id="tbodyItensNF"></tbody>
             </table>
+        </div>
+
+        <!-- NOVO: VALOR TOTAL -->
+        <div class="form-group" style="margin-top:20px;">
+            <label for="valorTotalNF">Valor Total da NF</label>
+            <input type="number" id="valorTotalNF" step="0.01" placeholder="Ex: 10000.00">
+        </div>
+
+    </section>
+
+    <!-- ============================ -->
+    <!--       BOLETOS (NOVO)        -->
+    <!-- ============================ -->
+    <section class="card">
+        <h2 class="card-title">Boletos / Parcelas</h2>
+
+        <div class="form-grid">
+
+            <div class="form-group">
+                <label>Parcela</label>
+                <input type="number" id="parcelaInput" min="1" placeholder="Ex: 1">
+            </div>
+
+            <div class="form-group">
+                <label>Valor</label>
+                <input type="number" id="valorParcelaInput" step="0.01" placeholder="Ex: 5000">
+            </div>
+
+            <div class="form-group">
+                <label>Vencimento</label>
+                <input type="date" id="vencimentoInput">
+            </div>
+
+            <div class="form-group" style="display:flex; align-items:end;">
+                <button id="btnAdicionarParcela" class="btn-secundario" style="width:100%;">
+                    Adicionar Parcela
+                </button>
+            </div>
+
+        </div>
+
+        <div class="tabela-wrapper" style="margin-top: 16px;">
+            <table class="tabela-padrao">
+                <thead>
+                    <tr>
+                        <th>Parcela</th>
+                        <th>Valor</th>
+                        <th>Vencimento</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyBoletos"></tbody>
+            </table>
+        </div>
+
+        <!-- BOTÃO AUTOMÁTICO (OPCIONAL) -->
+        <div style="margin-top: 16px;">
+            <button id="btnGerarParcelas" class="btn-secundario">
+                Gerar Parcelas Automáticas
+            </button>
         </div>
 
     </section>
@@ -100,13 +155,12 @@
     <!-- ============================ -->
     <section class="card" style="text-align: right;">
         <button id="btnSalvarNF" class="btn-primario">
-            Salvar NF e Baixar Pedidos
+            Salvar NF + Boletos + Financeiro
         </button>
     </section>
 
 </div>
 
-<!-- IMPORTAÇÃO DO JS -->
 <script type="module" src="js/auth.js"></script>
 <script type="module" src="js/notas_nova.js"></script>
 
