@@ -1,5 +1,5 @@
 // ===============================================
-//  NOTAS_NOVA.JS — FINAL COM BOLETOS + FINANCEIRO
+//  NOTAS_NOVA.JS — FINAL AJUSTADO AO SEU BANCO
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -17,28 +17,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     await carregarClientes();
     await carregarProdutos();
     configurarEventos();
-
-    console.log("Tela de Nova NF carregada.");
 });
 
 // ===============================================
 async function carregarClientes() {
-    const select = document.getElementById("clienteSelect");
-    select.innerHTML = `<option value="">Selecione o cliente</option>`;
-
-    const { data, error } = await supabase
+    const { data } = await supabase
         .from("clientes")
         .select("id, razao_social")
         .order("razao_social");
 
-    if (error) {
-        console.error(error);
-        alert("Erro ao carregar clientes");
-        return;
-    }
-
     listaClientes = data || [];
 
+    const select = document.getElementById("clienteSelect");
     listaClientes.forEach(cli => {
         const opt = document.createElement("option");
         opt.value = cli.id;
@@ -49,21 +39,14 @@ async function carregarClientes() {
 
 // ===============================================
 async function carregarProdutos() {
-    const select = document.getElementById("produtoSelect");
-
-    const { data, error } = await supabase
+    const { data } = await supabase
         .from("produtos")
         .select("id, codigo, descricao")
         .order("codigo");
 
-    if (error) {
-        console.error(error);
-        alert("Erro ao carregar produtos");
-        return;
-    }
-
     listaProdutos = data || [];
 
+    const select = document.getElementById("produtoSelect");
     listaProdutos.forEach(prod => {
         const opt = document.createElement("option");
         opt.value = prod.id;
@@ -74,11 +57,10 @@ async function carregarProdutos() {
 
 // ===============================================
 function configurarEventos() {
-    document.getElementById("btnAdicionarItem")?.addEventListener("click", adicionarItem);
-    document.getElementById("btnSalvarNF")?.addEventListener("click", salvarNF);
-
-    document.getElementById("btnAdicionarParcela")?.addEventListener("click", adicionarParcela);
-    document.getElementById("btnGerarParcelas")?.addEventListener("click", gerarParcelas);
+    document.getElementById("btnAdicionarItem").onclick = adicionarItem;
+    document.getElementById("btnSalvarNF").onclick = salvarNF;
+    document.getElementById("btnAdicionarParcela").onclick = adicionarParcela;
+    document.getElementById("btnGerarParcelas").onclick = gerarParcelas;
 }
 
 // ===============================================
@@ -88,10 +70,7 @@ function adicionarItem() {
     const produtoId = Number(document.getElementById("produtoSelect").value);
     const quantidade = Number(document.getElementById("quantidadeNF").value);
 
-    if (!produtoId || quantidade <= 0) {
-        alert("Selecione produto e quantidade.");
-        return;
-    }
+    if (!produtoId || quantidade <= 0) return alert("Preencha item");
 
     itensNF.push({ produto_id: produtoId, quantidade });
     atualizarTabelaItens();
@@ -101,18 +80,15 @@ function atualizarTabelaItens() {
     const tbody = document.getElementById("tbodyItensNF");
     tbody.innerHTML = "";
 
-    itensNF.forEach((item, index) => {
-        const produto = listaProdutos.find(p => p.id === item.produto_id);
+    itensNF.forEach((item, i) => {
+        const prod = listaProdutos.find(p => p.id === item.produto_id);
 
         tbody.innerHTML += `
-            <tr>
-                <td>${produto?.codigo} - ${produto?.descricao}</td>
-                <td>${item.quantidade}</td>
-                <td>
-                    <button onclick="removerItem(${index})">Remover</button>
-                </td>
-            </tr>
-        `;
+        <tr>
+            <td>${prod?.codigo} - ${prod?.descricao}</td>
+            <td>${item.quantidade}</td>
+            <td><button onclick="removerItem(${i})">Remover</button></td>
+        </tr>`;
     });
 }
 
@@ -130,8 +106,7 @@ function adicionarParcela() {
     const vencimento = document.getElementById("vencimentoInput").value;
 
     if (!parcela || !valor || !vencimento) {
-        alert("Preencha todos os campos da parcela.");
-        return;
+        return alert("Preencha parcela");
     }
 
     boletos.push({ parcela, valor, vencimento });
@@ -144,13 +119,12 @@ function atualizarTabelaBoletos() {
 
     boletos.forEach((b, i) => {
         tbody.innerHTML += `
-            <tr>
-                <td>${b.parcela}</td>
-                <td>R$ ${b.valor.toFixed(2)}</td>
-                <td>${b.vencimento}</td>
-                <td><button onclick="removerParcela(${i})">Remover</button></td>
-            </tr>
-        `;
+        <tr>
+            <td>${b.parcela}</td>
+            <td>R$ ${b.valor.toFixed(2)}</td>
+            <td>${b.vencimento}</td>
+            <td><button onclick="removerParcela(${i})">Remover</button></td>
+        </tr>`;
     });
 }
 
@@ -160,22 +134,13 @@ window.removerParcela = (i) => {
 };
 
 // ===============================================
-// GERAR PARCELAS
-// ===============================================
 function gerarParcelas() {
     const total = Number(document.getElementById("valorTotalNF").value);
+    const qtd = prompt("Qtd parcelas?");
 
-    if (!total || total <= 0) {
-        alert("Informe o valor total primeiro.");
-        return;
-    }
-
-    const qtd = prompt("Quantas parcelas?");
-    if (!qtd) return;
+    if (!total || !qtd) return;
 
     boletos = [];
-
-    const valorParcela = total / qtd;
     let data = new Date();
 
     for (let i = 1; i <= qtd; i++) {
@@ -183,7 +148,7 @@ function gerarParcelas() {
 
         boletos.push({
             parcela: i,
-            valor: valorParcela,
+            valor: total / qtd,
             vencimento: data.toISOString().split("T")[0]
         });
     }
@@ -195,18 +160,14 @@ function gerarParcelas() {
 // SALVAR NF COMPLETA
 // ===============================================
 async function salvarNF() {
+
     const clienteId = Number(document.getElementById("clienteSelect").value);
     const numeroNF = document.getElementById("nfNumero").value;
     const dataNF = document.getElementById("nfData").value;
     const total = Number(document.getElementById("valorTotalNF").value);
 
-    if (!clienteId || !numeroNF || !dataNF) {
-        alert("Preencha os dados da NF.");
-        return;
-    }
-
     // ---------- NF ----------
-    const { data: nf, error: erroNF } = await supabase
+    const { data: nf, error } = await supabase
         .from("notas_fiscais")
         .insert({
             cliente_id: clienteId,
@@ -217,124 +178,59 @@ async function salvarNF() {
         .select()
         .single();
 
-    if (erroNF) {
-        console.error("Erro NF:", erroNF);
-        alert("Erro ao salvar NF");
-        return;
+    if (error) {
+        console.error(error);
+        return alert("Erro NF");
     }
 
     const nfId = nf.id;
 
     // ---------- ITENS ----------
-    const { error: erroItens } = await supabase
-        .from("notas_fiscais_itens")
-        .insert(
-            itensNF.map(i => ({
-                nf_id: nfId,
-                produto_id: i.produto_id,
-                quantidade: i.quantidade
-            }))
-        );
+    await supabase.from("notas_fiscais_itens").insert(
+        itensNF.map(i => ({
+            nf_id: nfId,
+            produto_id: i.produto_id,
+            quantidade: i.quantidade
+        }))
+    );
 
-    if (erroItens) {
-        console.error("Erro itens:", erroItens);
-        alert("Erro ao salvar itens");
-        return;
-    }
-
-    // ---------- BOLETOS + FINANCEIRO ----------
+    // ---------- BOLETOS CORRIGIDO ----------
     for (const b of boletos) {
 
-        // BOLETO
         const { error: erroBoleto } = await supabase
             .from("boletos")
             .insert({
-                nf_id: nfId,
-                cliente_id: clienteId,
-                parcela: b.parcela,
+                nota_fiscal_id: nfId,
+                origem: numeroNF,
+                tipo: "NF",
+                numero_referencia: `${numeroNF}-${b.parcela}`,
                 valor: b.valor,
-                vencimento: b.vencimento,
+                data_vencimento: b.vencimento,
                 status: "ABERTO",
-                origem: numeroNF
+                tipo_de_iniciacao: "NF"
             });
 
         if (erroBoleto) {
-            console.error("Erro boleto:", erroBoleto);
-            alert("Erro ao salvar boleto");
-            return;
+            console.error("ERRO BOLETO:", erroBoleto);
+            return alert("Erro ao salvar boleto");
         }
 
-        // CONTAS RECEBER
+        // ---------- CONTAS RECEBER ----------
         const { error: erroCR } = await supabase
             .from("contas_receber")
             .insert({
-                cliente_id: clienteId,
                 data: b.vencimento,
-                descricao: `NF ${numeroNF} - Parcela ${b.parcela}`,
+                descricao: `${numeroNF}-${b.parcela}`,
                 valor: b.valor,
                 status: "PENDENTE"
             });
 
         if (erroCR) {
-            console.error("Erro contas_receber:", erroCR);
-            alert("Erro ao salvar contas a receber");
-            return;
+            console.error("ERRO CR:", erroCR);
+            return alert("Erro contas receber");
         }
     }
 
-    // ---------- BAIXA ----------
-    await realizarBaixaPorData(nfId, clienteId, itensNF);
-
-    alert("NF salva completa com sucesso 🚀");
+    alert("NF salva completa 🚀");
     window.location.href = "notas_lista.html";
-}
-
-// ===============================================
-// BAIXA AUTOMÁTICA (MANTIDA)
-// ===============================================
-async function realizarBaixaPorData(nfId, clienteId, itensNF) {
-    for (const itemNF of itensNF) {
-        let qtdRestante = Number(itemNF.quantidade);
-        if (qtdRestante <= 0) continue;
-
-        const { data: itensPedido } = await supabase
-            .from("pedidos_itens")
-            .select(`
-                id,
-                pedido_id,
-                produto_id,
-                quantidade,
-                data_entrega,
-                pedidos!inner(id, cliente_id)
-            `)
-            .eq("produto_id", itemNF.produto_id)
-            .eq("pedidos.cliente_id", clienteId)
-            .order("data_entrega", { ascending: true });
-
-        for (const pedItem of (itensPedido || [])) {
-            if (qtdRestante <= 0) break;
-
-            const { data: baixasItem } = await supabase
-                .from("notas_pedidos_baixas")
-                .select("quantidade_baixada")
-                .eq("pedido_item_id", pedItem.id);
-
-            const totalBaixado = (baixasItem || []).reduce((s, b) => s + Number(b.quantidade_baixada), 0);
-            const saldo = pedItem.quantidade - totalBaixado;
-
-            if (saldo <= 0) continue;
-
-            const baixar = Math.min(qtdRestante, saldo);
-
-            await supabase.from("notas_pedidos_baixas").insert({
-                nf_id: nfId,
-                pedido_id: pedItem.pedido_id,
-                produto_id: pedItem.produto_id,
-                pedido_item_id: pedItem.id,
-                quantidade_baixada: baixar
-            });
-
-            qtdRestante -= baixar;
-        }
-    }
 }
