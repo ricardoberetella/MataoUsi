@@ -1,5 +1,5 @@
 // ===============================================
-//  NOTAS_NOVA.JS — COMPLETO COM BOLETOS + FINANCEIRO
+//  NOTAS_NOVA.JS — COMPLETO COM BOLETOS + CONTAS_RECEBER
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -7,7 +7,7 @@ import { supabase, verificarLogin } from "./auth.js";
 let listaClientes = [];
 let listaProdutos = [];
 let itensNF = [];
-let boletos = []; // NOVO
+let boletos = [];
 
 // ===============================================
 document.addEventListener("DOMContentLoaded", async () => {
@@ -65,7 +65,6 @@ function configurarEventos() {
     document.getElementById("btnAdicionarItem")?.addEventListener("click", adicionarItem);
     document.getElementById("btnSalvarNF")?.addEventListener("click", salvarNF);
 
-    // NOVO
     document.getElementById("btnAdicionarParcela")?.addEventListener("click", adicionarParcela);
     document.getElementById("btnGerarParcelas")?.addEventListener("click", gerarParcelas);
 }
@@ -217,7 +216,7 @@ async function salvarNF() {
         }))
     );
 
-    // ---------- BOLETOS + FINANCEIRO ----------
+    // ---------- BOLETOS + CONTAS_RECEBER ----------
     for (const b of boletos) {
 
         // salva boleto
@@ -228,14 +227,13 @@ async function salvarNF() {
             vencimento: b.vencimento
         });
 
-        // lança no financeiro AUTOMATICAMENTE
-        await supabase.from("financeiro").insert({
+        // lança no contas_receber
+        await supabase.from("contas_receber").insert({
+            cliente_id: clienteId,
             data: b.vencimento,
             descricao: `NF ${numeroNF} - Parcela ${b.parcela}`,
             valor: b.valor,
-            tipo: "credito",
-            status: "PENDENTE",
-            banco: "SICOOB"
+            status: "PENDENTE"
         });
     }
 
@@ -247,7 +245,7 @@ async function salvarNF() {
 }
 
 // ===============================================
-// SUA FUNÇÃO ORIGINAL (MANTIDA)
+// BAIXA AUTOMÁTICA (MANTIDA)
 // ===============================================
 async function realizarBaixaPorData(nfId, clienteId, itensNF) {
     for (const itemNF of itensNF) {
