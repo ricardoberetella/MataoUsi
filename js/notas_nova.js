@@ -1,5 +1,5 @@
 // ===============================================
-//  NOTAS_NOVA.JS — COMPLETO COM BOLETOS + CONTAS_RECEBER
+//  NOTAS_NOVA.JS — FINAL COM BOLETOS + FINANCEIRO
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -26,10 +26,16 @@ async function carregarClientes() {
     const select = document.getElementById("clienteSelect");
     select.innerHTML = `<option value="">Selecione o cliente</option>`;
 
-    const { data } = await supabase
+    const { data, error } = await supabase
         .from("clientes")
         .select("id, razao_social")
         .order("razao_social");
+
+    if (error) {
+        console.error(error);
+        alert("Erro ao carregar clientes");
+        return;
+    }
 
     listaClientes = data || [];
 
@@ -45,10 +51,16 @@ async function carregarClientes() {
 async function carregarProdutos() {
     const select = document.getElementById("produtoSelect");
 
-    const { data } = await supabase
+    const { data, error } = await supabase
         .from("produtos")
         .select("id, codigo, descricao")
         .order("codigo");
+
+    if (error) {
+        console.error(error);
+        alert("Erro ao carregar produtos");
+        return;
+    }
 
     listaProdutos = data || [];
 
@@ -148,7 +160,7 @@ window.removerParcela = (i) => {
 };
 
 // ===============================================
-// GERAR PARCELAS AUTOMÁTICAS
+// GERAR PARCELAS
 // ===============================================
 function gerarParcelas() {
     const total = Number(document.getElementById("valorTotalNF").value);
@@ -194,7 +206,7 @@ async function salvarNF() {
     }
 
     // ---------- NF ----------
-    const { data: nf } = await supabase
+    const { data: nf, error: erroNF } = await supabase
         .from("notas_fiscais")
         .insert({
             cliente_id: clienteId,
@@ -205,42 +217,75 @@ async function salvarNF() {
         .select()
         .single();
 
+    if (erroNF) {
+        console.error("Erro NF:", erroNF);
+        alert("Erro ao salvar NF");
+        return;
+    }
+
     const nfId = nf.id;
 
     // ---------- ITENS ----------
-    await supabase.from("notas_fiscais_itens").insert(
-        itensNF.map(i => ({
-            nf_id: nfId,
-            produto_id: i.produto_id,
-            quantidade: i.quantidade
-        }))
-    );
+    const { error: erroItens } = await supabase
+        .from("notas_fiscais_itens")
+        .insert(
+            itensNF.map(i => ({
+                nf_id: nfId,
+                produto_id: i.produto_id,
+                quantidade: i.quantidade
+            }))
+        );
 
-    // ---------- BOLETOS + CONTAS_RECEBER ----------
-    for (const b of boletos) {
-
-        // salva boleto
-        await supabase.from("boletos").insert({
-            nf_id: nfId,
-            parcela: b.parcela,
-            valor: b.valor,
-            vencimento: b.vencimento
-        });
-
-        // lança no contas_receber
-        await supabase.from("contas_receber").insert({
-            cliente_id: clienteId,
-            data: b.vencimento,
-            descricao: `NF ${numeroNF} - Parcela ${b.parcela}`,
-            valor: b.valor,
-            status: "PENDENTE"
-        });
+    if (erroItens) {
+        console.error("Erro itens:", erroItens);
+        alert("Erro ao salvar itens");
+        return;
     }
 
-    // ---------- BAIXA AUTOMÁTICA ----------
+    // ---------- BOLETOS + FINANCEIRO ----------
+    for (const b of boletos) {
+
+        // BOLETO
+        const { error: erroBoleto } = await supabase
+            .from("boletos")
+            .insert({
+                nf_id: nfId,
+                cliente_id: clienteId,
+                parcela: b.parcela,
+                valor: b.valor,
+                vencimento: b.vencimento,
+                status: "ABERTO",
+                origem: numeroNF
+            });
+
+        if (erroBoleto) {
+            console.error("Erro boleto:", erroBoleto);
+            alert("Erro ao salvar boleto");
+            return;
+        }
+
+        // CONTAS RECEBER
+        const { error: erroCR } = await supabase
+            .from("contas_receber")
+            .insert({
+                cliente_id: clienteId,
+                data: b.vencimento,
+                descricao: `NF ${numeroNF} - Parcela ${b.parcela}`,
+                valor: b.valor,
+                status: "PENDENTE"
+            });
+
+        if (erroCR) {
+            console.error("Erro contas_receber:", erroCR);
+            alert("Erro ao salvar contas a receber");
+            return;
+        }
+    }
+
+    // ---------- BAIXA ----------
     await realizarBaixaPorData(nfId, clienteId, itensNF);
 
-    alert("NF completa salva com sucesso 🚀");
+    alert("NF salva completa com sucesso 🚀");
     window.location.href = "notas_lista.html";
 }
 
