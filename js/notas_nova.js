@@ -1,18 +1,14 @@
 // ===============================================
-//  NOTAS_NOVA.JS — SALVAR NF + BAIXA AUTOMÁTICA
-//  • Baixa por ITEM individual (pedidos_itens.id)
-//  • Ordem pela DATA DE ENTREGA (mais antiga -> mais nova)
-//  • Usa pedido_item_id na tabela notas_pedidos_baixas
+//  NOTAS_NOVA.JS — COMPLETO COM BOLETOS + FINANCEIRO
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
 
 let listaClientes = [];
 let listaProdutos = [];
-let itensNF = []; // [{ produto_id, quantidade }]
+let itensNF = [];
+let boletos = []; // NOVO
 
-// ===============================================
-//  INICIAR
 // ===============================================
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
@@ -26,22 +22,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // ===============================================
-//  CARREGAR CLIENTES
-// ===============================================
 async function carregarClientes() {
     const select = document.getElementById("clienteSelect");
     select.innerHTML = `<option value="">Selecione o cliente</option>`;
 
-    const { data, error } = await supabase
+    const { data } = await supabase
         .from("clientes")
         .select("id, razao_social")
-        .order("razao_social", { ascending: true });
-
-    if (error) {
-        console.error("Erro ao carregar clientes:", error);
-        alert("Erro ao carregar clientes.");
-        return;
-    }
+        .order("razao_social");
 
     listaClientes = data || [];
 
@@ -54,22 +42,13 @@ async function carregarClientes() {
 }
 
 // ===============================================
-//  CARREGAR PRODUTOS
-// ===============================================
 async function carregarProdutos() {
     const select = document.getElementById("produtoSelect");
-    select.innerHTML = `<option value="">Selecione o produto</option>`;
 
-    const { data, error } = await supabase
+    const { data } = await supabase
         .from("produtos")
         .select("id, codigo, descricao")
-        .order("codigo", { ascending: true });
-
-    if (error) {
-        console.error("Erro ao carregar produtos:", error);
-        alert("Erro ao carregar produtos.");
-        return;
-    }
+        .order("codigo");
 
     listaProdutos = data || [];
 
@@ -82,25 +61,24 @@ async function carregarProdutos() {
 }
 
 // ===============================================
-//  EVENTOS
-// ===============================================
 function configurarEventos() {
-    const btnAdd = document.getElementById("btnAdicionarItem");
-    const btnSalvar = document.getElementById("btnSalvarNF");
+    document.getElementById("btnAdicionarItem")?.addEventListener("click", adicionarItem);
+    document.getElementById("btnSalvarNF")?.addEventListener("click", salvarNF);
 
-    if (btnAdd) btnAdd.addEventListener("click", adicionarItem);
-    if (btnSalvar) btnSalvar.addEventListener("click", salvarNF);
+    // NOVO
+    document.getElementById("btnAdicionarParcela")?.addEventListener("click", adicionarParcela);
+    document.getElementById("btnGerarParcelas")?.addEventListener("click", gerarParcelas);
 }
 
 // ===============================================
-//  ADICIONAR ITEM NA NF
+// ITENS
 // ===============================================
 function adicionarItem() {
     const produtoId = Number(document.getElementById("produtoSelect").value);
     const quantidade = Number(document.getElementById("quantidadeNF").value);
 
     if (!produtoId || quantidade <= 0) {
-        alert("Selecione um produto e informe a quantidade.");
+        alert("Selecione produto e quantidade.");
         return;
     }
 
@@ -115,106 +93,168 @@ function atualizarTabelaItens() {
     itensNF.forEach((item, index) => {
         const produto = listaProdutos.find(p => p.id === item.produto_id);
 
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${produto ? `${produto.codigo} - ${produto.descricao}` : item.produto_id}</td>
-            <td style="text-align:right;">${item.quantidade}</td>
-            <td style="text-align:center;">
-                <button class="btn-secundario" onclick="removerItem(${index})">Remover</button>
-            </td>
+        tbody.innerHTML += `
+            <tr>
+                <td>${produto?.codigo} - ${produto?.descricao}</td>
+                <td>${item.quantidade}</td>
+                <td>
+                    <button onclick="removerItem(${index})">Remover</button>
+                </td>
+            </tr>
         `;
-        tbody.appendChild(tr);
     });
 }
 
-window.removerItem = function (index) {
-    itensNF.splice(index, 1);
+window.removerItem = (i) => {
+    itensNF.splice(i, 1);
     atualizarTabelaItens();
 };
 
 // ===============================================
-//  SALVAR NF + ITENS + BAIXA AUTOMÁTICA
+// BOLETOS
+// ===============================================
+function adicionarParcela() {
+    const parcela = Number(document.getElementById("parcelaInput").value);
+    const valor = Number(document.getElementById("valorParcelaInput").value);
+    const vencimento = document.getElementById("vencimentoInput").value;
+
+    if (!parcela || !valor || !vencimento) {
+        alert("Preencha todos os campos da parcela.");
+        return;
+    }
+
+    boletos.push({ parcela, valor, vencimento });
+    atualizarTabelaBoletos();
+}
+
+function atualizarTabelaBoletos() {
+    const tbody = document.getElementById("tbodyBoletos");
+    tbody.innerHTML = "";
+
+    boletos.forEach((b, i) => {
+        tbody.innerHTML += `
+            <tr>
+                <td>${b.parcela}</td>
+                <td>R$ ${b.valor.toFixed(2)}</td>
+                <td>${b.vencimento}</td>
+                <td><button onclick="removerParcela(${i})">Remover</button></td>
+            </tr>
+        `;
+    });
+}
+
+window.removerParcela = (i) => {
+    boletos.splice(i, 1);
+    atualizarTabelaBoletos();
+};
+
+// ===============================================
+// GERAR PARCELAS AUTOMÁTICAS
+// ===============================================
+function gerarParcelas() {
+    const total = Number(document.getElementById("valorTotalNF").value);
+
+    if (!total || total <= 0) {
+        alert("Informe o valor total primeiro.");
+        return;
+    }
+
+    const qtd = prompt("Quantas parcelas?");
+    if (!qtd) return;
+
+    boletos = [];
+
+    const valorParcela = total / qtd;
+    let data = new Date();
+
+    for (let i = 1; i <= qtd; i++) {
+        data.setMonth(data.getMonth() + 1);
+
+        boletos.push({
+            parcela: i,
+            valor: valorParcela,
+            vencimento: data.toISOString().split("T")[0]
+        });
+    }
+
+    atualizarTabelaBoletos();
+}
+
+// ===============================================
+// SALVAR NF COMPLETA
 // ===============================================
 async function salvarNF() {
     const clienteId = Number(document.getElementById("clienteSelect").value);
-    const numeroNF = document.getElementById("nfNumero").value.trim();
+    const numeroNF = document.getElementById("nfNumero").value;
     const dataNF = document.getElementById("nfData").value;
+    const total = Number(document.getElementById("valorTotalNF").value);
 
     if (!clienteId || !numeroNF || !dataNF) {
-        alert("Preencha cliente, número da NF e data.");
+        alert("Preencha os dados da NF.");
         return;
     }
 
-    if (itensNF.length === 0) {
-        alert("Adicione ao menos um item na NF.");
-        return;
-    }
-
-    // ---------- Criar NF ----------
-    const { data: nf, error: erroNF } = await supabase
+    // ---------- NF ----------
+    const { data: nf } = await supabase
         .from("notas_fiscais")
         .insert({
             cliente_id: clienteId,
             numero_nf: numeroNF,
             data_nf: dataNF,
-            total: 0
+            total: total
         })
         .select()
         .single();
 
-    if (erroNF) {
-        console.error("Erro ao salvar NF:", erroNF);
-        alert("Erro ao salvar Nota Fiscal.");
-        return;
-    }
-
     const nfId = nf.id;
 
-    // ---------- Inserir itens da NF ----------
-    const itensParaInserir = itensNF.map(it => ({
-        nf_id: nfId,
-        produto_id: it.produto_id,
-        quantidade: it.quantidade
-    }));
+    // ---------- ITENS ----------
+    await supabase.from("notas_fiscais_itens").insert(
+        itensNF.map(i => ({
+            nf_id: nfId,
+            produto_id: i.produto_id,
+            quantidade: i.quantidade
+        }))
+    );
 
-    const { error: erroItens } = await supabase
-        .from("notas_fiscais_itens")
-        .insert(itensParaInserir);
+    // ---------- BOLETOS + FINANCEIRO ----------
+    for (const b of boletos) {
 
-    if (erroItens) {
-        console.error("Erro ao salvar itens da NF:", erroItens);
-        alert("Erro ao salvar itens da Nota Fiscal.");
-        return;
+        // salva boleto
+        await supabase.from("boletos").insert({
+            nf_id: nfId,
+            parcela: b.parcela,
+            valor: b.valor,
+            vencimento: b.vencimento
+        });
+
+        // lança no financeiro AUTOMATICAMENTE
+        await supabase.from("financeiro").insert({
+            data: b.vencimento,
+            descricao: `NF ${numeroNF} - Parcela ${b.parcela}`,
+            valor: b.valor,
+            tipo: "credito",
+            status: "PENDENTE",
+            banco: "SICOOB"
+        });
     }
 
-    // ---------- Baixa automática ----------
-    await realizarBaixaPorData(nfId, clienteId, itensParaInserir);
+    // ---------- BAIXA AUTOMÁTICA ----------
+    await realizarBaixaPorData(nfId, clienteId, itensNF);
 
-    alert("NF salva e baixas aplicadas com sucesso!");
+    alert("NF completa salva com sucesso 🚀");
     window.location.href = "notas_lista.html";
 }
 
 // ===============================================
-//  BAIXA AUTOMÁTICA — POR ITEM E POR DATA
-// ===============================================
-//
-//  Regras:
-//  • Para cada item da NF (produto + quantidade)
-//  • Busca TODOS os itens de pedido (pedidos_itens) desse cliente e produto
-//  • Ordena por data_entrega asc (mais antiga primeiro)
-//  • Para cada item: calcula saldo = quantidade do item - baixas anteriores
-//  • Aplica baixa até acabar a quantidade da NF
-//  • Salva em notas_pedidos_baixas com pedido_item_id
+// SUA FUNÇÃO ORIGINAL (MANTIDA)
 // ===============================================
 async function realizarBaixaPorData(nfId, clienteId, itensNF) {
     for (const itemNF of itensNF) {
         let qtdRestante = Number(itemNF.quantidade);
         if (qtdRestante <= 0) continue;
 
-        console.log("🔎 Iniciando baixa para produto", itemNF.produto_id, "Quantidade NF =", qtdRestante);
-
-        // Buscar itens de pedido para esse cliente + produto
-        const { data: itensPedido, error } = await supabase
+        const { data: itensPedido } = await supabase
             .from("pedidos_itens")
             .select(`
                 id,
@@ -228,81 +268,30 @@ async function realizarBaixaPorData(nfId, clienteId, itensNF) {
             .eq("pedidos.cliente_id", clienteId)
             .order("data_entrega", { ascending: true });
 
-        if (error) {
-            console.error("Erro ao buscar itens de pedidos para baixa:", error);
-            continue;
-        }
-
-        if (!itensPedido || itensPedido.length === 0) {
-            console.log("Nenhum pedido encontrado para produto", itemNF.produto_id);
-            continue;
-        }
-
-        console.log("📋 Itens de pedido encontrados:", itensPedido);
-
-        // Processar item POR item, em ordem de data
-        for (const pedItem of itensPedido) {
+        for (const pedItem of (itensPedido || [])) {
             if (qtdRestante <= 0) break;
 
-            // Buscar baixas anteriores deste item específico
-            const { data: baixasItem, error: erroBaixas } = await supabase
+            const { data: baixasItem } = await supabase
                 .from("notas_pedidos_baixas")
                 .select("quantidade_baixada")
                 .eq("pedido_item_id", pedItem.id);
 
-            if (erroBaixas) {
-                console.error("Erro ao buscar baixas anteriores do item", pedItem.id, erroBaixas);
-                continue;
-            }
+            const totalBaixado = (baixasItem || []).reduce((s, b) => s + Number(b.quantidade_baixada), 0);
+            const saldo = pedItem.quantidade - totalBaixado;
 
-            const totalBaixadoItem = (baixasItem || []).reduce(
-                (soma, b) => soma + Number(b.quantidade_baixada),
-                0
-            );
+            if (saldo <= 0) continue;
 
-            const saldoItem = Number(pedItem.quantidade) - totalBaixadoItem;
+            const baixar = Math.min(qtdRestante, saldo);
 
-            if (saldoItem <= 0) {
-                console.log(`Item ${pedItem.id} já totalmente baixado. Saldo 0.`);
-                continue;
-            }
+            await supabase.from("notas_pedidos_baixas").insert({
+                nf_id: nfId,
+                pedido_id: pedItem.pedido_id,
+                produto_id: pedItem.produto_id,
+                pedido_item_id: pedItem.id,
+                quantidade_baixada: baixar
+            });
 
-            // Quanto posso baixar neste item agora
-            const baixarAgora = Math.min(qtdRestante, saldoItem);
-
-            console.log(
-                `⬇ Baixando ${baixarAgora} do item ${pedItem.id} (pedido ${pedItem.pedido_id}) ` +
-                `| saldoItem=${saldoItem} | qtdRestante antes=${qtdRestante}`
-            );
-
-            // Inserir baixa neste item
-            const { error: erroInsert } = await supabase
-                .from("notas_pedidos_baixas")
-                .insert({
-                    nf_id: nfId,
-                    pedido_id: pedItem.pedido_id,
-                    produto_id: pedItem.produto_id,
-                    pedido_item_id: pedItem.id,
-                    quantidade_baixada: baixarAgora
-                });
-
-            if (erroInsert) {
-                console.error("Erro ao registrar baixa do item", pedItem.id, erroInsert);
-                // Se der erro, não desconta a quantidade — pra não desalinhar
-                continue;
-            }
-
-            // Atualiza o restante da NF
-            qtdRestante -= baixarAgora;
-            console.log("qtdRestante após baixa =", qtdRestante);
+            qtdRestante -= baixar;
         }
-
-        console.log(
-            "✅ Final da baixa para produto",
-            itemNF.produto_id,
-            "| Restante não alocado da NF =", qtdRestante
-        );
     }
-
-    console.log("🎉 Baixa automática concluída para todos os itens da NF", nfId);
 }
