@@ -1,5 +1,5 @@
 // ===============================================
-//  NOTAS_NOVA.JS — COMPLETO E CORRIGIDO
+//  NOTAS_NOVA.JS — VERSÃO CORRIGIDA E COMPLETA
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -25,26 +25,30 @@ async function carregarClientes() {
     const { data } = await supabase.from("clientes").select("id, razao_social").order("razao_social");
     listaClientes = data || [];
     const select = document.getElementById("clienteSelect");
-    select.innerHTML = `<option value="">Selecione o cliente</option>`;
-    listaClientes.forEach(cli => {
-        const opt = document.createElement("option");
-        opt.value = cli.id;
-        opt.textContent = cli.razao_social;
-        select.appendChild(opt);
-    });
+    if (select) {
+        select.innerHTML = `<option value="">Selecione o cliente</option>`;
+        listaClientes.forEach(cli => {
+            const opt = document.createElement("option");
+            opt.value = cli.id;
+            opt.textContent = cli.razao_social;
+            select.appendChild(opt);
+        });
+    }
 }
 
 async function carregarProdutos() {
     const { data } = await supabase.from("produtos").select("id, codigo, descricao").order("codigo");
     listaProdutos = data || [];
     const select = document.getElementById("produtoSelect");
-    select.innerHTML = `<option value="">Selecione o produto</option>`;
-    listaProdutos.forEach(prod => {
-        const opt = document.createElement("option");
-        opt.value = prod.id;
-        opt.textContent = `${prod.codigo} - ${prod.descricao}`;
-        select.appendChild(opt);
-    });
+    if (select) {
+        select.innerHTML = `<option value="">Selecione o produto</option>`;
+        listaProdutos.forEach(prod => {
+            const opt = document.createElement("option");
+            opt.value = prod.id;
+            opt.textContent = `${prod.codigo} - ${prod.descricao}`;
+            select.appendChild(opt);
+        });
+    }
 }
 
 function configurarEventos() {
@@ -55,12 +59,13 @@ function configurarEventos() {
 }
 
 // ===============================================
-// GESTÃO DE ITENS E BAIXA DE PEDIDOS
+// ITENS E BAIXAS
 // ===============================================
 function adicionarItem() {
     const produtoId = Number(document.getElementById("produtoSelect").value);
     const quantidade = Number(document.getElementById("quantidadeNF").value);
-    const pedidoId = document.getElementById("pedidoOrigem")?.value || null; // Caso tenha campo de pedido
+    // Tenta pegar o ID do pedido de um campo oculto ou seleção (se houver)
+    const pedidoId = document.getElementById("pedidoIdSelecionado")?.value || null;
 
     if (!produtoId || quantidade <= 0) return alert("Selecione produto e quantidade.");
 
@@ -70,6 +75,7 @@ function adicionarItem() {
 
 function atualizarTabelaItens() {
     const tbody = document.getElementById("tbodyItensNF");
+    if (!tbody) return;
     tbody.innerHTML = "";
     itensNF.forEach((item, i) => {
         const prod = listaProdutos.find(p => p.id === item.produto_id);
@@ -77,7 +83,7 @@ function atualizarTabelaItens() {
         <tr>
             <td>${prod?.codigo} - ${prod?.descricao}</td>
             <td>${item.quantidade}</td>
-            <td><button type="button" onclick="removerItem(${i})">Remover</button></td>
+            <td><button type="button" class="btn-remover" onclick="removerItem(${i})">Remover</button></td>
         </tr>`;
     });
 }
@@ -88,14 +94,14 @@ window.removerItem = (i) => {
 };
 
 // ===============================================
-// FINANCEIRO (BOLETOS)
+// BOLETOS E PARCELAS
 // ===============================================
 function adicionarParcela() {
-    const parcela = document.getElementById("parcelaInput").value; // Ex: A, B, C ou 1, 2, 3
+    const parcela = document.getElementById("parcelaInput").value;
     const valor = Number(document.getElementById("valorParcelaInput").value);
     const vencimento = document.getElementById("vencimentoInput").value;
 
-    if (!parcela || !valor || !vencimento) return alert("Preencha a parcela.");
+    if (!parcela || !valor || !vencimento) return alert("Preencha os dados da parcela.");
 
     boletos.push({ parcela, valor, vencimento });
     atualizarTabelaBoletos();
@@ -103,6 +109,7 @@ function adicionarParcela() {
 
 function atualizarTabelaBoletos() {
     const tbody = document.getElementById("tbodyBoletos");
+    if (!tbody) return;
     tbody.innerHTML = "";
     boletos.forEach((b, i) => {
         tbody.innerHTML += `
@@ -110,7 +117,7 @@ function atualizarTabelaBoletos() {
             <td>${b.parcela}</td>
             <td>R$ ${b.valor.toFixed(2)}</td>
             <td>${b.vencimento}</td>
-            <td><button type="button" onclick="removerParcela(${i})">Remover</button></td>
+            <td><button type="button" class="btn-remover" onclick="removerParcela(${i})">Remover</button></td>
         </tr>`;
     });
 }
@@ -131,7 +138,7 @@ function gerarParcelas() {
         let venc = new Date(dataBase);
         venc.setMonth(venc.getMonth() + i);
         boletos.push({
-            parcela: String.fromCharCode(64 + i), // Gera A, B, C...
+            parcela: String.fromCharCode(64 + i), // A, B, C...
             valor: total / qtd,
             vencimento: venc.toISOString().split("T")[0]
         });
@@ -140,44 +147,45 @@ function gerarParcelas() {
 }
 
 // ===============================================
-// SALVAR TUDO (PROCESSO COMPLETO)
+// SALVAMENTO GLOBAL (NF + BAIXAS + FINANCEIRO)
 // ===============================================
 async function salvarNF() {
     const clienteId = Number(document.getElementById("clienteSelect").value);
     const numeroNF = document.getElementById("nfNumero").value;
     const dataNF = document.getElementById("nfData").value;
     
-    if (!clienteId || !numeroNF || !dataNF || itensNF.length === 0 || boletos.length === 0) {
-        return alert("Erro: Verifique se preencheu a NF, os Itens e os Boletos.");
-    }
+    if (!clienteId || !numeroNF || !dataNF) return alert("Preencha o cabeçalho da NF.");
+    if (itensNF.length === 0) return alert("Adicione ao menos um item.");
+    if (boletos.length === 0) return alert("Adicione ao menos um boleto/parcela.");
 
     const clienteObj = listaClientes.find(c => c.id === clienteId);
     const nomeCliente = clienteObj ? clienteObj.razao_social : "Cliente";
+    const totalNF = boletos.reduce((acc, b) => acc + b.valor, 0);
 
     try {
-        // 1. CRIAR A NOTA FISCAL
+        console.log("Gravando NF...");
         const { data: nf, error: errNF } = await supabase
             .from("notas_fiscais")
             .insert({
                 cliente_id: clienteId,
                 numero_nf: numeroNF,
                 data_nf: dataNF,
-                total: boletos.reduce((acc, b) => acc + b.valor, 0)
+                total: totalNF
             })
             .select().single();
 
-        if (errNF) throw errNF;
+        if (errNF) throw new Error("Erro na NF: " + errNF.message);
 
-        // 2. DAR BAIXA NOS ITENS (Registra na tabela de itens e vincula baixa)
+        // 1. GRAVAR ITENS E BAIXAS
+        console.log("Processando itens e baixas...");
         for (const item of itensNF) {
-            // Insere o item na NF
             await supabase.from("notas_fiscais_itens").insert({
                 nf_id: nf.id,
                 produto_id: item.produto_id,
                 quantidade: item.quantidade
             });
 
-            // GERA A BAIXA NO PEDIDO (Para aparecer no seu print 1)
+            // Se o item veio de um pedido, registra a baixa para o seu print 1
             if (item.pedido_id) {
                 await supabase.from("pedidos_baixas").insert({
                     pedido_id: item.pedido_id,
@@ -189,11 +197,12 @@ async function salvarNF() {
             }
         }
 
-        // 3. PROCESSAR FINANCEIRO (BOLETOS -> CONTAS RECEBER -> EXTRATO)
+        // 2. GRAVAR BOLETOS, CONTAS A RECEBER E EXTRATO
+        console.log("Processando financeiro...");
         for (const b of boletos) {
-            const refIdentificador = `${numeroNF}-${b.parcela}`;
+            const identificador = `${numeroNF}-${b.parcela}`;
 
-            // A) Tabela Boletos
+            // Salva na tabela interna de boletos da NF
             await supabase.from("boletos").insert({
                 nota_fiscal_id: nf.id,
                 origem: numeroNF,
@@ -202,30 +211,32 @@ async function salvarNF() {
                 vencimento: b.vencimento
             });
 
-            // B) Contas a Receber (Print 2)
-            await supabase.from("contas_receber").insert({
-                origem: refIdentificador,
+            // SALVA EM CONTAS A RECEBER (Print 2)
+            const { error: errCR } = await supabase.from("contas_receber").insert({
+                origem: identificador,
                 valor: b.valor,
                 vencimento: b.vencimento,
                 status: "ABERTO",
                 cliente: nomeCliente
             });
+            if (errCR) console.error("Erro CR:", errCR);
 
-            // C) Extrato Financeiro (Print 3)
-            await supabase.from("extrato_financeiro").insert({
+            // SALVA NO EXTRATO FINANCEIRO (Print 3)
+            const { error: errEX } = await supabase.from("extrato_financeiro").insert({
                 data: b.vencimento,
                 banco: "SICOOB",
-                descricao: `NF ${refIdentificador} - ${nomeCliente}`,
+                descricao: `NF ${identificador} - ${nomeCliente}`,
                 valor: b.valor,
                 status: "PENDENTE"
             });
+            if (errEX) console.error("Erro Extrato:", errEX);
         }
 
-        alert("Sucesso! NF salva, itens baixados e financeiro gerado.");
+        alert("Tudo salvo com sucesso! NF, Baixas e Financeiro atualizados. 🚀");
         window.location.href = "notas_lista.html";
 
     } catch (error) {
-        console.error("Erro Geral:", error);
-        alert("Erro no processo: " + error.message);
+        console.error("ERRO NO SALVAMENTO:", error);
+        alert(error.message);
     }
 }
