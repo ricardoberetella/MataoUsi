@@ -1,7 +1,3 @@
-// ===============================================
-//  NOTAS_NOVA.JS — FINAL 100% CORRIGIDO
-// ===============================================
-
 import { supabase, verificarLogin } from "./auth.js";
 
 let listaClientes = [];
@@ -9,6 +5,7 @@ let listaProdutos = [];
 let itensNF = [];
 let boletos = [];
 
+// ==========================
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
@@ -19,17 +16,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // ==========================
-// FORMATAR DINHEIRO BR
-// ==========================
-function formatarMoeda(valor) {
-    return valor.toLocaleString("pt-BR", {
+function formatarMoeda(v) {
+    return v.toLocaleString("pt-BR", {
         style: "currency",
         currency: "BRL"
     });
 }
 
-// ==========================
-// CLIENTES / PRODUTOS
 // ==========================
 async function carregarClientes() {
     const { data } = await supabase.from("clientes").select("id, razao_social");
@@ -37,30 +30,31 @@ async function carregarClientes() {
 
     const select = document.getElementById("clienteSelect");
     select.innerHTML = `<option value="">Selecione</option>`;
+
     listaClientes.forEach(c => {
-        const opt = document.createElement("option");
-        opt.value = c.id;
-        opt.textContent = c.razao_social;
-        select.appendChild(opt);
+        const o = document.createElement("option");
+        o.value = c.id;
+        o.textContent = c.razao_social;
+        select.appendChild(o);
     });
 }
 
+// ==========================
 async function carregarProdutos() {
     const { data } = await supabase.from("produtos").select("*");
     listaProdutos = data || [];
 
     const select = document.getElementById("produtoSelect");
     select.innerHTML = `<option value="">Selecione</option>`;
+
     listaProdutos.forEach(p => {
-        const opt = document.createElement("option");
-        opt.value = p.id;
-        opt.textContent = `${p.codigo} - ${p.descricao}`;
-        select.appendChild(opt);
+        const o = document.createElement("option");
+        o.value = p.id;
+        o.textContent = `${p.codigo} - ${p.descricao}`;
+        select.appendChild(o);
     });
 }
 
-// ==========================
-// EVENTOS
 // ==========================
 function configurarEventos() {
     document.getElementById("btnAdicionarItem").onclick = adicionarItem;
@@ -69,23 +63,19 @@ function configurarEventos() {
 }
 
 // ==========================
-// ITENS
-// ==========================
 function adicionarItem() {
     const produtoId = Number(document.getElementById("produtoSelect").value);
-    const quantidade = Number(document.getElementById("quantidadeNF").value);
+    const qtd = Number(document.getElementById("quantidadeNF").value);
 
-    if (!produtoId || quantidade <= 0) {
-        return alert("Informe produto e quantidade");
-    }
+    if (!produtoId || qtd <= 0) return alert("Preencha corretamente");
 
     const prod = listaProdutos.find(p => p.id === produtoId);
 
     itensNF.push({
         produto_id: produtoId,
-        quantidade,
+        quantidade: qtd,
         valor_unitario: prod.valor_unitario,
-        subtotal: quantidade * prod.valor_unitario
+        subtotal: qtd * prod.valor_unitario
     });
 
     atualizarTabelaItens();
@@ -120,19 +110,16 @@ function atualizarTabelaItens() {
 function atualizarTotalNF() {
     const total = itensNF.reduce((acc, i) => acc + i.subtotal, 0);
 
-    let el = document.getElementById("totalNFDisplay");
-
+    let el = document.getElementById("totalNF");
     if (!el) {
         el = document.createElement("h3");
-        el.id = "totalNFDisplay";
-        document.querySelector(".card").appendChild(el);
+        el.id = "totalNF";
+        document.querySelectorAll(".card")[1].appendChild(el);
     }
 
     el.innerHTML = `Total da NF: ${formatarMoeda(total)}`;
 }
 
-// ==========================
-// EDITAR / REMOVER
 // ==========================
 window.removerItem = (i) => {
     itensNF.splice(i, 1);
@@ -141,7 +128,6 @@ window.removerItem = (i) => {
 
 window.editarItem = (i) => {
     const item = itensNF[i];
-
     document.getElementById("produtoSelect").value = item.produto_id;
     document.getElementById("quantidadeNF").value = item.quantidade;
 
@@ -150,36 +136,27 @@ window.editarItem = (i) => {
 };
 
 // ==========================
-// PARCELAS AUTOMÁTICAS
-// ==========================
 function gerarParcelas() {
     const total = itensNF.reduce((acc, i) => acc + i.subtotal, 0);
-    const numeroNF = document.getElementById("nfNumero").value;
+    const nf = document.getElementById("nfNumero").value;
 
-    const qtd = prompt("Quantidade de parcelas?");
+    const qtd = prompt("Qtd parcelas?");
     if (!qtd) return;
 
     boletos = [];
 
     for (let i = 1; i <= qtd; i++) {
-        const data = new Date();
-        data.setMonth(data.getMonth() + i);
-
-        const letra = String.fromCharCode(64 + i);
+        let d = new Date();
+        d.setMonth(d.getMonth() + i);
 
         boletos.push({
-            origem: `${numeroNF} - ${letra}`,
+            origem: `${nf} - ${String.fromCharCode(64 + i)}`,
             valor: total / qtd,
-            vencimento: data
+            vencimento: d
         });
     }
 
     atualizarTabelaBoletos();
-}
-
-// ==========================
-function formatarDataBR(data) {
-    return data.toLocaleDateString("pt-BR");
 }
 
 // ==========================
@@ -192,9 +169,8 @@ function atualizarTabelaBoletos() {
         <tr>
             <td>${b.origem}</td>
             <td>${formatarMoeda(b.valor)}</td>
-            <td>${formatarDataBR(new Date(b.vencimento))}</td>
+            <td>${b.vencimento.toLocaleDateString("pt-BR")}</td>
             <td>
-                <button onclick="editarBoleto(${i})">✏️</button>
                 <button onclick="removerBoleto(${i})">❌</button>
             </td>
         </tr>
@@ -208,27 +184,28 @@ window.removerBoleto = (i) => {
 };
 
 // ==========================
-// SALVAR NF COMPLETO
+// 💥 SALVAR COMPLETO (CORRIGIDO)
 // ==========================
 async function salvarNF() {
+
     const clienteId = Number(document.getElementById("clienteSelect").value);
     const numeroNF = document.getElementById("nfNumero").value;
     const dataNF = document.getElementById("nfData").value;
 
     const total = itensNF.reduce((acc, i) => acc + i.subtotal, 0);
 
-    if (!clienteId || !numeroNF || !dataNF || itensNF.length === 0) {
-        return alert("Preencha tudo!");
+    if (!clienteId || !numeroNF || !dataNF) {
+        return alert("Preencha tudo");
     }
 
     try {
-        // 1. SALVAR NF
+        // NF
         const { data: nf, error } = await supabase
             .from("notas_fiscais")
             .insert({
                 cliente_id: clienteId,
                 numero_nf: numeroNF,
-                data_nf: dataNF, // CORRIGIDO (era dados_nf)
+                data_nf: dataNF,
                 total: total
             })
             .select()
@@ -236,31 +213,39 @@ async function salvarNF() {
 
         if (error) throw error;
 
-        // 2. SALVAR ITENS
+        // ITENS
         for (const item of itensNF) {
             await supabase.from("notas_fiscais_itens").insert({
                 nf_id: nf.id,
                 produto_id: item.produto_id,
                 quantidade: item.quantidade
             });
-        }
 
-        // 3. SALVAR BOLETOS
-        for (const b of boletos) {
-            await supabase.from("boletos").insert({
+            // BAIXA
+            await supabase.from("notas_pedidos_baixas").insert({
                 nf_id: nf.id,
-                descricao: b.origem,
-                valor: b.valor,
-                data_vencimento: new Date(b.vencimento).toISOString(),
-                status: "ABERTO"
+                produto_id: item.produto_id,
+                baixada: item.quantidade
             });
         }
 
-        alert("SALVO COM SUCESSO!");
+        // BOLETOS (AGORA CORRETO)
+        for (const b of boletos) {
+            await supabase.from("boletos").insert({
+                tipo_movimento: "BOLETO",
+                descricao: b.origem,
+                valor: b.valor,
+                data_vencimento: b.vencimento,
+                status: "ABERTO",
+                origem: numeroNF
+            });
+        }
+
+        alert("SALVO PERFEITO 🔥");
         location.reload();
 
-    } catch (err) {
-        console.error(err);
-        alert("Erro: " + err.message);
+    } catch (e) {
+        console.error(e);
+        alert("Erro: " + e.message);
     }
 }
