@@ -70,17 +70,22 @@
             </div>
 
             <div class="form-group" style="display: flex; align-items: flex-end;">
-                <button id="btnAdicionarItem" class="btn-secundario" style="width: 100%;">Adicionar Item</button>
+                <button id="btnAdicionarItem" class="btn-secundario" style="width: 100%;">
+                    Adicionar Item
+                </button>
             </div>
 
         </div>
 
+        <!-- TABELA CORRIGIDA -->
         <div class="tabela-wrapper" style="margin-top: 16px; overflow-x: auto;">
             <table class="tabela-padrao">
                 <thead>
                     <tr>
                         <th>Produto</th>
+                        <th>Valor Unitário</th>
                         <th>Quantidade</th>
+                        <th>Valor Total</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
@@ -88,45 +93,20 @@
             </table>
         </div>
 
-        <!-- NOVO: VALOR TOTAL -->
-        <div class="form-group" style="margin-top:20px;">
-            <label for="valorTotalNF">Valor Total da NF</label>
-            <input type="number" id="valorTotalNF" step="0.01" placeholder="Ex: 10000.00">
+        <!-- TOTAL AUTOMÁTICO -->
+        <div style="margin-top:20px; text-align:right;">
+            <h3>Total da NF: <span id="totalNF">R$ 0,00</span></h3>
         </div>
 
     </section>
 
     <!-- ============================ -->
-    <!--       BOLETOS (NOVO)        -->
+    <!--       BOLETOS              -->
     <!-- ============================ -->
     <section class="card">
         <h2 class="card-title">Boletos / Parcelas</h2>
 
-        <div class="form-grid">
-
-            <div class="form-group">
-                <label>Parcela</label>
-                <input type="number" id="parcelaInput" min="1" placeholder="Ex: 1">
-            </div>
-
-            <div class="form-group">
-                <label>Valor</label>
-                <input type="number" id="valorParcelaInput" step="0.01" placeholder="Ex: 5000">
-            </div>
-
-            <div class="form-group">
-                <label>Vencimento</label>
-                <input type="date" id="vencimentoInput">
-            </div>
-
-            <div class="form-group" style="display:flex; align-items:end;">
-                <button id="btnAdicionarParcela" class="btn-secundario" style="width:100%;">
-                    Adicionar Parcela
-                </button>
-            </div>
-
-        </div>
-
+        <!-- TABELA -->
         <div class="tabela-wrapper" style="margin-top: 16px;">
             <table class="tabela-padrao">
                 <thead>
@@ -141,7 +121,7 @@
             </table>
         </div>
 
-        <!-- BOTÃO AUTOMÁTICO (OPCIONAL) -->
+        <!-- BOTÃO AUTOMÁTICO -->
         <div style="margin-top: 16px;">
             <button id="btnGerarParcelas" class="btn-secundario">
                 Gerar Parcelas Automáticas
