@@ -5,32 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lançar Nota Fiscal - MataoUsi</title>
 
+    <!-- CSS já existentes -->
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/global.css">
-
-    <!-- 🔥 CORREÇÃO DEFINITIVA DO BUG VISUAL -->
-    <style>
-        *::before,
-        *::after {
-            content: none !important;
-            background: none !important;
-        }
-
-        body {
-            background: #0b1e2d !important;
-            overflow-x: hidden;
-        }
-
-        html, body {
-            background-image: none !important;
-        }
-
-        .container {
-            position: relative;
-            z-index: 1;
-        }
-    </style>
-
 </head>
 
 <body>
@@ -46,7 +23,7 @@
 <div class="container">
 
     <!-- ============================ -->
-    <!--  DADOS DA NF -->
+    <!--  DADOS GERAIS DA NF -->
     <!-- ============================ -->
     <section class="card">
         <h2 class="card-title">Dados da Nota Fiscal</h2>
@@ -74,11 +51,12 @@
     </section>
 
     <!-- ============================ -->
-    <!-- ITENS -->
+    <!--       ITENS DA NF           -->
     <!-- ============================ -->
     <section class="card">
         <h2 class="card-title">Itens da Nota Fiscal</h2>
 
+        <!-- Linha para adicionar item -->
         <div class="form-grid">
 
             <div class="form-group">
@@ -90,77 +68,45 @@
 
             <div class="form-group">
                 <label for="quantidadeNF">Quantidade</label>
-                <input type="number" id="quantidadeNF" min="0" placeholder="Ex: 100">
+                <input type="number" id="quantidadeNF" min="0" step="1" placeholder="Ex: 100">
             </div>
 
-            <div class="form-group" style="display:flex; align-items:flex-end;">
-                <button onclick="adicionarItem()" class="btn-secundario" style="width:100%;">
-                    Adicionar Item
-                </button>
+            <div class="form-group" style="display: flex; align-items: flex-end;">
+                <button id="btnAdicionarItem" class="btn-secundario" style="width: 100%;">Adicionar Item</button>
             </div>
 
         </div>
 
-        <div class="tabela-wrapper" style="margin-top: 16px;">
+        <!-- Tabela de itens adicionados -->
+        <div class="tabela-wrapper" style="margin-top: 16px; overflow-x: auto;">
             <table class="tabela-padrao">
                 <thead>
                     <tr>
-                        <th>Produto</th>
-                        <th>Valor Unitário</th>
-                        <th>Quantidade</th>
-                        <th>Valor Total</th>
-                        <th>Ações</th>
+                        <th style="min-width: 220px;">Produto</th>
+                        <th style="min-width: 120px;">Quantidade</th>
+                        <th style="min-width: 80px;">Ações</th>
                     </tr>
                 </thead>
-                <tbody id="tbodyItensNF"></tbody>
+                <tbody id="tbodyItensNF">
+                    <!-- Linhas via JS -->
+                </tbody>
             </table>
-        </div>
-
-        <div style="margin-top:20px; text-align:right;">
-            <h3>Total da NF: <span id="totalNF">R$ 0,00</span></h3>
         </div>
 
     </section>
 
     <!-- ============================ -->
-    <!-- BOLETOS -->
+    <!--       BOTÃO SALVAR NF       -->
     <!-- ============================ -->
-    <section class="card">
-        <h2 class="card-title">Boletos / Parcelas</h2>
-
-        <div class="tabela-wrapper">
-            <table class="tabela-padrao">
-                <thead>
-                    <tr>
-                        <th>Parcela</th>
-                        <th>Valor</th>
-                        <th>Vencimento</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody id="tbodyBoletos"></tbody>
-            </table>
-        </div>
-
-        <div style="margin-top:16px;">
-            <button onclick="gerarParcelas()" class="btn-secundario">
-                Gerar Parcelas Automáticas
-            </button>
-        </div>
-    </section>
-
-    <!-- ============================ -->
-    <!-- SALVAR -->
-    <!-- ============================ -->
-    <section class="card" style="text-align:right;">
-        <button onclick="salvarNF()" class="btn-primario">
-            Salvar NF + Boletos
+    <section class="card" style="text-align: right;">
+        <button id="btnSalvarNF" class="btn-primario">
+            Salvar NF e Baixar Pedidos
         </button>
     </section>
 
 </div>
 
-<!-- JS -->
+<!-- IMPORTAÇÃO DO JS -->
 <script type="module" src="js/auth.js"></script>
 <script type="module" src="js/notas_nova.js"></script>
 
