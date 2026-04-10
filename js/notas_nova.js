@@ -22,8 +22,9 @@ async function carregarClientes() {
     listaClientes = data || [];
 
     const select = document.getElementById("clienteSelect");
-    select.innerHTML = `<option value="">Selecione</option>`;
+    if (!select) return;
 
+    select.innerHTML = `<option value="">Selecione</option>`;
     listaClientes.forEach(c => {
         select.innerHTML += `<option value="${c.id}">${c.razao_social}</option>`;
     });
@@ -34,8 +35,9 @@ async function carregarProdutos() {
     listaProdutos = data || [];
 
     const select = document.getElementById("produtoSelect");
-    select.innerHTML = `<option value="">Selecione</option>`;
+    if (!select) return;
 
+    select.innerHTML = `<option value="">Selecione</option>`;
     listaProdutos.forEach(p => {
         select.innerHTML += `<option value="${p.id}">${p.codigo} - ${p.descricao}</option>`;
     });
@@ -43,10 +45,10 @@ async function carregarProdutos() {
 
 // ================= EVENTOS =================
 function configurarEventos() {
-    document.getElementById("btnAdicionarItem").onclick = adicionarItem;
-    document.getElementById("btnGerarParcelas").onclick = gerarParcelas;
-    document.getElementById("btnSalvarNF").onclick = salvarNF;
-    document.getElementById("btnAdicionarParcela").onclick = adicionarParcelaManual;
+    document.getElementById("btnAdicionarItem")?.addEventListener("click", adicionarItem);
+    document.getElementById("btnGerarParcelas")?.addEventListener("click", gerarParcelas);
+    document.getElementById("btnSalvarNF")?.addEventListener("click", salvarNF);
+    document.getElementById("btnAdicionarParcela")?.addEventListener("click", adicionarParcelaManual);
 }
 
 // ================= ITENS =================
@@ -72,6 +74,8 @@ function adicionarItem() {
 
 function atualizarTabelaItens() {
     const tbody = document.getElementById("tbodyItensNF");
+    if (!tbody) return;
+
     tbody.innerHTML = "";
 
     itensNF.forEach((item, i) => {
@@ -95,7 +99,8 @@ function atualizarTabelaItens() {
 
 function atualizarTotalNF() {
     const total = itensNF.reduce((a, b) => a + b.subtotal, 0);
-    document.getElementById("valorTotalNF").value = total.toFixed(2);
+    const campo = document.getElementById("valorTotalNF");
+    if (campo) campo.value = total.toFixed(2);
 }
 
 window.removerItem = (i) => {
@@ -114,6 +119,8 @@ window.editarItem = (i) => {
 function gerarParcelas() {
     const total = itensNF.reduce((a, b) => a + b.subtotal, 0);
     const qtd = prompt("Quantidade de parcelas:");
+
+    if (!qtd) return;
 
     boletos = [];
 
@@ -139,6 +146,8 @@ function adicionarParcelaManual() {
     const valor = Number(document.getElementById("valorParcelaInput").value);
     const venc = document.getElementById("vencimentoInput").value;
 
+    if (!parcela || !valor || !venc) return alert("Preencha tudo");
+
     boletos.push({
         numero: `${document.getElementById("nfNumero").value} - ${parcela}`,
         valor,
@@ -150,6 +159,8 @@ function adicionarParcelaManual() {
 
 function atualizarTabelaBoletos() {
     const tbody = document.getElementById("tbodyBoletos");
+    if (!tbody) return;
+
     tbody.innerHTML = "";
 
     boletos.forEach((b, i) => {
@@ -196,7 +207,7 @@ async function salvarNF() {
             .insert({
                 cliente_id: clienteId,
                 numero_nf: numeroNF,
-                dados_nf: dataNF,
+                data_nf: dataNF, // ✅ CORRETO
                 total: totalNF
             })
             .select();
@@ -222,7 +233,7 @@ async function salvarNF() {
             });
         }
 
-        alert("NF salva!");
+        alert("✅ NF salva com sucesso!");
         location.reload();
 
     } catch (e) {
