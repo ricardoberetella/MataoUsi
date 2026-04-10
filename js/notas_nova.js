@@ -1,5 +1,5 @@
 // ===============================================
-//  NOTAS_NOVA.JS — VERSÃO FINAL COMPLETA
+//  NOTAS_NOVA.JS — VERSÃO INTEGRAL CORRIGIDA
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -34,7 +34,7 @@ async function carregarClientes() {
 }
 
 async function carregarProdutos() {
-    // Busca 'valor_unitario' diretamente da tabela produtos
+    // Busca 'valor_unitario' conforme sua estrutura de banco de dados
     const { data } = await supabase.from("produtos").select("id, codigo, descricao, valor_unitario").order("codigo");
     listaProdutos = data || [];
     const select = document.getElementById("produtoSelect");
@@ -54,12 +54,12 @@ function configurarEventos() {
     document.getElementById("btnSalvarNF").onclick = salvarNF;
     document.getElementById("btnGerarParcelas").onclick = gerarParcelas;
 
-    // Listeners para cálculo em tempo real
+    // Listeners para cálculo em tempo real antes de adicionar à lista
     document.getElementById("produtoSelect").onchange = atualizarPreviewLinha;
     document.getElementById("quantidadeNF").oninput = atualizarPreviewLinha;
 }
 
-// ATUALIZAÇÃO AUTOMÁTICA DE VALORES NA INTERFACE
+// ATUALIZAÇÃO AUTOMÁTICA DE VALORES NA INTERFACE (PREVIEW)
 function atualizarPreviewLinha() {
     const produtoId = Number(document.getElementById("produtoSelect").value);
     const quantidade = Number(document.getElementById("quantidadeNF").value) || 0;
@@ -68,7 +68,6 @@ function atualizarPreviewLinha() {
     const vUnit = produto?.valor_unitario || 0;
     const vTotal = vUnit * quantidade;
 
-    // Atualiza inputs de visualização (se houver na tela)
     const inputVUnit = document.getElementById("valorUnitarioItem"); 
     const inputVTotal = document.getElementById("valorTotalItem");
 
@@ -99,27 +98,48 @@ function adicionarItem() {
     atualizarValorTotalNF();
 }
 
-function atualizarValorTotalNF() {
-    const total = itensNF.reduce((acc, item) => acc + item.subtotal, 0);
-    const inputTotalNF = document.getElementById("valorTotalNF");
-    if (inputTotalNF) inputTotalNF.value = total.toFixed(2);
-}
-
+// CORREÇÃO DA BARRA SUPERIOR E COLUNAS
 function atualizarTabelaItens() {
     const tbody = document.getElementById("tbodyItensNF");
     if (!tbody) return;
+    
     tbody.innerHTML = "";
+
+    // Cabeçalho com a ordem solicitada: Produto, Valor Unitário, Quantidade, Total e Ações
+    const cabecalho = `
+        <tr style="font-weight: bold; background-color: #1a2a3a; color: #00d4ff;">
+            <td style="padding: 10px;">Produto</td>
+            <td style="padding: 10px;">Valor Unitário</td>
+            <td style="padding: 10px;">Quantidade</td>
+            <td style="padding: 10px;">Total</td>
+            <td style="padding: 10px; text-align: center;">Ações</td>
+        </tr>
+    `;
+    
+    tbody.innerHTML = cabecalho;
+
     itensNF.forEach((item, i) => {
         const prod = listaProdutos.find(p => p.id === item.produto_id);
+        
         tbody.innerHTML += `
-            <tr>
-                <td>${prod?.codigo} - ${prod?.descricao}</td>
-                <td>R$ ${item.valor_unitario.toFixed(2)}</td>
-                <td>${item.quantidade}</td>
-                <td>R$ ${item.subtotal.toFixed(2)}</td>
-                <td><button type="button" onclick="removerItem(${i})">Remover</button></td>
+            <tr style="border-bottom: 1px solid #333;">
+                <td style="padding: 10px;">${prod?.codigo} - ${prod?.descricao}</td>
+                <td style="padding: 10px;">R$ ${item.valor_unitario.toFixed(2)}</td>
+                <td style="padding: 10px;">${item.quantidade}</td>
+                <td style="padding: 10px;">R$ ${item.subtotal.toFixed(2)}</td>
+                <td style="padding: 10px; text-align: center;">
+                    <button type="button" class="btn-remover" onclick="removerItem(${i})">Remover</button>
+                </td>
             </tr>`;
     });
+}
+
+function atualizarValorTotalNF() {
+    const total = itensNF.reduce((acc, item) => acc + item.subtotal, 0);
+    const inputTotalNF = document.getElementById("valorTotalNF");
+    if (inputTotalNF) {
+        inputTotalNF.value = total.toFixed(2);
+    }
 }
 
 window.removerItem = (i) => {
@@ -128,7 +148,7 @@ window.removerItem = (i) => {
     atualizarValorTotalNF();
 };
 
-// GERAÇÃO DE PARCELAS COM ORIGEM FORMATADA (EX: 9999-A)
+// GERAÇÃO DE PARCELAS COM ORIGEM DINÂMICA (Ex: 9999-A)
 function gerarParcelas() {
     const total = Number(document.getElementById("valorTotalNF").value);
     const numeroNF = document.getElementById("nfNumero").value;
@@ -141,7 +161,7 @@ function gerarParcelas() {
     for (let i = 1; i <= qtd; i++) {
         let venc = new Date(dataBase);
         venc.setMonth(venc.getMonth() + i);
-        const letra = String.fromCharCode(64 + i); // A, B, C...
+        const letra = String.fromCharCode(64 + i); 
         boletos.push({
             parcela: letra,
             origem_formatada: `${numeroNF}-${letra}`,
@@ -162,19 +182,19 @@ function atualizarTabelaBoletos() {
                 <td>${b.origem_formatada}</td>
                 <td>R$ ${b.valor.toFixed(2)}</td>
                 <td>${b.vencimento}</td>
-                <td><button type="button" onclick="removerParcela(${i})">Remover</button></td>
+                <td><button type="button" class="btn-remover" onclick="removerParcela(${i})">Remover</button></td>
             </tr>`;
     });
 }
 
-// SALVAMENTO INTEGRADO (NF + BAIXAS + FINANCEIRO)
+// SALVAMENTO COM BAIXA DE PEDIDOS E INTEGRAÇÃO FINANCEIRA
 async function salvarNF() {
     const clienteId = Number(document.getElementById("clienteSelect").value);
     const numeroNF = document.getElementById("nfNumero").value;
     const dataNF = document.getElementById("nfData").value;
     
     if (!clienteId || !numeroNF || !dataNF || itensNF.length === 0 || boletos.length === 0) {
-        return alert("Preencha todos os campos obrigatórios.");
+        return alert("Preencha todos os campos.");
     }
 
     const clienteObj = listaClientes.find(c => c.id === clienteId);
@@ -182,7 +202,6 @@ async function salvarNF() {
     const totalNF = itensNF.reduce((acc, item) => acc + item.subtotal, 0);
 
     try {
-        // 1. Grava a Nota Fiscal principal
         const { data: nf, error: errNF } = await supabase
             .from("notas_fiscais")
             .insert({ cliente_id: clienteId, numero_nf: numeroNF, data_nf: dataNF, total: totalNF })
@@ -190,7 +209,6 @@ async function salvarNF() {
 
         if (errNF) throw errNF;
 
-        // 2. Grava Itens e realiza baixas nos pedidos
         for (const item of itensNF) {
             await supabase.from("notas_fiscais_itens").insert({
                 nf_id: nf.id,
@@ -198,6 +216,7 @@ async function salvarNF() {
                 q: item.quantidade
             });
 
+            // Registro de baixa no pedido para aparecer no quadro de "Baixas Realizadas"
             if (item.pedido_id) {
                 await supabase.from("pedidos_baixas").insert({
                     pedido_id: item.pedido_id,
@@ -209,9 +228,7 @@ async function salvarNF() {
             }
         }
 
-        // 3. Processa Financeiro (Boletos, Contas a Receber e Extrato)
         for (const b of boletos) {
-            // Contas a Receber
             await supabase.from("contas_receber").insert({
                 origem: b.origem_formatada,
                 valor: b.valor,
@@ -220,7 +237,7 @@ async function salvarNF() {
                 cliente: nomeCliente
             });
 
-            // Extrato Financeiro (SICOOB)
+            // Envio para o Extrato Financeiro (SICOOB)
             await supabase.from("extrato_financeiro").insert({
                 data: b.vencimento,
                 banco: "SICOOB",
@@ -230,11 +247,11 @@ async function salvarNF() {
             });
         }
 
-        alert("Sucesso! Nota fiscal lançada, pedidos baixados e financeiro atualizado.");
+        alert("NF Lançada com sucesso!");
         window.location.href = "notas_lista.html";
 
     } catch (error) {
-        console.error("Erro ao salvar:", error);
-        alert("Erro no processo: " + error.message);
+        console.error(error);
+        alert("Erro: " + error.message);
     }
 }
