@@ -1,5 +1,5 @@
 // ===============================================
-//  NOTAS_NOVA.JS — VERSÃO FINAL AJUSTADA
+//  NOTAS_NOVA.JS — COMPLETO FINAL
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -54,6 +54,10 @@ function configurarEventos() {
     document.getElementById("btnGerarParcelas").onclick = gerarParcelas;
 }
 
+// ===============================
+// ITENS
+// ===============================
+
 function adicionarItem() {
     const produtoId = Number(document.getElementById("produtoSelect").value);
     const quantidade = Number(document.getElementById("quantidadeNF").value);
@@ -69,7 +73,7 @@ function adicionarItem() {
         produto_id: produtoId, 
         quantidade, 
         valor_unitario: valorUnitario,
-        subtotal: subtotal,
+        subtotal,
         pedido_id: pedidoId 
     });
 
@@ -79,36 +83,81 @@ function adicionarItem() {
 function atualizarTabelaItens() {
     const tbody = document.getElementById("tbodyItensNF");
     if (!tbody) return;
+
     tbody.innerHTML = "";
+
     itensNF.forEach((item, i) => {
         const prod = listaProdutos.find(p => p.id === item.produto_id);
+
         tbody.innerHTML += `
             <tr>
                 <td>${prod?.codigo} - ${prod?.descricao}</td>
                 <td>R$ ${item.valor_unitario.toFixed(2)}</td>
                 <td>${item.quantidade}</td>
                 <td>R$ ${item.subtotal.toFixed(2)}</td>
-                <td><button type="button" onclick="removerItem(${i})">Remover</button></td>
-            </tr>`;
+                <td>
+                    <button onclick="editarItem(${i})">Editar</button>
+                    <button onclick="removerItem(${i})">Remover</button>
+                </td>
+            </tr>
+        `;
     });
+
+    atualizarTotalNF();
 }
+
+function editarItem(index) {
+    const item = itensNF[index];
+
+    document.getElementById("produtoSelect").value = item.produto_id;
+    document.getElementById("quantidadeNF").value = item.quantidade;
+
+    itensNF.splice(index, 1);
+    atualizarTabelaItens();
+}
+
+function removerItem(index) {
+    itensNF.splice(index, 1);
+    atualizarTabelaItens();
+}
+
+// ===============================
+// TOTAL NF
+// ===============================
+
+function atualizarTotalNF() {
+    const total = itensNF.reduce((acc, item) => acc + item.subtotal, 0);
+
+    const el = document.getElementById("totalNF");
+    if (el) {
+        el.textContent = total.toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+        });
+    }
+}
+
+// ===============================
+// PARCELAS
+// ===============================
 
 function gerarParcelas() {
     const total = itensNF.reduce((acc, item) => acc + item.subtotal, 0);
     const numeroNF = document.getElementById("nfNumero").value;
+
     const qtd = prompt("Quantidade de parcelas?");
-    if (!total || !numeroNF || !qtd) return alert("Verifique a NF e os itens.");
+    if (!total || !numeroNF || !qtd) return alert("Verifique os dados.");
 
     boletos = [];
-    let dataBase = new Date();
+    let hoje = new Date();
 
     for (let i = 1; i <= qtd; i++) {
-        let venc = new Date(dataBase);
-        venc.setMonth(venc.getMonth() + i);
+        let venc = new Date(hoje);
+        venc.setMonth(hoje.getMonth() + i);
 
         boletos.push({
             numero: `${numeroNF}-${i}`,
-            valor: total / qtd,
+            valor: Number((total / qtd).toFixed(2)),
             vencimento: venc.toISOString().split("T")[0]
         });
     }
@@ -119,15 +168,24 @@ function gerarParcelas() {
 function atualizarTabelaBoletos() {
     const tbody = document.getElementById("tbodyBoletos");
     if (!tbody) return;
+
     tbody.innerHTML = "";
+
     boletos.forEach(b => {
-        tbody.innerHTML += `<tr><td>${b.numero}</td><td>R$ ${b.valor.toFixed(2)}</td><td>${b.vencimento}</td></tr>`;
+        tbody.innerHTML += `
+            <tr>
+                <td>${b.numero}</td>
+                <td>R$ ${b.valor.toFixed(2)}</td>
+                <td>${b.vencimento}</td>
+            </tr>
+        `;
     });
 }
 
-// ===============================================
-// SALVAR NF + BOLETOS + FINANCEIRO AUTOMÁTICO
-// ===============================================
+// ===============================
+// SALVAR NF + FINANCEIRO
+// ===============================
+
 async function salvarNF() {
     const clienteId = Number(document.getElementById("clienteSelect").value);
     const numeroNF = document.getElementById("nfNumero").value;
@@ -140,7 +198,6 @@ async function salvarNF() {
     const totalNF = itensNF.reduce((acc, item) => acc + item.subtotal, 0);
 
     try {
-        // 1. NOTA
         const { data: nf, error } = await supabase
             .from("notas_fiscais")
             .insert({ cliente_id: clienteId, numero_nf: numeroNF, data_nf: dataNF, total: totalNF })
@@ -149,7 +206,6 @@ async function salvarNF() {
 
         if (error) throw error;
 
-        // 2. ITENS
         for (const item of itensNF) {
             await supabase.from("notas_fiscais_itens").insert({
                 nf_id: nf.id,
@@ -158,10 +214,8 @@ async function salvarNF() {
             });
         }
 
-        // 3. BOLETOS + CONTAS + EXTRATO
         for (const b of boletos) {
 
-            // BOLETO
             const { data: boleto } = await supabase
                 .from("boletos")
                 .insert({
@@ -174,7 +228,6 @@ async function salvarNF() {
                 .select()
                 .single();
 
-            // CONTAS A RECEBER
             await supabase.from("contas_receber").insert({
                 boleto_id: boleto.id,
                 nota_fiscal_id: nf.id,
@@ -183,7 +236,6 @@ async function salvarNF() {
                 status: "ABERTO"
             });
 
-            // EXTRATO (sua tabela real)
             await supabase.from("inserir_movimentos").insert({
                 cliente_id: clienteId,
                 tipo: "entrada",
@@ -193,7 +245,7 @@ async function salvarNF() {
             });
         }
 
-        alert("✅ NF salva com financeiro automático!");
+        alert("✅ NF salva com sucesso!");
         window.location.href = `notas_ver.html?id=${nf.id}`;
 
     } catch (err) {
