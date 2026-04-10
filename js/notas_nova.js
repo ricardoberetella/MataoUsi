@@ -1,6 +1,6 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-// 🔴 COLOQUE SUA ANON KEY AQUI
+// 🔥 COLOQUE SUA ANON KEY REAL AQUI
 const supabase = createClient(
   'https://uxtgicfuggpuyjybwawa.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg'
@@ -8,6 +8,7 @@ const supabase = createClient(
 
 let itensNF = []
 let boletos = []
+let baixas = []
 
 // =========================
 // CARREGAR CLIENTES
@@ -15,7 +16,7 @@ let boletos = []
 async function carregarClientes() {
   const { data, error } = await supabase
     .from('clientes')
-    .select('id, nome_fantasia, razao_social')
+    .select('id, nome_fantasia')
 
   if (error) {
     console.error('Erro clientes:', error)
@@ -23,15 +24,12 @@ async function carregarClientes() {
   }
 
   const select = document.getElementById('clienteSelect')
+  if (!select) return
 
   select.innerHTML = '<option value="">Selecione o cliente</option>'
 
   data.forEach(c => {
-    select.innerHTML += `
-      <option value="${c.id}">
-        ${c.nome_fantasia || c.razao_social}
-      </option>
-    `
+    select.innerHTML += `<option value="${c.id}">${c.nome_fantasia}</option>`
   })
 }
 
@@ -41,7 +39,7 @@ async function carregarClientes() {
 async function carregarProdutos() {
   const { data, error } = await supabase
     .from('produtos')
-    .select('id, descricao, valor_unitario')
+    .select('id, codigo, valor_unitario')
 
   if (error) {
     console.error('Erro produtos:', error)
@@ -49,15 +47,17 @@ async function carregarProdutos() {
   }
 
   const select = document.getElementById('produtoSelect')
+  if (!select) return
 
   select.innerHTML = '<option value="">Selecione o produto</option>'
 
   data.forEach(p => {
-    select.innerHTML += `
-      <option value="${p.id}" data-valor="${p.valor_unitario || 0}">
-        ${p.descricao} - R$ ${Number(p.valor_unitario || 0).toFixed(2)}
-      </option>
-    `
+    const option = document.createElement('option')
+    option.value = p.id
+    option.textContent = `${p.codigo} - R$ ${p.valor_unitario}`
+    option.dataset.valor = p.valor_unitario
+
+    select.appendChild(option)
   })
 }
 
@@ -66,8 +66,9 @@ async function carregarProdutos() {
 // =========================
 function atualizarTotalNF() {
   const el = document.getElementById('totalNF')
+  if (!el) return
 
-  let total = itensNF.reduce((s, i) => s + i.total, 0)
+  const total = itensNF.reduce((s, i) => s + i.valor_total, 0)
 
   el.innerText = 'R$ ' + total.toFixed(2)
 }
@@ -77,51 +78,52 @@ function atualizarTotalNF() {
 // =========================
 function renderItens() {
   const tbody = document.getElementById('tbodyItensNF')
+  if (!tbody) return
+
   tbody.innerHTML = ''
 
   itensNF.forEach((item, index) => {
     tbody.innerHTML += `
       <tr>
-        <td>${item.nome}</td>
-        <td>R$ ${item.valor.toFixed(2)}</td>
+        <td>${item.codigo}</td>
+        <td>R$ ${item.valor_unitario}</td>
         <td>${item.quantidade}</td>
-        <td>R$ ${item.total.toFixed(2)}</td>
+        <td>R$ ${item.valor_total.toFixed(2)}</td>
         <td>
           <button onclick="removerItem(${index})">❌</button>
         </td>
       </tr>
     `
   })
-
-  atualizarTotalNF()
 }
 
 // =========================
 // ADICIONAR ITEM
 // =========================
-document.getElementById('btnAdicionarItem').onclick = () => {
-  const select = document.getElementById('produtoSelect')
-  const quantidade = Number(document.getElementById('quantidadeNF').value)
+window.adicionarItem = function () {
+  const produto = document.getElementById('produtoSelect')
+  const quantidade = document.getElementById('quantidadeNF')
 
-  if (!select.value || !quantidade) {
-    alert('Selecione produto e quantidade')
+  if (!produto.value || !quantidade.value) {
+    alert('Preencha produto e quantidade')
     return
   }
 
-  const option = select.options[select.selectedIndex]
+  const option = produto.selectedOptions[0]
 
-  const valor = Number(option.dataset.valor)
-  const nome = option.textContent
+  const valorUnitario = Number(option.dataset.valor)
+  const qtd = Number(quantidade.value)
 
   itensNF.push({
-    produto_id: select.value,
-    nome,
-    quantidade,
-    valor,
-    total: valor * quantidade
+    produto_id: produto.value,
+    codigo: option.textContent,
+    quantidade: qtd,
+    valor_unitario: valorUnitario,
+    valor_total: valorUnitario * qtd
   })
 
   renderItens()
+  atualizarTotalNF()
 }
 
 // =========================
@@ -130,32 +132,27 @@ document.getElementById('btnAdicionarItem').onclick = () => {
 window.removerItem = function (index) {
   itensNF.splice(index, 1)
   renderItens()
+  atualizarTotalNF()
 }
 
 // =========================
 // GERAR PARCELAS
 // =========================
-document.getElementById('btnGerarParcelas').onclick = () => {
-  const total = itensNF.reduce((s, i) => s + i.total, 0)
+window.gerarParcelas = function () {
+  const total = itensNF.reduce((s, i) => s + i.valor_total, 0)
 
   if (total <= 0) {
-    alert('Sem valor')
+    alert('Adicione itens primeiro')
     return
   }
 
   boletos = []
+  const parcela = total / 3
 
-  const qtd = 3
-  const valorParcela = total / qtd
-
-  for (let i = 1; i <= qtd; i++) {
-    const data = new Date()
-    data.setMonth(data.getMonth() + i)
-
+  for (let i = 1; i <= 3; i++) {
     boletos.push({
-      parcela: i,
-      valor: valorParcela,
-      vencimento: data.toISOString().split('T')[0]
+      valor: parcela,
+      vencimento: new Date()
     })
   }
 
@@ -167,51 +164,48 @@ document.getElementById('btnGerarParcelas').onclick = () => {
 // =========================
 function renderBoletos() {
   const tbody = document.getElementById('tbodyBoletos')
+  if (!tbody) return
+
   tbody.innerHTML = ''
 
   boletos.forEach((b, i) => {
     tbody.innerHTML += `
       <tr>
-        <td>${b.parcela}</td>
+        <td>${i + 1}</td>
         <td>R$ ${b.valor.toFixed(2)}</td>
-        <td>${b.vencimento}</td>
-        <td><button onclick="removerBoleto(${i})">❌</button></td>
+        <td>${new Date(b.vencimento).toLocaleDateString()}</td>
+        <td>✔</td>
       </tr>
     `
   })
 }
 
-window.removerBoleto = function (i) {
-  boletos.splice(i, 1)
-  renderBoletos()
-}
-
 // =========================
-// SALVAR NF
+// SALVAR NF COMPLETA
 // =========================
-document.getElementById('btnSalvarNF').onclick = async () => {
+window.salvarNF = async function () {
   try {
     const cliente = document.getElementById('clienteSelect').value
     const numero = document.getElementById('nfNumero').value
     const data = document.getElementById('nfData').value
 
     if (!cliente || !numero) {
-      alert('Preencha os dados')
+      alert('Preencha cliente e número')
       return
     }
 
     // 1. NF
-    const { data: nf, error } = await supabase
+    const { data: nf, error: erroNF } = await supabase
       .from('notas_fiscais')
       .insert([{
         cliente_id: cliente,
         numero_nf: numero,
-        dados_nf: data
+        data_nf: data
       }])
       .select()
       .single()
 
-    if (error) throw error
+    if (erroNF) throw erroNF
 
     const nf_id = nf.id
 
@@ -250,8 +244,8 @@ document.getElementById('btnSalvarNF').onclick = async () => {
     location.reload()
 
   } catch (e) {
-    console.error(e)
-    alert('Erro ao salvar')
+    console.error('Erro salvar:', e)
+    alert('Erro ao salvar NF')
   }
 }
 
