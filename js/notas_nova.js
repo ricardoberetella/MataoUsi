@@ -51,6 +51,14 @@ function configurarEventos() {
     document.getElementById("btnAdicionarParcela")?.addEventListener("click", adicionarParcelaManual);
 }
 
+// ================= FORMATAÇÃO =================
+function formatarMoeda(valor) {
+    return valor.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+    });
+}
+
 // ================= ITENS =================
 function adicionarItem() {
     const produtoId = Number(document.getElementById("produtoSelect").value);
@@ -59,7 +67,7 @@ function adicionarItem() {
     if (!produtoId || qtd <= 0) return alert("Preencha corretamente");
 
     const prod = listaProdutos.find(p => p.id === produtoId);
-    const valor = prod.valor_unitario;
+    const valor = Number(prod.valor_unitario);
     const subtotal = valor * qtd;
 
     if (editIndex !== null) {
@@ -84,9 +92,9 @@ function atualizarTabelaItens() {
         tbody.innerHTML += `
         <tr>
             <td>${p.codigo} - ${p.descricao}</td>
-            <td>R$ ${item.valor_unitario.toFixed(2)}</td>
+            <td>${formatarMoeda(item.valor_unitario)}</td>
             <td>${item.quantidade}</td>
-            <td>R$ ${item.subtotal.toFixed(2)}</td>
+            <td>${formatarMoeda(item.subtotal)}</td>
             <td>
                 <button onclick="editarItem(${i})">✏️</button>
                 <button onclick="removerItem(${i})">❌</button>
@@ -99,8 +107,12 @@ function atualizarTabelaItens() {
 
 function atualizarTotalNF() {
     const total = itensNF.reduce((a, b) => a + b.subtotal, 0);
+
     const campo = document.getElementById("valorTotalNF");
-    if (campo) campo.value = total.toFixed(2);
+    if (campo) {
+        campo.value = formatarMoeda(total);
+        campo.readOnly = true; // 🔥 trava edição
+    }
 }
 
 window.removerItem = (i) => {
@@ -118,7 +130,7 @@ window.editarItem = (i) => {
 // ================= BOLETOS =================
 function gerarParcelas() {
     const total = itensNF.reduce((a, b) => a + b.subtotal, 0);
-    const qtd = prompt("Quantidade de parcelas:");
+    const qtd = Number(prompt("Quantidade de parcelas:"));
 
     if (!qtd) return;
 
@@ -167,7 +179,7 @@ function atualizarTabelaBoletos() {
         tbody.innerHTML += `
         <tr>
             <td>${b.numero}</td>
-            <td>R$ ${b.valor.toFixed(2)}</td>
+            <td>${formatarMoeda(b.valor)}</td>
             <td>${b.vencimento}</td>
             <td>
                 <button onclick="editarBoleto(${i})">✏️</button>
@@ -207,7 +219,7 @@ async function salvarNF() {
             .insert({
                 cliente_id: clienteId,
                 numero_nf: numeroNF,
-                data_nf: dataNF, // ✅ CORRETO
+                data_nf: dataNF,
                 total: totalNF
             })
             .select();
