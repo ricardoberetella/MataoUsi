@@ -4,9 +4,7 @@ let listaClientes = [];
 let listaProdutos = [];
 let itensNF = [];
 let boletos = [];
-let editIndex = null;
 
-// ================= INIT =================
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
@@ -16,28 +14,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     configurarEventos();
 });
 
-// ================= LOAD =================
+// ================= CLIENTES =================
 async function carregarClientes() {
-    const { data } = await supabase.from("clientes").select("id, razao_social").order("razao_social");
+    const { data } = await supabase.from("clientes").select("id, razao_social");
     listaClientes = data || [];
 
     const select = document.getElementById("clienteSelect");
-    if (!select) return;
-
     select.innerHTML = `<option value="">Selecione</option>`;
+
     listaClientes.forEach(c => {
         select.innerHTML += `<option value="${c.id}">${c.razao_social}</option>`;
     });
 }
 
+// ================= PRODUTOS =================
 async function carregarProdutos() {
-    const { data } = await supabase.from("produtos").select("*").order("codigo");
+    const { data } = await supabase.from("produtos").select("*");
     listaProdutos = data || [];
 
     const select = document.getElementById("produtoSelect");
-    if (!select) return;
-
     select.innerHTML = `<option value="">Selecione</option>`;
+
     listaProdutos.forEach(p => {
         select.innerHTML += `<option value="${p.id}">${p.codigo} - ${p.descricao}</option>`;
     });
@@ -45,221 +42,214 @@ async function carregarProdutos() {
 
 // ================= EVENTOS =================
 function configurarEventos() {
-    document.getElementById("btnAdicionarItem")?.addEventListener("click", adicionarItem);
-    document.getElementById("btnGerarParcelas")?.addEventListener("click", gerarParcelas);
-    document.getElementById("btnSalvarNF")?.addEventListener("click", salvarNF);
-    document.getElementById("btnAdicionarParcela")?.addEventListener("click", adicionarParcelaManual);
-}
-
-// ================= FORMATAÇÃO =================
-function formatarMoeda(valor) {
-    return valor.toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL"
-    });
+    document.getElementById("btnAdicionarItem").onclick = adicionarItem;
+    document.getElementById("btnSalvarNF").onclick = salvarNF;
+    document.getElementById("btnGerarParcelas").onclick = gerarParcelas;
 }
 
 // ================= ITENS =================
 function adicionarItem() {
     const produtoId = Number(document.getElementById("produtoSelect").value);
-    const qtd = Number(document.getElementById("quantidadeNF").value);
+    const quantidade = Number(document.getElementById("quantidadeNF").value);
 
-    if (!produtoId || qtd <= 0) return alert("Preencha corretamente");
-
-    const prod = listaProdutos.find(p => p.id === produtoId);
-    const valor = Number(prod.valor_unitario);
-    const subtotal = valor * qtd;
-
-    if (editIndex !== null) {
-        itensNF[editIndex] = { produto_id: produtoId, quantidade: qtd, valor_unitario: valor, subtotal };
-        editIndex = null;
-    } else {
-        itensNF.push({ produto_id: produtoId, quantidade: qtd, valor_unitario: valor, subtotal });
+    if (!produtoId || !quantidade) {
+        alert("Preencha produto e quantidade");
+        return;
     }
 
+    const produto = listaProdutos.find(p => p.id === produtoId);
+
+    const item = {
+        produto_id: produtoId,
+        quantidade,
+        valor_unitario: produto.valor_unitario,
+        subtotal: quantidade * produto.valor_unitario
+    };
+
+    itensNF.push(item);
+
     atualizarTabelaItens();
+    atualizarTotalNF();
 }
 
+// ================= TABELA ITENS =================
 function atualizarTabelaItens() {
     const tbody = document.getElementById("tbodyItensNF");
-    if (!tbody) return;
-
     tbody.innerHTML = "";
 
     itensNF.forEach((item, i) => {
-        const p = listaProdutos.find(x => x.id === item.produto_id);
+        const prod = listaProdutos.find(p => p.id === item.produto_id);
 
         tbody.innerHTML += `
         <tr>
-            <td>${p.codigo} - ${p.descricao}</td>
-            <td>${formatarMoeda(item.valor_unitario)}</td>
+            <td>${prod.codigo} - ${prod.descricao}</td>
+            <td>R$ ${formatarValor(item.valor_unitario)}</td>
             <td>${item.quantidade}</td>
-            <td>${formatarMoeda(item.subtotal)}</td>
+            <td>R$ ${formatarValor(item.subtotal)}</td>
             <td>
                 <button onclick="editarItem(${i})">✏️</button>
                 <button onclick="removerItem(${i})">❌</button>
             </td>
         </tr>`;
     });
-
-    atualizarTotalNF();
 }
 
-function atualizarTotalNF() {
-    const total = itensNF.reduce((a, b) => a + b.subtotal, 0);
-
-    const campo = document.getElementById("valorTotalNF");
-    if (campo) {
-        campo.value = formatarMoeda(total);
-        campo.readOnly = true; // 🔥 trava edição
-    }
-}
-
-window.removerItem = (i) => {
+function removerItem(i) {
     itensNF.splice(i, 1);
     atualizarTabelaItens();
-};
+    atualizarTotalNF();
+}
+window.removerItem = removerItem;
 
-window.editarItem = (i) => {
-    const item = itensNF[i];
-    document.getElementById("produtoSelect").value = item.produto_id;
-    document.getElementById("quantidadeNF").value = item.quantidade;
-    editIndex = i;
-};
+function editarItem(i) {
+    const novaQtd = prompt("Nova quantidade:");
+    if (!novaQtd) return;
+
+    itensNF[i].quantidade = Number(novaQtd);
+    itensNF[i].subtotal = itensNF[i].quantidade * itensNF[i].valor_unitario;
+
+    atualizarTabelaItens();
+    atualizarTotalNF();
+}
+window.editarItem = editarItem;
+
+// ================= TOTAL =================
+function atualizarTotalNF() {
+    const total = itensNF.reduce((acc, i) => acc + i.subtotal, 0);
+
+    document.getElementById("valorTotalNF").value =
+        total.toFixed(2).replace(".", ",");
+
+    return total;
+}
 
 // ================= BOLETOS =================
 function gerarParcelas() {
-    const total = itensNF.reduce((a, b) => a + b.subtotal, 0);
-    const qtd = Number(prompt("Quantidade de parcelas:"));
+    const total = atualizarTotalNF();
+    const numeroNF = document.getElementById("nfNumero").value;
 
+    const qtd = Number(prompt("Quantidade de parcelas"));
     if (!qtd) return;
 
     boletos = [];
 
     for (let i = 1; i <= qtd; i++) {
-        const letra = String.fromCharCode(64 + i);
-        const numero = document.getElementById("nfNumero").value;
-
         let data = new Date();
         data.setMonth(data.getMonth() + i);
 
         boletos.push({
-            numero: `${numero} - ${letra}`,
+            origem: `${numeroNF} - ${String.fromCharCode(64 + i)}`,
             valor: total / qtd,
-            vencimento: formatarDataBR(data)
+            vencimento: formatarData(data)
         });
     }
 
     atualizarTabelaBoletos();
 }
 
-function adicionarParcelaManual() {
-    const parcela = document.getElementById("parcelaInput").value;
-    const valor = Number(document.getElementById("valorParcelaInput").value);
-    const venc = document.getElementById("vencimentoInput").value;
-
-    if (!parcela || !valor || !venc) return alert("Preencha tudo");
-
-    boletos.push({
-        numero: `${document.getElementById("nfNumero").value} - ${parcela}`,
-        valor,
-        vencimento: formatarDataBR(new Date(venc))
-    });
-
-    atualizarTabelaBoletos();
-}
-
 function atualizarTabelaBoletos() {
     const tbody = document.getElementById("tbodyBoletos");
-    if (!tbody) return;
-
     tbody.innerHTML = "";
 
     boletos.forEach((b, i) => {
         tbody.innerHTML += `
         <tr>
-            <td>${b.numero}</td>
-            <td>${formatarMoeda(b.valor)}</td>
+            <td>${b.origem}</td>
+            <td>R$ ${formatarValor(b.valor)}</td>
             <td>${b.vencimento}</td>
             <td>
-                <button onclick="editarBoleto(${i})">✏️</button>
                 <button onclick="removerBoleto(${i})">❌</button>
             </td>
         </tr>`;
     });
 }
 
-window.removerBoleto = (i) => {
+function removerBoleto(i) {
     boletos.splice(i, 1);
     atualizarTabelaBoletos();
-};
-
-window.editarBoleto = (i) => {
-    const b = boletos[i];
-    const novoValor = prompt("Novo valor:", b.valor);
-    if (novoValor) b.valor = Number(novoValor);
-    atualizarTabelaBoletos();
-};
+}
+window.removerBoleto = removerBoleto;
 
 // ================= SALVAR =================
 async function salvarNF() {
-    const clienteId = Number(document.getElementById("clienteSelect").value);
-    const numeroNF = document.getElementById("nfNumero").value;
-    const dataNF = document.getElementById("nfData").value;
-
-    if (!clienteId || !numeroNF || !dataNF || itensNF.length === 0 || boletos.length === 0) {
-        return alert("Preencha tudo");
-    }
-
-    const totalNF = itensNF.reduce((a, b) => a + b.subtotal, 0);
-
     try {
+        const clienteId = Number(document.getElementById("clienteSelect").value);
+        const numeroNF = document.getElementById("nfNumero").value;
+        const dataNF = document.getElementById("nfData").value;
+
+        const total = atualizarTotalNF();
+
+        if (!clienteId || !numeroNF || !dataNF) {
+            alert("Preencha os dados da NF");
+            return;
+        }
+
+        // ===== SALVA NF =====
         const { data: nf, error } = await supabase
             .from("notas_fiscais")
             .insert({
                 cliente_id: clienteId,
                 numero_nf: numeroNF,
                 data_nf: dataNF,
-                total: totalNF
+                total: total
             })
-            .select();
+            .select()
+            .single();
 
         if (error) throw error;
 
-        const nfId = nf[0].id;
-
+        // ===== SALVA ITENS (USANDO COLUNA q DO SEU BANCO) =====
         for (const item of itensNF) {
             await supabase.from("notas_fiscais_itens").insert({
-                nf_id: nfId,
+                nf_id: nf.id,
                 produto_id: item.produto_id,
                 q: item.quantidade
             });
         }
 
+        // ===== SALVA BAIXA NOS PEDIDOS =====
+        for (const item of itensNF) {
+            await supabase.from("notas_pedidos_baixas").insert({
+                nf_id: nf.id,
+                produto_id: item.produto_id,
+                baixada: item.quantidade
+            });
+        }
+
+        // ===== SALVA BOLETOS =====
         for (const b of boletos) {
             await supabase.from("contas_receber").insert({
-                nota_fiscal_id: nfId,
+                nf_id: nf.id,
+                nf_origem: b.origem,
                 valor: b.valor,
-                data_vencimento: converterDataISO(b.vencimento),
+                vencimento: converterDataISO(b.vencimento),
                 status: "ABERTO"
             });
         }
 
-        alert("✅ NF salva com sucesso!");
+        alert("NF COMPLETA SALVA COM SUCESSO!");
+
         location.reload();
 
-    } catch (e) {
-        console.error(e);
-        alert("Erro: " + e.message);
+    } catch (err) {
+        console.error(err);
+        alert("Erro: " + err.message);
     }
 }
 
-// ================= UTILS =================
-function formatarDataBR(data) {
-    return data.toLocaleDateString("pt-BR");
+// ================= HELPERS =================
+function formatarValor(v) {
+    return Number(v).toFixed(2).replace(".", ",");
+}
+
+function formatarData(date) {
+    const d = String(date.getDate()).padStart(2, "0");
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const y = date.getFullYear();
+    return `${d}/${m}/${y}`;
 }
 
 function converterDataISO(dataBR) {
-    const [d, m, a] = dataBR.split("/");
-    return `${a}-${m}-${d}`;
+    const [d, m, y] = dataBR.split("/");
+    return `${y}-${m}-${d}`;
 }
