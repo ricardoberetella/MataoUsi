@@ -1,13 +1,13 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
+// 🔴 COLOQUE SUA ANON KEY AQUI
 const supabase = createClient(
   'https://uxtgicfuggpuyjybwawa.supabase.co',
-  'SUA_ANON_KEY'
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4dGdpY2Z1Z2dwdXlqeWJ3YXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNjIyNjIsImV4cCI6MjA3ODgzODI2Mn0.bYAyuTccwk21yWiYrFt_v6mWubDWJGVRWT0rJT74fGg'
 )
 
 let itensNF = []
 let boletos = []
-let baixas = []
 
 // =========================
 // CARREGAR CLIENTES
@@ -15,98 +15,193 @@ let baixas = []
 async function carregarClientes() {
   const { data, error } = await supabase
     .from('clientes')
-    .select('id, nome_fantasia')
+    .select('id, nome_fantasia, razao_social')
 
   if (error) {
-    console.error(error)
+    console.error('Erro clientes:', error)
     return
   }
 
-  const select = document.getElementById('cliente')
-
-  if (!select) return
+  const select = document.getElementById('clienteSelect')
 
   select.innerHTML = '<option value="">Selecione o cliente</option>'
 
   data.forEach(c => {
-    select.innerHTML += `<option value="${c.id}">${c.nome_fantasia}</option>`
+    select.innerHTML += `
+      <option value="${c.id}">
+        ${c.nome_fantasia || c.razao_social}
+      </option>
+    `
   })
 }
 
 // =========================
-// SOMAR TOTAL
+// CARREGAR PRODUTOS
+// =========================
+async function carregarProdutos() {
+  const { data, error } = await supabase
+    .from('produtos')
+    .select('id, descricao, valor_unitario')
+
+  if (error) {
+    console.error('Erro produtos:', error)
+    return
+  }
+
+  const select = document.getElementById('produtoSelect')
+
+  select.innerHTML = '<option value="">Selecione o produto</option>'
+
+  data.forEach(p => {
+    select.innerHTML += `
+      <option value="${p.id}" data-valor="${p.valor_unitario || 0}">
+        ${p.descricao} - R$ ${Number(p.valor_unitario || 0).toFixed(2)}
+      </option>
+    `
+  })
+}
+
+// =========================
+// ATUALIZAR TOTAL
 // =========================
 function atualizarTotalNF() {
-  const elTotal = document.getElementById('total_nf')
-  if (!elTotal) return
+  const el = document.getElementById('totalNF')
 
-  let total = 0
+  let total = itensNF.reduce((s, i) => s + i.total, 0)
 
-  itensNF.forEach(item => {
-    total += Number(item.valor || 0)
-  })
-
-  elTotal.innerText = 'R$ ' + total.toFixed(2)
+  el.innerText = 'R$ ' + total.toFixed(2)
 }
 
 // =========================
-// ADICIONAR ITEM
+// RENDER ITENS
 // =========================
-window.adicionarItem = function () {
-  const produto = document.getElementById('produto')
-  const quantidade = document.getElementById('quantidade')
+function renderItens() {
+  const tbody = document.getElementById('tbodyItensNF')
+  tbody.innerHTML = ''
 
-  if (!produto || !quantidade) return
-
-  itensNF.push({
-    produto_id: produto.value,
-    quantidade: Number(quantidade.value),
-    valor: Number(quantidade.value)
+  itensNF.forEach((item, index) => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${item.nome}</td>
+        <td>R$ ${item.valor.toFixed(2)}</td>
+        <td>${item.quantidade}</td>
+        <td>R$ ${item.total.toFixed(2)}</td>
+        <td>
+          <button onclick="removerItem(${index})">❌</button>
+        </td>
+      </tr>
+    `
   })
 
   atualizarTotalNF()
 }
 
 // =========================
-// GERAR PARCELAS
+// ADICIONAR ITEM
 // =========================
-window.gerarParcelas = function () {
-  const total = itensNF.reduce((s, i) => s + i.valor, 0)
+document.getElementById('btnAdicionarItem').onclick = () => {
+  const select = document.getElementById('produtoSelect')
+  const quantidade = Number(document.getElementById('quantidadeNF').value)
 
-  if (total <= 0) return
-
-  boletos = []
-
-  const parcela = total / 3
-
-  for (let i = 1; i <= 3; i++) {
-    boletos.push({
-      valor: parcela,
-      vencimento: new Date()
-    })
+  if (!select.value || !quantidade) {
+    alert('Selecione produto e quantidade')
+    return
   }
 
-  console.log('Boletos gerados:', boletos)
+  const option = select.options[select.selectedIndex]
+
+  const valor = Number(option.dataset.valor)
+  const nome = option.textContent
+
+  itensNF.push({
+    produto_id: select.value,
+    nome,
+    quantidade,
+    valor,
+    total: valor * quantidade
+  })
+
+  renderItens()
 }
 
 // =========================
-// SALVAR TUDO
+// REMOVER ITEM
 // =========================
-window.salvarNF = async function () {
+window.removerItem = function (index) {
+  itensNF.splice(index, 1)
+  renderItens()
+}
+
+// =========================
+// GERAR PARCELAS
+// =========================
+document.getElementById('btnGerarParcelas').onclick = () => {
+  const total = itensNF.reduce((s, i) => s + i.total, 0)
+
+  if (total <= 0) {
+    alert('Sem valor')
+    return
+  }
+
+  boletos = []
+
+  const qtd = 3
+  const valorParcela = total / qtd
+
+  for (let i = 1; i <= qtd; i++) {
+    const data = new Date()
+    data.setMonth(data.getMonth() + i)
+
+    boletos.push({
+      parcela: i,
+      valor: valorParcela,
+      vencimento: data.toISOString().split('T')[0]
+    })
+  }
+
+  renderBoletos()
+}
+
+// =========================
+// RENDER BOLETOS
+// =========================
+function renderBoletos() {
+  const tbody = document.getElementById('tbodyBoletos')
+  tbody.innerHTML = ''
+
+  boletos.forEach((b, i) => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${b.parcela}</td>
+        <td>R$ ${b.valor.toFixed(2)}</td>
+        <td>${b.vencimento}</td>
+        <td><button onclick="removerBoleto(${i})">❌</button></td>
+      </tr>
+    `
+  })
+}
+
+window.removerBoleto = function (i) {
+  boletos.splice(i, 1)
+  renderBoletos()
+}
+
+// =========================
+// SALVAR NF
+// =========================
+document.getElementById('btnSalvarNF').onclick = async () => {
   try {
-    const cliente = document.getElementById('cliente')?.value
-    const numero = document.getElementById('numero_nf')?.value
-    const data = document.getElementById('data_nf')?.value
+    const cliente = document.getElementById('clienteSelect').value
+    const numero = document.getElementById('nfNumero').value
+    const data = document.getElementById('nfData').value
 
     if (!cliente || !numero) {
       alert('Preencha os dados')
       return
     }
 
-    // ======================
-    // 1. SALVAR NF
-    // ======================
-    const { data: nf, error: erroNF } = await supabase
+    // 1. NF
+    const { data: nf, error } = await supabase
       .from('notas_fiscais')
       .insert([{
         cliente_id: cliente,
@@ -116,15 +211,13 @@ window.salvarNF = async function () {
       .select()
       .single()
 
-    if (erroNF) throw erroNF
+    if (error) throw error
 
     const nf_id = nf.id
 
-    // ======================
-    // 2. SALVAR ITENS
-    // ======================
+    // 2. ITENS
     if (itensNF.length > 0) {
-      const itens = itensNF.map(i => ({
+      const lista = itensNF.map(i => ({
         nf_id,
         produto_id: i.produto_id,
         quantidade: i.quantidade
@@ -132,32 +225,12 @@ window.salvarNF = async function () {
 
       const { error } = await supabase
         .from('notas_fiscais_itens')
-        .insert(itens)
-
-      if (error) throw error
-    }
-
-    // ======================
-    // 3. SALVAR BAIXAS
-    // ======================
-    if (baixas.length > 0) {
-      const lista = baixas.map(b => ({
-        nf_id,
-        pedido_id: b.pedido_id,
-        produto_id: b.produto_id,
-        baixada: b.quantidade
-      }))
-
-      const { error } = await supabase
-        .from('notas_pedidos_baixas')
         .insert(lista)
 
       if (error) throw error
     }
 
-    // ======================
-    // 4. SALVAR BOLETOS
-    // ======================
+    // 3. BOLETOS
     if (boletos.length > 0) {
       const lista = boletos.map(b => ({
         nf_id,
@@ -178,7 +251,7 @@ window.salvarNF = async function () {
 
   } catch (e) {
     console.error(e)
-    alert('Erro ao salvar NF')
+    alert('Erro ao salvar')
   }
 }
 
@@ -186,3 +259,4 @@ window.salvarNF = async function () {
 // INIT
 // =========================
 carregarClientes()
+carregarProdutos()
