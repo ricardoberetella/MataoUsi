@@ -1,5 +1,5 @@
 // ===============================================
-//  NOTAS_NOVA.JS — VERSÃO FINAL CORRIGIDA
+//  NOTAS_NOVA.JS — VERSÃO FINAL AJUSTADA
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -57,7 +57,6 @@ function configurarEventos() {
 function adicionarItem() {
     const produtoId = Number(document.getElementById("produtoSelect").value);
     const quantidade = Number(document.getElementById("quantidadeNF").value);
-    // Captura o ID do pedido se houver
     const pedidoId = document.getElementById("pedidoOrigemInput")?.value || null;
 
     if (!produtoId || quantidade <= 0) return alert("Selecione produto e quantidade.");
@@ -102,16 +101,18 @@ function gerarParcelas() {
 
     boletos = [];
     let dataBase = new Date();
+
     for (let i = 1; i <= qtd; i++) {
         let venc = new Date(dataBase);
         venc.setMonth(venc.getMonth() + i);
-        const letra = String.fromCharCode(64 + i); 
+
         boletos.push({
-            origem: `${numeroNF}-${letra}`,
+            numero: `${numeroNF}-${i}`,
             valor: total / qtd,
             vencimento: venc.toISOString().split("T")[0]
         });
     }
+
     atualizarTabelaBoletos();
 }
 
@@ -120,12 +121,12 @@ function atualizarTabelaBoletos() {
     if (!tbody) return;
     tbody.innerHTML = "";
     boletos.forEach(b => {
-        tbody.innerHTML += `<tr><td>${b.origem}</td><td>R$ ${b.valor.toFixed(2)}</td><td>${b.vencimento}</td></tr>`;
+        tbody.innerHTML += `<tr><td>${b.numero}</td><td>R$ ${b.valor.toFixed(2)}</td><td>${b.vencimento}</td></tr>`;
     });
 }
 
 // ===============================================
-// SALVAMENTO CORRIGIDO COM VÍNCULOS DE NF_ID
+// SALVAR NF + BOLETOS + FINANCEIRO AUTOMÁTICO
 // ===============================================
 async function salvarNF() {
     const clienteId = Number(document.getElementById("clienteSelect").value);
@@ -133,82 +134,70 @@ async function salvarNF() {
     const dataNF = document.getElementById("nfData").value;
     
     if (!clienteId || !numeroNF || !dataNF || itensNF.length === 0 || boletos.length === 0) {
-        return alert("Preencha todos os campos e gere as parcelas.");
+        return alert("Preencha tudo e gere as parcelas.");
     }
 
-    const clienteObj = listaClientes.find(c => c.id === clienteId);
-    const nomeCliente = clienteObj ? clienteObj.razao_social : "Cliente";
     const totalNF = itensNF.reduce((acc, item) => acc + item.subtotal, 0);
 
     try {
-        // 1. Salva a NF e pega o ID gerado
-        const { data: nf, error: errNF } = await supabase
+        // 1. NOTA
+        const { data: nf, error } = await supabase
             .from("notas_fiscais")
             .insert({ cliente_id: clienteId, numero_nf: numeroNF, data_nf: dataNF, total: totalNF })
-            .select().single();
+            .select()
+            .single();
 
-        if (errNF) throw errNF;
+        if (error) throw error;
 
-        // 2. Salva Itens e Grava a Baixa na tabela de histórico
+        // 2. ITENS
         for (const item of itensNF) {
             await supabase.from("notas_fiscais_itens").insert({
                 nf_id: nf.id,
                 produto_id: item.produto_id,
                 q: item.quantidade
             });
-
-            // Grava na tabela 'pedidos_baixas' para aparecer no quadro de detalhes
-            if (item.pedido_id) {
-                await supabase.from("pedidos_baixas").insert({
-                    pedido_id: item.pedido_id,
-                    produto_id: item.produto_id,
-                    qtd_baixada: item.quantidade,
-                    nf_id: nf.id, // VÍNCULO ESSENCIAL
-                    situacao: "CONCLUÍDO"
-                });
-
-                // Atualiza o saldo no pedido (pedidos_itens)
-                const { data: pItem } = await supabase
-                    .from("pedidos_itens")
-                    .select("baixado")
-                    .eq("pedido_id", item.pedido_id)
-                    .eq("produto_id", item.produto_id)
-                    .single();
-
-                await supabase.from("pedidos_itens")
-                    .update({ baixado: (pItem?.baixado || 0) + item.quantidade })
-                    .eq("pedido_id", item.pedido_id)
-                    .eq("produto_id", item.produto_id);
-            }
         }
 
-        // 3. Salva Boletos vinculados à NF
+        // 3. BOLETOS + CONTAS + EXTRATO
         for (const b of boletos) {
+
+            // BOLETO
+            const { data: boleto } = await supabase
+                .from("boletos")
+                .insert({
+                    nota_fiscal_id: nf.id,
+                    numero_documento: b.numero,
+                    valor: b.valor,
+                    data_vencimento: b.vencimento,
+                    status: "ABERTO"
+                })
+                .select()
+                .single();
+
+            // CONTAS A RECEBER
             await supabase.from("contas_receber").insert({
-                nf_id: nf.id, // VÍNCULO ESSENCIAL PARA APARECER NO DETALHE
-                nf_origem: b.origem,
+                boleto_id: boleto.id,
+                nota_fiscal_id: nf.id,
                 valor: b.valor,
-                vencimento: b.vencimento,
-                status: "ABERTO",
-                cliente: nomeCliente
+                data_vencimento: b.vencimento,
+                status: "ABERTO"
             });
 
-            // Extrato Financeiro
-            await supabase.from("extrato_financeiro").insert({
-                data: b.vencimento,
-                banco: "SICOOB",
-                descricao: `NF ${b.origem} - ${nomeCliente}`,
+            // EXTRATO (sua tabela real)
+            await supabase.from("inserir_movimentos").insert({
+                cliente_id: clienteId,
+                tipo: "entrada",
                 valor: b.valor,
-                status: "PENDENTE"
+                data: b.vencimento,
+                observacao: `NF ${numeroNF}`
             });
         }
 
-        alert("NF e Financeiro lançados com sucesso!");
-        // Redireciona para a visualização da NF específica
+        alert("✅ NF salva com financeiro automático!");
         window.location.href = `notas_ver.html?id=${nf.id}`;
 
-    } catch (error) {
-        console.error(error);
-        alert("Erro ao salvar: " + error.message);
+    } catch (err) {
+        console.error(err);
+        alert("Erro ao salvar: " + err.message);
     }
 }
