@@ -1,5 +1,5 @@
 // ===============================================
-//  NOTAS_NOVA.JS — VERSÃO FINALIZADA
+//  NOTAS_NOVA.JS — COMPLETO COM BAIXA DE PEDIDOS
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -34,7 +34,6 @@ async function carregarClientes() {
 }
 
 async function carregarProdutos() {
-    // Buscamos o preço também para o cálculo automático
     const { data } = await supabase.from("produtos").select("id, codigo, descricao, preco_venda").order("codigo");
     listaProdutos = data || [];
     const select = document.getElementById("produtoSelect");
@@ -57,12 +56,14 @@ function configurarEventos() {
 }
 
 // ===============================================
-// GESTÃO DE ITENS E CÁLCULO TOTAL
+// GESTÃO DE ITENS E BAIXA DE PEDIDOS
 // ===============================================
 function adicionarItem() {
     const produtoId = Number(document.getElementById("produtoSelect").value);
     const quantidade = Number(document.getElementById("quantidadeNF").value);
-    
+    // IMPORTANTE: Este campo deve conter o ID do pedido que você está faturando
+    const pedidoId = document.getElementById("pedidoOrigemInput")?.value || null; 
+
     if (!produtoId || quantidade <= 0) return alert("Selecione produto e quantidade.");
 
     const produto = listaProdutos.find(p => p.id === produtoId);
@@ -73,7 +74,8 @@ function adicionarItem() {
         produto_id: produtoId, 
         quantidade, 
         valor_unitario: valorUnitario,
-        subtotal: subtotal
+        subtotal: subtotal,
+        pedido_id: pedidoId 
     });
 
     atualizarTabelaItens();
@@ -109,14 +111,14 @@ window.removerItem = (i) => {
 };
 
 // ===============================================
-// FINANCEIRO (BOLETOS COM ORIGEM DINÂMICA)
+// FINANCEIRO (BOLETOS, CONTAS E EXTRATO)
 // ===============================================
 function gerarParcelas() {
     const total = Number(document.getElementById("valorTotalNF").value);
     const numeroNF = document.getElementById("nfNumero").value;
     const qtd = prompt("Quantidade de parcelas?");
     
-    if (!total || !numeroNF || !qtd) return alert("Verifique o número da NF e o valor total dos itens.");
+    if (!total || !numeroNF || !qtd) return alert("Verifique o número da NF e o valor total.");
 
     boletos = [];
     let dataBase = new Date();
@@ -124,7 +126,7 @@ function gerarParcelas() {
         let venc = new Date(dataBase);
         venc.setMonth(venc.getMonth() + i);
         
-        const letra = String.fromCharCode(64 + i); // 1=A, 2=B...
+        const letra = String.fromCharCode(64 + i); 
         boletos.push({
             parcela: letra,
             origem_formatada: `${numeroNF}-${letra}`,
@@ -152,7 +154,7 @@ function atualizarTabelaBoletos() {
 }
 
 // ===============================================
-// SALVAMENTO INTEGRADO
+// SALVAMENTO COMPLETO (NF + BAIXAS + FINANCEIRO)
 // ===============================================
 async function salvarNF() {
     const clienteId = Number(document.getElementById("clienteSelect").value);
@@ -160,7 +162,7 @@ async function salvarNF() {
     const dataNF = document.getElementById("nfData").value;
     
     if (!clienteId || !numeroNF || !dataNF || itensNF.length === 0 || boletos.length === 0) {
-        return alert("Erro: Verifique Cabeçalho, Itens e Financeiro.");
+        return alert("Preencha todos os campos obrigatórios.");
     }
 
     const clienteObj = listaClientes.find(c => c.id === clienteId);
@@ -168,7 +170,7 @@ async function salvarNF() {
     const totalNF = itensNF.reduce((acc, item) => acc + item.subtotal, 0);
 
     try {
-        // 1. Grava a NF
+        // 1. GRAVAR NOTA FISCAL
         const { data: nf, error: errNF } = await supabase
             .from("notas_fiscais")
             .insert({ cliente_id: clienteId, numero_nf: numeroNF, data_nf: dataNF, total: totalNF })
@@ -176,26 +178,38 @@ async function salvarNF() {
 
         if (errNF) throw errNF;
 
-        // 2. Grava Itens
+        // 2. GRAVAR ITENS E REALIZAR BAIXA NOS PEDIDOS
         for (const item of itensNF) {
+            // Insere o item na NF
             await supabase.from("notas_fiscais_itens").insert({
                 nf_id: nf.id,
                 produto_id: item.produto_id,
                 q: item.quantidade
             });
+
+            // GERA A BAIXA (Para alimentar o quadro "Baixas Realizadas")
+            const { error: errBaixa } = await supabase.from("pedidos_baixas").insert({
+                pedido_id: item.pedido_id, // Vincula ao pedido original
+                produto_id: item.produto_id,
+                qtd_baixada: item.quantidade,
+                nf_id: nf.id,
+                situacao: "CONCLUÍDO"
+            });
+            if (errBaixa) console.error("Erro ao registrar baixa:", errBaixa.message);
         }
 
-        // 3. Processa Financeiro (Boletos + Contas Receber + Extrato)
+        // 3. PROCESSAR FINANCEIRO (BOLETOS + CONTAS RECEBER + EXTRATO)
         for (const b of boletos) {
-            const { data: boletoDb } = await supabase.from("boletos").insert({
+            // Tabela Boletos
+            await supabase.from("boletos").insert({
                 nota_fiscal_id: nf.id,
                 numero_nf_referencia: b.origem_formatada,
                 valor: b.valor,
                 data_vencimento: b.vencimento,
                 status: "ABERTO"
-            }).select().single();
+            });
 
-            // Envia para Contas a Receber
+            // Tabela Contas a Receber
             await supabase.from("contas_receber").insert({
                 origem: b.origem_formatada,
                 valor: b.valor,
@@ -204,21 +218,21 @@ async function salvarNF() {
                 cliente: nomeCliente
             });
 
-            // Envia para Extrato Financeiro
+            // Tabela Extrato Financeiro
             await supabase.from("extrato_financeiro").insert({
                 data: b.vencimento,
                 banco: "SICOOB",
                 descricao: `NF ${b.origem_formatada} - ${nomeCliente}`,
-                valor: b.valor, // Valor positivo para entrada/receber
+                valor: b.valor,
                 status: "PENDENTE"
             });
         }
 
-        alert("NF Lançada! Itens baixados e Financeiro atualizado.");
+        alert("Sucesso! NF salva, itens baixados e financeiro gerado em Contas e Extrato.");
         window.location.href = "notas_lista.html";
 
     } catch (error) {
-        console.error(error);
-        alert("Erro ao salvar: " + error.message);
+        console.error("ERRO:", error);
+        alert("Erro no salvamento: " + error.message);
     }
 }
