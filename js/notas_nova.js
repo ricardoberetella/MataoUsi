@@ -1,5 +1,5 @@
 // ===============================================
-//  NOTAS_NOVA.JS — COMPLETO COM BAIXA DE PEDIDOS
+//  NOTAS_NOVA.JS — VERSÃO FINAL COMPLETA
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -34,7 +34,8 @@ async function carregarClientes() {
 }
 
 async function carregarProdutos() {
-    const { data } = await supabase.from("produtos").select("id, codigo, descricao, preco_venda").order("codigo");
+    // Busca 'valor_unitario' diretamente da tabela produtos
+    const { data } = await supabase.from("produtos").select("id, codigo, descricao, valor_unitario").order("codigo");
     listaProdutos = data || [];
     const select = document.getElementById("produtoSelect");
     if (select) {
@@ -51,23 +52,39 @@ async function carregarProdutos() {
 function configurarEventos() {
     document.getElementById("btnAdicionarItem").onclick = adicionarItem;
     document.getElementById("btnSalvarNF").onclick = salvarNF;
-    document.getElementById("btnAdicionarParcela").onclick = adicionarParcela;
     document.getElementById("btnGerarParcelas").onclick = gerarParcelas;
+
+    // Listeners para cálculo em tempo real
+    document.getElementById("produtoSelect").onchange = atualizarPreviewLinha;
+    document.getElementById("quantidadeNF").oninput = atualizarPreviewLinha;
 }
 
-// ===============================================
-// GESTÃO DE ITENS E BAIXA DE PEDIDOS
-// ===============================================
+// ATUALIZAÇÃO AUTOMÁTICA DE VALORES NA INTERFACE
+function atualizarPreviewLinha() {
+    const produtoId = Number(document.getElementById("produtoSelect").value);
+    const quantidade = Number(document.getElementById("quantidadeNF").value) || 0;
+    
+    const produto = listaProdutos.find(p => p.id === produtoId);
+    const vUnit = produto?.valor_unitario || 0;
+    const vTotal = vUnit * quantidade;
+
+    // Atualiza inputs de visualização (se houver na tela)
+    const inputVUnit = document.getElementById("valorUnitarioItem"); 
+    const inputVTotal = document.getElementById("valorTotalItem");
+
+    if (inputVUnit) inputVUnit.value = vUnit.toFixed(2);
+    if (inputVTotal) inputVTotal.value = vTotal.toFixed(2);
+}
+
 function adicionarItem() {
     const produtoId = Number(document.getElementById("produtoSelect").value);
     const quantidade = Number(document.getElementById("quantidadeNF").value);
-    // IMPORTANTE: Este campo deve conter o ID do pedido que você está faturando
-    const pedidoId = document.getElementById("pedidoOrigemInput")?.value || null; 
+    const pedidoId = document.getElementById("pedidoOrigemInput")?.value || null;
 
     if (!produtoId || quantidade <= 0) return alert("Selecione produto e quantidade.");
 
     const produto = listaProdutos.find(p => p.id === produtoId);
-    const valorUnitario = produto?.preco_venda || 0;
+    const valorUnitario = produto?.valor_unitario || 0;
     const subtotal = quantidade * valorUnitario;
 
     itensNF.push({ 
@@ -84,8 +101,8 @@ function adicionarItem() {
 
 function atualizarValorTotalNF() {
     const total = itensNF.reduce((acc, item) => acc + item.subtotal, 0);
-    const inputTotal = document.getElementById("valorTotalNF");
-    if (inputTotal) inputTotal.value = total.toFixed(2);
+    const inputTotalNF = document.getElementById("valorTotalNF");
+    if (inputTotalNF) inputTotalNF.value = total.toFixed(2);
 }
 
 function atualizarTabelaItens() {
@@ -97,6 +114,7 @@ function atualizarTabelaItens() {
         tbody.innerHTML += `
             <tr>
                 <td>${prod?.codigo} - ${prod?.descricao}</td>
+                <td>R$ ${item.valor_unitario.toFixed(2)}</td>
                 <td>${item.quantidade}</td>
                 <td>R$ ${item.subtotal.toFixed(2)}</td>
                 <td><button type="button" onclick="removerItem(${i})">Remover</button></td>
@@ -110,23 +128,20 @@ window.removerItem = (i) => {
     atualizarValorTotalNF();
 };
 
-// ===============================================
-// FINANCEIRO (BOLETOS, CONTAS E EXTRATO)
-// ===============================================
+// GERAÇÃO DE PARCELAS COM ORIGEM FORMATADA (EX: 9999-A)
 function gerarParcelas() {
     const total = Number(document.getElementById("valorTotalNF").value);
     const numeroNF = document.getElementById("nfNumero").value;
     const qtd = prompt("Quantidade de parcelas?");
     
-    if (!total || !numeroNF || !qtd) return alert("Verifique o número da NF e o valor total.");
+    if (!total || !numeroNF || !qtd) return alert("Verifique o número da NF e o total.");
 
     boletos = [];
     let dataBase = new Date();
     for (let i = 1; i <= qtd; i++) {
         let venc = new Date(dataBase);
         venc.setMonth(venc.getMonth() + i);
-        
-        const letra = String.fromCharCode(64 + i); 
+        const letra = String.fromCharCode(64 + i); // A, B, C...
         boletos.push({
             parcela: letra,
             origem_formatada: `${numeroNF}-${letra}`,
@@ -144,7 +159,6 @@ function atualizarTabelaBoletos() {
     boletos.forEach((b, i) => {
         tbody.innerHTML += `
             <tr>
-                <td>${b.parcela}</td>
                 <td>${b.origem_formatada}</td>
                 <td>R$ ${b.valor.toFixed(2)}</td>
                 <td>${b.vencimento}</td>
@@ -153,9 +167,7 @@ function atualizarTabelaBoletos() {
     });
 }
 
-// ===============================================
-// SALVAMENTO COMPLETO (NF + BAIXAS + FINANCEIRO)
-// ===============================================
+// SALVAMENTO INTEGRADO (NF + BAIXAS + FINANCEIRO)
 async function salvarNF() {
     const clienteId = Number(document.getElementById("clienteSelect").value);
     const numeroNF = document.getElementById("nfNumero").value;
@@ -170,7 +182,7 @@ async function salvarNF() {
     const totalNF = itensNF.reduce((acc, item) => acc + item.subtotal, 0);
 
     try {
-        // 1. GRAVAR NOTA FISCAL
+        // 1. Grava a Nota Fiscal principal
         const { data: nf, error: errNF } = await supabase
             .from("notas_fiscais")
             .insert({ cliente_id: clienteId, numero_nf: numeroNF, data_nf: dataNF, total: totalNF })
@@ -178,38 +190,28 @@ async function salvarNF() {
 
         if (errNF) throw errNF;
 
-        // 2. GRAVAR ITENS E REALIZAR BAIXA NOS PEDIDOS
+        // 2. Grava Itens e realiza baixas nos pedidos
         for (const item of itensNF) {
-            // Insere o item na NF
             await supabase.from("notas_fiscais_itens").insert({
                 nf_id: nf.id,
                 produto_id: item.produto_id,
                 q: item.quantidade
             });
 
-            // GERA A BAIXA (Para alimentar o quadro "Baixas Realizadas")
-            const { error: errBaixa } = await supabase.from("pedidos_baixas").insert({
-                pedido_id: item.pedido_id, // Vincula ao pedido original
-                produto_id: item.produto_id,
-                qtd_baixada: item.quantidade,
-                nf_id: nf.id,
-                situacao: "CONCLUÍDO"
-            });
-            if (errBaixa) console.error("Erro ao registrar baixa:", errBaixa.message);
+            if (item.pedido_id) {
+                await supabase.from("pedidos_baixas").insert({
+                    pedido_id: item.pedido_id,
+                    produto_id: item.produto_id,
+                    qtd_baixada: item.quantidade,
+                    nf_id: nf.id,
+                    situacao: "CONCLUÍDO"
+                });
+            }
         }
 
-        // 3. PROCESSAR FINANCEIRO (BOLETOS + CONTAS RECEBER + EXTRATO)
+        // 3. Processa Financeiro (Boletos, Contas a Receber e Extrato)
         for (const b of boletos) {
-            // Tabela Boletos
-            await supabase.from("boletos").insert({
-                nota_fiscal_id: nf.id,
-                numero_nf_referencia: b.origem_formatada,
-                valor: b.valor,
-                data_vencimento: b.vencimento,
-                status: "ABERTO"
-            });
-
-            // Tabela Contas a Receber
+            // Contas a Receber
             await supabase.from("contas_receber").insert({
                 origem: b.origem_formatada,
                 valor: b.valor,
@@ -218,7 +220,7 @@ async function salvarNF() {
                 cliente: nomeCliente
             });
 
-            // Tabela Extrato Financeiro
+            // Extrato Financeiro (SICOOB)
             await supabase.from("extrato_financeiro").insert({
                 data: b.vencimento,
                 banco: "SICOOB",
@@ -228,11 +230,11 @@ async function salvarNF() {
             });
         }
 
-        alert("Sucesso! NF salva, itens baixados e financeiro gerado em Contas e Extrato.");
+        alert("Sucesso! Nota fiscal lançada, pedidos baixados e financeiro atualizado.");
         window.location.href = "notas_lista.html";
 
     } catch (error) {
-        console.error("ERRO:", error);
-        alert("Erro no salvamento: " + error.message);
+        console.error("Erro ao salvar:", error);
+        alert("Erro no processo: " + error.message);
     }
 }
