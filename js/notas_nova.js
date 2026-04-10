@@ -1,5 +1,5 @@
 // ===============================================
-//  NOTAS_NOVA.JS — ATUALIZADO (AUTOMAÇÃO TOTAL)
+//  NOTAS_NOVA.JS — ARQUIVO COMPLETO E CORRIGIDO
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -10,6 +10,8 @@ let itensNF = [];
 let boletos = [];
 
 // ===============================================
+// INICIALIZAÇÃO
+// ===============================================
 document.addEventListener("DOMContentLoaded", async () => {
     const user = await verificarLogin();
     if (!user) return;
@@ -19,7 +21,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     configurarEventos();
 });
 
-// ===============================================
 async function carregarClientes() {
     const { data } = await supabase
         .from("clientes")
@@ -27,7 +28,6 @@ async function carregarClientes() {
         .order("razao_social");
 
     listaClientes = data || [];
-
     const select = document.getElementById("clienteSelect");
     select.innerHTML = `<option value="">Selecione o cliente</option>`;
 
@@ -39,7 +39,6 @@ async function carregarClientes() {
     });
 }
 
-// ===============================================
 async function carregarProdutos() {
     const { data } = await supabase
         .from("produtos")
@@ -47,7 +46,6 @@ async function carregarProdutos() {
         .order("codigo");
 
     listaProdutos = data || [];
-
     const select = document.getElementById("produtoSelect");
     select.innerHTML = `<option value="">Selecione o produto</option>`;
 
@@ -59,7 +57,6 @@ async function carregarProdutos() {
     });
 }
 
-// ===============================================
 function configurarEventos() {
     document.getElementById("btnAdicionarItem").onclick = adicionarItem;
     document.getElementById("btnSalvarNF").onclick = salvarNF;
@@ -68,7 +65,7 @@ function configurarEventos() {
 }
 
 // ===============================================
-// ITENS
+// GESTÃO DE ITENS (PRODUTOS)
 // ===============================================
 function adicionarItem() {
     const produtoId = Number(document.getElementById("produtoSelect").value);
@@ -88,12 +85,11 @@ function atualizarTabelaItens() {
 
     itensNF.forEach((item, i) => {
         const prod = listaProdutos.find(p => p.id === item.produto_id);
-
         tbody.innerHTML += `
         <tr>
             <td>${prod?.codigo} - ${prod?.descricao}</td>
             <td>${item.quantidade}</td>
-            <td><button class="btn-remover" onclick="removerItem(${i})">Remover</button></td>
+            <td><button type="button" onclick="removerItem(${i})">Remover</button></td>
         </tr>`;
     });
 }
@@ -104,7 +100,7 @@ window.removerItem = (i) => {
 };
 
 // ===============================================
-// BOLETOS
+// GESTÃO DE BOLETOS (FINANCEIRO)
 // ===============================================
 function adicionarParcela() {
     const parcela = Number(document.getElementById("parcelaInput").value);
@@ -127,9 +123,9 @@ function atualizarTabelaBoletos() {
         tbody.innerHTML += `
         <tr>
             <td>${b.parcela}</td>
-            <td>R$ ${b.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+            <td>R$ ${b.valor.toFixed(2)}</td>
             <td>${b.vencimento}</td>
-            <td><button class="btn-remover" onclick="removerParcela(${i})">Remover</button></td>
+            <td><button type="button" onclick="removerParcela(${i})">Remover</button></td>
         </tr>`;
     });
 }
@@ -139,116 +135,109 @@ window.removerParcela = (i) => {
     atualizarTabelaBoletos();
 };
 
-// ===============================================
 function gerarParcelas() {
-    const totalInput = Number(document.getElementById("valorTotalNF").value);
+    const total = Number(document.getElementById("valorTotalNF").value);
     const qtd = prompt("Quantidade de parcelas?");
 
-    if (!totalInput || !qtd) return;
+    if (!total || !qtd) return alert("Informe o valor total e a quantidade de parcelas.");
 
     boletos = [];
     let dataBase = new Date();
 
     for (let i = 1; i <= qtd; i++) {
-        let dataVencimento = new Date(dataBase);
-        dataVencimento.setMonth(dataVencimento.getMonth() + i);
-
+        let venc = new Date(dataBase);
+        venc.setMonth(venc.getMonth() + i);
+        
         boletos.push({
             parcela: i,
-            valor: totalInput / qtd,
-            vencimento: dataVencimento.toISOString().split("T")[0]
+            valor: total / qtd,
+            vencimento: venc.toISOString().split("T")[0]
         });
     }
-
     atualizarTabelaBoletos();
 }
 
 // ===============================================
-// SALVAR NF COMPLETA COM INTEGRAÇÃO TOTAL
+// SALVAMENTO COMPLETO (AÇÃO FINAL)
 // ===============================================
 async function salvarNF() {
     const clienteId = Number(document.getElementById("clienteSelect").value);
     const numeroNF = document.getElementById("nfNumero").value;
     const dataNF = document.getElementById("nfData").value;
     
-    // Obter nome do cliente para as descrições financeiras
+    // Validações básicas
+    if (!clienteId || !numeroNF || !dataNF) return alert("Preencha os dados da NF.");
+    if (itensNF.length === 0) return alert("Adicione ao menos um item.");
+    if (boletos.length === 0) return alert("Gere os boletos antes de salvar.");
+
+    // Cálculo do total real baseado nos boletos
+    const totalFinal = boletos.reduce((acc, b) => acc + b.valor, 0);
     const clienteObj = listaClientes.find(c => c.id === clienteId);
-    const nomeCliente = clienteObj ? clienteObj.razao_social : "Cliente Desconhecido";
+    const nomeCliente = clienteObj ? clienteObj.razao_social : "";
 
-    // CÁLCULO AUTOMÁTICO DO TOTAL BASEADO NOS BOLETOS
-    const totalCalculado = boletos.reduce((acc, b) => acc + b.valor, 0);
+    try {
+        // 1. Inserir a Nota Fiscal
+        const { data: nf, error: errNF } = await supabase
+            .from("notas_fiscais")
+            .insert({
+                cliente_id: clienteId,
+                numero_nf: numeroNF,
+                data_nf: dataNF,
+                total: totalFinal
+            })
+            .select().single();
 
-    if (!clienteId || !numeroNF || !dataNF || boletos.length === 0) {
-        return alert("Preencha os dados da NF e inclua ao menos um boleto.");
+        if (errNF) throw errNF;
+
+        // 2. Inserir Itens da NF
+        const { error: errItens } = await supabase
+            .from("notas_fiscais_itens")
+            .insert(itensNF.map(item => ({
+                nf_id: nf.id,
+                produto_id: item.produto_id,
+                quantidade: item.quantidade
+            })));
+
+        if (errItens) throw errItens;
+
+        // 3. Loop para Gravar Financeiro (Boletos, Contas a Receber e Extrato)
+        for (const b of boletos) {
+            const ref = `${numeroNF}-${b.parcela}`;
+
+            // Tabela Boletos
+            await supabase.from("boletos").insert({
+                nota_fiscal_id: nf.id,
+                origem: numeroNF,
+                numero_referencia: ref,
+                valor: b.valor,
+                data_vencimento: b.vencimento,
+                status: "ABERTO"
+            });
+
+            // Tabela Contas a Receber (Print 2)
+            await supabase.from("contas_receber").insert({
+                origem: ref,
+                valor: b.valor,
+                vencimento: b.vencimento,
+                status: "ABERTO",
+                cliente: nomeCliente
+            });
+
+            // Tabela Extrato Financeiro (Print 3)
+            await supabase.from("extrato_financeiro").insert({
+                data: b.vencimento,
+                banco: "SICOOB",
+                descricao: `NF ${ref} - ${nomeCliente}`,
+                valor: b.valor,
+                status: "PENDENTE"
+            });
+        }
+
+        alert("Nota Fiscal e Financeiro processados com sucesso! 🚀");
+        window.location.href = "notas_lista.html";
+
+    } catch (error) {
+        console.error("Erro ao salvar:", error);
+        alert("Erro ao salvar: " + error.message);
     }
-
-    // 1. INSERIR NOTA FISCAL
-    const { data: nf, error: errorNF } = await supabase
-        .from("notas_fiscais")
-        .insert({
-            cliente_id: clienteId,
-            numero_nf: numeroNF,
-            data_nf: dataNF,
-            total: totalCalculado
-        })
-        .select()
-        .single();
-
-    if (errorNF) {
-        console.error("Erro NF:", errorNF);
-        return alert("Erro ao salvar NF.");
-    }
-
-    const nfId = nf.id;
-
-    // 2. INSERIR ITENS DA NF
-    const { error: erroItens } = await supabase
-        .from("notas_fiscais_itens")
-        .insert(
-            itensNF.map(i => ({
-                nf_id: nfId,
-                produto_id: i.produto_id,
-                quantidade: i.quantidade
-            }))
-        );
-
-    if (erroItens) console.error("Erro itens:", erroItens);
-
-    // 3. PROCESSAR BOLETOS, CONTAS A RECEBER E EXTRATO
-    for (const b of boletos) {
-        const descCompleta = `${numeroNF}-${b.parcela} - ${nomeCliente}`;
-
-        // Salvar na Tabela Boletos (Print 1)
-        await supabase.from("boletos").insert({
-            nota_fiscal_id: nfId,
-            origem: numeroNF,
-            tipo: "NF",
-            numero_referencia: `${numeroNF}-${b.parcela}`,
-            valor: b.valor,
-            data_vencimento: b.vencimento,
-            data_emissao: dataNF,
-            status: "ABERTO"
-        });
-
-        // Salvar em Contas a Receber (Print 2)
-        await supabase.from("contas_receber").insert({
-            origem: `${numeroNF}-${b.parcela}`, // Coluna NF/Origem
-            valor: b.valor,
-            vencimento: b.vencimento,
-            status: "ABERTO",
-            cliente: nomeCliente
-        });
-
-        // Salvar no Extrato Financeiro (Print 3)
-        await supabase.from("extrato_financeiro").insert({
-            data: b.vencimento,
-            banco: "SICOOB",
-            descricao: descCompleta,
-            valor: b.valor, // Valor positivo para Entrada/Receber
-            status: "PENDENTE"
-        });
-    }
-
-    alert("NF registrada, Financeiro atualizado e Extrato gerado com sucesso! 🚀");
-    window.location.href = "notas_lista.html";
 }
