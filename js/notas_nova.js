@@ -1,5 +1,5 @@
 // ===============================================
-//  NOTAS_NOVA.JS — COMPLETO FINAL
+//  NOTAS_NOVA.JS — FINAL COMPLETO
 // ===============================================
 
 import { supabase, verificarLogin } from "./auth.js";
@@ -92,12 +92,12 @@ function atualizarTabelaItens() {
         tbody.innerHTML += `
             <tr>
                 <td>${prod?.codigo} - ${prod?.descricao}</td>
-                <td>R$ ${item.valor_unitario.toFixed(2)}</td>
-                <td>${item.quantidade}</td>
-                <td>R$ ${item.subtotal.toFixed(2)}</td>
-                <td>
-                    <button onclick="editarItem(${i})">Editar</button>
-                    <button onclick="removerItem(${i})">Remover</button>
+                <td style="text-align:right">R$ ${item.valor_unitario.toFixed(2)}</td>
+                <td style="text-align:center">${item.quantidade}</td>
+                <td style="text-align:right">R$ ${item.subtotal.toFixed(2)}</td>
+                <td style="text-align:center">
+                    <button onclick="editarItem(${i})">✏️</button>
+                    <button onclick="removerItem(${i})">❌</button>
                 </td>
             </tr>
         `;
@@ -155,14 +155,21 @@ function gerarParcelas() {
         let venc = new Date(hoje);
         venc.setMonth(hoje.getMonth() + i);
 
+        const letra = String.fromCharCode(64 + i);
+
         boletos.push({
-            numero: `${numeroNF}-${i}`,
+            numero: `${numeroNF} - ${letra}`,
             valor: Number((total / qtd).toFixed(2)),
-            vencimento: venc.toISOString().split("T")[0]
+            vencimento: formatarDataBR(venc)
         });
     }
 
     atualizarTabelaBoletos();
+}
+
+function formatarDataBR(data) {
+    const d = new Date(data);
+    return d.toLocaleDateString('pt-BR');
 }
 
 function atualizarTabelaBoletos() {
@@ -171,15 +178,36 @@ function atualizarTabelaBoletos() {
 
     tbody.innerHTML = "";
 
-    boletos.forEach(b => {
+    boletos.forEach((b, i) => {
         tbody.innerHTML += `
             <tr>
                 <td>${b.numero}</td>
-                <td>R$ ${b.valor.toFixed(2)}</td>
-                <td>${b.vencimento}</td>
+                <td style="text-align:right">R$ ${b.valor.toFixed(2)}</td>
+                <td style="text-align:center">${b.vencimento}</td>
+                <td style="text-align:center">
+                    <button onclick="editarParcela(${i})">✏️</button>
+                    <button onclick="removerParcela(${i})">❌</button>
+                </td>
             </tr>
         `;
     });
+}
+
+function editarParcela(index) {
+    const b = boletos[index];
+
+    const novoValor = prompt("Novo valor:", b.valor);
+    const novaData = prompt("Nova data (dd/mm/aaaa):", b.vencimento);
+
+    if (novoValor) b.valor = Number(novoValor);
+    if (novaData) b.vencimento = novaData;
+
+    atualizarTabelaBoletos();
+}
+
+function removerParcela(index) {
+    boletos.splice(index, 1);
+    atualizarTabelaBoletos();
 }
 
 // ===============================
